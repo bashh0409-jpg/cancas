@@ -108,7 +108,7 @@ export default async function HomePage() {
                 <div
                   key={i}
                   // min-w so cards don't shrink on small screens
-                  className="shrink-0 min-w-[140px] h-36 bg-white/10 rounded-lg"
+                  className="shrink-0 min-w-[200px] h-36 bg-white/10 rounded-lg"
                 />
               ))}
             </div>
