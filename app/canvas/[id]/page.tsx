@@ -2,6 +2,8 @@ import FloatingToolbar from "@/app/components/FloatingToolbar";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import CanvasWorkspace from "./CanvasWorkspace";
+import { SignOutNameButton } from "../../home/SignOutNameButton";
 
 type CanvasPageProps = {
   params: Promise<{
@@ -10,26 +12,60 @@ type CanvasPageProps = {
 };
 
 export default async function CanvasPage({ params }: CanvasPageProps) {
+  async function signOut(formData: FormData) {
+    "use server";
+
+    void formData;
+
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    redirect("/signin");
+  }
+
   const { id } = await params;
   void id;
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
+  const user = data.user;
 
-  if (!data.user) {
+  if (!user) {
     redirect("/signin");
   }
 
+  const firstName =
+    (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
+    user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
+    "User";
+  
+  const credits = 2332; // TODO: Fetch from Supabase
+
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#111111]">
-      <Link
-        href="/home"
-        className="absolute left-4 top-4 z-10 rounded-full bg-white px-3 py-1.5 font-mono text-sm font-semibold tracking-tight text-black transition hover:bg-white/85"
-      >
-        Back
-      </Link>
+      <CanvasWorkspace />
+      <div className="absolute left-0 top-0 z-50 flex w-full items-center justify-between p-4">
+        <Link
+          href="/home"
+          className="rounded-full bg-white px-3 py-1.5 font-mono text-sm font-semibold tracking-tight text-black transition hover:bg-white/85"
+        >
+          Back
+        </Link>
+        <div className="pixel text-sm tracking-tight text-white">
+          You have {credits} credits left.
+        </div>
+      </div>
+
+      <div className="absolute left-0 bottom-0 z-50 flex w-full items-center justify-between p-4">
+        <div className="pixel text-sm tracking-tight text-white">
+          Auto-saving is on.
+        </div>
+        <div className="pixel text-sm tracking-tight text-white">
+          Let&apos;s do this thing{" "}
+          <SignOutNameButton firstName={firstName} signOutAction={signOut} />
+        </div>
+      </div>
+
       <FloatingToolbar />
-      <div className="h-full w-full bg-[linear-gradient(rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[size:32px_32px]" />
     </main>
   );
 }
