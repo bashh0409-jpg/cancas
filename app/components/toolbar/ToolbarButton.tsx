@@ -22,7 +22,7 @@ export function ToolbarButton({
       title={label}
       type={type}
       className={[
-        "flex h-8 w-8 items-center justify-center rounded-full text-zinc-800 transition",
+        "flex h-8 w-8 items-center justify-center rounded-lg text-zinc-800 transition",
         active ? "bg-[#0d99ff] text-white" : "hover:bg-zinc-100",
         "disabled:pointer-events-none disabled:opacity-40",
         className,
