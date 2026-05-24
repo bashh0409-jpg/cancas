@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const redirectTo = next.startsWith('/') ? next : '/home'
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=missing_code`)
+    return NextResponse.redirect(`${origin}/signin?error=missing_code`)
   }
 
   const supabase = await createClient()
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message)}`
+      `${origin}/signin?error=${encodeURIComponent(error.message)}`
     )
   }
 

@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { GeistPixelSquare } from "geist/font/pixel";
 import localFont from "next/font/local";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const cmGeom = localFont({
   src: [
@@ -24,15 +15,15 @@ const cmGeom = localFont({
   variable: "--font-cmgeom",
 });
 
-const rinter = localFont({
+const helveticaNeue = localFont({
   src: [
     {
-      path: "../public/fonts/Rinter.woff2",
+      path: "../public/fonts/HelveticaNeueMedium.woff2",
       weight: "400",
       style: "normal",
     },
   ],
-  variable: "--font-rinter",
+  variable: "--font-helvetica-neue",
 });
 
 export const metadata: Metadata = {
@@ -48,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} ${cmGeom.variable} ${rinter.variable} h-full antialiased`}
+      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${GeistPixelSquare.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

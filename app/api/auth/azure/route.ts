@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   if (error || !data?.url) {
     return NextResponse.json(
-      { error: error?.message ?? "Unable to start Azure login" },
+      { error: error?.message ?? "Unable to start Azure sign-in" },
       { status: 500 },
     );
   }
