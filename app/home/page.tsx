@@ -43,16 +43,16 @@ export default async function HomePage() {
 
           {/* Nav */}
           <div className="mt-8 flex flex-col gap-2">
-            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
+            <button className="px-3 py-2 cursor-pointer rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Home
             </button>
-            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
+            <button className="px-3 py-2 cursor-pointer rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Templates
             </button>
-            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
+            <button className="px-3 py-2 cursor-pointer rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Library
             </button>
-            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
+            <button className="px-3 py-2 cursor-pointer rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Your Account
             </button>
           </div>
@@ -69,7 +69,7 @@ export default async function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
               <form action={createCanvas} className="">
-                <button className="bg-white/20 pixel text-white rounded-lg px-2 py-2  text-sm">
+                <button className="bg-white/20 cursor-pointer pixel text-white rounded-lg px-2 py-2  text-sm">
                   New File
                 </button>
               </form>
