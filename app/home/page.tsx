@@ -32,24 +32,34 @@ export default async function HomePage() {
     <div className="w-full mx-auto">
       <div className="bg-black/70 p-3 flex border h-screen">
         {/* Sidebar */}
-        <div className="p-3 h-screen">
-          <div className="text-2xl font-medium tracking-tight text-white uppercase">
+        <div className="h-screen p-4 flex flex-col bg-black/40 backdrop-blur-md border-r border-white/10">
+          {/* Logo */}
+          <div className="text-2xl font-medium tracking-tight text-white uppercase flex items-center gap-2">
             Slate
+            <span className="uppercase bg-white/10 text-[10px] text-white/60 px-1.5 py-0.5 rounded-md font-semibold tracking-wide">
+              BETA
+            </span>
           </div>
 
-          <div className="mt-6 text-white flex text-base flex-col w-50 gap-2">
-            <button className="px-2 py-1 bg-white/20 rounded-lg w-full">
+          {/* Nav */}
+          <div className="mt-8 flex flex-col gap-2">
+            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Home
             </button>
-            <button className="px-2 py-1 bg-white/20 rounded-lg w-full">
+            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Templates
             </button>
-            <button className="px-2 py-1 bg-white/20 rounded-lg w-full">
+            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Library
             </button>
-            <button className="px-2 py-1 bg-white/20 rounded-lg w-full">
+            <button className="px-3 py-2 rounded-lg text-sm text-white/80 bg-white/5 hover:bg-white/10 transition text-left">
               Your Account
             </button>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-auto pt-4 border-t border-white/10">
+            <div className="text-sm text-white truncate pixel">{user.email}</div>
           </div>
         </div>
 

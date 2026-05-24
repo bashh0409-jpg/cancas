@@ -46,9 +46,17 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
       <div className="absolute left-0 top-0 z-50 flex w-full items-center justify-between p-4">
         <Link
           href="/home"
-          className="rounded-full bg-white px-3 py-1.5 font-mono text-sm font-semibold tracking-tight text-black transition hover:bg-white/85"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 border border-white/15 transition hover:bg-white/15"
         >
-          Back
+          <svg
+            fill="currentColor"
+            width="20"
+            height="20"
+            viewBox="0 0 32 32"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
+          </svg>
         </Link>
         <div className="pixel text-sm tracking-tight text-white">
           You have {credits} credits left.
