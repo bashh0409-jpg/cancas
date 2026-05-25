@@ -20,6 +20,7 @@ export default function Page() {
     <div className="flex h-screen w-full overflow-hidden bg-white">
       {/* Left */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
+        <h1 className="text-3xl  tracking-tight text-black absolute top-10 left-15">SLATE</h1>
         <div className="flex bg-black/2 rounded-lg w-full max-w-[380px] p-4 flex-col items-center gap-12">
           {/* Logo */}
           <div className="flex w-full flex-col gap-2 ">

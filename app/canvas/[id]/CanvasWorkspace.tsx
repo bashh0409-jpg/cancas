@@ -302,6 +302,9 @@ export default function CanvasWorkspace({
       restoredFromLocalDraft: localDraft !== null,
     };
   });
+  const initialImageIdsRef = useRef(
+    new Set(initialDraftState.content.imageNodes.map((node) => node.id))
+  );
   const canvasRef = useRef<HTMLDivElement>(null);
   const imageNodesRef = useRef<ImageCanvasNode[]>([]);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
@@ -345,7 +348,12 @@ export default function CanvasWorkspace({
   const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
+  const [isCanvasLoading, setIsCanvasLoading] = useState(true);
+  const [settledInitialImageIds, setSettledInitialImageIds] = useState<
+    Set<string>
+  >(() => new Set());
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
+  const initialImageCount = initialImageIdsRef.current.size;
   const activeWebNode =
     webNodes.find((node) => node.id === activeWebNodeId) ?? null;
   const selectedImageIdSet = useMemo(
@@ -361,6 +369,38 @@ export default function CanvasWorkspace({
   useEffect(() => {
     webNodesRef.current = webNodes;
   }, [webNodes]);
+
+  useEffect(() => {
+    if (!isCanvasLoading) {
+      return;
+    }
+
+    if (settledInitialImageIds.size < initialImageCount) {
+      return;
+    }
+
+    const firstFrame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setIsCanvasLoading(false));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+    };
+  }, [initialImageCount, isCanvasLoading, settledInitialImageIds.size]);
+
+  useEffect(() => {
+    if (!isCanvasLoading) {
+      return;
+    }
+
+    const fallbackTimer = window.setTimeout(() => {
+      setIsCanvasLoading(false);
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [isCanvasLoading]);
 
   const buildCanvasContent = useCallback((): CanvasContent => {
     return {
@@ -585,6 +625,22 @@ export default function CanvasWorkspace({
       x: (point.x - rect.left - viewport.x) / viewport.zoom,
       y: (point.y - rect.top - viewport.y) / viewport.zoom,
     };
+  }
+
+  function handleInitialImageSettled(nodeId: string) {
+    if (!initialImageIdsRef.current.has(nodeId)) {
+      return;
+    }
+
+    setSettledInitialImageIds((current) => {
+      if (current.has(nodeId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(nodeId);
+      return next;
+    });
   }
 
   function handleDragEnter(event: ReactDragEvent<HTMLDivElement>) {
@@ -1223,6 +1279,8 @@ export default function CanvasWorkspace({
                 className="block h-full w-full select-none object-contain"
                 draggable={false}
                 src={node.url}
+                onError={() => handleInitialImageSettled(node.id)}
+                onLoad={() => handleInitialImageSettled(node.id)}
               />
               <div
                 className={[
@@ -1525,6 +1583,17 @@ export default function CanvasWorkspace({
           onClose={() => setActiveWebNodeId(null)}
         />
       )}
+
+      {isCanvasLoading ? (
+        <div
+          aria-label="Loading canvas"
+          aria-live="polite"
+          className="fixed inset-0 z-[100] grid place-items-center bg-black"
+          role="status"
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+        </div>
+      ) : null}
     </div>
   );
 }
