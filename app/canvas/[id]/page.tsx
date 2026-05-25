@@ -54,7 +54,13 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
     "User";
 
-  const credits = 2332;
+  const { data: creditsRow } = await supabase
+    .from("user_credits")
+    .select("balance")
+    .eq("user_id", user.id)
+    .single();
+
+  const credits = creditsRow?.balance ?? 0;
 
   return (
     <CanvasPageClient

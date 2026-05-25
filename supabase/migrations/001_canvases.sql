@@ -59,3 +59,25 @@ create policy "Users delete own canvas files"
 create policy "Public read canvas files"
   on storage.objects for select
   using (bucket_id = 'canvas-files');
+
+create table if not exists public.user_credits (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  balance integer not null default 0 check (balance >= 0),
+  lifetime_earned integer not null default 0 check (lifetime_earned >= 0),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_credits enable row level security;
+
+create policy "Users read own credits"
+  on public.user_credits for select
+  using (auth.uid() = user_id);
+
+create policy "Users update own credits"
+  on public.user_credits for update
+  using (auth.uid() = user_id);
+
+-- Service role only for inserts — credits should be granted server-side, not by the client
+create policy "Service role insert credits"
+  on public.user_credits for insert
+  with check (auth.role() = 'service_role');

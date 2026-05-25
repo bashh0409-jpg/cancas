@@ -16,17 +16,12 @@ import {
   type LayoutArrangeRequest,
 } from "@/lib/canvas/imageLayouts";
 import {
-  prepareImageForUpload,
-  runWithConcurrency,
-} from "@/lib/canvas/imageUploadPrep";
-import {
   deletePendingUploadFile,
   getPendingUploadFile,
   savePendingUploadFile,
 } from "@/lib/canvas/pendingUploads";
 import { deleteCanvasImage, uploadCanvasImage } from "@/lib/canvas/storage";
-
-const UPLOAD_CONCURRENCY = 4;
+import { canvasImageUploadPool } from "@/lib/canvas/uploadPool";
 import { createClient } from "@/lib/supabase/client";
 import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 
@@ -190,6 +185,12 @@ function isPendingCloudSync(node: ImageCanvasNode) {
   return !node.storagePath;
 }
 
+function getImageNodeSrc(node: ImageCanvasNode) {
+  const url = node.url.trim();
+
+  return url.length > 0 ? url : null;
+}
+
 function serializeImageNodeForSave(node: ImageCanvasNode) {
   const pending = isPendingCloudSync(node);
 
@@ -330,42 +331,32 @@ export default function CanvasWorkspace({
   serverUpdatedAt,
   onImageSyncStatsChange,
 }: CanvasWorkspaceProps) {
-  const [initialDraftState] = useState(() => {
-    const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
-
-    return {
-      content: localDraft?.content ?? initialContent,
-      restoredFromLocalDraft: localDraft !== null,
-    };
-  });
   const initialImageIdsRef = useRef(
-    new Set(initialDraftState.content.imageNodes.map((node) => node.id))
+    new Set(initialContent.imageNodes.map((node) => node.id))
   );
   const canvasRef = useRef<HTMLDivElement>(null);
-  const imageNodesRef = useRef<ImageCanvasNode[]>(
-    initialDraftState.content.imageNodes
-  );
+  const imageNodesRef = useRef<ImageCanvasNode[]>(initialContent.imageNodes);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
   const webResizeRef = useRef<NodeResizeState | null>(null);
-  const skipSaveRef = useRef(!initialDraftState.restoredFromLocalDraft);
+  const skipSaveRef = useRef(true);
+  const [isClientReady, setIsClientReady] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUploadFilesRef = useRef<
     Map<string, { file: File; blobUrl: string }>
   >(new Map());
   const pendingUploadIdsRef = useRef<Set<string>>(new Set());
-  const [viewport, setViewport] = useState<Viewport>(
-    initialDraftState.content.viewport
-  );
+  const supabaseClientRef = useRef(createClient());
+  const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
   const [showGridControls, setShowGridControls] = useState(false);
-  const [showGrid, setShowGrid] = useState(initialDraftState.content.showGrid);
+  const [showGrid, setShowGrid] = useState(initialContent.showGrid);
   const [backgroundColor, setBackgroundColor] = useState(
-    initialDraftState.content.backgroundColor
+    initialContent.backgroundColor
   );
-  const [gridColor, setGridColor] = useState(initialDraftState.content.gridColor);
-  const [gridSize, setGridSize] = useState(initialDraftState.content.gridSize);
+  const [gridColor, setGridColor] = useState(initialContent.gridColor);
+  const [gridSize, setGridSize] = useState(initialContent.gridSize);
   const [isFileDragging, setIsFileDragging] = useState(false);
   const [draggingImageNodeId, setDraggingImageNodeId] = useState<string | null>(
     null
@@ -378,11 +369,9 @@ export default function CanvasWorkspace({
   );
   const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(null);
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
-    initialDraftState.content.imageNodes
+    initialContent.imageNodes
   );
-  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(
-    initialDraftState.content.webNodes
-  );
+  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(initialContent.webNodes);
   const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
@@ -414,6 +403,37 @@ export default function CanvasWorkspace({
   }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
 
   useEffect(() => {
+    const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
+
+    if (localDraft?.content) {
+      const content = localDraft.content;
+
+      setViewport(content.viewport);
+      setShowGrid(content.showGrid);
+      setBackgroundColor(content.backgroundColor);
+      setGridColor(content.gridColor);
+      setGridSize(content.gridSize);
+      setImageNodes(content.imageNodes);
+      setWebNodes(content.webNodes);
+      imageNodesRef.current = content.imageNodes;
+      webNodesRef.current = content.webNodes;
+      initialImageIdsRef.current = new Set(
+        content.imageNodes.map((node) => node.id)
+      );
+      setSettledInitialImageIds(new Set());
+      skipSaveRef.current = true;
+    } else {
+      skipSaveRef.current = false;
+    }
+
+    setIsClientReady(true);
+  }, [canvasId, serverUpdatedAt]);
+
+  useEffect(() => {
+    if (!isClientReady) {
+      return;
+    }
+
     let cancelled = false;
 
     async function resumePendingUploads() {
@@ -448,17 +468,15 @@ export default function CanvasWorkspace({
         nodesToResume.push({ nodeId: node.id, file, blobUrl });
       }
 
-      if (cancelled || nodesToResume.length === 0) {
-        return;
-      }
-
-      await runWithConcurrency(nodesToResume, UPLOAD_CONCURRENCY, async (entry) => {
+      for (const entry of nodesToResume) {
         if (cancelled) {
           return;
         }
 
-        await syncImageToStorage(entry.nodeId, entry.file, entry.blobUrl);
-      });
+        canvasImageUploadPool.enqueue(() =>
+          syncImageToStorage(entry.nodeId, entry.file, entry.blobUrl)
+        );
+      }
     }
 
     void resumePendingUploads();
@@ -466,7 +484,7 @@ export default function CanvasWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [canvasId, userId]);
+  }, [canvasId, userId, isClientReady]);
 
   const removeImageNodes = useCallback((ids: string[]) => {
     if (ids.length === 0) {
@@ -476,7 +494,7 @@ export default function CanvasWorkspace({
     const nodesToRemove = imageNodesRef.current.filter((node) =>
       ids.includes(node.id)
     );
-    const supabase = createClient();
+    const supabase = supabaseClientRef.current;
 
     for (const node of nodesToRemove) {
       if (node.url.startsWith("blob:")) {
@@ -539,6 +557,37 @@ export default function CanvasWorkspace({
       window.clearTimeout(fallbackTimer);
     };
   }, [isCanvasLoading]);
+
+  useEffect(() => {
+    if (!isCanvasLoading) {
+      return;
+    }
+
+    const emptyInitialIds = imageNodes
+      .filter(
+        (node) =>
+          initialImageIdsRef.current.has(node.id) && getImageNodeSrc(node) === null
+      )
+      .map((node) => node.id);
+
+    if (emptyInitialIds.length === 0) {
+      return;
+    }
+
+    setSettledInitialImageIds((current) => {
+      const next = new Set(current);
+      let changed = false;
+
+      for (const nodeId of emptyInitialIds) {
+        if (!next.has(nodeId)) {
+          next.add(nodeId);
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+  }, [imageNodes, isCanvasLoading]);
 
   const buildCanvasContent = useCallback((): CanvasContent => {
     return {
@@ -877,16 +926,13 @@ export default function CanvasWorkspace({
   }
 
   async function syncImageToStorage(nodeId: string, file: File, blobUrl: string) {
-    const supabase = createClient();
-
     try {
-      const uploadFile = await prepareImageForUpload(file);
       const uploaded = await uploadCanvasImage(
-        supabase,
+        supabaseClientRef.current,
         userId,
         canvasId,
         nodeId,
-        uploadFile
+        file
       );
 
       pendingUploadIdsRef.current.delete(nodeId);
@@ -940,7 +986,7 @@ export default function CanvasWorkspace({
         pendingUploadFilesRef.current.set(nodeId, { file, blobUrl });
         pendingUploadIdsRef.current.add(nodeId);
 
-        return {
+        const node = {
           id: nodeId,
           fileName: file.name,
           url: blobUrl,
@@ -951,6 +997,12 @@ export default function CanvasWorkspace({
           size: fitImageSize(naturalSize.width, naturalSize.height),
           zIndex: index + 1,
         };
+
+        canvasImageUploadPool.enqueue(() =>
+          syncImageToStorage(nodeId, file, blobUrl)
+        );
+
+        return node;
       })
     );
 
@@ -971,16 +1023,6 @@ export default function CanvasWorkspace({
       }
 
       return [...current, ...nextNodes];
-    });
-
-    await runWithConcurrency(placeholderNodes, UPLOAD_CONCURRENCY, async (node) => {
-      const pending = pendingUploadFilesRef.current.get(node.id);
-
-      if (!pending) {
-        return;
-      }
-
-      await syncImageToStorage(node.id, pending.file, pending.blobUrl);
     });
   }
 
@@ -1473,6 +1515,7 @@ export default function CanvasWorkspace({
           const isSelected = selectedImageIdSet.has(node.id);
           const showResizeHandles =
             isSelected && selectedImageIds.length === 1;
+          const imageSrc = getImageNodeSrc(node);
 
           return (
             <div
@@ -1491,16 +1534,27 @@ export default function CanvasWorkspace({
                 zIndex: node.zIndex,
               }}
             >
-              {/* Object URLs from local drops are not compatible with next/image optimization. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt={node.fileName}
-                className="block h-full w-full select-none object-contain"
-                draggable={false}
-                src={node.url}
-                onError={() => handleInitialImageSettled(node.id)}
-                onLoad={() => handleInitialImageSettled(node.id)}
-              />
+              {imageSrc ? (
+                <>
+                  {/* Object URLs from local drops are not compatible with next/image optimization. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    alt={node.fileName}
+                    className="block h-full w-full select-none object-contain"
+                    draggable={false}
+                    src={imageSrc}
+                    onError={() => handleInitialImageSettled(node.id)}
+                    onLoad={() => handleInitialImageSettled(node.id)}
+                  />
+                </>
+              ) : (
+                <div
+                  aria-hidden
+                  className="flex h-full w-full items-center justify-center bg-white/5"
+                >
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+                </div>
+              )}
               <div
                 className={[
                   "pointer-events-none absolute -inset-px border transition",
@@ -1831,7 +1885,7 @@ export default function CanvasWorkspace({
         />
       )}
 
-      {isCanvasLoading ? (
+      {!isClientReady || isCanvasLoading ? (
         <div
           aria-label="Loading canvas"
           aria-live="polite"
