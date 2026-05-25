@@ -6,7 +6,18 @@ import type {
   PointerEvent as ReactPointerEvent,
   WheelEvent,
 } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
+import { WebsitePreviewCard } from "@/app/components/website-preview/WebsitePreviewCard";
+import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
+import {
+  arrangeImagesFromRequest,
+  getSelectionOrigin,
+  type LayoutArrangeRequest,
+} from "@/lib/canvas/imageLayouts";
+import { uploadCanvasImage } from "@/lib/canvas/storage";
+import { createClient } from "@/lib/supabase/client";
+import type { CanvasContent } from "@/types/canvas";
 
 type Viewport = {
   x: number;
@@ -23,6 +34,7 @@ type ImageCanvasNode = {
   id: string;
   fileName: string;
   url: string;
+  storagePath?: string;
   position: Point;
   size: {
     width: number;
@@ -31,9 +43,24 @@ type ImageCanvasNode = {
   zIndex: number;
 };
 
+type CanvasWorkspaceProps = {
+  canvasId: string;
+  userId: string;
+  canvasName: string;
+  initialContent: CanvasContent;
+};
+
 type ImageDragState = {
-  nodeId: string;
+  anchorId: string;
   offset: Point;
+  nodeIds: string[];
+  startPositions: Record<string, Point>;
+};
+
+type MarqueeState = {
+  start: Point;
+  current: Point;
+  additive: boolean;
 };
 
 type WebCanvasNode = {
@@ -46,17 +73,18 @@ type WebCanvasNode = {
     height: number;
   };
   zIndex: number;
-  isLoading: boolean;
 };
 
 type WebDragState = {
   nodeId: string;
   offset: Point;
+  startPoint: Point;
+  hasMoved: boolean;
 };
 
 type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
-type ImageResizeState = {
+type NodeResizeState = {
   nodeId: string;
   corner: ResizeCorner;
   startPoint: Point;
@@ -65,6 +93,7 @@ type ImageResizeState = {
     width: number;
     height: number;
   };
+  lockAspectRatio: boolean;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -123,19 +152,51 @@ function getWebsiteTitle(url: string) {
   }
 }
 
-export default function CanvasWorkspace() {
+function normalizeRect(start: Point, end: Point) {
+  return {
+    x: Math.min(start.x, end.x),
+    y: Math.min(start.y, end.y),
+    width: Math.abs(end.x - start.x),
+    height: Math.abs(end.y - start.y),
+  };
+}
+
+function imageIntersectsRect(node: ImageCanvasNode, rect: ReturnType<typeof normalizeRect>) {
+  return (
+    node.position.x < rect.x + rect.width &&
+    node.position.x + node.size.width > rect.x &&
+    node.position.y < rect.y + rect.height &&
+    node.position.y + node.size.height > rect.y
+  );
+}
+
+export default function CanvasWorkspace({
+  canvasId,
+  userId,
+  canvasName,
+  initialContent,
+}: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const imageNodesRef = useRef<ImageCanvasNode[]>([]);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
   const imageDragRef = useRef<ImageDragState | null>(null);
-  const imageResizeRef = useRef<ImageResizeState | null>(null);
+  const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
-  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
+  const webResizeRef = useRef<NodeResizeState | null>(null);
+  const skipSaveRef = useRef(true);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingUploadFilesRef = useRef<
+    Map<string, { file: File; blobUrl: string }>
+  >(new Map());
+  const pendingUploadIdsRef = useRef<Set<string>>(new Set());
+  const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
   const [showGridControls, setShowGridControls] = useState(false);
-  const [showGrid, setShowGrid] = useState(true);
-  const [backgroundColor, setBackgroundColor] = useState("#111111");
-  const [gridColor, setGridColor] = useState("#343434");
-  const [gridSize, setGridSize] = useState(32);
+  const [showGrid, setShowGrid] = useState(initialContent.showGrid);
+  const [backgroundColor, setBackgroundColor] = useState(
+    initialContent.backgroundColor
+  );
+  const [gridColor, setGridColor] = useState(initialContent.gridColor);
+  const [gridSize, setGridSize] = useState(initialContent.gridSize);
   const [isFileDragging, setIsFileDragging] = useState(false);
   const [draggingImageNodeId, setDraggingImageNodeId] = useState<string | null>(
     null
@@ -143,9 +204,27 @@ export default function CanvasWorkspace() {
   const [resizingImageNodeId, setResizingImageNodeId] = useState<string | null>(
     null
   );
-  const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>([]);
-  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>([]);
+  const [resizingWebNodeId, setResizingWebNodeId] = useState<string | null>(
+    null
+  );
+  const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(null);
+  const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
+    initialContent.imageNodes
+  );
+  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(
+    initialContent.webNodes
+  );
+  const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
+  const [marquee, setMarquee] = useState<MarqueeState | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
+  const activeWebNode =
+    webNodes.find((node) => node.id === activeWebNodeId) ?? null;
+  const selectedImageIdSet = useMemo(
+    () => new Set(selectedImageIds),
+    [selectedImageIds]
+  );
+  const marqueeRect = marquee ? normalizeRect(marquee.start, marquee.current) : null;
 
   useEffect(() => {
     imageNodesRef.current = imageNodes;
@@ -154,6 +233,99 @@ export default function CanvasWorkspace() {
   useEffect(() => {
     webNodesRef.current = webNodes;
   }, [webNodes]);
+
+  const buildCanvasContent = useCallback((): CanvasContent => {
+    return {
+      version: 1,
+      viewport,
+      imageNodes: imageNodes
+        .filter((node) => !pendingUploadIdsRef.current.has(node.id))
+        .map((node) => ({
+          id: node.id,
+          fileName: node.fileName,
+          url: node.url,
+          storagePath: node.storagePath,
+          position: node.position,
+          size: node.size,
+          zIndex: node.zIndex,
+        })),
+      webNodes,
+      showGrid,
+      backgroundColor,
+      gridColor,
+      gridSize,
+    };
+  }, [
+    backgroundColor,
+    gridColor,
+    gridSize,
+    imageNodes,
+    showGrid,
+    viewport,
+    webNodes,
+  ]);
+
+  useEffect(() => {
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false;
+      return;
+    }
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      void fetch(`/api/canvases/${canvasId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: buildCanvasContent(),
+          name: canvasName,
+        }),
+      });
+    }, 1200);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [buildCanvasContent, canvasId, canvasName]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target;
+
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA")
+      ) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        setSelectedImageIds([]);
+        setMarquee(null);
+        return;
+      }
+
+      const selectAll = event.key === "a" && (event.metaKey || event.ctrlKey);
+
+      if (selectAll) {
+        event.preventDefault();
+        setSelectedImageIds(imageNodesRef.current.map((node) => node.id));
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     function preventFileNavigation(event: DragEvent) {
@@ -170,7 +342,11 @@ export default function CanvasWorkspace() {
     return () => {
       window.removeEventListener("dragover", preventFileNavigation);
       window.removeEventListener("drop", preventFileNavigation);
-      imageNodesRef.current.forEach((node) => URL.revokeObjectURL(node.url));
+      imageNodesRef.current.forEach((node) => {
+        if (node.url.startsWith("blob:")) {
+          URL.revokeObjectURL(node.url);
+        }
+      });
     };
   }, []);
 
@@ -208,15 +384,14 @@ export default function CanvasWorkspace() {
           url,
           title: getWebsiteTitle(url),
           position: {
-            x: center.x - 160,
-            y: center.y - 120,
+            x: center.x - 130,
+            y: center.y - 170,
           },
           size: {
-            width: 320,
-            height: 240,
+            width: 260,
+            height: 340,
           },
           zIndex: topZIndex + 1,
-          isLoading: true,
         },
       ]);
     }
@@ -293,6 +468,39 @@ export default function CanvasWorkspace() {
     }
   }
 
+  async function syncImageToStorage(nodeId: string, file: File, blobUrl: string) {
+    const supabase = createClient();
+
+    try {
+      const uploaded = await uploadCanvasImage(
+        supabase,
+        userId,
+        canvasId,
+        nodeId,
+        file
+      );
+
+      pendingUploadIdsRef.current.delete(nodeId);
+
+      setImageNodes((current) =>
+        current.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                url: uploaded.url,
+                storagePath: uploaded.storagePath,
+              }
+            : node
+        )
+      );
+
+      URL.revokeObjectURL(blobUrl);
+      pendingUploadFilesRef.current.delete(nodeId);
+    } catch {
+      pendingUploadIdsRef.current.delete(nodeId);
+    }
+  }
+
   async function handleDrop(event: ReactDragEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
@@ -311,15 +519,19 @@ export default function CanvasWorkspace() {
       y: event.clientY,
     });
 
-    const droppedNodes = await Promise.all(
+    const placeholderNodes = await Promise.all(
       files.map(async (file, index) => {
-        const url = URL.createObjectURL(file);
-        const naturalSize = await getNaturalImageSize(url);
+        const nodeId = crypto.randomUUID();
+        const blobUrl = URL.createObjectURL(file);
+        const naturalSize = await getNaturalImageSize(blobUrl);
+
+        pendingUploadFilesRef.current.set(nodeId, { file, blobUrl });
+        pendingUploadIdsRef.current.add(nodeId);
 
         return {
-          id: crypto.randomUUID(),
+          id: nodeId,
           fileName: file.name,
-          url,
+          url: blobUrl,
           position: {
             x: dropPosition.x + index * 20,
             y: dropPosition.y + index * 20,
@@ -335,13 +547,131 @@ export default function CanvasWorkspace() {
         (max, node) => Math.max(max, node.zIndex),
         0
       );
-      const nextNodes = droppedNodes.map((node, index) => ({
+      const nextNodes = placeholderNodes.map((node, index) => ({
         ...node,
         zIndex: topZIndex + index + 1,
       }));
 
+      const nextIds = nextNodes.map((node) => node.id);
+
+      if (nextIds.length >= 2) {
+        setSelectedImageIds(nextIds);
+      }
+
       return [...current, ...nextNodes];
     });
+
+    for (const node of placeholderNodes) {
+      const pending = pendingUploadFilesRef.current.get(node.id);
+
+      if (!pending) {
+        continue;
+      }
+
+      void syncImageToStorage(node.id, pending.file, pending.blobUrl);
+    }
+  }
+
+  function applyImageLayout(request: LayoutArrangeRequest) {
+    const selected = imageNodes.filter((node) =>
+      selectedImageIdSet.has(node.id)
+    );
+
+    if (selected.length < 2) {
+      return;
+    }
+
+    const origin = getSelectionOrigin(selected);
+    const layouts = arrangeImagesFromRequest(
+      selected.map((node) => ({
+        id: node.id,
+        width: node.size.width,
+        height: node.size.height,
+      })),
+      origin,
+      request
+    );
+    const layoutById = new Map(layouts.map((entry) => [entry.id, entry]));
+
+    setImageNodes((current) =>
+      current.map((node) => {
+        const layout = layoutById.get(node.id);
+
+        if (!layout) {
+          return node;
+        }
+
+        return {
+          ...node,
+          position: layout.position,
+          size: layout.size,
+        };
+      })
+    );
+  }
+
+  function handleCanvasPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+
+    setMarquee({
+      start: point,
+      current: point,
+      additive,
+    });
+
+    if (!additive) {
+      setSelectedImageIds([]);
+    }
+
+    setActiveWebNodeId(null);
+  }
+
+  function handleCanvasPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!marquee) {
+      return;
+    }
+
+    setMarquee((current) =>
+      current
+        ? {
+            ...current,
+            current: screenToCanvas({ x: event.clientX, y: event.clientY }),
+          }
+        : null
+    );
+  }
+
+  function handleCanvasPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!marquee) {
+      return;
+    }
+
+    const rect = normalizeRect(marquee.start, marquee.current);
+    const hitIds = imageNodesRef.current
+      .filter((node) => imageIntersectsRect(node, rect))
+      .map((node) => node.id);
+
+    if (rect.width > 4 || rect.height > 4) {
+      setSelectedImageIds((current) =>
+        marquee.additive
+          ? [...new Set([...current, ...hitIds])]
+          : hitIds
+      );
+    }
+
+    setMarquee(null);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
   function handleImagePointerDown(
@@ -356,13 +686,41 @@ export default function CanvasWorkspace() {
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
 
+    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+    const isSelected = selectedImageIdSet.has(node.id);
+    let idsToDrag: string[];
+
+    if (additive && isSelected) {
+      setSelectedImageIds((current) => current.filter((id) => id !== node.id));
+      return;
+    }
+
+    if (additive) {
+      idsToDrag = [...selectedImageIds, node.id];
+      setSelectedImageIds(idsToDrag);
+    } else if (!isSelected) {
+      idsToDrag = [node.id];
+      setSelectedImageIds(idsToDrag);
+    } else if (selectedImageIds.length > 1) {
+      idsToDrag = selectedImageIds;
+    } else {
+      idsToDrag = [node.id];
+    }
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    const startPositions = Object.fromEntries(
+      imageNodesRef.current
+        .filter((entry) => idsToDrag.includes(entry.id))
+        .map((entry) => [entry.id, entry.position])
+    );
+
     imageDragRef.current = {
-      nodeId: node.id,
+      anchorId: node.id,
       offset: {
         x: point.x - node.position.x,
         y: point.y - node.position.y,
       },
+      nodeIds: idsToDrag,
+      startPositions,
     };
     setDraggingImageNodeId(node.id);
 
@@ -378,58 +736,64 @@ export default function CanvasWorkspace() {
     });
   }
 
+  function getResizedNodeBounds(
+    resizeState: NodeResizeState,
+    point: Point
+  ): { position: Point; size: { width: number; height: number } } {
+    const deltaX = point.x - resizeState.startPoint.x;
+    const deltaY = point.y - resizeState.startPoint.y;
+    const horizontalSign = resizeState.corner.includes("right") ? 1 : -1;
+    const verticalSign = resizeState.corner.includes("bottom") ? 1 : -1;
+    const minSize = resizeState.lockAspectRatio ? 40 : 120;
+
+    let nextWidth = resizeState.startSize.width + deltaX * horizontalSign;
+    let nextHeight = resizeState.startSize.height + deltaY * verticalSign;
+
+    if (resizeState.lockAspectRatio) {
+      const ratio = resizeState.startSize.width / resizeState.startSize.height;
+      const widthFromX = resizeState.startSize.width + deltaX * horizontalSign;
+      const widthFromY =
+        resizeState.startSize.width + deltaY * verticalSign * ratio;
+      nextWidth =
+        Math.abs(widthFromX) > Math.abs(widthFromY) ? widthFromX : widthFromY;
+      nextHeight = nextWidth / ratio;
+    }
+
+    nextWidth = Math.max(minSize, Math.round(nextWidth));
+    nextHeight = Math.max(minSize, Math.round(nextHeight));
+
+    const nextPosition = { ...resizeState.startPosition };
+
+    if (resizeState.corner.includes("left")) {
+      nextPosition.x =
+        resizeState.startPosition.x + resizeState.startSize.width - nextWidth;
+    }
+
+    if (resizeState.corner.includes("top")) {
+      nextPosition.y =
+        resizeState.startPosition.y + resizeState.startSize.height - nextHeight;
+    }
+
+    return {
+      position: nextPosition,
+      size: { width: nextWidth, height: nextHeight },
+    };
+  }
+
   function handleImagePointerMove(event: ReactPointerEvent<HTMLElement>) {
     const dragState = imageDragRef.current;
     const resizeState = imageResizeRef.current;
 
     if (resizeState) {
       const point = screenToCanvas({ x: event.clientX, y: event.clientY });
-      const deltaX = point.x - resizeState.startPoint.x;
-      const deltaY = point.y - resizeState.startPoint.y;
-      const ratio = resizeState.startSize.width / resizeState.startSize.height;
-      const horizontalSign = resizeState.corner.includes("right") ? 1 : -1;
-      const verticalSign = resizeState.corner.includes("bottom") ? 1 : -1;
-      const widthFromX =
-        resizeState.startSize.width + deltaX * horizontalSign;
-      const widthFromY =
-        resizeState.startSize.width + deltaY * verticalSign * ratio;
-      const nextWidth = Math.max(
-        40,
-        Math.round(Math.abs(widthFromX) > Math.abs(widthFromY) ? widthFromX : widthFromY)
-      );
-      const nextHeight = Math.max(40, Math.round(nextWidth / ratio));
+      const bounds = getResizedNodeBounds(resizeState, point);
 
       setImageNodes((current) =>
-        current.map((node) => {
-          if (node.id !== resizeState.nodeId) {
-            return node;
-          }
-
-          const nextPosition = { ...resizeState.startPosition };
-
-          if (resizeState.corner.includes("left")) {
-            nextPosition.x =
-              resizeState.startPosition.x +
-              resizeState.startSize.width -
-              nextWidth;
-          }
-
-          if (resizeState.corner.includes("top")) {
-            nextPosition.y =
-              resizeState.startPosition.y +
-              resizeState.startSize.height -
-              nextHeight;
-          }
-
-          return {
-            ...node,
-            position: nextPosition,
-            size: {
-              width: nextWidth,
-              height: nextHeight,
-            },
-          };
-        })
+        current.map((node) =>
+          node.id === resizeState.nodeId
+            ? { ...node, position: bounds.position, size: bounds.size }
+            : node
+        )
       );
 
       return;
@@ -440,19 +804,41 @@ export default function CanvasWorkspace() {
     }
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    const anchorStart = dragState.startPositions[dragState.anchorId];
+
+    if (!anchorStart) {
+      return;
+    }
+
+    const anchorPosition = {
+      x: point.x - dragState.offset.x,
+      y: point.y - dragState.offset.y,
+    };
+    const delta = {
+      x: anchorPosition.x - anchorStart.x,
+      y: anchorPosition.y - anchorStart.y,
+    };
 
     setImageNodes((current) =>
-      current.map((node) =>
-        node.id === dragState.nodeId
-          ? {
-              ...node,
-              position: {
-                x: point.x - dragState.offset.x,
-                y: point.y - dragState.offset.y,
-              },
-            }
-          : node
-      )
+      current.map((node) => {
+        if (!dragState.nodeIds.includes(node.id)) {
+          return node;
+        }
+
+        const start = dragState.startPositions[node.id];
+
+        if (!start) {
+          return node;
+        }
+
+        return {
+          ...node,
+          position: {
+            x: start.x + delta.x,
+            y: start.y + delta.y,
+          },
+        };
+      })
     );
   }
 
@@ -467,10 +853,14 @@ export default function CanvasWorkspace() {
     }
   }
 
-  function handleWebDragPointerDown(
+  function handleWebPointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
     node: WebCanvasNode
   ) {
+    if (webResizeRef.current) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -482,7 +872,10 @@ export default function CanvasWorkspace() {
         x: point.x - node.position.x,
         y: point.y - node.position.y,
       },
+      startPoint: point,
+      hasMoved: false,
     };
+    setDraggingWebNodeId(node.id);
 
     setWebNodes((current) => {
       const topZIndex = Math.max(
@@ -497,7 +890,24 @@ export default function CanvasWorkspace() {
     });
   }
 
-  function handleWebPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+  function handleWebPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const resizeState = webResizeRef.current;
+
+    if (resizeState) {
+      const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+      const bounds = getResizedNodeBounds(resizeState, point);
+
+      setWebNodes((current) =>
+        current.map((node) =>
+          node.id === resizeState.nodeId
+            ? { ...node, position: bounds.position, size: bounds.size }
+            : node
+        )
+      );
+
+      return;
+    }
+
     const dragState = webDragRef.current;
 
     if (!dragState) {
@@ -505,6 +915,14 @@ export default function CanvasWorkspace() {
     }
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    const moveDistance = Math.hypot(
+      point.x - dragState.startPoint.x,
+      point.y - dragState.startPoint.y
+    );
+
+    if (moveDistance > 4) {
+      dragState.hasMoved = true;
+    }
 
     setWebNodes((current) =>
       current.map((node) =>
@@ -521,23 +939,22 @@ export default function CanvasWorkspace() {
     );
   }
 
-  function handleWebPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+  function handleWebPointerUp(event: ReactPointerEvent<HTMLElement>) {
+    const didDrag = webDragRef.current?.hasMoved ?? false;
+    const didResize = webResizeRef.current !== null;
     webDragRef.current = null;
+    webResizeRef.current = null;
+    setDraggingWebNodeId(null);
+    setResizingWebNodeId(null);
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+
+    return { didDrag, didResize };
   }
 
-  function handleWebsiteLoad(nodeId: string) {
-    setWebNodes((current) =>
-      current.map((node) =>
-        node.id === nodeId ? { ...node, isLoading: false } : node
-      )
-    );
-  }
-
-  function handleResizePointerDown(
+  function handleImageResizePointerDown(
     event: ReactPointerEvent<HTMLButtonElement>,
     node: ImageCanvasNode,
     corner: ResizeCorner
@@ -553,6 +970,7 @@ export default function CanvasWorkspace() {
       startPoint: screenToCanvas({ x: event.clientX, y: event.clientY }),
       startPosition: node.position,
       startSize: node.size,
+      lockAspectRatio: true,
     };
     setDraggingImageNodeId(null);
     setResizingImageNodeId(node.id);
@@ -561,6 +979,40 @@ export default function CanvasWorkspace() {
       const topZIndex = current.reduce(
         (max, entry) => Math.max(max, entry.zIndex),
         0
+      );
+
+      return current.map((entry) =>
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+      );
+    });
+  }
+
+  function handleWebResizePointerDown(
+    event: ReactPointerEvent<HTMLButtonElement>,
+    node: WebCanvasNode,
+    corner: ResizeCorner
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    webDragRef.current = null;
+    webResizeRef.current = {
+      nodeId: node.id,
+      corner,
+      startPoint: screenToCanvas({ x: event.clientX, y: event.clientY }),
+      startPosition: node.position,
+      startSize: node.size,
+      lockAspectRatio: false,
+    };
+    setDraggingWebNodeId(null);
+    setResizingWebNodeId(node.id);
+
+    setWebNodes((current) => {
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((entry) => entry.zIndex),
+        ...current.map((entry) => entry.zIndex)
       );
 
       return current.map((entry) =>
@@ -582,21 +1034,120 @@ export default function CanvasWorkspace() {
     >
       <div
         className="absolute inset-0"
+        onPointerCancel={handleCanvasPointerUp}
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerUp={handleCanvasPointerUp}
         style={{
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
           transformOrigin: "0 0",
         }}
       >
-        {imageNodes.map((node) => (
+        {marqueeRect && (marqueeRect.width > 2 || marqueeRect.height > 2) && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute border border-[#0d99ff] bg-[#0d99ff]/10"
+            style={{
+              height: marqueeRect.height,
+              left: marqueeRect.x,
+              top: marqueeRect.y,
+              width: marqueeRect.width,
+              zIndex: 9999,
+            }}
+          />
+        )}
+
+        {imageNodes.map((node) => {
+          const isSelected = selectedImageIdSet.has(node.id);
+          const showResizeHandles =
+            isSelected && selectedImageIds.length === 1;
+
+          return (
+            <div
+              key={node.id}
+              className="group absolute"
+              onPointerCancel={handleImagePointerUp}
+              onPointerDown={(event) => handleImagePointerDown(event, node)}
+              onPointerMove={handleImagePointerMove}
+              onPointerUp={handleImagePointerUp}
+              style={{
+                cursor: draggingImageNodeId === node.id ? "grabbing" : "grab",
+                height: node.size.height,
+                left: node.position.x,
+                top: node.position.y,
+                width: node.size.width,
+                zIndex: node.zIndex,
+              }}
+            >
+              {/* Object URLs from local drops are not compatible with next/image optimization. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt={node.fileName}
+                className="block h-full w-full select-none object-contain"
+                draggable={false}
+                src={node.url}
+              />
+              <div
+                className={[
+                  "pointer-events-none absolute -inset-px border transition",
+                  isSelected
+                    ? "border-[#0d99ff] opacity-100"
+                    : "border-[#0d99ff] opacity-0 group-hover:opacity-100",
+                  resizingImageNodeId === node.id ? "opacity-100" : "",
+                ].join(" ")}
+              />
+              {showResizeHandles
+                ? (
+                    [
+                      ["top-left", "-left-1.5 -top-1.5 cursor-nwse-resize"],
+                      ["top-right", "-right-1.5 -top-1.5 cursor-nesw-resize"],
+                      ["bottom-left", "-bottom-1.5 -left-1.5 cursor-nesw-resize"],
+                      [
+                        "bottom-right",
+                        "-bottom-1.5 -right-1.5 cursor-nwse-resize",
+                      ],
+                    ] as const
+                  ).map(([corner, className]) => (
+                    <button
+                      key={corner}
+                      aria-label={`Resize image from ${corner}`}
+                      className={[
+                        "absolute h-3 w-3 border border-[#0d99ff] bg-white transition",
+                        resizingImageNodeId === node.id || isSelected
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100",
+                        className,
+                      ].join(" ")}
+                      type="button"
+                      onPointerCancel={handleImagePointerUp}
+                      onPointerDown={(event) =>
+                        handleImageResizePointerDown(event, node, corner)
+                      }
+                      onPointerMove={handleImagePointerMove}
+                      onPointerUp={handleImagePointerUp}
+                    />
+                  ))
+                : null}
+            </div>
+          );
+        })}
+
+        {webNodes.map((node) => (
           <div
             key={node.id}
             className="group absolute"
-            onPointerCancel={handleImagePointerUp}
-            onPointerDown={(event) => handleImagePointerDown(event, node)}
-            onPointerMove={handleImagePointerMove}
-            onPointerUp={handleImagePointerUp}
+            onPointerCancel={handleWebPointerUp}
+            onPointerDown={(event) => handleWebPointerDown(event, node)}
+            onPointerMove={handleWebPointerMove}
+            onPointerUp={(event) => {
+              const { didDrag, didResize } = handleWebPointerUp(event);
+
+              if (!didDrag && !didResize) {
+                setActiveWebNodeId(node.id);
+              }
+            }}
             style={{
-              cursor: draggingImageNodeId === node.id ? "grabbing" : "grab",
+              cursor: draggingWebNodeId === node.id ? "grabbing" : "grab",
               height: node.size.height,
               left: node.position.x,
               top: node.position.y,
@@ -604,18 +1155,11 @@ export default function CanvasWorkspace() {
               zIndex: node.zIndex,
             }}
           >
-            {/* Object URLs from local drops are not compatible with next/image optimization. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt={node.fileName}
-              className="block h-full w-full select-none object-contain"
-              draggable={false}
-              src={node.url}
-            />
+            <WebsitePreviewCard url={node.url} />
             <div
               className={[
-                "pointer-events-none absolute -inset-px border border-[#0d99ff] transition",
-                resizingImageNodeId === node.id
+                "pointer-events-none absolute -inset-px rounded-lg border border-[#0d99ff] transition",
+                resizingWebNodeId === node.id
                   ? "opacity-100"
                   : "opacity-0 group-hover:opacity-100",
               ].join(" ")}
@@ -630,77 +1174,23 @@ export default function CanvasWorkspace() {
             ).map(([corner, className]) => (
               <button
                 key={corner}
-                aria-label={`Resize image from ${corner}`}
+                aria-label={`Resize link preview from ${corner}`}
                 className={[
                   "absolute h-3 w-3 border border-[#0d99ff] bg-white transition",
-                  resizingImageNodeId === node.id
+                  resizingWebNodeId === node.id
                     ? "opacity-100"
                     : "opacity-0 group-hover:opacity-100",
                   className,
                 ].join(" ")}
                 type="button"
-                onPointerCancel={handleImagePointerUp}
+                onPointerCancel={handleWebPointerUp}
                 onPointerDown={(event) =>
-                  handleResizePointerDown(event, node, corner)
+                  handleWebResizePointerDown(event, node, corner)
                 }
-                onPointerMove={handleImagePointerMove}
-                onPointerUp={handleImagePointerUp}
+                onPointerMove={handleWebPointerMove}
+                onPointerUp={handleWebPointerUp}
               />
             ))}
-          </div>
-        ))}
-
-        {webNodes.map((node) => (
-          <div
-            key={node.id}
-            className="absolute overflow-hidden rounded-lg border border-white/15 bg-zinc-950 shadow-[0_18px_46px_rgba(0,0,0,0.34)]"
-            onPointerCancel={handleWebPointerUp}
-            onPointerMove={handleWebPointerMove}
-            onPointerUp={handleWebPointerUp}
-            style={{
-              height: node.size.height,
-              left: node.position.x,
-              top: node.position.y,
-              width: node.size.width,
-              zIndex: node.zIndex,
-            }}
-          >
-            <div
-              className="flex h-9 cursor-grab items-center gap-2 border-b border-white/10 bg-zinc-950 px-2 text-white active:cursor-grabbing"
-              onPointerDown={(event) => handleWebDragPointerDown(event, node)}
-            >
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              <span className="min-w-0 flex-1 truncate text-xs font-medium">
-                {node.title}
-              </span>
-              <a
-                aria-label={`Open ${node.title} in a new tab`}
-                className="rounded-md px-1.5 py-1 text-[11px] text-white/55 transition hover:bg-white/10 hover:text-white"
-                href={node.url}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Open
-              </a>
-            </div>
-            <div className="relative h-[calc(100%-36px)] bg-white">
-              {node.isLoading && (
-                <div className="absolute inset-0 z-10 grid place-items-center bg-zinc-950 text-white">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                    <div className="text-xs text-white/60">Loading preview</div>
-                  </div>
-                </div>
-              )}
-              <iframe
-                className="h-full w-full bg-white"
-                onLoad={() => handleWebsiteLoad(node.id)}
-                referrerPolicy="no-referrer"
-                sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
-                src={node.url}
-                title={node.title}
-              />
-            </div>
           </div>
         ))}
       </div>
@@ -882,6 +1372,22 @@ export default function CanvasWorkspace() {
             </div>
           </aside>
       </div>
+
+      {selectedImageIds.length >= 2 && (
+        <ImageSelectionArrangeBar
+          count={selectedImageIds.length}
+          onArrange={applyImageLayout}
+          onClearSelection={() => setSelectedImageIds([])}
+        />
+      )}
+
+      {activeWebNode && (
+        <WebsitePreviewModal
+          title={activeWebNode.title}
+          url={activeWebNode.url}
+          onClose={() => setActiveWebNodeId(null)}
+        />
+      )}
     </div>
   );
 }

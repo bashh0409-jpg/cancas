@@ -20,14 +20,16 @@ export default function Page() {
     <div className="flex h-screen w-full overflow-hidden bg-white">
       {/* Left */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
-        <div className="flex w-full max-w-[360px] flex-col items-center gap-6">
+        <div className="flex bg-black/2 rounded-lg w-full max-w-[380px] p-4 flex-col items-center gap-12">
           {/* Logo */}
           <div className="flex w-full flex-col items-center justify-center">
             <div className="text-2xl font-medium tracking-tight text-black">
-              Welcome to Slate
+              Design, create, and ship ideas faster — powered by multiple AI
+              tools in one place.
             </div>
 
-            <p className="text-sm text-zinc-500">Sign in to your account</p>
+            <p className="text-sm  
+            hidden text-zinc-500">Sign in to your account</p>
           </div>
 
           <div className="flex w-full flex-col items-center justify-center gap-2">

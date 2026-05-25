@@ -8,10 +8,13 @@ const Hero = () => {
         Everything you need for art-directed design.
       </h1>
       <p className="mt-6 max-w-2xl text-sm text-white/70 sm:text-lg">
-        Templates for real-time 3D, motion and visual content. Fully
-        customizable. Ready to use.
+        Design, create, and ship ideas faster — powered by multiple AI tools in
+        one place.
       </p>
-      <Link href="/signup" className="mt-8 rounded-full bg-white px-5 py-2 text-sm font-semibold tracking-tight text-black transition hover:bg-white/85">
+      <Link
+        href="/signup"
+        className="mt-8 rounded-full bg-white px-5 py-2 text-sm font-semibold tracking-tight text-black transition hover:bg-white/85"
+      >
         Start for free
       </Link>
     </section>
