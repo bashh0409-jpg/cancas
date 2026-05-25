@@ -627,6 +627,57 @@ export default function CanvasWorkspace({
     };
   }
 
+  function fitContentToView() {
+    const rect = canvasRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      return;
+    }
+
+    const nodes = [
+      ...imageNodesRef.current.map((node) => ({
+        x: node.position.x,
+        y: node.position.y,
+        width: node.size.width,
+        height: node.size.height,
+      })),
+      ...webNodesRef.current.map((node) => ({
+        x: node.position.x,
+        y: node.position.y,
+        width: node.size.width,
+        height: node.size.height,
+      })),
+    ];
+
+    if (nodes.length === 0) {
+      setViewport({ x: 0, y: 0, zoom: 1 });
+      return;
+    }
+
+    const padding = 64;
+    const minX = Math.min(...nodes.map((node) => node.x));
+    const minY = Math.min(...nodes.map((node) => node.y));
+    const maxX = Math.max(...nodes.map((node) => node.x + node.width));
+    const maxY = Math.max(...nodes.map((node) => node.y + node.height));
+    const contentWidth = Math.max(maxX - minX, 1);
+    const contentHeight = Math.max(maxY - minY, 1);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const availableWidth = Math.max(rect.width - padding * 2, 1);
+    const availableHeight = Math.max(rect.height - padding * 2, 1);
+    const zoom = clamp(
+      Math.min(availableWidth / contentWidth, availableHeight / contentHeight),
+      0.2,
+      4
+    );
+
+    setViewport({
+      x: rect.width / 2 - centerX * zoom,
+      y: rect.height / 2 - centerY * zoom,
+      zoom,
+    });
+  }
+
   function handleInitialImageSettled(nodeId: string) {
     if (!initialImageIdsRef.current.has(nodeId)) {
       return;
@@ -1566,6 +1617,34 @@ export default function CanvasWorkspace({
               </label>
             </div>
           </aside>
+      </div>
+
+      <div
+        className="absolute right-4 top-1/2 z-40 -translate-y-1/2 text-white"
+        onWheel={(event) => event.stopPropagation()}
+      >
+        <button
+          aria-label="Fit all content to view"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition hover:bg-zinc-900 hover:text-white"
+          title="Fit all content to view"
+          type="button"
+          onClick={fitContentToView}
+        >
+          <svg
+            aria-hidden
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M7 12h10M12 7v10"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.7"
+            />
+          </svg>
+        </button>
       </div>
 
       {selectedImageIds.length >= 2 && (
