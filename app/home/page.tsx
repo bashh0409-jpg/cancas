@@ -28,6 +28,15 @@ export default async function HomePage() {
     user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
     "User";
 
+  // At the top of the file, add this above the component:
+  const TUTORIAL_VIDEOS = [
+    { id: "dQw4w9WgXcQ", title: "Getting Started with Slate" },
+    { id: "jNQXAC9IVRw", title: "Canvas Basics" },
+    { id: "9bZkp7q19f0", title: "Shapes & Layers" },
+    { id: "kJQP7kiw5Fk", title: "Text & Typography" },
+    { id: "OPf0YbXqDm0", title: "Exporting Your Work" },
+  ];
+
   return (
     <div className="min-h-screen bg-black/70">
       {/* Mobile top bar — only visible on small screens */}
