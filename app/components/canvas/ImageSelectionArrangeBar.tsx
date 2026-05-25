@@ -7,7 +7,7 @@ import {
   type LayoutDirection,
   type LayoutKind,
 } from "@/lib/canvas/imageLayouts";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type ImageSelectionArrangeBarProps = {
   count: number;
@@ -31,12 +31,9 @@ export function ImageSelectionArrangeBar({
   const [tracks, setTracks] = useState(() => getDefaultTrackCount(count, 6));
 
   const maxTracks = useMemo(() => Math.min(MAX_TRACKS, Math.max(1, count)), [count]);
+  const clampedTracks = Math.min(Math.max(MIN_TRACKS, tracks), maxTracks);
   const sizeLabel = kind === "grid" ? "Cell size" : direction === "vertical" ? "Column width" : "Row height";
   const tracksLabel = direction === "vertical" ? "Columns" : "Rows";
-
-  useEffect(() => {
-    setTracks((current) => Math.min(Math.max(MIN_TRACKS, current), maxTracks));
-  }, [maxTracks]);
 
   function handleKindChange(nextKind: LayoutKind) {
     setKind(nextKind);
@@ -54,7 +51,7 @@ export function ImageSelectionArrangeBar({
       kind,
       direction,
       size,
-      tracks: Math.min(tracks, maxTracks),
+      tracks: clampedTracks,
     });
   }
 
@@ -168,7 +165,7 @@ export function ImageSelectionArrangeBar({
         <label className="grid gap-1.5">
           <span className="flex items-center justify-between text-[11px] text-white/60">
             <span>{tracksLabel}</span>
-            <span className="font-mono text-white/80">{Math.min(tracks, maxTracks)}</span>
+            <span className="font-mono text-white/80">{clampedTracks}</span>
           </span>
           <input
             aria-label={tracksLabel}
@@ -177,7 +174,7 @@ export function ImageSelectionArrangeBar({
             min={MIN_TRACKS}
             step={1}
             type="range"
-            value={Math.min(tracks, maxTracks)}
+            value={clampedTracks}
             onChange={(event) => setTracks(Number(event.currentTarget.value))}
           />
         </label>

@@ -65,6 +65,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
         canvasId={id}
         canvasName={canvas.name}
         initialContent={initialContent}
+        serverUpdatedAt={canvas.updated_at}
         userId={user.id}
       />
       <div className="absolute left-0 top-0 z-50 flex w-full items-center justify-between p-4">

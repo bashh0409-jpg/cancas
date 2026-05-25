@@ -17,7 +17,7 @@ import {
 } from "@/lib/canvas/imageLayouts";
 import { uploadCanvasImage } from "@/lib/canvas/storage";
 import { createClient } from "@/lib/supabase/client";
-import type { CanvasContent } from "@/types/canvas";
+import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 
 type Viewport = {
   x: number;
@@ -48,6 +48,14 @@ type CanvasWorkspaceProps = {
   userId: string;
   canvasName: string;
   initialContent: CanvasContent;
+  serverUpdatedAt: string;
+};
+
+type LocalCanvasDraft = {
+  content: CanvasContent;
+  savedAt: string;
+  serverUpdatedAt: string;
+  syncedAt?: string;
 };
 
 type ImageDragState = {
@@ -170,12 +178,130 @@ function imageIntersectsRect(node: ImageCanvasNode, rect: ReturnType<typeof norm
   );
 }
 
+function getLocalDraftKey(canvasId: string) {
+  return `canvasai:canvas:${canvasId}:draft`;
+}
+
+function readLocalCanvasDraft(
+  canvasId: string,
+  serverUpdatedAt: string
+): LocalCanvasDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawDraft = window.localStorage.getItem(getLocalDraftKey(canvasId));
+
+    if (!rawDraft) {
+      return null;
+    }
+
+    const parsedDraft = JSON.parse(rawDraft) as Record<string, unknown>;
+    const content = parseCanvasContent(parsedDraft.content);
+    const savedAt =
+      typeof parsedDraft.savedAt === "string" ? parsedDraft.savedAt : null;
+    const draftServerUpdatedAt =
+      typeof parsedDraft.serverUpdatedAt === "string"
+        ? parsedDraft.serverUpdatedAt
+        : "";
+    const syncedAt =
+      typeof parsedDraft.syncedAt === "string" ? parsedDraft.syncedAt : undefined;
+
+    if (!content || !savedAt) {
+      return null;
+    }
+
+    const savedTime = Date.parse(savedAt);
+    const syncedTime = syncedAt ? Date.parse(syncedAt) : 0;
+    const serverTime = Date.parse(serverUpdatedAt);
+
+    if (Number.isNaN(savedTime)) {
+      return null;
+    }
+
+    const hasUnsyncedChanges = !syncedAt || savedTime > syncedTime;
+    const isNewerThanServer = Number.isNaN(serverTime) || savedTime > serverTime;
+
+    if (!hasUnsyncedChanges && !isNewerThanServer) {
+      return null;
+    }
+
+    return {
+      content,
+      savedAt,
+      serverUpdatedAt: draftServerUpdatedAt,
+      syncedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalCanvasDraft(
+  canvasId: string,
+  content: CanvasContent,
+  serverUpdatedAt: string,
+  syncedAt?: string
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const savedAt = new Date().toISOString();
+    const draft: LocalCanvasDraft = {
+      content,
+      savedAt,
+      serverUpdatedAt,
+      syncedAt,
+    };
+
+    window.localStorage.setItem(getLocalDraftKey(canvasId), JSON.stringify(draft));
+  } catch {
+    // localStorage can be full or unavailable; Supabase autosave still runs.
+  }
+}
+
+function markLocalCanvasDraftSynced(
+  canvasId: string,
+  content: CanvasContent,
+  serverUpdatedAt: string
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const syncedAt = new Date().toISOString();
+    const draft: LocalCanvasDraft = {
+      content,
+      savedAt: syncedAt,
+      serverUpdatedAt,
+      syncedAt,
+    };
+
+    window.localStorage.setItem(getLocalDraftKey(canvasId), JSON.stringify(draft));
+  } catch {
+    // Best-effort backup only.
+  }
+}
+
 export default function CanvasWorkspace({
   canvasId,
   userId,
   canvasName,
   initialContent,
+  serverUpdatedAt,
 }: CanvasWorkspaceProps) {
+  const [initialDraftState] = useState(() => {
+    const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
+
+    return {
+      content: localDraft?.content ?? initialContent,
+      restoredFromLocalDraft: localDraft !== null,
+    };
+  });
   const canvasRef = useRef<HTMLDivElement>(null);
   const imageNodesRef = useRef<ImageCanvasNode[]>([]);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
@@ -183,20 +309,22 @@ export default function CanvasWorkspace({
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
   const webResizeRef = useRef<NodeResizeState | null>(null);
-  const skipSaveRef = useRef(true);
+  const skipSaveRef = useRef(!initialDraftState.restoredFromLocalDraft);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUploadFilesRef = useRef<
     Map<string, { file: File; blobUrl: string }>
   >(new Map());
   const pendingUploadIdsRef = useRef<Set<string>>(new Set());
-  const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
-  const [showGridControls, setShowGridControls] = useState(false);
-  const [showGrid, setShowGrid] = useState(initialContent.showGrid);
-  const [backgroundColor, setBackgroundColor] = useState(
-    initialContent.backgroundColor
+  const [viewport, setViewport] = useState<Viewport>(
+    initialDraftState.content.viewport
   );
-  const [gridColor, setGridColor] = useState(initialContent.gridColor);
-  const [gridSize, setGridSize] = useState(initialContent.gridSize);
+  const [showGridControls, setShowGridControls] = useState(false);
+  const [showGrid, setShowGrid] = useState(initialDraftState.content.showGrid);
+  const [backgroundColor, setBackgroundColor] = useState(
+    initialDraftState.content.backgroundColor
+  );
+  const [gridColor, setGridColor] = useState(initialDraftState.content.gridColor);
+  const [gridSize, setGridSize] = useState(initialDraftState.content.gridSize);
   const [isFileDragging, setIsFileDragging] = useState(false);
   const [draggingImageNodeId, setDraggingImageNodeId] = useState<string | null>(
     null
@@ -209,10 +337,10 @@ export default function CanvasWorkspace({
   );
   const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(null);
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
-    initialContent.imageNodes
+    initialDraftState.content.imageNodes
   );
   const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(
-    initialContent.webNodes
+    initialDraftState.content.webNodes
   );
   const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
@@ -275,14 +403,23 @@ export default function CanvasWorkspace({
       clearTimeout(saveTimerRef.current);
     }
 
+    const content = buildCanvasContent();
+    writeLocalCanvasDraft(canvasId, content, serverUpdatedAt);
+
     saveTimerRef.current = setTimeout(() => {
       void fetch(`/api/canvases/${canvasId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: buildCanvasContent(),
+          content,
           name: canvasName,
         }),
+      }).then((response) => {
+        if (response.ok) {
+          markLocalCanvasDraftSynced(canvasId, content, serverUpdatedAt);
+        }
+      }).catch(() => {
+        // Keep the local draft dirty so the next page load can recover it.
       });
     }, 1200);
 
@@ -291,7 +428,7 @@ export default function CanvasWorkspace({
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [buildCanvasContent, canvasId, canvasName]);
+  }, [buildCanvasContent, canvasId, canvasName, serverUpdatedAt]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
