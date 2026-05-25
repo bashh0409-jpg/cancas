@@ -101,3 +101,77 @@ export async function saveUserCanvasContent(
     throw error;
   }
 }
+
+export async function updateUserCanvasName(
+  supabase: SupabaseClient,
+  userId: string,
+  canvasId: string,
+  name: string
+) {
+  const { error } = await supabase
+    .from("canvases")
+    .update({
+      name,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", canvasId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deleteUserCanvas(
+  supabase: SupabaseClient,
+  userId: string,
+  canvasId: string
+) {
+  const rootPath = `${userId}/${canvasId}`;
+  const { data: nodeFolders, error: listError } = await supabase.storage
+    .from("canvas-files")
+    .list(rootPath);
+
+  if (listError) {
+    throw listError;
+  }
+
+  const pathsToRemove: string[] = [];
+
+  for (const entry of nodeFolders ?? []) {
+    if (!entry.name) {
+      continue;
+    }
+
+    const nodePath = `${rootPath}/${entry.name}`;
+    const { data: files } = await supabase.storage
+      .from("canvas-files")
+      .list(nodePath);
+
+    for (const file of files ?? []) {
+      if (file.name) {
+        pathsToRemove.push(`${nodePath}/${file.name}`);
+      }
+    }
+  }
+
+  if (pathsToRemove.length > 0) {
+    const { error: removeError } = await supabase.storage
+      .from("canvas-files")
+      .remove(pathsToRemove);
+
+    if (removeError) {
+      throw removeError;
+    }
+  }
+
+  const { error } = await supabase
+    .from("canvases")
+    .delete()
+    .eq("id", canvasId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}

@@ -9,9 +9,11 @@ export async function uploadCanvasImage(
 ): Promise<{ url: string; storagePath: string }> {
   const storagePath = `${userId}/${canvasId}/${nodeId}/${file.name}`;
 
-  const { error } = await supabase.storage
-    .from("canvas-files")
-    .upload(storagePath, file, { upsert: true });
+  const { error } = await supabase.storage.from("canvas-files").upload(storagePath, file, {
+    upsert: true,
+    contentType: file.type,
+    cacheControl: "3600",
+  });
 
   if (error) {
     throw error;
@@ -23,4 +25,17 @@ export async function uploadCanvasImage(
     url: data.publicUrl,
     storagePath,
   };
+}
+
+export async function deleteCanvasImage(
+  supabase: SupabaseClient,
+  storagePath: string
+) {
+  const { error } = await supabase.storage
+    .from("canvas-files")
+    .remove([storagePath]);
+
+  if (error) {
+    throw error;
+  }
 }
