@@ -1,9 +1,11 @@
+import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import { createCanvasAction } from "@/app/home/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
 import { createClient } from "@/lib/supabase/server";
 import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { SignOutNameButton } from "./SignOutNameButton";
 
 export default async function HomePage() {
@@ -38,6 +40,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-black/70">
+      <Suspense fallback={null}>
+        <ClearLocalDataOnQuery />
+      </Suspense>
       <div className="flex md:hidden items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40 backdrop-blur-md">
         <div className="text-xl font-medium tracking-tight text-white uppercase flex items-center gap-2">
           Slate

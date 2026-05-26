@@ -16,12 +16,27 @@ import {
   type LayoutArrangeRequest,
 } from "@/lib/canvas/imageLayouts";
 import {
+  fetchRemoteCanvasUpdate,
+  subscribeToCanvasUpdates,
+} from "@/lib/canvas/canvasRemoteSync";
+import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
+import {
+  IMAGE_DELETE_UNDO_LIMIT,
+  type ImageDeleteUndoEntry,
+} from "@/lib/canvas/imageDeleteUndo";
+import {
   deletePendingUploadFile,
   getPendingUploadFile,
   savePendingUploadFile,
 } from "@/lib/canvas/pendingUploads";
 import { deleteCanvasImage, uploadCanvasImage } from "@/lib/canvas/storage";
 import { canvasImageUploadPool } from "@/lib/canvas/uploadPool";
+import {
+  createUploadDebugEntry,
+  logUploadDebug,
+  type UploadDebugEntry,
+} from "@/lib/canvas/uploadDebug";
+import { sleep, withTimeout } from "@/lib/canvas/uploadUtils";
 import { createClient } from "@/lib/supabase/client";
 import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 
@@ -61,6 +76,8 @@ type CanvasWorkspaceProps = {
   initialContent: CanvasContent;
   serverUpdatedAt: string;
   onImageSyncStatsChange?: (stats: ImageSyncStats) => void;
+  onUploadDebugEntry?: (entry: UploadDebugEntry) => void;
+  onRemoteNameChange?: (name: string) => void;
 };
 
 type LocalCanvasDraft = {
@@ -330,6 +347,8 @@ export default function CanvasWorkspace({
   initialContent,
   serverUpdatedAt,
   onImageSyncStatsChange,
+  onUploadDebugEntry,
+  onRemoteNameChange,
 }: CanvasWorkspaceProps) {
   const initialImageIdsRef = useRef(
     new Set(initialContent.imageNodes.map((node) => node.id))
@@ -344,10 +363,16 @@ export default function CanvasWorkspace({
   const skipSaveRef = useRef(true);
   const [isClientReady, setIsClientReady] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDelayMsRef = useRef(1200);
+  const lastServerUpdatedAtRef = useRef(serverUpdatedAt);
+  const isApplyingRemoteUpdateRef = useRef(false);
   const pendingUploadFilesRef = useRef<
     Map<string, { file: File; blobUrl: string }>
   >(new Map());
   const pendingUploadIdsRef = useRef<Set<string>>(new Set());
+  const imageDeleteUndoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
+  const imageDeleteRedoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
+  const selectedImageIdsRef = useRef<string[]>([]);
   const supabaseClientRef = useRef(createClient());
   const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
   const [showGridControls, setShowGridControls] = useState(false);
@@ -442,6 +467,7 @@ export default function CanvasWorkspace({
       );
 
       const nodesToResume = [];
+      const orphans: string[] = [];
 
       for (const node of nodesNeedingSync) {
         if (cancelled || pendingUploadFilesRef.current.has(node.id)) {
@@ -451,6 +477,10 @@ export default function CanvasWorkspace({
         const file = await getPendingUploadFile(canvasId, node.id);
 
         if (!file) {
+          if (!getImageNodeSrc(node)) {
+            orphans.push(node.id);
+          }
+
           continue;
         }
 
@@ -466,6 +496,12 @@ export default function CanvasWorkspace({
         );
 
         nodesToResume.push({ nodeId: node.id, file, blobUrl });
+      }
+
+      if (orphans.length > 0) {
+        setImageNodes((current) =>
+          current.filter((node) => !orphans.includes(node.id))
+        );
       }
 
       for (const entry of nodesToResume) {
@@ -486,37 +522,210 @@ export default function CanvasWorkspace({
     };
   }, [canvasId, userId, isClientReady]);
 
-  const removeImageNodes = useCallback((ids: string[]) => {
-    if (ids.length === 0) {
+  const commitImageDeleteEntry = useCallback(
+    (entry: ImageDeleteUndoEntry) => {
+      const supabase = supabaseClientRef.current;
+
+      for (const node of entry.nodes) {
+        const pending = entry.pendingByNodeId[node.id];
+
+        if (pending) {
+          URL.revokeObjectURL(pending.blobUrl);
+          void deletePendingUploadFile(canvasId, node.id);
+        } else if (node.url.startsWith("blob:")) {
+          URL.revokeObjectURL(node.url);
+        }
+
+        pendingUploadFilesRef.current.delete(node.id);
+        pendingUploadIdsRef.current.delete(node.id);
+
+        if (node.storagePath) {
+          void deleteCanvasImage(supabase, node.storagePath).catch(() => {
+            // Best-effort storage cleanup.
+          });
+        }
+      }
+    },
+    [canvasId]
+  );
+
+  const flushImageDeleteRedoStack = useCallback(() => {
+    for (const entry of imageDeleteRedoStackRef.current) {
+      commitImageDeleteEntry(entry);
+    }
+
+    imageDeleteRedoStackRef.current = [];
+  }, [commitImageDeleteEntry]);
+
+  const applyImageDeleteEntryToCanvas = useCallback((entry: ImageDeleteUndoEntry) => {
+    const removedIds = new Set(entry.nodes.map((node) => node.id));
+
+    for (const node of entry.nodes) {
+      pendingUploadFilesRef.current.delete(node.id);
+      pendingUploadIdsRef.current.delete(node.id);
+    }
+
+    setImageNodes((current) =>
+      current.filter((node) => !removedIds.has(node.id))
+    );
+    setSelectedImageIds((current) =>
+      current.filter((id) => !removedIds.has(id))
+    );
+  }, []);
+
+  const removeImageNodes = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) {
+        return;
+      }
+
+      const removedIds = new Set(ids);
+      const nodesToRemove = imageNodesRef.current.filter((node) =>
+        removedIds.has(node.id)
+      );
+
+      if (nodesToRemove.length === 0) {
+        return;
+      }
+
+      flushImageDeleteRedoStack();
+
+      const pendingByNodeId: ImageDeleteUndoEntry["pendingByNodeId"] = {};
+
+      for (const node of nodesToRemove) {
+        const pending = pendingUploadFilesRef.current.get(node.id);
+
+        if (pending) {
+          pendingByNodeId[node.id] = pending;
+        }
+
+        pendingUploadFilesRef.current.delete(node.id);
+        pendingUploadIdsRef.current.delete(node.id);
+      }
+
+      const entry: ImageDeleteUndoEntry = {
+        nodes: nodesToRemove,
+        selectedIds: nodesToRemove
+          .filter((node) => selectedImageIdsRef.current.includes(node.id))
+          .map((node) => node.id),
+        pendingByNodeId,
+      };
+
+      imageDeleteUndoStackRef.current.push(entry);
+
+      while (imageDeleteUndoStackRef.current.length > IMAGE_DELETE_UNDO_LIMIT) {
+        const flushed = imageDeleteUndoStackRef.current.shift();
+
+        if (flushed) {
+          commitImageDeleteEntry(flushed);
+        }
+      }
+
+      applyImageDeleteEntryToCanvas(entry);
+      saveDelayMsRef.current = 0;
+    },
+    [applyImageDeleteEntryToCanvas, commitImageDeleteEntry, flushImageDeleteRedoStack]
+  );
+
+  const undoImageDelete = useCallback(() => {
+    const entry = imageDeleteUndoStackRef.current.pop();
+
+    if (!entry) {
       return;
     }
 
-    const nodesToRemove = imageNodesRef.current.filter((node) =>
-      ids.includes(node.id)
-    );
-    const supabase = supabaseClientRef.current;
+    imageDeleteRedoStackRef.current.push(entry);
 
-    for (const node of nodesToRemove) {
-      if (node.url.startsWith("blob:")) {
-        URL.revokeObjectURL(node.url);
-      }
+    for (const [nodeId, pending] of Object.entries(entry.pendingByNodeId)) {
+      pendingUploadFilesRef.current.set(nodeId, pending);
+      pendingUploadIdsRef.current.add(nodeId);
+    }
 
-      pendingUploadFilesRef.current.delete(node.id);
-      pendingUploadIdsRef.current.delete(node.id);
-      void deletePendingUploadFile(canvasId, node.id);
+    setImageNodes((current) => {
+      const existingIds = new Set(current.map((node) => node.id));
+      const restored = entry.nodes.filter((node) => !existingIds.has(node.id));
 
-      if (node.storagePath) {
-        void deleteCanvasImage(supabase, node.storagePath).catch(() => {
-          // Best-effort storage cleanup.
-        });
+      return [...current, ...restored].sort((a, b) => a.zIndex - b.zIndex);
+    });
+    setSelectedImageIds(entry.selectedIds);
+    saveDelayMsRef.current = 0;
+  }, []);
+
+  const redoImageDelete = useCallback(() => {
+    const entry = imageDeleteRedoStackRef.current.pop();
+
+    if (!entry) {
+      return;
+    }
+
+    imageDeleteUndoStackRef.current.push(entry);
+
+    while (imageDeleteUndoStackRef.current.length > IMAGE_DELETE_UNDO_LIMIT) {
+      const flushed = imageDeleteUndoStackRef.current.shift();
+
+      if (flushed) {
+        commitImageDeleteEntry(flushed);
       }
     }
 
-    setImageNodes((current) => current.filter((node) => !ids.includes(node.id)));
-    setSelectedImageIds((current) =>
-      current.filter((id) => !ids.includes(id))
-    );
-  }, []);
+    applyImageDeleteEntryToCanvas(entry);
+    saveDelayMsRef.current = 0;
+  }, [applyImageDeleteEntryToCanvas, commitImageDeleteEntry]);
+
+  const applyRemoteCanvasUpdate = useCallback(
+    (content: CanvasContent, updatedAt: string, name: string) => {
+      if (Date.parse(updatedAt) <= Date.parse(lastServerUpdatedAtRef.current)) {
+        return;
+      }
+
+      isApplyingRemoteUpdateRef.current = true;
+      imageDeleteUndoStackRef.current = [];
+      imageDeleteRedoStackRef.current = [];
+
+      const mergedImageNodes = mergeRemoteImageNodes(
+        imageNodesRef.current,
+        content.imageNodes
+      );
+      const keptBlobUrls = new Set(
+        mergedImageNodes
+          .filter((node) => node.url.startsWith("blob:"))
+          .map((node) => node.url)
+      );
+
+      for (const node of imageNodesRef.current) {
+        if (node.url.startsWith("blob:") && !keptBlobUrls.has(node.url)) {
+          URL.revokeObjectURL(node.url);
+          pendingUploadFilesRef.current.delete(node.id);
+          pendingUploadIdsRef.current.delete(node.id);
+        }
+      }
+
+      setViewport(content.viewport);
+      setShowGrid(content.showGrid);
+      setBackgroundColor(content.backgroundColor);
+      setGridColor(content.gridColor);
+      setGridSize(content.gridSize);
+      setImageNodes(mergedImageNodes);
+      setWebNodes(content.webNodes);
+      imageNodesRef.current = mergedImageNodes;
+      webNodesRef.current = content.webNodes;
+      setSelectedImageIds([]);
+      lastServerUpdatedAtRef.current = updatedAt;
+      serverUpdatedAtRef.current = updatedAt;
+      skipSaveRef.current = true;
+      markLocalCanvasDraftSynced(canvasId, { ...content, imageNodes: mergedImageNodes }, updatedAt);
+      onRemoteNameChange?.(name);
+
+      window.requestAnimationFrame(() => {
+        isApplyingRemoteUpdateRef.current = false;
+      });
+    },
+    [canvasId, onRemoteNameChange]
+  );
+
+  useEffect(() => {
+    selectedImageIdsRef.current = selectedImageIds;
+  }, [selectedImageIds]);
 
   useEffect(() => {
     imageNodesRef.current = imageNodes;
@@ -525,6 +734,16 @@ export default function CanvasWorkspace({
   useEffect(() => {
     webNodesRef.current = webNodes;
   }, [webNodes]);
+
+  useEffect(() => {
+    if (!isClientReady) {
+      return;
+    }
+
+    if (initialImageCount === 0) {
+      setIsCanvasLoading(false);
+    }
+  }, [initialImageCount, isClientReady]);
 
   useEffect(() => {
     if (!isCanvasLoading) {
@@ -610,7 +829,61 @@ export default function CanvasWorkspace({
     webNodes,
   ]);
 
+  const buildCanvasContentRef = useRef(buildCanvasContent);
+  buildCanvasContentRef.current = buildCanvasContent;
+
+  const serverUpdatedAtRef = useRef(serverUpdatedAt);
+  serverUpdatedAtRef.current = serverUpdatedAt;
+  lastServerUpdatedAtRef.current = serverUpdatedAt;
+
+  const persistCanvasToCloud = useCallback(async () => {
+    if (!isClientReady || isApplyingRemoteUpdateRef.current) {
+      return;
+    }
+
+    if (imageNodesRef.current.some((node) => isPendingCloudSync(node))) {
+      return;
+    }
+
+    const content = buildCanvasContentRef.current();
+
+    writeLocalCanvasDraft(
+      canvasId,
+      content,
+      serverUpdatedAtRef.current
+    );
+
+    try {
+      const response = await fetch(`/api/canvases/${canvasId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          name: canvasName,
+        }),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = (await response.json()) as { updated_at?: string };
+
+      if (data.updated_at) {
+        lastServerUpdatedAtRef.current = data.updated_at;
+        serverUpdatedAtRef.current = data.updated_at;
+        markLocalCanvasDraftSynced(canvasId, content, data.updated_at);
+      }
+    } catch {
+      // Keep the local draft dirty so the next page load can recover it.
+    }
+  }, [canvasId, canvasName, isClientReady]);
+
   useEffect(() => {
+    if (!isClientReady) {
+      return;
+    }
+
     if (skipSaveRef.current) {
       skipSaveRef.current = false;
       return;
@@ -620,55 +893,108 @@ export default function CanvasWorkspace({
       clearTimeout(saveTimerRef.current);
     }
 
-    const content = buildCanvasContent();
-    writeLocalCanvasDraft(canvasId, content, serverUpdatedAt);
+    let delay = saveDelayMsRef.current;
+    saveDelayMsRef.current = 1200;
+
+    if (pendingUploadIdsRef.current.size > 0) {
+      delay = Math.max(delay, 3500);
+    }
 
     saveTimerRef.current = setTimeout(() => {
-      void fetch(`/api/canvases/${canvasId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content,
-          name: canvasName,
-        }),
-      }).then((response) => {
-        if (response.ok) {
-          markLocalCanvasDraftSynced(canvasId, content, serverUpdatedAt);
-        }
-      }).catch(() => {
-        // Keep the local draft dirty so the next page load can recover it.
-      });
-    }, 1200);
+      void persistCanvasToCloud();
+    }, delay);
 
     return () => {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [buildCanvasContent, canvasId, canvasName, serverUpdatedAt]);
+  }, [buildCanvasContent, isClientReady, persistCanvasToCloud]);
 
   useEffect(() => {
-    function flushDraft() {
-      writeLocalCanvasDraft(canvasId, buildCanvasContent(), serverUpdatedAt);
+    if (!isClientReady) {
+      return;
+    }
+
+    const supabase = supabaseClientRef.current;
+
+    return subscribeToCanvasUpdates(supabase, canvasId, (update) => {
+      applyRemoteCanvasUpdate(update.content, update.updatedAt, update.name);
+    });
+  }, [applyRemoteCanvasUpdate, canvasId, isClientReady]);
+
+  useEffect(() => {
+    if (!isClientReady) {
+      return;
+    }
+
+    async function pullRemoteIfNewer() {
+      const update = await fetchRemoteCanvasUpdate(canvasId);
+
+      if (!update) {
+        return;
+      }
+
+      applyRemoteCanvasUpdate(update.content, update.updatedAt, update.name);
     }
 
     function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void pullRemoteIfNewer();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [applyRemoteCanvasUpdate, canvasId, isClientReady]);
+
+  useEffect(() => {
+    function commitPendingImageDeletes() {
+      for (const entry of imageDeleteUndoStackRef.current) {
+        commitImageDeleteEntry(entry);
+      }
+
+      for (const entry of imageDeleteRedoStackRef.current) {
+        commitImageDeleteEntry(entry);
+      }
+
+      imageDeleteUndoStackRef.current = [];
+      imageDeleteRedoStackRef.current = [];
+    }
+
+    function flushDraft() {
+      writeLocalCanvasDraft(
+        canvasId,
+        buildCanvasContentRef.current(),
+        serverUpdatedAtRef.current
+      );
+    }
+
+    function handlePageExit() {
+      commitPendingImageDeletes();
+      flushDraft();
+    }
+
+    function handleVisibilityHidden() {
       if (document.visibilityState === "hidden") {
         flushDraft();
       }
     }
 
-    window.addEventListener("beforeunload", flushDraft);
-    window.addEventListener("pagehide", flushDraft);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handlePageExit);
+    window.addEventListener("pagehide", handlePageExit);
+    document.addEventListener("visibilitychange", handleVisibilityHidden);
 
     return () => {
-      window.removeEventListener("beforeunload", flushDraft);
-      window.removeEventListener("pagehide", flushDraft);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      flushDraft();
+      window.removeEventListener("beforeunload", handlePageExit);
+      window.removeEventListener("pagehide", handlePageExit);
+      document.removeEventListener("visibilitychange", handleVisibilityHidden);
+      handlePageExit();
     };
-  }, [buildCanvasContent, canvasId, serverUpdatedAt]);
+  }, [canvasId, commitImageDeleteEntry]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -686,6 +1012,24 @@ export default function CanvasWorkspace({
       if (event.key === "Escape") {
         setSelectedImageIds([]);
         setMarquee(null);
+        return;
+      }
+
+      const primaryModifier = event.metaKey || event.ctrlKey;
+      const isUndoKey =
+        event.code === "KeyZ" || event.key === "z" || event.key === "Z";
+
+      if (primaryModifier && isUndoKey && !event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        undoImageDelete();
+        return;
+      }
+
+      if (primaryModifier && isUndoKey && event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        redoImageDelete();
         return;
       }
 
@@ -710,12 +1054,17 @@ export default function CanvasWorkspace({
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
-  }, [removeImageNodes, selectedImageIdSet]);
+  }, [
+    redoImageDelete,
+    removeImageNodes,
+    selectedImageIdSet,
+    undoImageDelete,
+  ]);
 
   useEffect(() => {
     function preventFileNavigation(event: DragEvent) {
@@ -926,35 +1275,117 @@ export default function CanvasWorkspace({
   }
 
   async function syncImageToStorage(nodeId: string, file: File, blobUrl: string) {
-    try {
-      const uploaded = await uploadCanvasImage(
-        supabaseClientRef.current,
-        userId,
-        canvasId,
-        nodeId,
-        file
-      );
+    const maxAttempts = 3;
 
-      pendingUploadIdsRef.current.delete(nodeId);
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const uploaded = await withTimeout(
+          uploadCanvasImage(
+            supabaseClientRef.current,
+            userId,
+            canvasId,
+            nodeId,
+            file
+          ),
+          120_000,
+          "Upload timed out"
+        );
+
+        pendingUploadIdsRef.current.delete(nodeId);
+
+        setImageNodes((current) =>
+          current.map((node) =>
+            node.id === nodeId
+              ? {
+                  ...node,
+                  url: uploaded.url,
+                  storagePath: uploaded.storagePath,
+                }
+              : node
+          )
+        );
+
+        URL.revokeObjectURL(blobUrl);
+        pendingUploadFilesRef.current.delete(nodeId);
+        await deletePendingUploadFile(canvasId, nodeId);
+        return;
+      } catch (error) {
+        const debugEntry = createUploadDebugEntry(
+          nodeId,
+          file.name,
+          attempt + 1,
+          error
+        );
+
+        if (process.env.NODE_ENV === "development") {
+          logUploadDebug(debugEntry);
+        }
+
+        onUploadDebugEntry?.(debugEntry);
+
+        if (attempt < maxAttempts - 1) {
+          await sleep(1000 * (attempt + 1));
+        }
+      }
+    }
+
+    // Keep blob preview + IndexedDB so a later visit can retry the upload.
+  }
+
+  function addDroppedImageFile(
+    file: File,
+    index: number,
+    dropPosition: Point,
+    topZIndex: number
+  ) {
+    const nodeId = crypto.randomUUID();
+    const blobUrl = URL.createObjectURL(file);
+    const placeholderSize = fitImageSize(320, 240);
+
+    pendingUploadFilesRef.current.set(nodeId, { file, blobUrl });
+    pendingUploadIdsRef.current.add(nodeId);
+
+    setImageNodes((current) => [
+      ...current,
+      {
+        id: nodeId,
+        fileName: file.name,
+        url: blobUrl,
+        position: {
+          x: dropPosition.x + index * 20,
+          y: dropPosition.y + index * 20,
+        },
+        size: placeholderSize,
+        zIndex: topZIndex + index + 1,
+      },
+    ]);
+
+    canvasImageUploadPool.enqueue(() =>
+      syncImageToStorage(nodeId, file, blobUrl)
+    );
+
+    void (async () => {
+      try {
+        await savePendingUploadFile(canvasId, nodeId, file);
+      } catch {
+        // Upload can still proceed from memory.
+      }
+
+      const naturalSize = await getNaturalImageSize(blobUrl);
 
       setImageNodes((current) =>
         current.map((node) =>
           node.id === nodeId
             ? {
                 ...node,
-                url: uploaded.url,
-                storagePath: uploaded.storagePath,
+                size: fitImageSize(naturalSize.width, naturalSize.height),
               }
             : node
         )
       );
+    })();
 
-      URL.revokeObjectURL(blobUrl);
-      pendingUploadFilesRef.current.delete(nodeId);
-      await deletePendingUploadFile(canvasId, nodeId);
-    } catch {
-      // Keep pending state so a later visit can retry the upload.
-    }
+    return nodeId;
   }
 
   async function handleDrop(event: ReactDragEvent<HTMLDivElement>) {
@@ -975,55 +1406,29 @@ export default function CanvasWorkspace({
       y: event.clientY,
     });
 
-    const placeholderNodes = await Promise.all(
-      files.map(async (file, index) => {
-        const nodeId = crypto.randomUUID();
-        const blobUrl = URL.createObjectURL(file);
-        const naturalSize = await getNaturalImageSize(blobUrl);
-
-        await savePendingUploadFile(canvasId, nodeId, file);
-
-        pendingUploadFilesRef.current.set(nodeId, { file, blobUrl });
-        pendingUploadIdsRef.current.add(nodeId);
-
-        const node = {
-          id: nodeId,
-          fileName: file.name,
-          url: blobUrl,
-          position: {
-            x: dropPosition.x + index * 20,
-            y: dropPosition.y + index * 20,
-          },
-          size: fitImageSize(naturalSize.width, naturalSize.height),
-          zIndex: index + 1,
-        };
-
-        canvasImageUploadPool.enqueue(() =>
-          syncImageToStorage(nodeId, file, blobUrl)
-        );
-
-        return node;
-      })
+    const topZIndex = imageNodesRef.current.reduce(
+      (max, node) => Math.max(max, node.zIndex),
+      0
     );
 
-    setImageNodes((current) => {
-      const topZIndex = current.reduce(
-        (max, node) => Math.max(max, node.zIndex),
-        0
+    const addedIds: string[] = [];
+
+    for (let index = 0; index < files.length; index += 1) {
+      const nodeId = addDroppedImageFile(
+        files[index],
+        index,
+        dropPosition,
+        topZIndex
       );
-      const nextNodes = placeholderNodes.map((node, index) => ({
-        ...node,
-        zIndex: topZIndex + index + 1,
-      }));
 
-      const nextIds = nextNodes.map((node) => node.id);
+      addedIds.push(nodeId);
+    }
 
-      if (nextIds.length >= 2) {
-        setSelectedImageIds(nextIds);
-      }
+    if (addedIds.length >= 2) {
+      setSelectedImageIds(addedIds);
+    }
 
-      return [...current, ...nextNodes];
-    });
+    saveDelayMsRef.current = 0;
   }
 
   function applyImageLayout(request: LayoutArrangeRequest) {

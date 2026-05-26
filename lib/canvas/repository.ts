@@ -77,14 +77,15 @@ export async function saveUserCanvasContent(
   canvasId: string,
   content: CanvasContent,
   name?: string
-) {
+): Promise<{ updated_at: string }> {
+  const updated_at = new Date().toISOString();
   const payload: {
     content: CanvasContent;
     updated_at: string;
     name?: string;
   } = {
     content,
-    updated_at: new Date().toISOString(),
+    updated_at,
   };
 
   if (name !== undefined) {
@@ -100,6 +101,8 @@ export async function saveUserCanvasContent(
   if (error) {
     throw error;
   }
+
+  return { updated_at };
 }
 
 export async function updateUserCanvasName(
@@ -107,12 +110,13 @@ export async function updateUserCanvasName(
   userId: string,
   canvasId: string,
   name: string
-) {
+): Promise<{ updated_at: string }> {
+  const updated_at = new Date().toISOString();
   const { error } = await supabase
     .from("canvases")
     .update({
       name,
-      updated_at: new Date().toISOString(),
+      updated_at,
     })
     .eq("id", canvasId)
     .eq("user_id", userId);
@@ -120,6 +124,8 @@ export async function updateUserCanvasName(
   if (error) {
     throw error;
   }
+
+  return { updated_at };
 }
 
 export async function deleteUserCanvas(

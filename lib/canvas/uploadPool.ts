@@ -21,7 +21,13 @@ export class UploadPool {
 
       this.activeCount += 1;
 
-      void task().finally(() => {
+      void (async () => {
+        try {
+          await task();
+        } catch {
+          // Upload tasks handle their own errors; never block the pool.
+        }
+      })().finally(() => {
         this.activeCount -= 1;
         this.pump();
       });
