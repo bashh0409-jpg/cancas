@@ -1,7 +1,7 @@
 type CanvasZoomControlsProps = {
   canZoomIn: boolean;
   canZoomOut: boolean;
-  zoomPercent: number;
+  zoomPercent: string;
   onResetZoom: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -51,13 +51,13 @@ export function CanvasZoomControls({
   return (
     <div
       aria-label="Canvas zoom controls"
-      className="absolute right-4 top-[calc(50%+3.5rem)] z-40 flex flex-col overflow-hidden rounded-xl border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur"
+      className="absolute right-4 top-[calc(50%+3.5rem)] z-40 flex flex-col overflow-hidden rounded-full border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur"
       role="group"
       onWheel={(event) => event.stopPropagation()}
     >
       <button
         aria-label="Zoom in"
-        className="flex h-10 w-12 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
+        className="flex h-10 w-10 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
         disabled={!canZoomIn}
         title="Zoom in"
         type="button"
@@ -67,16 +67,16 @@ export function CanvasZoomControls({
       </button>
       <button
         aria-label="Reset zoom to 100%"
-        className="h-9 w-12 border-y border-white/10 px-1 text-center font-mono text-[11px] font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+        className="h-10 w-10 border-y border-white/10 px-1 text-center font-mono text-[11px] font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
         title="Reset zoom to 100%"
         type="button"
         onClick={onResetZoom}
       >
-        {zoomPercent}%
+        {zoomPercent}
       </button>
       <button
         aria-label="Zoom out"
-        className="flex h-10 w-12 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
+        className="flex h-10 w-10 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
         disabled={!canZoomOut}
         title="Zoom out"
         type="button"

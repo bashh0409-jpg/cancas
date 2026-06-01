@@ -172,9 +172,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 4;
-const ZOOM_STEP = 0.1;
+const MIN_ZOOM = 0.001;
+const MAX_ZOOM = 100;
+const ZOOM_SCALE_FACTOR = 1.2;
 
 function getNaturalImageSize(url: string) {
   return new Promise<{ width: number; height: number }>((resolve) => {
@@ -483,7 +483,10 @@ export default function CanvasWorkspace({
   );
   const totalImageCount = imageNodes.length;
   const marqueeRect = marquee ? normalizeRect(marquee.start, marquee.current) : null;
-  const zoomPercent = Math.round(viewport.zoom * 100);
+  const zoomPercent =
+    viewport.zoom >= 0.01
+      ? `${Math.round(viewport.zoom * 100)}%`
+      : `${(viewport.zoom * 100).toFixed(1)}%`;
 
   useEffect(() => {
     onImageSyncStatsChange?.({
@@ -1334,10 +1337,10 @@ export default function CanvasWorkspace({
     event.preventDefault();
 
     if (event.ctrlKey || event.metaKey) {
-      setViewport((current) => ({
-        ...current,
-        zoom: clamp(current.zoom - event.deltaY * 0.0015, MIN_ZOOM, MAX_ZOOM),
-      }));
+      updateZoomKeepingScreenPoint(
+        { x: event.clientX, y: event.clientY },
+        (currentZoom) => currentZoom * Math.exp(-event.deltaY * 0.0015)
+      );
       return;
     }
 
@@ -1418,7 +1421,10 @@ export default function CanvasWorkspace({
     });
   }
 
-  function updateZoomKeepingCenter(getNextZoom: (currentZoom: number) => number) {
+  function updateZoomKeepingScreenPoint(
+    screenPoint: Point,
+    getNextZoom: (currentZoom: number) => number
+  ) {
     const rect = canvasRef.current?.getBoundingClientRect();
 
     setViewport((current) => {
@@ -1428,25 +1434,42 @@ export default function CanvasWorkspace({
         return { ...current, zoom };
       }
 
-      const center = {
-        x: (rect.width / 2 - current.x) / current.zoom,
-        y: (rect.height / 2 - current.y) / current.zoom,
+      const anchor = {
+        x: (screenPoint.x - rect.left - current.x) / current.zoom,
+        y: (screenPoint.y - rect.top - current.y) / current.zoom,
       };
 
       return {
-        x: rect.width / 2 - center.x * zoom,
-        y: rect.height / 2 - center.y * zoom,
+        x: screenPoint.x - rect.left - anchor.x * zoom,
+        y: screenPoint.y - rect.top - anchor.y * zoom,
         zoom,
       };
     });
   }
 
+  function updateZoomKeepingCenter(getNextZoom: (currentZoom: number) => number) {
+    const rect = canvasRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      updateZoomKeepingScreenPoint({ x: 0, y: 0 }, getNextZoom);
+      return;
+    }
+
+    updateZoomKeepingScreenPoint(
+      {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      },
+      getNextZoom
+    );
+  }
+
   function zoomIn() {
-    updateZoomKeepingCenter((currentZoom) => currentZoom + ZOOM_STEP);
+    updateZoomKeepingCenter((currentZoom) => currentZoom * ZOOM_SCALE_FACTOR);
   }
 
   function zoomOut() {
-    updateZoomKeepingCenter((currentZoom) => currentZoom - ZOOM_STEP);
+    updateZoomKeepingCenter((currentZoom) => currentZoom / ZOOM_SCALE_FACTOR);
   }
 
   function resetZoom() {

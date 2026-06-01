@@ -34,7 +34,7 @@ export function CanvasGridControls({
         aria-expanded={isOpen}
         aria-label="Grid settings"
         className={[
-          "flex h-11 w-11 items-center justify-center rounded-xl border shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition duration-200",
+          "flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition duration-200",
           isOpen
             ? "border-[#0d99ff] bg-[#0d99ff] text-white"
             : "border-white/10 bg-zinc-950/90 text-white/75 hover:bg-zinc-900",

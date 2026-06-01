@@ -1,6 +1,42 @@
 import type { CanvasContent, CanvasListItem, CanvasRecord } from "@/types/canvas";
 import { parseCanvasContent } from "@/types/canvas";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isUuid, slugifyCanvasName } from "./slug";
+
+async function createUniqueCanvasSlug(
+  supabase: SupabaseClient,
+  userId: string,
+  name: string,
+  excludeCanvasId?: string
+) {
+  const baseSlug = slugifyCanvasName(name);
+
+  for (let index = 0; index < 100; index += 1) {
+    const slug = index === 0 ? baseSlug : `${baseSlug}-${index + 1}`;
+    let query = supabase
+      .from("canvases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("slug", slug)
+      .limit(1);
+
+    if (excludeCanvasId) {
+      query = query.neq("id", excludeCanvasId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return slug;
+    }
+  }
+
+  return `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
+}
 
 export async function listUserCanvases(
   supabase: SupabaseClient,
@@ -8,7 +44,7 @@ export async function listUserCanvases(
 ): Promise<CanvasListItem[]> {
   const { data, error } = await supabase
     .from("canvases")
-    .select("id, name, created_at, updated_at")
+    .select("id, slug, name, created_at, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -24,33 +60,39 @@ export async function createUserCanvas(
   userId: string,
   name = "Untitled"
 ): Promise<string> {
+  const slug = await createUniqueCanvasSlug(supabase, userId, name);
   const { data, error } = await supabase
     .from("canvases")
     .insert({
       user_id: userId,
       name,
+      slug,
     })
-    .select("id")
+    .select("slug")
     .single();
 
   if (error || !data) {
     throw error ?? new Error("Failed to create canvas");
   }
 
-  return data.id;
+  return data.slug;
 }
 
 export async function getUserCanvas(
   supabase: SupabaseClient,
   userId: string,
-  canvasId: string
+  identifier: string
 ): Promise<CanvasRecord | null> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("canvases")
-    .select("id, name, content, created_at, updated_at")
-    .eq("id", canvasId)
-    .eq("user_id", userId)
-    .maybeSingle();
+    .select("id, slug, name, content, created_at, updated_at")
+    .eq("user_id", userId);
+
+  query = isUuid(identifier)
+    ? query.eq("id", identifier)
+    : query.eq("slug", identifier);
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     throw error;
@@ -64,6 +106,7 @@ export async function getUserCanvas(
 
   return {
     id: data.id,
+    slug: data.slug,
     name: data.name,
     content: parsedContent ?? {},
     created_at: data.created_at,
@@ -110,12 +153,14 @@ export async function updateUserCanvasName(
   userId: string,
   canvasId: string,
   name: string
-): Promise<{ updated_at: string }> {
+): Promise<{ updated_at: string; slug: string }> {
   const updated_at = new Date().toISOString();
+  const slug = await createUniqueCanvasSlug(supabase, userId, name, canvasId);
   const { error } = await supabase
     .from("canvases")
     .update({
       name,
+      slug,
       updated_at,
     })
     .eq("id", canvasId)
@@ -125,7 +170,7 @@ export async function updateUserCanvasName(
     throw error;
   }
 
-  return { updated_at };
+  return { updated_at, slug };
 }
 
 export async function deleteUserCanvas(

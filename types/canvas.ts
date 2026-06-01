@@ -47,6 +47,7 @@ export type CanvasContent = {
 
 export type CanvasRecord = {
   id: string;
+  slug: string;
   name: string;
   content: CanvasContent | Record<string, never>;
   created_at: string;
@@ -55,6 +56,7 @@ export type CanvasRecord = {
 
 export type CanvasListItem = {
   id: string;
+  slug: string;
   name: string;
   created_at: string;
   updated_at: string;

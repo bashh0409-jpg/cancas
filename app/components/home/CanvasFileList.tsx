@@ -96,7 +96,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
             {deletingId === canvas.id ? "Deleting…" : "Delete"}
           </button>
 
-          <Link className="flex flex-col p-4" href={`/canvas/${canvas.id}`}>
+          <Link className="flex flex-col p-4" href={`/canvas/${canvas.slug}`}>
             <div className="mb-3 flex h-28 items-center justify-center rounded-lg bg-white/10 text-white/30 transition group-hover:bg-white/15">
               <svg
                 aria-hidden

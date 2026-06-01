@@ -32,6 +32,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json({
       content: canvas.content,
       name: canvas.name,
+      slug: canvas.slug,
       updated_at: canvas.updated_at,
     });
   } catch {
@@ -80,7 +81,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     } else if (name) {
       const updated = await updateUserCanvasName(supabase, user.id, id, name);
 
-      return NextResponse.json({ ok: true, updated_at: updated.updated_at });
+      return NextResponse.json({
+        ok: true,
+        slug: updated.slug,
+        updated_at: updated.updated_at,
+      });
     } else {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }

@@ -10,7 +10,7 @@ export function CanvasFitToViewButton({ onClick }: CanvasFitToViewButtonProps) {
     >
       <button
         aria-label="Fit all content to view"
-        className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition hover:bg-zinc-900 hover:text-white"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition hover:bg-zinc-900 hover:text-white"
         title="Fit all content to view"
         type="button"
         onClick={onClick}

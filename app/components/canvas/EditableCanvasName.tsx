@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type EditableCanvasNameProps = {
@@ -13,6 +14,7 @@ export function EditableCanvasName({
   initialName,
   onNameChange,
 }: EditableCanvasNameProps) {
+  const router = useRouter();
   const [name, setName] = useState(initialName);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -47,7 +49,14 @@ export function EditableCanvasName({
         return;
       }
 
+      const data = (await response.json()) as { slug?: string };
+
       onNameChange?.(trimmedName);
+
+      if (data.slug) {
+        router.replace(`/canvas/${data.slug}`);
+        router.refresh();
+      }
     } catch {
       setName(initialName);
     } finally {

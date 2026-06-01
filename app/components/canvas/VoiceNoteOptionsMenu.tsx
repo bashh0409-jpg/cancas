@@ -17,7 +17,7 @@ export function VoiceNoteOptionsMenu({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label="Voice note options"
-        className="pixel rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] tracking-tight text-white opacity-0 transition group-hover:opacity-100 hover:bg-white/20"
+        className="pixel rounded  px-1.5 py-0.5 text-[10px] tracking-tight text-white opacity-100 transition group-hover:opacity-100 hover:bg-white/20"
         type="button"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {

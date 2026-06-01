@@ -4,14 +4,16 @@ type VoiceNoteWaveformProps = {
   durationMs: number;
   playbackMs: number;
   isPlaying: boolean;
+  levels?: number[];
 };
 
 export function VoiceNoteWaveform({
   durationMs,
   playbackMs,
   isPlaying,
+  levels,
 }: VoiceNoteWaveformProps) {
-  const bars = getVoiceWaveformHeights();
+  const bars = isPlaying && levels ? levels : getVoiceWaveformHeights();
   const progressRatio =
     durationMs > 0 ? Math.min(1, playbackMs / durationMs) : 0;
   const progressedBars = Math.floor(progressRatio * bars.length);
@@ -26,7 +28,7 @@ export function VoiceNoteWaveform({
             key={`voice-bar-${index}`}
             aria-hidden
             className={[
-              "w-1 flex-1 rounded-full transition-all duration-200",
+              "w-full flex-1 rounded-full transition-all duration-200",
               isActive
                 ? "bg-gradient-to-t from-[#0d99ff]/70 via-[#2bb7ff] to-[#8edcff]"
                 : "bg-white/25",

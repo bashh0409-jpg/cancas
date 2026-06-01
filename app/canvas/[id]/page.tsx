@@ -1,4 +1,5 @@
 import { getUserCanvas } from "@/lib/canvas/repository";
+import { getUserCredits } from "@/lib/credits/repository";
 import { createClient } from "@/lib/supabase/server";
 import {
   EMPTY_CANVAS_CONTENT,
@@ -46,6 +47,10 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     notFound();
   }
 
+  if (id !== canvas.slug) {
+    redirect(`/canvas/${canvas.slug}`);
+  }
+
   const initialContent =
     parseCanvasContent(canvas.content) ?? EMPTY_CANVAS_CONTENT;
 
@@ -54,11 +59,11 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
     "User";
 
-  const credits = 0;
+  const credits = await getUserCredits(supabase, user.id);
 
   return (
     <CanvasPageClient
-      canvasId={id}
+      canvasId={canvas.id}
       canvasName={canvas.name}
       credits={credits}
       firstName={firstName}
