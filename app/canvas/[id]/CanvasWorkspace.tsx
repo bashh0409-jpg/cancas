@@ -7,8 +7,18 @@ import type {
   WheelEvent,
 } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CanvasDropOverlay } from "@/app/components/canvas/CanvasDropOverlay";
+import { CanvasFitToViewButton } from "@/app/components/canvas/CanvasFitToViewButton";
+import { CanvasGridControls } from "@/app/components/canvas/CanvasGridControls";
+import { CanvasImageNode } from "@/app/components/canvas/CanvasImageNode";
+import { CanvasLoadingOverlay } from "@/app/components/canvas/CanvasLoadingOverlay";
+import { CanvasMarqueeSelection } from "@/app/components/canvas/CanvasMarqueeSelection";
+import { CanvasVoiceNode } from "@/app/components/canvas/CanvasVoiceNode";
+import { CanvasWebNode } from "@/app/components/canvas/CanvasWebNode";
+import { CanvasZoomControls } from "@/app/components/canvas/CanvasZoomControls";
 import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
-import { WebsitePreviewCard } from "@/app/components/website-preview/WebsitePreviewCard";
+import type { VoiceNoteMenuAction } from "@/app/components/canvas/VoiceNoteOptionsMenu";
+import type { ResizeCorner } from "@/app/components/canvas/NodeResizeHandles";
 import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
 import {
   arrangeImagesFromRequest,
@@ -19,6 +29,10 @@ import {
   fetchRemoteCanvasUpdate,
   subscribeToCanvasUpdates,
 } from "@/lib/canvas/canvasRemoteSync";
+import {
+  VOICE_NOTE_RECORDED_EVENT,
+  type VoiceNoteRecordedDetail,
+} from "@/lib/canvas/voiceNotes";
 import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
 import {
   IMAGE_DELETE_UNDO_LIMIT,
@@ -38,6 +52,11 @@ import {
 } from "@/lib/canvas/uploadDebug";
 import { sleep, withTimeout } from "@/lib/canvas/uploadUtils";
 import { createClient } from "@/lib/supabase/client";
+import { useVoiceNotePlayback } from "@/lib/canvas/useVoiceNotePlayback";
+import {
+  blobToDataUrl,
+  formatVoiceNoteTitle,
+} from "@/lib/canvas/voiceNoteUtils";
 import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 
 type Viewport = {
@@ -119,7 +138,23 @@ type WebDragState = {
   hasMoved: boolean;
 };
 
-type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+type VoiceCanvasNode = {
+  id: string;
+  title: string;
+  audioDataUrl: string;
+  durationMs: number;
+  position: Point;
+  size: {
+    width: number;
+    height: number;
+  };
+  zIndex: number;
+};
+
+type VoiceDragState = {
+  nodeId: string;
+  offset: Point;
+};
 
 type NodeResizeState = {
   nodeId: string;
@@ -136,6 +171,10 @@ type NodeResizeState = {
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
+
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.1;
 
 function getNaturalImageSize(url: string) {
   return new Promise<{ width: number; height: number }>((resolve) => {
@@ -356,9 +395,11 @@ export default function CanvasWorkspace({
   const canvasRef = useRef<HTMLDivElement>(null);
   const imageNodesRef = useRef<ImageCanvasNode[]>(initialContent.imageNodes);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
+  const voiceNodesRef = useRef<VoiceCanvasNode[]>(initialContent.voiceNodes);
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
+  const voiceDragRef = useRef<VoiceDragState | null>(null);
   const webResizeRef = useRef<NodeResizeState | null>(null);
   const skipSaveRef = useRef(true);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -393,10 +434,33 @@ export default function CanvasWorkspace({
     null
   );
   const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(null);
+  const [draggingVoiceNodeId, setDraggingVoiceNodeId] = useState<string | null>(
+    null
+  );
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
     initialContent.imageNodes
   );
   const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(initialContent.webNodes);
+  const [voiceNodes, setVoiceNodes] = useState<VoiceCanvasNode[]>(
+    initialContent.voiceNodes
+  );
+  const [pendingVoiceRecording, setPendingVoiceRecording] =
+    useState<VoiceNoteRecordedDetail | null>(null);
+  const [openVoiceMenuNodeId, setOpenVoiceMenuNodeId] = useState<string | null>(
+    null
+  );
+  const {
+    playingNodeId: playingVoiceNodeId,
+    playbackMsByNodeId: voicePlaybackMsByNodeId,
+    registerAudioElement,
+    togglePlayback: toggleVoicePlayback,
+    removeNodePlayback,
+    handleAudioEnded,
+    handleAudioPaused,
+    handleAudioPlaying,
+    handleAudioTimeUpdate,
+    cleanupAllAudio,
+  } = useVoiceNotePlayback();
   const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
@@ -419,6 +483,7 @@ export default function CanvasWorkspace({
   );
   const totalImageCount = imageNodes.length;
   const marqueeRect = marquee ? normalizeRect(marquee.start, marquee.current) : null;
+  const zoomPercent = Math.round(viewport.zoom * 100);
 
   useEffect(() => {
     onImageSyncStatsChange?.({
@@ -440,8 +505,10 @@ export default function CanvasWorkspace({
       setGridSize(content.gridSize);
       setImageNodes(content.imageNodes);
       setWebNodes(content.webNodes);
+      setVoiceNodes(content.voiceNodes);
       imageNodesRef.current = content.imageNodes;
       webNodesRef.current = content.webNodes;
+      voiceNodesRef.current = content.voiceNodes;
       initialImageIdsRef.current = new Set(
         content.imageNodes.map((node) => node.id)
       );
@@ -707,8 +774,10 @@ export default function CanvasWorkspace({
       setGridSize(content.gridSize);
       setImageNodes(mergedImageNodes);
       setWebNodes(content.webNodes);
+      setVoiceNodes(content.voiceNodes);
       imageNodesRef.current = mergedImageNodes;
       webNodesRef.current = content.webNodes;
+      voiceNodesRef.current = content.voiceNodes;
       setSelectedImageIds([]);
       lastServerUpdatedAtRef.current = updatedAt;
       serverUpdatedAtRef.current = updatedAt;
@@ -734,6 +803,85 @@ export default function CanvasWorkspace({
   useEffect(() => {
     webNodesRef.current = webNodes;
   }, [webNodes]);
+
+  useEffect(() => {
+    voiceNodesRef.current = voiceNodes;
+  }, [voiceNodes]);
+
+  useEffect(() => {
+    function handleVoiceNoteRecorded(event: Event) {
+      const detail = (event as CustomEvent<VoiceNoteRecordedDetail>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      setPendingVoiceRecording(detail);
+    }
+
+    window.addEventListener(VOICE_NOTE_RECORDED_EVENT, handleVoiceNoteRecorded);
+
+    return () => {
+      window.removeEventListener(
+        VOICE_NOTE_RECORDED_EVENT,
+        handleVoiceNoteRecorded
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingVoiceRecording || !isClientReady) {
+      return;
+    }
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      setPendingVoiceRecording(null);
+      return;
+    }
+
+    void (async () => {
+      let audioDataUrl: string;
+      try {
+        audioDataUrl = await blobToDataUrl(pendingVoiceRecording.blob);
+      } catch {
+        setPendingVoiceRecording(null);
+        return;
+      }
+      const center = {
+        x: (rect.width / 2 - viewport.x) / viewport.zoom,
+        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+      };
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex)
+      );
+
+      setVoiceNodes((current) => [
+        ...current,
+        {
+          id: pendingVoiceRecording.id,
+          title: formatVoiceNoteTitle(pendingVoiceRecording.durationMs),
+          audioDataUrl,
+          durationMs: pendingVoiceRecording.durationMs,
+          position: {
+            x: center.x - 120,
+            y: center.y - 56,
+          },
+          size: {
+            width: 240,
+            height: 112,
+          },
+          zIndex: topZIndex + 1,
+        },
+      ]);
+      saveDelayMsRef.current = 0;
+      setPendingVoiceRecording(null);
+    })();
+  }, [isClientReady, pendingVoiceRecording, viewport.x, viewport.y, viewport.zoom]);
 
   useEffect(() => {
     if (!isClientReady) {
@@ -814,6 +962,7 @@ export default function CanvasWorkspace({
       viewport,
       imageNodes: imageNodes.map(serializeImageNodeForSave),
       webNodes,
+      voiceNodes,
       showGrid,
       backgroundColor,
       gridColor,
@@ -827,6 +976,7 @@ export default function CanvasWorkspace({
     showGrid,
     viewport,
     webNodes,
+    voiceNodes,
   ]);
 
   const buildCanvasContentRef = useRef(buildCanvasContent);
@@ -997,6 +1147,26 @@ export default function CanvasWorkspace({
   }, [canvasId, commitImageDeleteEntry]);
 
   useEffect(() => {
+    function handleGlobalPointerDown() {
+      setOpenVoiceMenuNodeId(null);
+    }
+
+    function handleGlobalEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpenVoiceMenuNodeId(null);
+      }
+    }
+
+    window.addEventListener("pointerdown", handleGlobalPointerDown);
+    window.addEventListener("keydown", handleGlobalEscape);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleGlobalPointerDown);
+      window.removeEventListener("keydown", handleGlobalEscape);
+    };
+  }, []);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target;
 
@@ -1086,8 +1256,9 @@ export default function CanvasWorkspace({
           URL.revokeObjectURL(node.url);
         }
       });
+      cleanupAllAudio();
     };
-  }, []);
+  }, [cleanupAllAudio]);
 
   useEffect(() => {
     function handleWindowPaste(event: ClipboardEvent) {
@@ -1113,7 +1284,8 @@ export default function CanvasWorkspace({
       const topZIndex = Math.max(
         0,
         ...imageNodesRef.current.map((node) => node.zIndex),
-        ...webNodesRef.current.map((node) => node.zIndex)
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex)
       );
 
       setWebNodes((current) => [
@@ -1164,7 +1336,7 @@ export default function CanvasWorkspace({
     if (event.ctrlKey || event.metaKey) {
       setViewport((current) => ({
         ...current,
-        zoom: clamp(current.zoom - event.deltaY * 0.0015, 0.2, 4),
+        zoom: clamp(current.zoom - event.deltaY * 0.0015, MIN_ZOOM, MAX_ZOOM),
       }));
       return;
     }
@@ -1209,6 +1381,12 @@ export default function CanvasWorkspace({
         width: node.size.width,
         height: node.size.height,
       })),
+      ...voiceNodesRef.current.map((node) => ({
+        x: node.position.x,
+        y: node.position.y,
+        width: node.size.width,
+        height: node.size.height,
+      })),
     ];
 
     if (nodes.length === 0) {
@@ -1229,8 +1407,8 @@ export default function CanvasWorkspace({
     const availableHeight = Math.max(rect.height - padding * 2, 1);
     const zoom = clamp(
       Math.min(availableWidth / contentWidth, availableHeight / contentHeight),
-      0.2,
-      4
+      MIN_ZOOM,
+      MAX_ZOOM
     );
 
     setViewport({
@@ -1238,6 +1416,41 @@ export default function CanvasWorkspace({
       y: rect.height / 2 - centerY * zoom,
       zoom,
     });
+  }
+
+  function updateZoomKeepingCenter(getNextZoom: (currentZoom: number) => number) {
+    const rect = canvasRef.current?.getBoundingClientRect();
+
+    setViewport((current) => {
+      const zoom = clamp(getNextZoom(current.zoom), MIN_ZOOM, MAX_ZOOM);
+
+      if (!rect) {
+        return { ...current, zoom };
+      }
+
+      const center = {
+        x: (rect.width / 2 - current.x) / current.zoom,
+        y: (rect.height / 2 - current.y) / current.zoom,
+      };
+
+      return {
+        x: rect.width / 2 - center.x * zoom,
+        y: rect.height / 2 - center.y * zoom,
+        zoom,
+      };
+    });
+  }
+
+  function zoomIn() {
+    updateZoomKeepingCenter((currentZoom) => currentZoom + ZOOM_STEP);
+  }
+
+  function zoomOut() {
+    updateZoomKeepingCenter((currentZoom) => currentZoom - ZOOM_STEP);
+  }
+
+  function resetZoom() {
+    updateZoomKeepingCenter(() => 1);
   }
 
   function handleInitialImageSettled(nodeId: string) {
@@ -1408,7 +1621,11 @@ export default function CanvasWorkspace({
 
     const topZIndex = imageNodesRef.current.reduce(
       (max, node) => Math.max(max, node.zIndex),
-      0
+      Math.max(
+        0,
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex)
+      )
     );
 
     const addedIds: string[] = [];
@@ -1740,7 +1957,8 @@ export default function CanvasWorkspace({
       const topZIndex = Math.max(
         0,
         ...imageNodesRef.current.map((entry) => entry.zIndex),
-        ...current.map((entry) => entry.zIndex)
+        ...current.map((entry) => entry.zIndex),
+        ...voiceNodesRef.current.map((entry) => entry.zIndex)
       );
 
       return current.map((entry) =>
@@ -1880,6 +2098,89 @@ export default function CanvasWorkspace({
     });
   }
 
+  function handleVoicePointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+    node: VoiceCanvasNode
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    voiceDragRef.current = {
+      nodeId: node.id,
+      offset: {
+        x: point.x - node.position.x,
+        y: point.y - node.position.y,
+      },
+    };
+    setDraggingVoiceNodeId(node.id);
+
+    setVoiceNodes((current) => {
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((entry) => entry.zIndex),
+        ...webNodesRef.current.map((entry) => entry.zIndex),
+        ...current.map((entry) => entry.zIndex)
+      );
+
+      return current.map((entry) =>
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+      );
+    });
+  }
+
+  function handleVoicePointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const dragState = voiceDragRef.current;
+
+    if (!dragState) {
+      return;
+    }
+
+    const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+
+    setVoiceNodes((current) =>
+      current.map((node) =>
+        node.id === dragState.nodeId
+          ? {
+              ...node,
+              position: {
+                x: point.x - dragState.offset.x,
+                y: point.y - dragState.offset.y,
+              },
+            }
+          : node
+      )
+    );
+  }
+
+  function handleVoicePointerUp(event: ReactPointerEvent<HTMLElement>) {
+    voiceDragRef.current = null;
+    setDraggingVoiceNodeId(null);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function handleDeleteVoiceNode(nodeId: string) {
+    removeNodePlayback(nodeId);
+    setVoiceNodes((current) => current.filter((node) => node.id !== nodeId));
+    saveDelayMsRef.current = 0;
+  }
+
+  function handleVoiceNodeMenuAction(nodeId: string, action: VoiceNoteMenuAction) {
+    if (action === "delete") {
+      handleDeleteVoiceNode(nodeId);
+      setOpenVoiceMenuNodeId(null);
+      return;
+    }
+
+    setOpenVoiceMenuNodeId(null);
+    const actionLabel = action === "transcribe" ? "Transcribe" : "Ask AI";
+    window.alert(`${actionLabel} for voice notes is coming soon.`);
+  }
+
   return (
     <div
       ref={canvasRef}
@@ -1903,16 +2204,11 @@ export default function CanvasWorkspace({
         }}
       >
         {marqueeRect && (marqueeRect.width > 2 || marqueeRect.height > 2) && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute border border-[#0d99ff] bg-[#0d99ff]/10"
-            style={{
-              height: marqueeRect.height,
-              left: marqueeRect.x,
-              top: marqueeRect.y,
-              width: marqueeRect.width,
-              zIndex: 9999,
-            }}
+          <CanvasMarqueeSelection
+            height={marqueeRect.height}
+            width={marqueeRect.width}
+            x={marqueeRect.x}
+            y={marqueeRect.y}
           />
         )}
 
@@ -1923,92 +2219,35 @@ export default function CanvasWorkspace({
           const imageSrc = getImageNodeSrc(node);
 
           return (
-            <div
+            <CanvasImageNode
               key={node.id}
-              className="group absolute"
+              imageSrc={imageSrc}
+              isDragging={draggingImageNodeId === node.id}
+              isResizing={resizingImageNodeId === node.id}
+              isSelected={isSelected}
+              node={node}
+              showResizeHandles={showResizeHandles}
+              onImageSettled={() => handleInitialImageSettled(node.id)}
               onPointerCancel={handleImagePointerUp}
               onPointerDown={(event) => handleImagePointerDown(event, node)}
               onPointerMove={handleImagePointerMove}
               onPointerUp={handleImagePointerUp}
-              style={{
-                cursor: draggingImageNodeId === node.id ? "grabbing" : "grab",
-                height: node.size.height,
-                left: node.position.x,
-                top: node.position.y,
-                width: node.size.width,
-                zIndex: node.zIndex,
-              }}
-            >
-              {imageSrc ? (
-                <>
-                  {/* Object URLs from local drops are not compatible with next/image optimization. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    alt={node.fileName}
-                    className="block h-full w-full select-none object-contain"
-                    draggable={false}
-                    src={imageSrc}
-                    onError={() => handleInitialImageSettled(node.id)}
-                    onLoad={() => handleInitialImageSettled(node.id)}
-                  />
-                </>
-              ) : (
-                <div
-                  aria-hidden
-                  className="flex h-full w-full items-center justify-center bg-white/5"
-                >
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-                </div>
-              )}
-              <div
-                className={[
-                  "pointer-events-none absolute -inset-px border transition",
-                  isSelected
-                    ? "border-[#0d99ff] opacity-100"
-                    : "border-[#0d99ff] opacity-0 group-hover:opacity-100",
-                  resizingImageNodeId === node.id ? "opacity-100" : "",
-                ].join(" ")}
-              />
-              {showResizeHandles
-                ? (
-                    [
-                      ["top-left", "-left-1.5 -top-1.5 cursor-nwse-resize"],
-                      ["top-right", "-right-1.5 -top-1.5 cursor-nesw-resize"],
-                      ["bottom-left", "-bottom-1.5 -left-1.5 cursor-nesw-resize"],
-                      [
-                        "bottom-right",
-                        "-bottom-1.5 -right-1.5 cursor-nwse-resize",
-                      ],
-                    ] as const
-                  ).map(([corner, className]) => (
-                    <button
-                      key={corner}
-                      aria-label={`Resize image from ${corner}`}
-                      className={[
-                        "absolute h-3 w-3 border border-[#0d99ff] bg-white transition",
-                        resizingImageNodeId === node.id || isSelected
-                          ? "opacity-100"
-                          : "opacity-0 group-hover:opacity-100",
-                        className,
-                      ].join(" ")}
-                      type="button"
-                      onPointerCancel={handleImagePointerUp}
-                      onPointerDown={(event) =>
-                        handleImageResizePointerDown(event, node, corner)
-                      }
-                      onPointerMove={handleImagePointerMove}
-                      onPointerUp={handleImagePointerUp}
-                    />
-                  ))
-                : null}
-            </div>
+              onResizePointerCancel={handleImagePointerUp}
+              onResizePointerDown={(corner, event) =>
+                handleImageResizePointerDown(event, node, corner)
+              }
+              onResizePointerMove={handleImagePointerMove}
+              onResizePointerUp={handleImagePointerUp}
+            />
           );
         })}
 
         {webNodes.map((node) => (
-          <div
+          <CanvasWebNode
             key={node.id}
-            className="group absolute"
+            isDragging={draggingWebNodeId === node.id}
+            isResizing={resizingWebNodeId === node.id}
+            node={node}
             onPointerCancel={handleWebPointerUp}
             onPointerDown={(event) => handleWebPointerDown(event, node)}
             onPointerMove={handleWebPointerMove}
@@ -2019,260 +2258,71 @@ export default function CanvasWorkspace({
                 setActiveWebNodeId(node.id);
               }
             }}
-            style={{
-              cursor: draggingWebNodeId === node.id ? "grabbing" : "grab",
-              height: node.size.height,
-              left: node.position.x,
-              top: node.position.y,
-              width: node.size.width,
-              zIndex: node.zIndex,
-            }}
-          >
-            <WebsitePreviewCard url={node.url} />
-            <div
-              className={[
-                "pointer-events-none absolute -inset-px rounded-lg border border-[#0d99ff] transition",
-                resizingWebNodeId === node.id
-                  ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100",
-              ].join(" ")}
-            />
-            {(
-              [
-                ["top-left", "-left-1.5 -top-1.5 cursor-nwse-resize"],
-                ["top-right", "-right-1.5 -top-1.5 cursor-nesw-resize"],
-                ["bottom-left", "-bottom-1.5 -left-1.5 cursor-nesw-resize"],
-                ["bottom-right", "-bottom-1.5 -right-1.5 cursor-nwse-resize"],
-              ] as const
-            ).map(([corner, className]) => (
-              <button
-                key={corner}
-                aria-label={`Resize link preview from ${corner}`}
-                className={[
-                  "absolute h-3 w-3 border border-[#0d99ff] bg-white transition",
-                  resizingWebNodeId === node.id
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100",
-                  className,
-                ].join(" ")}
-                type="button"
-                onPointerCancel={handleWebPointerUp}
-                onPointerDown={(event) =>
-                  handleWebResizePointerDown(event, node, corner)
-                }
-                onPointerMove={handleWebPointerMove}
-                onPointerUp={handleWebPointerUp}
-              />
-            ))}
-          </div>
+            onResizePointerCancel={handleWebPointerUp}
+            onResizePointerDown={(corner, event) =>
+              handleWebResizePointerDown(event, node, corner)
+            }
+            onResizePointerMove={handleWebPointerMove}
+            onResizePointerUp={handleWebPointerUp}
+          />
+        ))}
+
+        {voiceNodes.map((node) => (
+          <CanvasVoiceNode
+            key={node.id}
+            isDragging={draggingVoiceNodeId === node.id}
+            isMenuOpen={openVoiceMenuNodeId === node.id}
+            isPlaying={playingVoiceNodeId === node.id}
+            node={node}
+            playbackMs={voicePlaybackMsByNodeId[node.id] ?? 0}
+            onAudioEnded={() => handleAudioEnded(node.id)}
+            onAudioPaused={() => handleAudioPaused(node.id)}
+            onAudioPlaying={() => handleAudioPlaying(node.id)}
+            onAudioRef={(element) => registerAudioElement(node.id, element)}
+            onAudioTimeUpdate={(playbackMs) =>
+              handleAudioTimeUpdate(node.id, playbackMs)
+            }
+            onMenuAction={(action) => handleVoiceNodeMenuAction(node.id, action)}
+            onPointerCancel={handleVoicePointerUp}
+            onPointerDown={(event) => handleVoicePointerDown(event, node)}
+            onPointerMove={handleVoicePointerMove}
+            onPointerUp={handleVoicePointerUp}
+            onToggleMenu={() =>
+              setOpenVoiceMenuNodeId((current) =>
+                current === node.id ? null : node.id
+              )
+            }
+            onTogglePlayback={() => toggleVoicePlayback(node.id)}
+          />
         ))}
       </div>
 
-      <div
-        aria-hidden={!isFileDragging}
-        className={[
-          "pointer-events-none absolute inset-4 z-30 grid place-items-center rounded-xl border border-dashed text-sm font-medium text-white transition",
-          isFileDragging
-            ? "border-[#0d99ff]/70 bg-[#0d99ff]/10 opacity-100"
-            : "border-white/0 bg-transparent opacity-0",
-        ].join(" ")}
-      >
-        Drop images onto the canvas
-      </div>
+      <CanvasDropOverlay isVisible={isFileDragging} />
 
-      <div
-        className="absolute left-4 top-1/2 z-40 -translate-y-1/2 text-white"
-        onWheel={(event) => event.stopPropagation()}
-      >
-        <button
-          aria-expanded={showGridControls}
-          aria-label="Grid settings"
-          className={[
-            "flex h-11 w-11 items-center justify-center rounded-xl border shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition duration-200",
-            showGridControls
-              ? "border-[#0d99ff] bg-[#0d99ff] text-white"
-              : "border-white/10 bg-zinc-950/90 text-white/75 hover:bg-zinc-900",
-          ].join(" ")}
-          type="button"
-          onClick={() => setShowGridControls((current) => !current)}
-        >
-          <svg
-            aria-hidden="true"
-            className={[
-              "h-5 w-5 transition duration-300",
-              showGridControls ? "rotate-45 scale-95" : "rotate-0 scale-100",
-            ].join(" ")}
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M8 3v18M16 3v18M3 8h18M3 16h18"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="1.7"
-            />
-          </svg>
-        </button>
+      <CanvasGridControls
+        backgroundColor={backgroundColor}
+        gridColor={gridColor}
+        gridSize={gridSize}
+        gridSizePercent={gridSizePercent}
+        isOpen={showGridControls}
+        showGrid={showGrid}
+        onBackgroundColorChange={setBackgroundColor}
+        onGridColorChange={setGridColor}
+        onGridSizeChange={setGridSize}
+        onToggleOpen={() => setShowGridControls((current) => !current)}
+        onToggleShowGrid={() => setShowGrid((current) => !current)}
+      />
 
-        <aside
-          aria-hidden={!showGridControls}
-          className={[
-            "absolute left-14 top-1/2 w-64 rounded-lg border border-white/10 bg-zinc-950/90 p-3 text-sm shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur",
-            "origin-left transition-[opacity,filter,transform,clip-path] duration-300 ease-[cubic-bezier(.18,.89,.32,1.18)]",
-            showGridControls
-              ? "pointer-events-auto opacity-100 blur-0"
-              : "pointer-events-none opacity-0 blur-sm",
-          ].join(" ")}
-          style={{
-            clipPath: showGridControls
-              ? "inset(0% 0% 0% 0% round 12px)"
-              : "inset(30% 78% 30% 0% round 999px)",
-            transform: showGridControls
-              ? "translateY(-50%) translateX(0) scaleX(1) scaleY(1) skewY(0deg)"
-              : "translateY(-50%) translateX(-24px) scaleX(0.2) scaleY(0.46) skewY(-7deg)",
-          }}
-        >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                  Canvas
-                </div>
-                <div className="mt-0.5 text-sm font-medium text-white">
-                  Grid 
-                </div>
-              </div>
-              <button
-                aria-label={showGrid ? "Hide grid" : "Show grid"}
-                aria-pressed={showGrid}
-                className={[
-                  "group relative h-8 w-14 overflow-hidden rounded-sm border p-0.5 transition",
-                  showGrid
-                    ? "border-[#0d99ff]/70 bg-[#0d99ff]/20"
-                    : "border-white/10 bg-white/5 hover:bg-white/10",
-                ].join(" ")}
-                type="button"
-                onClick={() => setShowGrid((current) => !current)}
-              >
-                <span
-                  className={[
-                    "absolute inset-y-0 w-1/2 rounded bg-white shadow-[0_4px_14px_rgba(0,0,0,0.34)] transition-transform duration-200",
-                    showGrid ? "translate-x-[24px]" : "translate-x-0",
-                  ].join(" ")}
-                />
-                <span
-                  className={[
-                    "relative z-10 inline-flex h-full w-1/2 items-center justify-center text-[10px] font-semibold transition",
-                    showGrid ? "text-white/45" : "text-zinc-950",
-                  ].join(" ")}
-                >
-                  Off
-                </span>
-                <span
-                  className={[
-                    "relative z-10 inline-flex h-full w-1/2 items-center justify-center text-[10px] font-semibold transition",
-                    showGrid ? "text-zinc-950" : "text-white/45",
-                  ].join(" ")}
-                >
-                  On
-                </span>
-              </button>
-            </div>
+      <CanvasFitToViewButton onClick={fitContentToView} />
 
-            <div className="mt-4 grid gap-3">
-              <label className="flex items-center justify-between gap-3">
-                <span className="text-white/70">Canvas color</span>
-                <span className="flex items-center gap-2">
-                  <span
-                    className="h-6 w-6 rounded-md border border-white/20"
-                    style={{ backgroundColor }}
-                  />
-                  <input
-                    aria-label="Canvas color"
-                    className="h-8 w-8 cursor-pointer rounded-md border-0 bg-transparent p-0"
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(event) =>
-                      setBackgroundColor(event.currentTarget.value)
-                    }
-                  />
-                </span>
-              </label>
-
-              <label className="flex items-center justify-between gap-3">
-                <span className="text-white/70">Grid color</span>
-                <span className="flex items-center gap-2">
-                  <span className="grid h-6 w-6 grid-cols-2 overflow-hidden rounded-md border border-white/20">
-                    <span style={{ backgroundColor: gridColor }} />
-                    <span style={{ backgroundColor }} />
-                    <span style={{ backgroundColor }} />
-                    <span style={{ backgroundColor: gridColor }} />
-                  </span>
-                  <input
-                    aria-label="Grid color"
-                    className="h-8 w-8 cursor-pointer rounded-md border-0 bg-transparent p-0"
-                    type="color"
-                    value={gridColor}
-                    onChange={(event) =>
-                      setGridColor(event.currentTarget.value)
-                    }
-                  />
-                </span>
-              </label>
-
-              <label className="grid gap-2">
-                <span className="flex items-center justify-between text-white/70">
-                  <span>Grid size</span>
-                  <span className="font-mono text-xs text-white/50">
-                    {gridSize}px
-                  </span>
-                </span>
-                <input
-                  aria-label="Grid size"
-                  className="h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-zinc-950 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow-[0_3px_12px_rgba(0,0,0,0.42)] [&::-webkit-slider-thumb]:-mt-[5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-zinc-950 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_3px_12px_rgba(0,0,0,0.42)] [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full"
-                  max="80"
-                  min="12"
-                  step="4"
-                  style={{
-                    background: `linear-gradient(90deg, #0d99ff 0%, #0d99ff ${gridSizePercent}%, rgba(255,255,255,0.14) ${gridSizePercent}%, rgba(255,255,255,0.14) 100%)`,
-                  }}
-                  type="range"
-                  value={gridSize}
-                  onChange={(event) =>
-                    setGridSize(Number(event.currentTarget.value))
-                  }
-                />
-              </label>
-            </div>
-          </aside>
-      </div>
-
-      <div
-        className="absolute right-4 top-1/2 z-40 -translate-y-1/2 text-white"
-        onWheel={(event) => event.stopPropagation()}
-      >
-        <button
-          aria-label="Fit all content to view"
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition hover:bg-zinc-900 hover:text-white"
-          title="Fit all content to view"
-          type="button"
-          onClick={fitContentToView}
-        >
-          <svg
-            aria-hidden
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M7 12h10M12 7v10"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.7"
-            />
-          </svg>
-        </button>
-      </div>
+      <CanvasZoomControls
+        canZoomIn={viewport.zoom < MAX_ZOOM}
+        canZoomOut={viewport.zoom > MIN_ZOOM}
+        zoomPercent={zoomPercent}
+        onResetZoom={resetZoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+      />
 
       {selectedImageIds.length >= 2 && (
         <ImageSelectionArrangeBar
@@ -2290,16 +2340,7 @@ export default function CanvasWorkspace({
         />
       )}
 
-      {!isClientReady || isCanvasLoading ? (
-        <div
-          aria-label="Loading canvas"
-          aria-live="polite"
-          className="fixed inset-0 z-[100] grid place-items-center bg-black"
-          role="status"
-        >
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
-        </div>
-      ) : null}
+      <CanvasLoadingOverlay isVisible={!isClientReady || isCanvasLoading} />
     </div>
   );
 }

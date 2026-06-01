@@ -30,6 +30,14 @@ export function ToolbarIcon({ name, ...props }: ToolbarIconProps) {
           <path d="M5.5 19.5h13" />
         </>
       )}
+      {name === "mic" && (
+        <>
+          <path d="M12 4.5a2.5 2.5 0 0 1 2.5 2.5v4.5a2.5 2.5 0 0 1-5 0V7a2.5 2.5 0 0 1 2.5-2.5z" />
+          <path d="M7.5 10.5a4.5 4.5 0 1 0 9 0" />
+          <path d="M12 15v3.5" />
+          <path d="M9.2 19.5h5.6" />
+        </>
+      )}
       {name === "text" && (
         <>
           <path d="M6 5.5h12" />

@@ -5,6 +5,7 @@ import { ShapeTools } from "./ShapeTools";
 import { TextToolButton } from "./TextToolButton";
 import { ToolGroup } from "./ToolGroup";
 import { ToolbarSeparator } from "./ToolbarSeparator";
+import { VoiceNoteToolButton } from "./VoiceNoteToolButton";
 
 export default function FloatingToolbar() {
   return (
@@ -21,6 +22,7 @@ export default function FloatingToolbar() {
         <AddFileButton />
         <TextToolButton />
         <ShapeTools />
+        <VoiceNoteToolButton />
         <AIActionButton />
       </ToolGroup>
     </div>

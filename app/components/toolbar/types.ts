@@ -14,6 +14,7 @@ export type ToolbarIconName =
   | "arrow"
   | "hand"
   | "upload"
+  | "mic"
   | "text"
   | "frame"
   | "square"

@@ -23,11 +23,22 @@ export type CanvasWebNode = {
   zIndex: number;
 };
 
+export type CanvasVoiceNode = {
+  id: string;
+  title: string;
+  audioDataUrl: string;
+  durationMs: number;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  zIndex: number;
+};
+
 export type CanvasContent = {
   version: 1;
   viewport: CanvasViewport;
   imageNodes: CanvasImageNode[];
   webNodes: CanvasWebNode[];
+  voiceNodes: CanvasVoiceNode[];
   showGrid: boolean;
   backgroundColor: string;
   gridColor: string;
@@ -54,6 +65,7 @@ export const EMPTY_CANVAS_CONTENT: CanvasContent = {
   viewport: { x: 0, y: 0, zoom: 1 },
   imageNodes: [],
   webNodes: [],
+  voiceNodes: [],
   showGrid: true,
   backgroundColor: "#111111",
   gridColor: "#343434",
@@ -103,6 +115,9 @@ export function parseCanvasContent(value: unknown): CanvasContent | null {
       : [],
     webNodes: Array.isArray(record.webNodes)
       ? (record.webNodes as CanvasWebNode[])
+      : [],
+    voiceNodes: Array.isArray(record.voiceNodes)
+      ? (record.voiceNodes as CanvasVoiceNode[])
       : [],
     showGrid: typeof record.showGrid === "boolean" ? record.showGrid : true,
     backgroundColor:
