@@ -1,5 +1,6 @@
 import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
+import { CreditNotifier } from "@/app/components/home/CreditNotifier";
 import { createCanvasAction } from "@/app/home/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +9,16 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SignOutNameButton } from "./SignOutNameButton";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: { error?: string | string[] };
+}) {
+  const errorMessage =
+    searchParams.error === "no_credits"
+      ? "No credits available. Unable to create a new file."
+      : undefined;
+
   async function signOut(formData: FormData) {
     "use server";
     void formData;
@@ -40,6 +50,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-black/70">
+      <CreditNotifier message={errorMessage} />
       <Suspense fallback={null}>
         <ClearLocalDataOnQuery />
       </Suspense>
@@ -133,6 +144,12 @@ export default async function HomePage() {
           {projectsError ? (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
               {projectsError}
+            </div>
+          ) : null}
+
+          {errorMessage ? (
+            <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100">
+              {errorMessage}
             </div>
           ) : null}
 
