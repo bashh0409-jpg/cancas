@@ -29,6 +29,17 @@ const helveticaNeue = localFont({
   variable: "--font-helvetica-neue",
 });
 
+const rinter = localFont({
+  src: [
+    {
+      path: "../public/fonts/Rinter.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-rinter",
+});
+
 export const metadata: Metadata = {
   title: "Slate",
   description: "discover the power of collaborative creativity with Slate, the ultimate canvas for your ideas.",
@@ -42,7 +53,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${GeistPixelSquare.variable} h-full antialiased`}
+      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${GeistPixelSquare.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <PHProvider>

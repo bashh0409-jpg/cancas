@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Source+Code+Pro:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -28,6 +29,18 @@
 
 .pixel {
   font-family: var(--font-geist-pixel-square);
+}
+
+.rinter {
+  font-family: var(--font-rinter);
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 .blue{

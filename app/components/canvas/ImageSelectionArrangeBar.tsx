@@ -61,7 +61,7 @@ export function ImageSelectionArrangeBar({
       role="toolbar"
       aria-label="Arrange selected images"
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full justify-between flex-wrap items-center gap-2">
         <span className="px-1 text-xs font-medium text-white/70">
           {count} selected
         </span>
@@ -108,7 +108,7 @@ export function ImageSelectionArrangeBar({
             type="button"
             onClick={() => handleDirectionChange("vertical")}
           >
-            ↓ Vertical
+            Vertical
           </button>
           <button
             aria-label="Horizontal layout"
@@ -123,7 +123,7 @@ export function ImageSelectionArrangeBar({
             type="button"
             onClick={() => handleDirectionChange("horizontal")}
           >
-            → Horizontal
+            Horizontal
           </button>
         </div>
 
@@ -135,12 +135,12 @@ export function ImageSelectionArrangeBar({
           Apply layout
         </button>
         <button
-          aria-label="Clear selection"
+          aria-label="Close selection"
           className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition hover:bg-white/10 hover:text-white"
           type="button"
           onClick={onClearSelection}
         >
-          Clear
+          Close
         </button>
       </div>
 
