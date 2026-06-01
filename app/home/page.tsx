@@ -3,6 +3,7 @@ import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import { CreditNotifier } from "@/app/components/home/CreditNotifier";
 import { createCanvasAction } from "@/app/home/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
+import { getUserCredits } from "@/lib/credits/repository";
 import { createClient } from "@/lib/supabase/server";
 import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
@@ -40,12 +41,19 @@ export default async function HomePage({
 
   let canvases: CanvasListItem[] = [];
   let projectsError: string | null = null;
+  let credits = 0;
 
   try {
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
     projectsError =
       "Could not load projects. Run the Supabase migrations in supabase/migrations in your SQL editor.";
+  }
+
+  try {
+    credits = await getUserCredits(supabase, user.id);
+  } catch {
+    // Silently fail if credits fetch fails
   }
 
   return (
@@ -61,8 +69,14 @@ export default async function HomePage({
             BETA
           </span>
         </div>
-        <div className="text-white pixel text-sm truncate max-w-[140px]">
-          {user.email}
+        <div className="flex items-center gap-3">
+          <div className="px-2 py-1 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center gap-1">
+            <span className="text-blue-200 pixel text-xs">Credits</span>
+            <span className="text-blue-100 font-semibold text-sm">{credits}</span>
+          </div>
+          <div className="text-white pixel text-sm truncate max-w-[80px]">
+            {user.email}
+          </div>
         </div>
       </div>
 
@@ -89,6 +103,10 @@ export default async function HomePage({
           <div className="mt-auto pt-4 border-t border-white/10">
             <div className="text-sm text-white truncate pixel">
               {user.email}
+            </div>
+            <div className="mt-3 px-3 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center gap-2">
+              <span className="text-blue-200 pixel text-xs">Credits</span>
+              <span className="text-blue-100 font-semibold text-sm">{credits}</span>
             </div>
           </div>
         </aside>
