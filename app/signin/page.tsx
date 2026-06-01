@@ -1,10 +1,22 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { useState } from "react";
 
+const LOGIN_IMAGES = [
+  "/images/login/login1.jpg",
+  "/images/login/login2.jpg",
+  "/images/login/login3.jpg",
+  "/images/login/login4.jpeg",
+  "/images/login/login5.jpg",
+] as const;
+
+function getRandomLoginImage() {
+  return LOGIN_IMAGES[Math.floor(Math.random() * LOGIN_IMAGES.length)];
+}
+
 export default function Page() {
+  const [loginImage] = useState(getRandomLoginImage);
   const [loadingProvider, setLoadingProvider] = useState<
     "google" | "azure" | "email" | null
   >(null);
@@ -185,12 +197,10 @@ export default function Page() {
       </div>
 
       <div className="relative hidden w-full md:flex">
-        <Image
-          src="/images/loginpage.jpg"
+        <img
+          src={loginImage}
           alt="Login background"
-          fill
-          priority
-          className="object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/10" />
       </div>
