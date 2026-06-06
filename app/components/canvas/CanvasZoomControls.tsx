@@ -1,3 +1,5 @@
+import { Minus, Plus } from "lucide-react";
+
 type CanvasZoomControlsProps = {
   canZoomIn: boolean;
   canZoomOut: boolean;
@@ -6,39 +8,6 @@ type CanvasZoomControlsProps = {
   onZoomIn: () => void;
   onZoomOut: () => void;
 };
-
-function ZoomIcon({ direction }: { direction: "in" | "out" }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 21 21"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-      <path
-        d="M7.5 10.5h6"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.7"
-      />
-      {direction === "in" ? (
-        <path
-          d="M10.5 7.5v6"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="1.7"
-        />
-      ) : null}
-    </svg>
-  );
-}
 
 export function CanvasZoomControls({
   canZoomIn,
@@ -51,39 +20,56 @@ export function CanvasZoomControls({
   return (
     <div
       aria-label="Canvas zoom controls"
-      className="absolute right-4 top-[calc(50%+3.5rem)] z-40 flex flex-col overflow-hidden rounded-full border border-white/10 bg-zinc-950/90 text-white/75 shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur"
+      className="absolute right-4 top-[calc(50%+3.5rem)] z-40"
       role="group"
       onWheel={(event) => event.stopPropagation()}
     >
-      <button
-        aria-label="Zoom in"
-        className="flex h-10 w-10 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
-        disabled={!canZoomIn}
-        title="Zoom in"
-        type="button"
-        onClick={onZoomIn}
-      >
-        <ZoomIcon direction="in" />
-      </button>
-      <button
-        aria-label="Reset zoom to 100%"
-        className="h-10 w-10 border-y border-white/10 px-1 text-center font-mono text-[11px] font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-        title="Reset zoom to 100%"
-        type="button"
-        onClick={onResetZoom}
-      >
-        {zoomPercent}
-      </button>
-      <button
-        aria-label="Zoom out"
-        className="flex h-10 w-10 items-center justify-center transition hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35"
-        disabled={!canZoomOut}
-        title="Zoom out"
-        type="button"
-        onClick={onZoomOut}
-      >
-        <ZoomIcon direction="out" />
-      </button>
+      <div className="flex items-center gap-1 rounded-xl border border-black/10 bg-white/95 p-1 text-black shadow-[0_10px_30px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+        <ZoomButton disabled={!canZoomOut} label="Zoom out" onClick={onZoomOut}>
+          <Minus className="h-3.5 w-3.5" />
+        </ZoomButton>
+
+        <button
+          aria-label="Reset zoom to 100%"
+          className="flex h-8 min-w-[54px] items-center justify-center rounded-lg bg-black/[0.04] px-2 font-mono text-[10px] font-semibold text-black/70 transition hover:bg-black/[0.06] hover:text-black"
+          title="Reset zoom to 100%"
+          type="button"
+          onClick={onResetZoom}
+        >
+          {zoomPercent}
+        </button>
+
+        <ZoomButton disabled={!canZoomIn} label="Zoom in" onClick={onZoomIn}>
+          <Plus className="h-3.5 w-3.5" />
+        </ZoomButton>
+      </div>
     </div>
+  );
+}
+
+type ZoomButtonProps = {
+  children: React.ReactNode;
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+};
+
+function ZoomButton({ children, label, disabled, onClick }: ZoomButtonProps) {
+  return (
+    <button
+      aria-label={label}
+      className={[
+        "flex h-8 w-8 items-center justify-center rounded-lg transition",
+        "bg-black/[0.04] text-black/60",
+        "hover:bg-black/[0.06] hover:text-black",
+        "disabled:pointer-events-none disabled:opacity-30",
+      ].join(" ")}
+      disabled={disabled}
+      title={label}
+      type="button"
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }

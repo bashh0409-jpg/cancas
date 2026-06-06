@@ -41,13 +41,14 @@ export default function CanvasPageClient({
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
   const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
-    synced: initialContent.imageNodes.filter((node) => Boolean(node.storagePath))
+    synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
       .length,
     total: initialContent.imageNodes.length,
   }));
-  const [uploadDebugEntries, setUploadDebugEntries] = useState<UploadDebugEntry[]>(
-    []
-  );
+
+  const [uploadDebugEntries, setUploadDebugEntries] = useState<
+    UploadDebugEntry[]
+  >([]);
   const [showUploadDebug, setShowUploadDebug] = useState(false);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function CanvasPageClient({
       <Suspense fallback={null}>
         <ClearLocalDataOnQuery redirectTo={`/canvas/${canvasId}`} />
       </Suspense>
+
       <CanvasWorkspace
         canvasId={canvasId}
         canvasName={canvasTitle}
@@ -66,19 +68,60 @@ export default function CanvasPageClient({
         serverUpdatedAt={serverUpdatedAt}
         userId={userId}
         onImageSyncStatsChange={setSyncStats}
-        onUploadDebugEntry={(entry) => {
-          setUploadDebugEntries((current) => [entry, ...current].slice(0, 6));
-        }}
+        onUploadDebugEntry={(entry) =>
+          setUploadDebugEntries((c) => [entry, ...c].slice(0, 6))
+        }
         onRemoteNameChange={setCanvasTitle}
       />
 
-      {showUploadDebug ? (
+      {/* TOP BAR (strict 3-column grid) */}
+      <div className="absolute left-0 top-0 z-50 w-full p-4">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+          {/* LEFT */}
+          <div className="flex items-center gap-2 justify-start">
+            <Link
+              href="/home"
+              className="
+                flex h-8 w-8 items-center justify-center
+                rounded-md border border-white/10
+                bg-white text-black/70
+                transition hover:bg-white/15 hover:text-white
+              "
+            >
+              <svg
+                fill="currentColor"
+                width="18"
+                height="18"
+                viewBox="0 0 32 32"
+              >
+                <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* CENTER */}
+          <div className="justify-self-center">
+            <EditableCanvasName
+              canvasId={canvasId}
+              initialName={canvasTitle}
+              onNameChange={setCanvasTitle}
+            />
+          </div>
+
+          {/* RIGHT */}
+          <div className="justify-self-end pixel text-sm tracking-tight text-white">
+            You have {credits} credits left.
+          </div>
+        </div>
+      </div>
+
+      {/* DEBUG */}
+      {showUploadDebug && (
         <div className="absolute right-4 top-16 z-[60] max-w-md rounded-lg border border-red-500/40 bg-black/90 p-3 text-xs text-white shadow-lg">
           <p className="mb-2 font-medium text-red-300">Upload debug (dev)</p>
           {uploadDebugEntries.length === 0 ? (
             <p className="text-white/60">
-              Drop images. Failed uploads will appear here and in the browser
-              console.
+              Drop images. Failed uploads will appear here.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -96,42 +139,22 @@ export default function CanvasPageClient({
             </ul>
           )}
         </div>
-      ) : null}
+      )}
 
-      <div className="absolute left-0 top-0 z-50 flex w-full items-center justify-between p-4">
-        <Link
-          href="/home"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/60 transition hover:bg-white/15"
-        >
-          <svg
-            fill="currentColor"
-            width="20"
-            height="20"
-            viewBox="0 0 32 32"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
-          </svg>
-        </Link>
-        <EditableCanvasName
-          canvasId={canvasId}
-          initialName={canvasTitle}
-          onNameChange={setCanvasTitle}
-        />
-        <div className="pixel text-sm tracking-tight text-white">
-          You have {credits} credits left.
-        </div>
-      </div>
-
+      {/* BOTTOM BAR */}
       <div className="absolute bottom-0 left-0 z-50 flex w-full items-center justify-between p-4">
         <div className="pixel text-sm tracking-tight text-white">
           <span className="text-white">{syncStats.synced}</span>
           <span className="text-white/50"> / {syncStats.total}</span>
           <span className="text-white/70"> synced to cloud</span>
         </div>
+
         <div className="pixel text-sm tracking-tight text-white">
           Let&apos;s do this thing{" "}
-          <SignOutNameButton firstName={firstName} signOutAction={signOutAction} />
+          <SignOutNameButton
+            firstName={firstName}
+            signOutAction={signOutAction}
+          />
         </div>
       </div>
 

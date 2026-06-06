@@ -211,6 +211,11 @@ const DEFAULT_TEXT_STYLE: TextCanvasNode["style"] = {
   fontSize: 32,
 };
 
+const DEFAULT_BACKGROUND = "#111111";
+const DEFAULT_GRID_COLOR = "#343434";
+const DEFAULT_GRID_SIZE = 32;
+const DEFAULT_SHOW_GRID = true;
+
 function getNaturalImageSize(url: string) {
   return new Promise<{ width: number; height: number }>((resolve) => {
     const image = new Image();
@@ -296,7 +301,10 @@ function serializeImageNodeForSave(node: ImageCanvasNode) {
   };
 }
 
-function imageIntersectsRect(node: ImageCanvasNode, rect: ReturnType<typeof normalizeRect>) {
+function imageIntersectsRect(
+  node: ImageCanvasNode,
+  rect: ReturnType<typeof normalizeRect>,
+) {
   return (
     node.position.x < rect.x + rect.width &&
     node.position.x + node.size.width > rect.x &&
@@ -311,7 +319,7 @@ function getLocalDraftKey(canvasId: string) {
 
 function readLocalCanvasDraft(
   canvasId: string,
-  serverUpdatedAt: string
+  serverUpdatedAt: string,
 ): LocalCanvasDraft | null {
   if (typeof window === "undefined") {
     return null;
@@ -333,7 +341,9 @@ function readLocalCanvasDraft(
         ? parsedDraft.serverUpdatedAt
         : "";
     const syncedAt =
-      typeof parsedDraft.syncedAt === "string" ? parsedDraft.syncedAt : undefined;
+      typeof parsedDraft.syncedAt === "string"
+        ? parsedDraft.syncedAt
+        : undefined;
 
     if (!content || !savedAt) {
       return null;
@@ -348,7 +358,8 @@ function readLocalCanvasDraft(
     }
 
     const hasUnsyncedChanges = !syncedAt || savedTime > syncedTime;
-    const isNewerThanServer = Number.isNaN(serverTime) || savedTime > serverTime;
+    const isNewerThanServer =
+      Number.isNaN(serverTime) || savedTime > serverTime;
 
     if (!hasUnsyncedChanges && !isNewerThanServer) {
       return null;
@@ -369,7 +380,7 @@ function writeLocalCanvasDraft(
   canvasId: string,
   content: CanvasContent,
   serverUpdatedAt: string,
-  syncedAt?: string
+  syncedAt?: string,
 ) {
   if (typeof window === "undefined") {
     return;
@@ -384,7 +395,10 @@ function writeLocalCanvasDraft(
       syncedAt,
     };
 
-    window.localStorage.setItem(getLocalDraftKey(canvasId), JSON.stringify(draft));
+    window.localStorage.setItem(
+      getLocalDraftKey(canvasId),
+      JSON.stringify(draft),
+    );
   } catch {
     // localStorage can be full or unavailable; Supabase autosave still runs.
   }
@@ -393,7 +407,7 @@ function writeLocalCanvasDraft(
 function markLocalCanvasDraftSynced(
   canvasId: string,
   content: CanvasContent,
-  serverUpdatedAt: string
+  serverUpdatedAt: string,
 ) {
   if (typeof window === "undefined") {
     return;
@@ -408,7 +422,10 @@ function markLocalCanvasDraftSynced(
       syncedAt,
     };
 
-    window.localStorage.setItem(getLocalDraftKey(canvasId), JSON.stringify(draft));
+    window.localStorage.setItem(
+      getLocalDraftKey(canvasId),
+      JSON.stringify(draft),
+    );
   } catch {
     // Best-effort backup only.
   }
@@ -425,7 +442,7 @@ export default function CanvasWorkspace({
   onRemoteNameChange,
 }: CanvasWorkspaceProps) {
   const initialImageIdsRef = useRef(
-    new Set(initialContent.imageNodes.map((node) => node.id))
+    new Set(initialContent.imageNodes.map((node) => node.id)),
   );
   const canvasRef = useRef<HTMLDivElement>(null);
   const imageNodesRef = useRef<ImageCanvasNode[]>(initialContent.imageNodes);
@@ -457,41 +474,52 @@ export default function CanvasWorkspace({
   const [showContentsPanel, setShowContentsPanel] = useState(false);
   const [showGrid, setShowGrid] = useState(initialContent.showGrid);
   const [backgroundColor, setBackgroundColor] = useState(
-    initialContent.backgroundColor
+    initialContent.backgroundColor,
   );
   const [gridColor, setGridColor] = useState(initialContent.gridColor);
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
+  const handleResetGrid = () => {
+    setBackgroundColor(DEFAULT_BACKGROUND);
+    setGridColor(DEFAULT_GRID_COLOR);
+    setGridSize(DEFAULT_GRID_SIZE);
+    setShowGrid(DEFAULT_SHOW_GRID);
+    setShowGridControls(false); // optional UX: close panel after reset
+  };
   const [isFileDragging, setIsFileDragging] = useState(false);
   const [draggingImageNodeId, setDraggingImageNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [resizingImageNodeId, setResizingImageNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [resizingWebNodeId, setResizingWebNodeId] = useState<string | null>(
-    null
+    null,
   );
-  const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(null);
+  const [draggingWebNodeId, setDraggingWebNodeId] = useState<string | null>(
+    null,
+  );
   const [draggingVoiceNodeId, setDraggingVoiceNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [draggingTextNodeId, setDraggingTextNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
-    initialContent.imageNodes
+    initialContent.imageNodes,
   );
-  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(initialContent.webNodes);
+  const [webNodes, setWebNodes] = useState<WebCanvasNode[]>(
+    initialContent.webNodes,
+  );
   const [voiceNodes, setVoiceNodes] = useState<VoiceCanvasNode[]>(
-    initialContent.voiceNodes
+    initialContent.voiceNodes,
   );
   const [textNodes, setTextNodes] = useState<TextCanvasNode[]>(
-    initialContent.textNodes
+    initialContent.textNodes,
   );
   const [pendingVoiceRecording, setPendingVoiceRecording] =
     useState<VoiceNoteRecordedDetail | null>(null);
   const [openVoiceMenuNodeId, setOpenVoiceMenuNodeId] = useState<string | null>(
-    null
+    null,
   );
   const {
     playingNodeId: playingVoiceNodeId,
@@ -508,10 +536,10 @@ export default function CanvasWorkspace({
   const [activeWebNodeId, setActiveWebNodeId] = useState<string | null>(null);
   const [isTextToolActive, setIsTextToolActive] = useState(false);
   const [selectedTextNodeId, setSelectedTextNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [editingTextNodeId, setEditingTextNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [marquee, setMarquee] = useState<MarqueeState | null>(null);
@@ -525,15 +553,17 @@ export default function CanvasWorkspace({
     webNodes.find((node) => node.id === activeWebNodeId) ?? null;
   const selectedImageIdSet = useMemo(
     () => new Set(selectedImageIds),
-    [selectedImageIds]
+    [selectedImageIds],
   );
-  
+
   const cloudSyncedCount = useMemo(
     () => imageNodes.filter((node) => Boolean(node.storagePath)).length,
-    [imageNodes]
+    [imageNodes],
   );
   const totalImageCount = imageNodes.length;
-  const marqueeRect = marquee ? normalizeRect(marquee.start, marquee.current) : null;
+  const marqueeRect = marquee
+    ? normalizeRect(marquee.start, marquee.current)
+    : null;
   const zoomPercent =
     viewport.zoom >= 0.01
       ? `${Math.round(viewport.zoom * 100)}%`
@@ -582,7 +612,7 @@ export default function CanvasWorkspace({
 
         return getZIndex(b) - getZIndex(a);
       }),
-    [imageNodes, textNodes, voiceNodes, webNodes]
+    [imageNodes, textNodes, voiceNodes, webNodes],
   );
 
   useEffect(() => {
@@ -612,7 +642,7 @@ export default function CanvasWorkspace({
       voiceNodesRef.current = content.voiceNodes;
       textNodesRef.current = content.textNodes;
       initialImageIdsRef.current = new Set(
-        content.imageNodes.map((node) => node.id)
+        content.imageNodes.map((node) => node.id),
       );
       setSettledInitialImageIds(new Set());
       skipSaveRef.current = true;
@@ -632,7 +662,7 @@ export default function CanvasWorkspace({
 
     async function resumePendingUploads() {
       const nodesNeedingSync = imageNodesRef.current.filter((node) =>
-        isPendingCloudSync(node)
+        isPendingCloudSync(node),
       );
 
       const nodesToResume = [];
@@ -660,8 +690,8 @@ export default function CanvasWorkspace({
 
         setImageNodes((current) =>
           current.map((entry) =>
-            entry.id === node.id ? { ...entry, url: blobUrl } : entry
-          )
+            entry.id === node.id ? { ...entry, url: blobUrl } : entry,
+          ),
         );
 
         nodesToResume.push({ nodeId: node.id, file, blobUrl });
@@ -669,7 +699,7 @@ export default function CanvasWorkspace({
 
       if (orphans.length > 0) {
         setImageNodes((current) =>
-          current.filter((node) => !orphans.includes(node.id))
+          current.filter((node) => !orphans.includes(node.id)),
         );
       }
 
@@ -679,7 +709,7 @@ export default function CanvasWorkspace({
         }
 
         canvasImageUploadPool.enqueue(() =>
-          syncImageToStorage(entry.nodeId, entry.file, entry.blobUrl)
+          syncImageToStorage(entry.nodeId, entry.file, entry.blobUrl),
         );
       }
     }
@@ -715,7 +745,7 @@ export default function CanvasWorkspace({
         }
       }
     },
-    [canvasId]
+    [canvasId],
   );
 
   const flushImageDeleteRedoStack = useCallback(() => {
@@ -726,21 +756,24 @@ export default function CanvasWorkspace({
     imageDeleteRedoStackRef.current = [];
   }, [commitImageDeleteEntry]);
 
-  const applyImageDeleteEntryToCanvas = useCallback((entry: ImageDeleteUndoEntry) => {
-    const removedIds = new Set(entry.nodes.map((node) => node.id));
+  const applyImageDeleteEntryToCanvas = useCallback(
+    (entry: ImageDeleteUndoEntry) => {
+      const removedIds = new Set(entry.nodes.map((node) => node.id));
 
-    for (const node of entry.nodes) {
-      pendingUploadFilesRef.current.delete(node.id);
-      pendingUploadIdsRef.current.delete(node.id);
-    }
+      for (const node of entry.nodes) {
+        pendingUploadFilesRef.current.delete(node.id);
+        pendingUploadIdsRef.current.delete(node.id);
+      }
 
-    setImageNodes((current) =>
-      current.filter((node) => !removedIds.has(node.id))
-    );
-    setSelectedImageIds((current) =>
-      current.filter((id) => !removedIds.has(id))
-    );
-  }, []);
+      setImageNodes((current) =>
+        current.filter((node) => !removedIds.has(node.id)),
+      );
+      setSelectedImageIds((current) =>
+        current.filter((id) => !removedIds.has(id)),
+      );
+    },
+    [],
+  );
 
   const removeImageNodes = useCallback(
     (ids: string[]) => {
@@ -750,7 +783,7 @@ export default function CanvasWorkspace({
 
       const removedIds = new Set(ids);
       const nodesToRemove = imageNodesRef.current.filter((node) =>
-        removedIds.has(node.id)
+        removedIds.has(node.id),
       );
 
       if (nodesToRemove.length === 0) {
@@ -793,7 +826,11 @@ export default function CanvasWorkspace({
       applyImageDeleteEntryToCanvas(entry);
       saveDelayMsRef.current = 0;
     },
-    [applyImageDeleteEntryToCanvas, commitImageDeleteEntry, flushImageDeleteRedoStack]
+    [
+      applyImageDeleteEntryToCanvas,
+      commitImageDeleteEntry,
+      flushImageDeleteRedoStack,
+    ],
   );
 
   const undoImageDelete = useCallback(() => {
@@ -853,12 +890,12 @@ export default function CanvasWorkspace({
 
       const mergedImageNodes = mergeRemoteImageNodes(
         imageNodesRef.current,
-        content.imageNodes
+        content.imageNodes,
       );
       const keptBlobUrls = new Set(
         mergedImageNodes
           .filter((node) => node.url.startsWith("blob:"))
-          .map((node) => node.url)
+          .map((node) => node.url),
       );
 
       for (const node of imageNodesRef.current) {
@@ -888,14 +925,18 @@ export default function CanvasWorkspace({
       lastServerUpdatedAtRef.current = updatedAt;
       serverUpdatedAtRef.current = updatedAt;
       skipSaveRef.current = true;
-      markLocalCanvasDraftSynced(canvasId, { ...content, imageNodes: mergedImageNodes }, updatedAt);
+      markLocalCanvasDraftSynced(
+        canvasId,
+        { ...content, imageNodes: mergedImageNodes },
+        updatedAt,
+      );
       onRemoteNameChange?.(name);
 
       window.requestAnimationFrame(() => {
         isApplyingRemoteUpdateRef.current = false;
       });
     },
-    [canvasId, onRemoteNameChange]
+    [canvasId, onRemoteNameChange],
   );
 
   useEffect(() => {
@@ -934,7 +975,7 @@ export default function CanvasWorkspace({
     return () => {
       window.removeEventListener(
         VOICE_NOTE_RECORDED_EVENT,
-        handleVoiceNoteRecorded
+        handleVoiceNoteRecorded,
       );
     };
   }, []);
@@ -967,7 +1008,7 @@ export default function CanvasWorkspace({
         0,
         ...imageNodesRef.current.map((node) => node.zIndex),
         ...webNodesRef.current.map((node) => node.zIndex),
-        ...voiceNodesRef.current.map((node) => node.zIndex)
+        ...voiceNodesRef.current.map((node) => node.zIndex),
       );
 
       setVoiceNodes((current) => [
@@ -991,7 +1032,13 @@ export default function CanvasWorkspace({
       saveDelayMsRef.current = 0;
       setPendingVoiceRecording(null);
     })();
-  }, [isClientReady, pendingVoiceRecording, viewport.x, viewport.y, viewport.zoom]);
+  }, [
+    isClientReady,
+    pendingVoiceRecording,
+    viewport.x,
+    viewport.y,
+    viewport.zoom,
+  ]);
 
   useEffect(() => {
     if (!isClientReady) {
@@ -1043,7 +1090,8 @@ export default function CanvasWorkspace({
     const emptyInitialIds = imageNodes
       .filter(
         (node) =>
-          initialImageIdsRef.current.has(node.id) && getImageNodeSrc(node) === null
+          initialImageIdsRef.current.has(node.id) &&
+          getImageNodeSrc(node) === null,
       )
       .map((node) => node.id);
 
@@ -1109,11 +1157,7 @@ export default function CanvasWorkspace({
 
     const content = buildCanvasContentRef.current();
 
-    writeLocalCanvasDraft(
-      canvasId,
-      content,
-      serverUpdatedAtRef.current
-    );
+    writeLocalCanvasDraft(canvasId, content, serverUpdatedAtRef.current);
 
     try {
       const response = await fetch(`/api/canvases/${canvasId}`, {
@@ -1231,7 +1275,7 @@ export default function CanvasWorkspace({
       writeLocalCanvasDraft(
         canvasId,
         buildCanvasContentRef.current(),
-        serverUpdatedAtRef.current
+        serverUpdatedAtRef.current,
       );
     }
 
@@ -1351,7 +1395,7 @@ export default function CanvasWorkspace({
         if (selectedTextNodeId) {
           event.preventDefault();
           setTextNodes((current) =>
-            current.filter((node) => node.id !== selectedTextNodeId)
+            current.filter((node) => node.id !== selectedTextNodeId),
           );
           setSelectedTextNodeId(null);
           setEditingTextNodeId(null);
@@ -1384,12 +1428,7 @@ export default function CanvasWorkspace({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
-  }, [
-    redoImageDelete,
-    removeImageNodes,
-    selectedImageIdSet,
-    undoImageDelete,
-  ]);
+  }, [redoImageDelete, removeImageNodes, selectedImageIdSet, undoImageDelete]);
 
   useEffect(() => {
     function preventFileNavigation(event: DragEvent) {
@@ -1440,7 +1479,7 @@ export default function CanvasWorkspace({
         0,
         ...imageNodesRef.current.map((node) => node.zIndex),
         ...webNodesRef.current.map((node) => node.zIndex),
-        ...voiceNodesRef.current.map((node) => node.zIndex)
+        ...voiceNodesRef.current.map((node) => node.zIndex),
       );
 
       setWebNodes((current) => [
@@ -1491,7 +1530,7 @@ export default function CanvasWorkspace({
     if (event.ctrlKey || event.metaKey) {
       updateZoomKeepingScreenPoint(
         { x: event.clientX, y: event.clientY },
-        (currentZoom) => currentZoom * Math.exp(-event.deltaY * 0.0015)
+        (currentZoom) => currentZoom * Math.exp(-event.deltaY * 0.0015),
       );
       return;
     }
@@ -1522,7 +1561,7 @@ export default function CanvasWorkspace({
       ...imageNodesRef.current.map((node) => node.zIndex),
       ...webNodesRef.current.map((node) => node.zIndex),
       ...voiceNodesRef.current.map((node) => node.zIndex),
-      ...textNodesRef.current.map((node) => node.zIndex)
+      ...textNodesRef.current.map((node) => node.zIndex),
     );
   }
 
@@ -1563,10 +1602,10 @@ export default function CanvasWorkspace({
       Math.min(
         (rect.width - padding) / Math.max(bounds.size.width, 1),
         (rect.height - padding) / Math.max(bounds.size.height, 1),
-        2
+        2,
       ),
       MIN_ZOOM,
-      MAX_ZOOM
+      MAX_ZOOM,
     );
     const centerX = bounds.position.x + bounds.size.width / 2;
     const centerY = bounds.position.y + bounds.size.height / 2;
@@ -1651,7 +1690,7 @@ export default function CanvasWorkspace({
     const zoom = clamp(
       Math.min(availableWidth / contentWidth, availableHeight / contentHeight),
       MIN_ZOOM,
-      MAX_ZOOM
+      MAX_ZOOM,
     );
 
     setViewport({
@@ -1663,7 +1702,7 @@ export default function CanvasWorkspace({
 
   function updateZoomKeepingScreenPoint(
     screenPoint: Point,
-    getNextZoom: (currentZoom: number) => number
+    getNextZoom: (currentZoom: number) => number,
   ) {
     const rect = canvasRef.current?.getBoundingClientRect();
 
@@ -1687,7 +1726,9 @@ export default function CanvasWorkspace({
     });
   }
 
-  function updateZoomKeepingCenter(getNextZoom: (currentZoom: number) => number) {
+  function updateZoomKeepingCenter(
+    getNextZoom: (currentZoom: number) => number,
+  ) {
     const rect = canvasRef.current?.getBoundingClientRect();
 
     if (!rect) {
@@ -1700,7 +1741,7 @@ export default function CanvasWorkspace({
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2,
       },
-      getNextZoom
+      getNextZoom,
     );
   }
 
@@ -1750,7 +1791,11 @@ export default function CanvasWorkspace({
     }
   }
 
-  async function syncImageToStorage(nodeId: string, file: File, blobUrl: string) {
+  async function syncImageToStorage(
+    nodeId: string,
+    file: File,
+    blobUrl: string,
+  ) {
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -1761,10 +1806,10 @@ export default function CanvasWorkspace({
             userId,
             canvasId,
             nodeId,
-            file
+            file,
           ),
           120_000,
-          "Upload timed out"
+          "Upload timed out",
         );
 
         pendingUploadIdsRef.current.delete(nodeId);
@@ -1777,8 +1822,8 @@ export default function CanvasWorkspace({
                   url: uploaded.url,
                   storagePath: uploaded.storagePath,
                 }
-              : node
-          )
+              : node,
+          ),
         );
 
         URL.revokeObjectURL(blobUrl);
@@ -1790,7 +1835,7 @@ export default function CanvasWorkspace({
           nodeId,
           file.name,
           attempt + 1,
-          error
+          error,
         );
 
         if (process.env.NODE_ENV === "development") {
@@ -1812,7 +1857,7 @@ export default function CanvasWorkspace({
     file: File,
     index: number,
     dropPosition: Point,
-    topZIndex: number
+    topZIndex: number,
   ) {
     const nodeId = crypto.randomUUID();
     const blobUrl = URL.createObjectURL(file);
@@ -1837,7 +1882,7 @@ export default function CanvasWorkspace({
     ]);
 
     canvasImageUploadPool.enqueue(() =>
-      syncImageToStorage(nodeId, file, blobUrl)
+      syncImageToStorage(nodeId, file, blobUrl),
     );
 
     void (async () => {
@@ -1856,8 +1901,8 @@ export default function CanvasWorkspace({
                 ...node,
                 size: fitImageSize(naturalSize.width, naturalSize.height),
               }
-            : node
-        )
+            : node,
+        ),
       );
     })();
 
@@ -1870,7 +1915,7 @@ export default function CanvasWorkspace({
     setIsFileDragging(false);
 
     const files = Array.from(event.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/")
+      file.type.startsWith("image/"),
     );
 
     if (files.length === 0) {
@@ -1887,8 +1932,8 @@ export default function CanvasWorkspace({
       Math.max(
         0,
         ...webNodesRef.current.map((node) => node.zIndex),
-        ...voiceNodesRef.current.map((node) => node.zIndex)
-      )
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+      ),
     );
 
     const addedIds: string[] = [];
@@ -1898,7 +1943,7 @@ export default function CanvasWorkspace({
         files[index],
         index,
         dropPosition,
-        topZIndex
+        topZIndex,
       );
 
       addedIds.push(nodeId);
@@ -1913,7 +1958,7 @@ export default function CanvasWorkspace({
 
   function applyImageLayout(request: LayoutArrangeRequest) {
     const selected = imageNodes.filter((node) =>
-      selectedImageIdSet.has(node.id)
+      selectedImageIdSet.has(node.id),
     );
 
     if (selected.length < 2) {
@@ -1928,7 +1973,7 @@ export default function CanvasWorkspace({
         height: node.size.height,
       })),
       origin,
-      request
+      request,
     );
     const layoutById = new Map(layouts.map((entry) => [entry.id, entry]));
 
@@ -1945,7 +1990,7 @@ export default function CanvasWorkspace({
           position: layout.position,
           size: layout.size,
         };
-      })
+      }),
     );
   }
 
@@ -1992,7 +2037,7 @@ export default function CanvasWorkspace({
             ...current,
             current: screenToCanvas({ x: event.clientX, y: event.clientY }),
           }
-        : null
+        : null,
     );
   }
 
@@ -2008,9 +2053,7 @@ export default function CanvasWorkspace({
 
     if (rect.width > 4 || rect.height > 4) {
       setSelectedImageIds((current) =>
-        marquee.additive
-          ? [...new Set([...current, ...hitIds])]
-          : hitIds
+        marquee.additive ? [...new Set([...current, ...hitIds])] : hitIds,
       );
     }
 
@@ -2023,7 +2066,7 @@ export default function CanvasWorkspace({
 
   function handleImagePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
-    node: ImageCanvasNode
+    node: ImageCanvasNode,
   ) {
     if (imageResizeRef.current) {
       return;
@@ -2057,7 +2100,7 @@ export default function CanvasWorkspace({
     const startPositions = Object.fromEntries(
       imageNodesRef.current
         .filter((entry) => idsToDrag.includes(entry.id))
-        .map((entry) => [entry.id, entry.position])
+        .map((entry) => [entry.id, entry.position]),
     );
 
     imageDragRef.current = {
@@ -2074,18 +2117,18 @@ export default function CanvasWorkspace({
     setImageNodes((current) => {
       const topZIndex = current.reduce(
         (max, entry) => Math.max(max, entry.zIndex),
-        0
+        0,
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
 
   function getResizedNodeBounds(
     resizeState: NodeResizeState,
-    point: Point
+    point: Point,
   ): { position: Point; size: { width: number; height: number } } {
     const deltaX = point.x - resizeState.startPoint.x;
     const deltaY = point.y - resizeState.startPoint.y;
@@ -2139,8 +2182,8 @@ export default function CanvasWorkspace({
         current.map((node) =>
           node.id === resizeState.nodeId
             ? { ...node, position: bounds.position, size: bounds.size }
-            : node
-        )
+            : node,
+        ),
       );
 
       return;
@@ -2185,7 +2228,7 @@ export default function CanvasWorkspace({
             y: start.y + delta.y,
           },
         };
-      })
+      }),
     );
   }
 
@@ -2202,7 +2245,7 @@ export default function CanvasWorkspace({
 
   function handleWebPointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
-    node: WebCanvasNode
+    node: WebCanvasNode,
   ) {
     if (webResizeRef.current) {
       return;
@@ -2229,11 +2272,11 @@ export default function CanvasWorkspace({
         0,
         ...imageNodesRef.current.map((entry) => entry.zIndex),
         ...current.map((entry) => entry.zIndex),
-        ...voiceNodesRef.current.map((entry) => entry.zIndex)
+        ...voiceNodesRef.current.map((entry) => entry.zIndex),
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
@@ -2249,8 +2292,8 @@ export default function CanvasWorkspace({
         current.map((node) =>
           node.id === resizeState.nodeId
             ? { ...node, position: bounds.position, size: bounds.size }
-            : node
-        )
+            : node,
+        ),
       );
 
       return;
@@ -2265,7 +2308,7 @@ export default function CanvasWorkspace({
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     const moveDistance = Math.hypot(
       point.x - dragState.startPoint.x,
-      point.y - dragState.startPoint.y
+      point.y - dragState.startPoint.y,
     );
 
     if (moveDistance > 4) {
@@ -2282,8 +2325,8 @@ export default function CanvasWorkspace({
                 y: point.y - dragState.offset.y,
               },
             }
-          : node
-      )
+          : node,
+      ),
     );
   }
 
@@ -2305,7 +2348,7 @@ export default function CanvasWorkspace({
   function handleImageResizePointerDown(
     event: ReactPointerEvent<HTMLButtonElement>,
     node: ImageCanvasNode,
-    corner: ResizeCorner
+    corner: ResizeCorner,
   ) {
     event.preventDefault();
     event.stopPropagation();
@@ -2326,11 +2369,11 @@ export default function CanvasWorkspace({
     setImageNodes((current) => {
       const topZIndex = current.reduce(
         (max, entry) => Math.max(max, entry.zIndex),
-        0
+        0,
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
@@ -2338,7 +2381,7 @@ export default function CanvasWorkspace({
   function handleWebResizePointerDown(
     event: ReactPointerEvent<HTMLButtonElement>,
     node: WebCanvasNode,
-    corner: ResizeCorner
+    corner: ResizeCorner,
   ) {
     event.preventDefault();
     event.stopPropagation();
@@ -2360,18 +2403,18 @@ export default function CanvasWorkspace({
       const topZIndex = Math.max(
         0,
         ...imageNodesRef.current.map((entry) => entry.zIndex),
-        ...current.map((entry) => entry.zIndex)
+        ...current.map((entry) => entry.zIndex),
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
 
   function handleVoicePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
-    node: VoiceCanvasNode
+    node: VoiceCanvasNode,
   ) {
     event.preventDefault();
     event.stopPropagation();
@@ -2392,11 +2435,11 @@ export default function CanvasWorkspace({
         0,
         ...imageNodesRef.current.map((entry) => entry.zIndex),
         ...webNodesRef.current.map((entry) => entry.zIndex),
-        ...current.map((entry) => entry.zIndex)
+        ...current.map((entry) => entry.zIndex),
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
@@ -2420,8 +2463,8 @@ export default function CanvasWorkspace({
                 y: point.y - dragState.offset.y,
               },
             }
-          : node
-      )
+          : node,
+      ),
     );
   }
 
@@ -2440,7 +2483,10 @@ export default function CanvasWorkspace({
     saveDelayMsRef.current = 0;
   }
 
-  function handleVoiceNodeMenuAction(nodeId: string, action: VoiceNoteMenuAction) {
+  function handleVoiceNodeMenuAction(
+    nodeId: string,
+    action: VoiceNoteMenuAction,
+  ) {
     if (action === "delete") {
       handleDeleteVoiceNode(nodeId);
       setOpenVoiceMenuNodeId(null);
@@ -2454,7 +2500,7 @@ export default function CanvasWorkspace({
 
   function handleTextPointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
-    node: TextCanvasNode
+    node: TextCanvasNode,
   ) {
     if (editingTextNodeId === node.id) {
       event.stopPropagation();
@@ -2484,11 +2530,11 @@ export default function CanvasWorkspace({
         ...imageNodesRef.current.map((entry) => entry.zIndex),
         ...webNodesRef.current.map((entry) => entry.zIndex),
         ...voiceNodesRef.current.map((entry) => entry.zIndex),
-        ...current.map((entry) => entry.zIndex)
+        ...current.map((entry) => entry.zIndex),
       );
 
       return current.map((entry) =>
-        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
       );
     });
   }
@@ -2512,8 +2558,8 @@ export default function CanvasWorkspace({
                 y: point.y - dragState.offset.y,
               },
             }
-          : node
-      )
+          : node,
+      ),
     );
   }
 
@@ -2528,10 +2574,10 @@ export default function CanvasWorkspace({
 
   function updateTextNode(
     nodeId: string,
-    getNextNode: (node: TextCanvasNode) => TextCanvasNode
+    getNextNode: (node: TextCanvasNode) => TextCanvasNode,
   ) {
     setTextNodes((current) =>
-      current.map((node) => (node.id === nodeId ? getNextNode(node) : node))
+      current.map((node) => (node.id === nodeId ? getNextNode(node) : node)),
     );
     saveDelayMsRef.current = 0;
   }
@@ -2572,8 +2618,7 @@ export default function CanvasWorkspace({
 
         {imageNodes.map((node) => {
           const isSelected = selectedImageIdSet.has(node.id);
-          const showResizeHandles =
-            isSelected && selectedImageIds.length === 1;
+          const showResizeHandles = isSelected && selectedImageIds.length === 1;
           const imageSrc = getImageNodeSrc(node);
 
           return (
@@ -2672,14 +2717,16 @@ export default function CanvasWorkspace({
             onAudioTimeUpdate={(playbackMs) =>
               handleAudioTimeUpdate(node.id, playbackMs)
             }
-            onMenuAction={(action) => handleVoiceNodeMenuAction(node.id, action)}
+            onMenuAction={(action) =>
+              handleVoiceNodeMenuAction(node.id, action)
+            }
             onPointerCancel={handleVoicePointerUp}
             onPointerDown={(event) => handleVoicePointerDown(event, node)}
             onPointerMove={handleVoicePointerMove}
             onPointerUp={handleVoicePointerUp}
             onToggleMenu={() =>
               setOpenVoiceMenuNodeId((current) =>
-                current === node.id ? null : node.id
+                current === node.id ? null : node.id,
               )
             }
             onTogglePlayback={() => toggleVoicePlayback(node.id)}
@@ -2699,8 +2746,9 @@ export default function CanvasWorkspace({
         onBackgroundColorChange={setBackgroundColor}
         onGridColorChange={setGridColor}
         onGridSizeChange={setGridSize}
-        onToggleOpen={() => setShowGridControls((current) => !current)}
-        onToggleShowGrid={() => setShowGrid((current) => !current)}
+        onToggleOpen={() => setShowGridControls((c) => !c)}
+        onToggleShowGrid={() => setShowGrid((c) => !c)}
+        onReset={handleResetGrid}
       />
 
       <CanvasFitToViewButton onClick={fitContentToView} />

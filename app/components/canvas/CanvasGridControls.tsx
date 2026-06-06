@@ -1,3 +1,15 @@
+"use client";
+
+import {
+  Eye,
+  EyeOff,
+  Grid2x2,
+  Palette,
+  Ruler,
+  Settings2,
+  RotateCcw,
+} from "lucide-react";
+
 type CanvasGridControlsProps = {
   isOpen: boolean;
   showGrid: boolean;
@@ -10,6 +22,7 @@ type CanvasGridControlsProps = {
   onBackgroundColorChange: (color: string) => void;
   onGridColorChange: (color: string) => void;
   onGridSizeChange: (size: number) => void;
+  onReset: () => void; // FIX: parent must fully restore defaults; local reset logic cannot guess state
 };
 
 export function CanvasGridControls({
@@ -18,170 +31,181 @@ export function CanvasGridControls({
   backgroundColor,
   gridColor,
   gridSize,
-  gridSizePercent,
   onToggleOpen,
   onToggleShowGrid,
   onBackgroundColorChange,
   onGridColorChange,
   onGridSizeChange,
+  onReset,
 }: CanvasGridControlsProps) {
   return (
     <div
-      className="absolute left-4 top-1/2 z-40 -translate-y-1/2 text-white"
+      className="absolute left-4 top-1/2 z-40 -translate-y-1/2"
       onWheel={(event) => event.stopPropagation()}
     >
-      <button
-        aria-expanded={isOpen}
-        aria-label="Grid settings"
-        className={[
-          "flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur transition duration-200",
-          isOpen
-            ? "border-[#0d99ff] bg-[#0d99ff] text-white"
-            : "border-white/10 bg-zinc-950/90 text-white/75 hover:bg-zinc-900",
-        ].join(" ")}
-        type="button"
-        onClick={onToggleOpen}
-      >
-        <svg
-          aria-hidden="true"
+      <div className="flex items-center gap-1.5">
+        <button
+          aria-expanded={isOpen}
+          aria-label="Grid settings"
           className={[
-            "h-5 w-5 transition duration-300",
-            isOpen ? "rotate-45 scale-95" : "rotate-0 scale-100",
+            "flex h-9 w-9 items-center justify-center rounded-xl",
+            "border border-black/10 bg-white/95 text-black",
+            "shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl",
+            isOpen ? "ring-2 ring-[#0d99ff]/15" : "",
           ].join(" ")}
-          fill="none"
-          viewBox="0 0 24 24"
+          type="button"
+          onClick={onToggleOpen}
         >
-          <path
-            d="M8 3v18M16 3v18M3 8h18M3 16h18"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.7"
-          />
-        </svg>
-      </button>
+          <Settings2 className="h-4 w-4" />
+        </button>
 
-      <aside
-        aria-hidden={!isOpen}
-        className={[
-          "absolute left-14 top-1/2 w-64 rounded-lg border border-white/10 bg-zinc-950/90 p-3 text-sm shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur",
-          "origin-left transition-[opacity,filter,transform,clip-path] duration-300 ease-[cubic-bezier(.18,.89,.32,1.18)]",
-          isOpen
-            ? "pointer-events-auto opacity-100 blur-0"
-            : "pointer-events-none opacity-0 blur-sm",
-        ].join(" ")}
-        style={{
-          clipPath: isOpen
-            ? "inset(0% 0% 0% 0% round 12px)"
-            : "inset(30% 78% 30% 0% round 999px)",
-          transform: isOpen
-            ? "translateY(-50%) translateX(0) scaleX(1) scaleY(1) skewY(0deg)"
-            : "translateY(-50%) translateX(-24px) scaleX(0.2) scaleY(0.46) skewY(-7deg)",
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-white/45">
-              Canvas
-            </div>
-            <div className="mt-0.5 text-sm font-medium text-white">Grid</div>
-          </div>
-          <button
-            aria-label={showGrid ? "Hide grid" : "Show grid"}
-            aria-pressed={showGrid}
-            className={[
-              "group relative h-8 w-14 overflow-hidden rounded-sm border p-0.5 transition",
-              showGrid
-                ? "border-[#0d99ff]/70 bg-[#0d99ff]/20"
-                : "border-white/10 bg-white/5 hover:bg-white/10",
-            ].join(" ")}
-            type="button"
-            onClick={onToggleShowGrid}
-          >
-            <span
-              className={[
-                "absolute inset-y-0 w-1/2 rounded bg-white shadow-[0_4px_14px_rgba(0,0,0,0.34)] transition-transform duration-200",
-                showGrid ? "translate-x-[24px]" : "translate-x-0",
-              ].join(" ")}
+        <aside
+          aria-hidden={!isOpen}
+          className={[
+            "overflow-hidden rounded-xl border border-black/10 bg-white/95",
+            "shadow-[0_12px_32px_rgba(0,0,0,0.10)] backdrop-blur-xl",
+            "transition-all duration-200 ease-out",
+            isOpen
+              ? "pointer-events-auto translate-x-0 opacity-100"
+              : "pointer-events-none -translate-x-2 opacity-0",
+          ].join(" ")}
+        >
+          <div className="flex items-center gap-1 p-1">
+            <CompactColorInput
+              icon={<Palette className="h-3 w-3" />}
+              label="Background"
+              value={backgroundColor}
+              onChange={onBackgroundColorChange}
             />
-            <span
-              className={[
-                "relative z-10 inline-flex h-full w-1/2 items-center justify-center text-[10px] font-semibold transition",
-                showGrid ? "text-white/45" : "text-zinc-950",
-              ].join(" ")}
-            >
-              Off
-            </span>
-            <span
-              className={[
-                "relative z-10 inline-flex h-full w-1/2 items-center justify-center text-[10px] font-semibold transition",
-                showGrid ? "text-zinc-950" : "text-white/45",
-              ].join(" ")}
-            >
-              On
-            </span>
-          </button>
-        </div>
 
-        <div className="mt-4 grid gap-3">
-          <label className="flex items-center justify-between gap-3">
-            <span className="text-white/70">Canvas color</span>
-            <span className="flex items-center gap-2">
-              <span
-                className="h-6 w-6 rounded-md border border-white/20"
-                style={{ backgroundColor }}
-              />
-              <input
-                aria-label="Canvas color"
-                className="h-8 w-8 cursor-pointer rounded-md border-0 bg-transparent p-0"
-                type="color"
-                value={backgroundColor}
-                onChange={(event) =>
-                  onBackgroundColorChange(event.currentTarget.value)
-                }
-              />
-            </span>
-          </label>
+            <CompactColorInput
+              icon={<Grid2x2 className="h-3 w-3" />}
+              label="Grid"
+              value={gridColor}
+              onChange={onGridColorChange}
+            />
 
-          <label className="flex items-center justify-between gap-3">
-            <span className="text-white/70">Grid color</span>
-            <span className="flex items-center gap-2">
-              <span className="grid h-6 w-6 grid-cols-2 overflow-hidden rounded-md border border-white/20">
-                <span style={{ backgroundColor: gridColor }} />
-                <span style={{ backgroundColor }} />
-                <span style={{ backgroundColor }} />
-                <span style={{ backgroundColor: gridColor }} />
-              </span>
-              <input
-                aria-label="Grid color"
-                className="h-8 w-8 cursor-pointer rounded-md border-0 bg-transparent p-0"
-                type="color"
-                value={gridColor}
-                onChange={(event) => onGridColorChange(event.currentTarget.value)}
-              />
-            </span>
-          </label>
-
-          <label className="grid gap-2">
-            <span className="flex items-center justify-between text-white/70">
-              <span>Grid size</span>
-              <span className="font-mono text-xs text-white/50">{gridSize}px</span>
-            </span>
-            <input
-              aria-label="Grid size"
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-zinc-950 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow-[0_3px_12px_rgba(0,0,0,0.34)] [&::-webkit-slider-thumb]:-mt-[5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-zinc-950 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_3px_12px_rgba(0,0,0,0.42)] [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full"
-              max="80"
-              min="12"
-              step="4"
-              style={{
-                background: `linear-gradient(90deg, #0d99ff 0%, #0d99ff ${gridSizePercent}%, rgba(255,255,255,0.14) ${gridSizePercent}%, rgba(255,255,255,0.14) 100%)`,
-              }}
-              type="range"
+            <CompactNumberInput
+              icon={<Ruler className="h-3 w-3" />}
+              label="Grid size"
+              max={80}
+              min={12}
+              step={4}
               value={gridSize}
-              onChange={(event) => onGridSizeChange(Number(event.currentTarget.value))}
+              onChange={onGridSizeChange}
             />
-          </label>
-        </div>
-      </aside>
+
+            <button
+              aria-label="Toggle grid"
+              className={[
+                "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                showGrid
+                  ? "bg-[#0d99ff] text-white"
+                  : "bg-black/[0.04] text-black/50 hover:text-black",
+              ].join(" ")}
+              type="button"
+              onClick={onToggleShowGrid}
+            >
+              {showGrid ? (
+                <Eye className="h-3.5 w-3.5" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5" />
+              )}
+            </button>
+
+            {/* RESET */}
+            <button
+              aria-label="Reset settings"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/[0.04] text-black/60 hover:bg-black/[0.08] hover:text-black"
+              type="button"
+              onClick={onReset}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+type CompactColorInputProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function CompactColorInput({
+  icon,
+  label,
+  value,
+  onChange,
+}: CompactColorInputProps) {
+  return (
+    <label className="relative flex h-8 items-center gap-1.5 rounded-lg bg-black/[0.04] px-2">
+      <div className="text-black/45">{icon}</div>
+
+      <div
+        className="h-3.5 w-3.5 rounded-[4px] border border-black/10"
+        style={{ backgroundColor: value }}
+      />
+
+      <span className="w-[42px] text-[10px] font-medium uppercase tracking-tight text-black/60">
+        {value.replace("#", "")}
+      </span>
+
+      <input
+        aria-label={label}
+        className="absolute inset-0 cursor-pointer opacity-0"
+        type="color"
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+      />
+    </label>
+  );
+}
+
+type CompactNumberInputProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+};
+
+function CompactNumberInput({
+  icon,
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: CompactNumberInputProps) {
+  return (
+    <label className="flex h-8 items-center gap-1.5 rounded-lg bg-black/[0.04] px-2">
+      <div className="text-black/45">{icon}</div>
+
+      <input
+        aria-label={label}
+        className="w-9 bg-transparent text-right font-mono text-[10px] text-black outline-none"
+        max={max}
+        min={min}
+        step={step}
+        type="number"
+        value={value}
+        onChange={(event) => {
+          const nextValue = Number(event.currentTarget.value);
+          if (Number.isNaN(nextValue)) return;
+
+          onChange(Math.min(Math.max(nextValue, min), max));
+        }}
+      />
+
+      <span className="text-[10px] text-black/45">px</span>
+    </label>
   );
 }
