@@ -21,6 +21,7 @@ type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 type ImageSyncStats = {
   synced: number;
   total: number;
+  failed: number;
 };
 
 type CanvasPageClientProps = {
@@ -49,6 +50,7 @@ export default function CanvasPageClient({
     synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
       .length,
     total: initialContent.imageNodes.length,
+    failed: 0,
   }));
 
   const [uploadDebugEntries, setUploadDebugEntries] = useState<

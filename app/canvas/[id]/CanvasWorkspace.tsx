@@ -90,6 +90,7 @@ type ImageCanvasNode = {
 type ImageSyncStats = {
   synced: number;
   total: number;
+  failed: number;
 };
 
 type CanvasWorkspaceProps = {
@@ -622,6 +623,7 @@ export default function CanvasWorkspace({
     onImageSyncStatsChange?.({
       synced: cloudSyncedCount,
       total: totalImageCount,
+      failed: 0,
     });
   }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
 
