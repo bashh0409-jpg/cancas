@@ -1375,14 +1375,15 @@ export default function CanvasWorkspace({
         return;
       }
 
-      const isDuplicateKey = event.key === "d" && (event.metaKey || event.ctrlKey);
+      const isDuplicateKey =
+        event.key === "d" && (event.metaKey || event.ctrlKey);
 
       if (isDuplicateKey) {
         event.preventDefault();
         event.stopPropagation();
 
         const selectedNodes = imageNodesRef.current.filter((node) =>
-          selectedImageIdSet.has(node.id)
+          selectedImageIdSet.has(node.id),
         );
 
         if (selectedNodes.length > 0) {
@@ -1409,7 +1410,13 @@ export default function CanvasWorkspace({
     return () => {
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
-  }, [redoImageDelete, removeImageNodes, selectedImageIdSet, undoImageDelete, setImageNodes]);
+  }, [
+    redoImageDelete,
+    removeImageNodes,
+    selectedImageIdSet,
+    undoImageDelete,
+    setImageNodes,
+  ]);
 
   useEffect(() => {
     function preventFileNavigation(event: DragEvent) {

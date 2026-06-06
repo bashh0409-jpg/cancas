@@ -19,7 +19,9 @@ type ImageSelectionArrangeBarProps = {
 const MIN_SIZE = 100;
 const MAX_SIZE = 400;
 const MIN_TRACKS = 1;
-const MAX_TRACKS = 12;
+const MAX_TRACKS = 30;
+const MIN_GAP = 4;
+const MAX_GAP = 32;
 
 export function ImageSelectionArrangeBar({
   count,
@@ -35,6 +37,8 @@ export function ImageSelectionArrangeBar({
   );
 
   const [tracks, setTracks] = useState(() => getDefaultTrackCount(count, 6));
+
+  const [gap, setGap] = useState(12);
 
   const maxTracks = useMemo(
     () => Math.min(MAX_TRACKS, Math.max(1, count)),
@@ -69,16 +73,17 @@ export function ImageSelectionArrangeBar({
       direction,
       size,
       tracks: clampedTracks,
+      gap,
     });
   }
 
   return (
     <div
       aria-label="Arrange selected images"
-      className="pointer-events-auto fixed left-1/2 top-13 z-[60] w-[340px] -translate-x-1/2 rounded-xl border border-black/10 bg-white/95 p-2 text-black shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+      className="pointer-events-auto fixed left-1/2 top-13 z-[60] w-fit -translate-x-1/2 rounded-xl border border-black/10 bg-white/95 p-2 text-black shadow-[0_12px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl"
       role="toolbar"
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex w-full items-center gap-1.5">
         <ToolbarIconButton
           active={kind === "grid"}
           onClick={() => handleKindChange("grid")}
@@ -131,7 +136,7 @@ export function ImageSelectionArrangeBar({
         </div>
       </div>
 
-      <div className="mt-2 flex gap-2 border-t border-black/5 pt-2">
+      <div className="mt-2 w-fit flex gap-2 border-t border-black/5 pt-2">
         <CompactInput
           label={sizeLabel}
           max={MAX_SIZE}
@@ -149,6 +154,16 @@ export function ImageSelectionArrangeBar({
           step={1}
           value={clampedTracks}
           onChange={setTracks}
+        />
+
+        <CompactInput
+          label="Gap"
+          max={MAX_GAP}
+          min={MIN_GAP}
+          step={2}
+          value={gap}
+          valueSuffix="px"
+          onChange={setGap}
         />
       </div>
 

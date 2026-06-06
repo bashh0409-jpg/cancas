@@ -43,6 +43,7 @@ export type LayoutArrangeRequest = {
   direction: LayoutDirection;
   size: number;
   tracks: number;
+  gap?: number;
 };
 
 const DEFAULT_GAP = 16;
@@ -53,7 +54,7 @@ const DEFAULT_ROW = 180;
 function fitInsideCell(
   width: number,
   height: number,
-  cellSize: number
+  cellSize: number,
 ): LayoutSize {
   const aspect = width / height;
 
@@ -76,7 +77,10 @@ export function getDefaultTrackCount(count: number, maxTracks: number) {
   return Math.min(maxTracks, Math.max(1, Math.ceil(Math.sqrt(count))));
 }
 
-export function getDefaultLayoutSize(kind: LayoutKind, direction: LayoutDirection) {
+export function getDefaultLayoutSize(
+  kind: LayoutKind,
+  direction: LayoutDirection,
+) {
   if (kind === "grid") {
     return DEFAULT_CELL;
   }
@@ -84,13 +88,17 @@ export function getDefaultLayoutSize(kind: LayoutKind, direction: LayoutDirectio
   return direction === "horizontal" ? DEFAULT_ROW : DEFAULT_COLUMN;
 }
 
-function resolveTracks(count: number, tracks: number | undefined, maxTracks: number) {
+function resolveTracks(
+  count: number,
+  tracks: number | undefined,
+  maxTracks: number,
+) {
   return tracks ?? getDefaultTrackCount(count, maxTracks);
 }
 
 export function arrangeImagesGrid(
   nodes: LayoutImageInput[],
-  options: ArrangeImagesOptions
+  options: ArrangeImagesOptions,
 ): LayoutImageOutput[] {
   const gap = options.gap ?? DEFAULT_GAP;
   const cellSize = options.cellSize ?? DEFAULT_CELL;
@@ -136,7 +144,7 @@ export function arrangeImagesGrid(
 
 export function arrangeImagesPinterest(
   nodes: LayoutImageInput[],
-  options: ArrangeImagesOptions
+  options: ArrangeImagesOptions,
 ): LayoutImageOutput[] {
   const gap = options.gap ?? 12;
   const direction = options.direction ?? "vertical";
@@ -146,11 +154,25 @@ export function arrangeImagesPinterest(
     const rowHeight = options.rowHeight ?? DEFAULT_ROW;
     const rows = resolveTracks(nodes.length, options.tracks, 5);
     const rowWidths = Array.from({ length: rows }, () => 0);
+
+    // Sort by aspect ratio but distribute to avoid clustering similar sizes
     const sorted = [...nodes].sort(
-      (a, b) => b.width / b.height - a.width / a.height
+      (a, b) => b.width / b.height - a.width / a.height,
     );
 
-    return sorted.map((node) => {
+    // Round-robin assignment with aspect ratio awareness
+    const assigned = sorted.map((node, index) => ({
+      node,
+      row: index % rows,
+    }));
+
+    // Sort by assigned row, then by aspect ratio within row for balance
+    assigned.sort((a, b) => {
+      if (a.row !== b.row) return a.row - b.row;
+      return b.node.width / b.node.height - a.node.width / a.node.height;
+    });
+
+    return assigned.map(({ node }) => {
       const aspect = node.width / node.height;
       const width = Math.max(1, Math.round(rowHeight * aspect));
       const row = rowWidths.indexOf(Math.min(...rowWidths));
@@ -170,11 +192,25 @@ export function arrangeImagesPinterest(
   const columnWidth = options.columnWidth ?? DEFAULT_COLUMN;
   const columns = resolveTracks(nodes.length, options.tracks, 5);
   const columnHeights = Array.from({ length: columns }, () => 0);
+
+  // Sort by aspect ratio but distribute to avoid clustering similar sizes
   const sorted = [...nodes].sort(
-    (a, b) => b.height / b.width - a.height / a.width
+    (a, b) => b.height / b.width - a.height / a.width,
   );
 
-  return sorted.map((node) => {
+  // Round-robin assignment with aspect ratio awareness
+  const assigned = sorted.map((node, index) => ({
+    node,
+    column: index % columns,
+  }));
+
+  // Sort by assigned column, then by aspect ratio within column for balance
+  assigned.sort((a, b) => {
+    if (a.column !== b.column) return a.column - b.column;
+    return b.node.height / b.node.width - a.node.height / a.node.width;
+  });
+
+  return assigned.map(({ node }) => {
     const aspect = node.width / node.height;
     const height = Math.max(1, Math.round(columnWidth / aspect));
     const column = columnHeights.indexOf(Math.min(...columnHeights));
@@ -194,7 +230,7 @@ export function arrangeImagesPinterest(
 export function arrangeImages(
   nodes: LayoutImageInput[],
   kind: LayoutKind,
-  options: ArrangeImagesOptions
+  options: ArrangeImagesOptions,
 ): LayoutImageOutput[] {
   if (nodes.length === 0) {
     return [];
@@ -210,12 +246,13 @@ export function arrangeImages(
 export function arrangeImagesFromRequest(
   nodes: LayoutImageInput[],
   origin: LayoutPoint,
-  request: LayoutArrangeRequest
+  request: LayoutArrangeRequest,
 ): LayoutImageOutput[] {
   const baseOptions: ArrangeImagesOptions = {
     origin,
     direction: request.direction,
     tracks: request.tracks,
+    gap: request.gap,
   };
 
   if (request.kind === "grid") {
@@ -239,7 +276,7 @@ export function arrangeImagesFromRequest(
 }
 
 export function getSelectionOrigin(
-  nodes: { position: LayoutPoint }[]
+  nodes: { position: LayoutPoint }[],
 ): LayoutPoint {
   return {
     x: Math.min(...nodes.map((node) => node.position.x)),
