@@ -59,26 +59,24 @@ export function CanvasTextNode({
     }
 
     const textarea = textareaRef.current;
-
     if (!textarea) {
       return;
     }
 
     textarea.focus();
-    textarea.select();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   }, [isEditing]);
 
   useLayoutEffect(() => {
-    const measure = measureRef.current;
-
-    if (!measure) {
+    const measurement = measureRef.current;
+    if (!measurement) {
       return;
     }
 
-    const rect = measure.getBoundingClientRect();
+    const rect = measurement.getBoundingClientRect();
     const nextSize = {
-      width: Math.ceil(Math.max(48, rect.width)),
-      height: Math.ceil(Math.max(node.style.fontSize * 1.35 + 16, rect.height)),
+      width: Math.max(60, Math.ceil(rect.width)),
+      height: Math.max(node.style.fontSize * 1.35 + 16, Math.ceil(rect.height)),
     };
 
     if (
@@ -88,21 +86,17 @@ export function CanvasTextNode({
       onSizeChange(nextSize);
     }
   }, [
-    node.size.height,
-    node.size.width,
+    node.text,
     node.style.backgroundColor,
     node.style.color,
     node.style.fontFamily,
     node.style.fontSize,
-    node.text,
     onSizeChange,
   ]);
 
   function handleTextChange(event: ChangeEvent<HTMLTextAreaElement>) {
     onInput(event.currentTarget.value);
   }
-
-  const shouldUseDifferenceBlend = node.style.backgroundColor === "transparent";
 
   return (
     <div
@@ -117,58 +111,56 @@ export function CanvasTextNode({
       onPointerUp={onPointerUp}
       style={{
         cursor: isEditing ? "text" : isDragging ? "grabbing" : "grab",
-        height: node.size.height,
         left: node.position.x,
         top: node.position.y,
         width: node.size.width,
+        height: node.size.height,
         zIndex: node.zIndex,
       }}
     >
-      {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          className={[
-            "h-full w-full resize-none overflow-hidden rounded-md border px-3 py-2 leading-tight outline-none transition",
-            "border-[#2244ec]",
-          ].join(" ")}
-          spellCheck
-          style={{
-            backgroundColor: node.style.backgroundColor,
-            color: node.style.color,
-            fontFamily: node.style.fontFamily,
-            fontSize: node.style.fontSize,
-            mixBlendMode: shouldUseDifferenceBlend ? "difference" : "normal",
-          }}
-          value={node.text}
-          onBlur={onBlur}
-          onChange={handleTextChange}
-          onPointerDown={(event) => event.stopPropagation()}
-        />
-      ) : (
-        <div
-          className={[
-            "h-full w-full whitespace-pre-wrap break-words rounded-md border px-3 py-2 leading-tight outline-none transition",
-            isSelected
-              ? "border-[#2244ec]"
-              : "border-transparent group-hover:border-[#2244ec]/70",
-            node.style.backgroundColor === "transparent" ? "" : "shadow-sm",
-          ].join(" ")}
-          style={{
-            backgroundColor: node.style.backgroundColor,
-            color: node.style.color,
-            fontFamily: node.style.fontFamily,
-            fontSize: node.style.fontSize,
-            mixBlendMode: shouldUseDifferenceBlend ? "difference" : "normal",
-          }}
-        >
-          {node.text}
-        </div>
-      )}
+      <div
+        className={[
+          "h-full w-full rounded-md border px-3 py-2 leading-tight transition",
+          isSelected
+            ? "border-[#2244ec]"
+            : "border-transparent group-hover:border-[#2244ec]/70",
+        ].join(" ")}
+        style={{
+          backgroundColor: node.style.backgroundColor,
+          color: node.style.color,
+          fontFamily: node.style.fontFamily,
+          fontSize: node.style.fontSize,
+        }}
+      >
+        {isEditing ? (
+          <textarea
+            ref={textareaRef}
+            className="h-full w-full resize-none overflow-hidden bg-transparent outline-none"
+            spellCheck
+            style={{
+              backgroundColor: "transparent",
+              color: node.style.color,
+              fontFamily: node.style.fontFamily,
+              fontSize: node.style.fontSize,
+            }}
+            value={node.text}
+            onBlur={onBlur}
+            onChange={handleTextChange}
+            onPointerDown={(event) => event.stopPropagation()}
+          />
+        ) : (
+          <div className="h-full w-full whitespace-pre-wrap break-words">
+            {node.text || "Text"}
+          </div>
+        )}
+      </div>
+
       <div
         ref={measureRef}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 -z-10 whitespace-pre rounded-md border px-3 py-2 leading-tight opacity-0"
+        className="pointer-events-none fixed left-0 top-0 -z-10 whitespace-pre-wrap break-words px-3 py-2 opacity-0"
         style={{
+          minWidth: 60,
           backgroundColor: node.style.backgroundColor,
           color: node.style.color,
           fontFamily: node.style.fontFamily,

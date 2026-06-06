@@ -1,14 +1,22 @@
 "use client";
 
-import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
 import { ToolbarButton } from "./ToolbarButton";
 
-export function TextToolButton() {
+type TextToolButtonProps = {
+  isActive?: boolean;
+  onActivate: () => void;
+};
+
+export function TextToolButton({
+  isActive = false,
+  onActivate,
+}: TextToolButtonProps) {
   return (
     <ToolbarButton
       icon="text"
       label="Text"
-      onClick={activateCanvasTextTool}
+      active={isActive}
+      onClick={onActivate}
     />
   );
 }

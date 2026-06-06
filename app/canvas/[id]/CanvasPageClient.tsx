@@ -11,7 +11,12 @@ import {
   type UploadDebugEntry,
 } from "@/lib/canvas/uploadDebug";
 import CanvasWorkspace from "./CanvasWorkspace";
+import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
 import { SignOutNameButton } from "../../home/SignOutNameButton";
+import { Cloud, CloudUpload } from "lucide-react";
+
+type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
+
 
 type ImageSyncStats = {
   synced: number;
@@ -97,7 +102,9 @@ export default function CanvasPageClient({
                 <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
               </svg>
             </Link>
-            <span className="text-white pixel mix-blend-difference text-sm">Home</span>
+            <span className="text-white pixel mix-blend-difference text-sm">
+              Home
+            </span>
           </div>
 
           {/* CENTER */}
@@ -143,20 +150,8 @@ export default function CanvasPageClient({
       )}
 
       {/* BOTTOM BAR */}
-      <div className="absolute bottom-0 left-0 z-50 flex w-full items-center justify-between p-4">
-        <div className="pixel text-sm tracking-tight text-white">
-          <span className="text-white">{syncStats.synced}</span>
-          <span className="text-white/50"> / {syncStats.total}</span>
-          <span className="text-white/70"> synced to cloud</span>
-        </div>
-
-        <div className="pixel text-sm tracking-tight text-white">
-          Let&apos;s do this thing{" "}
-          <SignOutNameButton
-            firstName={firstName}
-            signOutAction={signOutAction}
-          />
-        </div>
+      <div className="absolute bottom-0 left-0 z-50 flex w-fit items-center p-4">
+        <SyncIndicator stats={syncStats} />
       </div>
 
       <FloatingToolbar />
