@@ -1,6 +1,10 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-export type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+export type ResizeCorner =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
 
 type NodeResizeHandlesProps = {
   corners: readonly (readonly [ResizeCorner, string])[];
@@ -9,7 +13,7 @@ type NodeResizeHandlesProps = {
   onPointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onPointerDown: (
     corner: ResizeCorner,
-    event: ReactPointerEvent<HTMLButtonElement>
+    event: ReactPointerEvent<HTMLButtonElement>,
   ) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -31,7 +35,7 @@ export function NodeResizeHandles({
           key={corner}
           aria-label={`Resize ${labelPrefix} from ${corner}`}
           className={[
-            "absolute h-3 w-3 border border-[#0d99ff] bg-white transition",
+            "absolute h-3 w-3 border border-[#2244ec] bg-white transition",
             visible ? "opacity-100" : "opacity-0 group-hover:opacity-100",
             className,
           ].join(" ")}

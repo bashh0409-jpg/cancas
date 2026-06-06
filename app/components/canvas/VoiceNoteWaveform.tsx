@@ -14,31 +14,27 @@ export function VoiceNoteWaveform({
   levels,
 }: VoiceNoteWaveformProps) {
   const bars = isPlaying && levels ? levels : getVoiceWaveformHeights();
+
   const progressRatio =
     durationMs > 0 ? Math.min(1, playbackMs / durationMs) : 0;
+
   const progressedBars = Math.floor(progressRatio * bars.length);
 
   return (
-    <div className="relative flex h-8 flex-1 items-center gap-0.5 rounded-md border border-white/20 bg-black/20 px-1.5 py-1">
-      {bars.map((height, index) => {
-        const isActive = isPlaying && index <= progressedBars;
+    <div className="flex h-7 flex-1 items-center gap-[2px] rounded-md border border-white/10 bg-white/5 px-1.5">
+      {bars.map((h, i) => {
+        const active = i <= progressedBars;
 
         return (
           <span
-            key={`voice-bar-${index}`}
-            aria-hidden
+            key={i}
             className={[
-              "w-full flex-1 rounded-full transition-all duration-200",
-              isActive
-                ? "bg-gradient-to-t from-[#0d99ff]/70 via-[#2bb7ff] to-[#8edcff]"
-                : "bg-white/25",
+              "w-[2px] rounded-full transition-all",
+              active ? "bg-white/80" : "bg-white/20",
             ].join(" ")}
             style={{
-              height: `${Math.max(22, height)}%`,
-              opacity: isActive ? 1 : 0.75,
-              transform: isPlaying
-                ? `scaleY(${1 + ((index % 3) * 0.08)})`
-                : "scaleY(1)",
+              height: `${Math.max(20, h)}%`,
+              transform: isPlaying ? `scaleY(${1 + (i % 2) * 0.05})` : "none",
             }}
           />
         );

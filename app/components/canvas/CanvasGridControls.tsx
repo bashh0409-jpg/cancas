@@ -51,7 +51,7 @@ export function CanvasGridControls({
             "flex h-9 w-9 items-center justify-center rounded-xl",
             "border border-black/10 bg-white/95 text-black",
             "shadow-[0_8px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl",
-            isOpen ? "ring-2 ring-[#0d99ff]/15" : "",
+            isOpen ? "ring-2 ring-[#2244ec]/15" : "",
           ].join(" ")}
           type="button"
           onClick={onToggleOpen}
@@ -100,7 +100,7 @@ export function CanvasGridControls({
               className={[
                 "flex h-8 w-8 items-center justify-center rounded-lg transition",
                 showGrid
-                  ? "bg-[#0d99ff] text-white"
+                  ? "bg-[#2244ec] text-white"
                   : "bg-black/[0.04] text-black/50 hover:text-black",
               ].join(" ")}
               type="button"

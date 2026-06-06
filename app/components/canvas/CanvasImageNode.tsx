@@ -30,7 +30,7 @@ type CanvasImageNodeProps = {
   onResizePointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerDown: (
     corner: ResizeCorner,
-    event: ReactPointerEvent<HTMLButtonElement>
+    event: ReactPointerEvent<HTMLButtonElement>,
   ) => void;
   onResizePointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -94,8 +94,8 @@ export function CanvasImageNode({
         className={[
           "pointer-events-none absolute -inset-px border transition",
           isSelected
-            ? "border-[#0d99ff] opacity-100"
-            : "border-[#0d99ff] opacity-0 group-hover:opacity-100",
+            ? "border-[#2244ec] opacity-100"
+            : "border-[#2244ec] opacity-0 group-hover:opacity-100",
           isResizing ? "opacity-100" : "",
         ].join(" ")}
       />

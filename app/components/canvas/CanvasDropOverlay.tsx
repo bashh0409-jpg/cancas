@@ -9,7 +9,7 @@ export function CanvasDropOverlay({ isVisible }: CanvasDropOverlayProps) {
       className={[
         "pointer-events-none absolute inset-4 z-30 grid place-items-center rounded-xl border border-dashed text-sm font-medium text-white transition",
         isVisible
-          ? "border-[#0d99ff]/70 bg-[#0d99ff]/10 opacity-100"
+          ? "border-[#2244ec]/70 bg-[#2244ec]/10 opacity-100"
           : "border-white/0 bg-transparent opacity-0",
       ].join(" ")}
     >

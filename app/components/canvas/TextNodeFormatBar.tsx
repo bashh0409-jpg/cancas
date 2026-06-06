@@ -65,6 +65,7 @@ export function TextNodeFormatBar({
     <div
       className="pointer-events-auto fixed left-1/2 top-16 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1.5 text-white shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur"
       role="toolbar"
+      style={{ mixBlendMode: "multiply" }}
       onPointerDown={(event) => event.stopPropagation()}
       onWheel={(event) => event.stopPropagation()}
     >
@@ -99,7 +100,10 @@ export function TextNodeFormatBar({
           value={fontSize}
           onChange={(event) =>
             onFontSizeChange(
-              Math.min(240, Math.max(8, Number(event.currentTarget.value) || 8))
+              Math.min(
+                240,
+                Math.max(8, Number(event.currentTarget.value) || 8),
+              ),
             )
           }
         />
@@ -150,7 +154,9 @@ export function TextNodeFormatBar({
           aria-label="Custom background color"
           className="h-7 w-7 cursor-pointer rounded-full border border-white/15 bg-transparent p-0"
           type="color"
-          value={backgroundColor === "transparent" ? "#111111" : backgroundColor}
+          value={
+            backgroundColor === "transparent" ? "#111111" : backgroundColor
+          }
           onChange={(event) =>
             onBackgroundColorChange(event.currentTarget.value)
           }

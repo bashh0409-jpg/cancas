@@ -5,7 +5,7 @@
   <rect x="360" y="620" width="620" height="340" rx="30" fill="#EAF7EE"/>
   <circle cx="1180" cy="820" r="160" fill="#F7D06B"/>
   <path d="M320 300H520M320 360H575M865 380H1160M475 790H800" stroke="#111111" stroke-width="20" stroke-linecap="round"/>
-  <path d="M1220 360L1325 465L1218 572" stroke="#0D99FF" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1220 360L1325 465L1218 572" stroke="#2244ec" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M1010 845C1080 745 1215 725 1320 790" stroke="#111111" stroke-width="18" stroke-linecap="round"/>
   <g opacity=".18">
     <path d="M0 80H1600M0 240H1600M0 400H1600M0 560H1600M0 720H1600M0 880H1600M0 1040H1600" stroke="white"/>

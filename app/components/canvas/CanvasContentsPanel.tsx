@@ -115,7 +115,7 @@ export function CanvasContentsPanel({
             "bg-white/95 px-3 text-black",
             "shadow-[0_10px_28px_rgba(0,0,0,0.10)] backdrop-blur-xl",
             "transition",
-            isOpen ? "ring-2 ring-[#0d99ff]/15" : "",
+            isOpen ? "ring-2 ring-[#2244ec]/15" : "",
           ].join(" ")}
         >
           <Layers3 className="h-4 w-4 text-black/60" />

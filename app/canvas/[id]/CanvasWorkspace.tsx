@@ -2000,6 +2000,9 @@ export default function CanvasWorkspace({
     }
 
     event.preventDefault();
+    setShowGridControls(false);
+    setShowContentsPanel(false);
+
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
 
     if (isTextToolActive) {

@@ -59,7 +59,7 @@ export const CANVAS_TEXT_FONTS = [
 export const CANVAS_TEXT_COLORS = [
   "#ffffff",
   "#111111",
-  "#0d99ff",
+  "#2244ec",
   "#7c3aed",
   "#f97316",
   "#22c55e",
@@ -71,7 +71,7 @@ export const CANVAS_TEXT_BACKGROUNDS = [
   "transparent",
   "#ffffff",
   "#111111",
-  "#0d99ff",
+  "#2244ec",
   "#facc15",
   "#22c55e",
   "#f97316",

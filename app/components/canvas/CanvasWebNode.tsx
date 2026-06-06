@@ -27,7 +27,7 @@ type CanvasWebNodeProps = {
   onResizePointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerDown: (
     corner: ResizeCorner,
-    event: ReactPointerEvent<HTMLButtonElement>
+    event: ReactPointerEvent<HTMLButtonElement>,
   ) => void;
   onResizePointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -65,7 +65,7 @@ export function CanvasWebNode({
       <WebsitePreviewCard url={node.url} />
       <div
         className={[
-          "pointer-events-none absolute -inset-px rounded-lg border border-[#0d99ff] transition",
+          "pointer-events-none absolute -inset-px rounded-lg border border-[#2244ec] transition",
           isResizing ? "opacity-100" : "opacity-0 group-hover:opacity-100",
         ].join(" ")}
       />

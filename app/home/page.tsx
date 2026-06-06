@@ -9,6 +9,7 @@ import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SignOutNameButton } from "./SignOutNameButton";
+import { CreditsBadge } from "../components/home/CreditsBadge";
 
 export default async function HomePage({
   searchParams,
@@ -72,7 +73,9 @@ export default async function HomePage({
         <div className="flex items-center gap-3">
           <div className="px-2 py-1 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center gap-1">
             <span className="text-blue-200 pixel text-xs">Credits</span>
-            <span className="text-blue-100 font-semibold text-sm">{credits}</span>
+            <span className="text-blue-100 font-semibold text-sm">
+              {credits}
+            </span>
           </div>
           <div className="text-white pixel text-sm truncate max-w-[80px]">
             {user.email}
@@ -106,7 +109,9 @@ export default async function HomePage({
             </div>
             <div className="mt-3 px-3 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center gap-2">
               <span className="text-blue-200 pixel text-xs">Credits</span>
-              <span className="text-blue-100 font-semibold text-sm">{credits}</span>
+              <span className="text-blue-100 font-semibold text-sm">
+                {credits}
+              </span>
             </div>
           </div>
         </aside>
@@ -126,14 +131,7 @@ export default async function HomePage({
                 </span>
               </div>
             </div>
-            <div className="text-white pixel text-sm">
-              Welcome,{" "}
-              <SignOutNameButton
-                firstName={firstName}
-                signOutAction={signOut}
-              />
-              !
-            </div>
+            <CreditsBadge credits={credits} />
           </div>
 
           <div className="p-3 text-white text-sm pixel bg-white/10 rounded-lg">

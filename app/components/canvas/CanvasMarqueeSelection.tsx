@@ -14,7 +14,7 @@ export function CanvasMarqueeSelection({
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute border border-[#0d99ff] bg-[#0d99ff]/10"
+      className="pointer-events-none absolute border border-[#2244ec] bg-[#2244ec]/10"
       style={{
         height,
         left: x,

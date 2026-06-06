@@ -97,6 +97,7 @@ export default function CanvasPageClient({
                 <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
               </svg>
             </Link>
+            <span className="text-white pixel mix-blend-difference text-sm">Home</span>
           </div>
 
           {/* CENTER */}

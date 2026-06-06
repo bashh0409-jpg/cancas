@@ -113,7 +113,7 @@ export function ImageSelectionArrangeBar({
 
         <div className="ml-auto flex items-center gap-1">
           <button
-            className="h-8 rounded-md bg-[#0d99ff] px-3 text-[11px] font-semibold text-white transition hover:bg-[#0b87e0]"
+            className="h-8 rounded-md bg-[#2244ec] px-3 text-[11px] font-semibold text-white transition hover:bg-[#0b87e0]"
             type="button"
             onClick={applyLayout}
           >
@@ -184,7 +184,7 @@ function ToolbarIconButton({
           "flex h-8 w-8 items-center justify-center rounded-md transition",
           active
             ? blue
-              ? "bg-[#0d99ff] text-white"
+              ? "bg-[#2244ec] text-white"
               : "bg-black text-white"
             : "text-black/50 hover:bg-black/[0.04] hover:text-black",
         ].join(" ")}
@@ -223,7 +223,7 @@ function CompactInput({
       <div className="flex items-center gap-1">
         <input
           aria-label={label}
-          className="h-6 w-16 rounded-md border border-black/10 bg-white px-2 text-right font-mono text-[11px] text-black outline-none transition focus:border-[#0d99ff]"
+          className="h-6 w-16 rounded-md border border-black/10 bg-white px-2 text-right font-mono text-[11px] text-black outline-none transition focus:border-[#2244ec]"
           max={max}
           min={min}
           step={step}

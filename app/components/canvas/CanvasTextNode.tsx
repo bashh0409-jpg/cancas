@@ -127,7 +127,7 @@ export function CanvasTextNode({
           ref={textareaRef}
           className={[
             "h-full w-full resize-none overflow-hidden rounded-md border px-3 py-2 leading-tight outline-none transition",
-            "border-[#0d99ff]",
+            "border-[#2244ec]",
           ].join(" ")}
           spellCheck
           style={{
@@ -135,6 +135,7 @@ export function CanvasTextNode({
             color: node.style.color,
             fontFamily: node.style.fontFamily,
             fontSize: node.style.fontSize,
+            mixBlendMode: "multiply",
           }}
           value={node.text}
           onBlur={onBlur}
@@ -146,8 +147,8 @@ export function CanvasTextNode({
           className={[
             "h-full w-full whitespace-pre-wrap break-words rounded-md border px-3 py-2 leading-tight outline-none transition",
             isSelected
-              ? "border-[#0d99ff]"
-              : "border-transparent group-hover:border-[#0d99ff]/70",
+              ? "border-[#2244ec]"
+              : "border-transparent group-hover:border-[#2244ec]/70",
             node.style.backgroundColor === "transparent" ? "" : "shadow-sm",
           ].join(" ")}
           style={{
@@ -155,6 +156,7 @@ export function CanvasTextNode({
             color: node.style.color,
             fontFamily: node.style.fontFamily,
             fontSize: node.style.fontSize,
+            mixBlendMode: "multiply",
           }}
         >
           {node.text}

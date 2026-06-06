@@ -59,7 +59,7 @@ export function VoiceNoteCard({
   const animationFrameRef = useRef<number | null>(null);
   const frequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const [waveformLevels, setWaveformLevels] = useState<number[]>(
-    getVoiceWaveformHeights
+    getVoiceWaveformHeights,
   );
 
   const stopWaveformAnalysis = useCallback(() => {
@@ -118,26 +118,36 @@ export function VoiceNoteCard({
 
       currentAnalyser.getByteFrequencyData(frequencyData);
 
-      const nextLevels = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, index) => {
-        const bucketStart = Math.floor(
-          (index / WAVEFORM_BAR_COUNT) * frequencyData.length
-        );
-        const bucketEnd = Math.max(
-          bucketStart + 1,
-          Math.floor(((index + 1) / WAVEFORM_BAR_COUNT) * frequencyData.length)
-        );
-        let total = 0;
+      const nextLevels = Array.from(
+        { length: WAVEFORM_BAR_COUNT },
+        (_, index) => {
+          const bucketStart = Math.floor(
+            (index / WAVEFORM_BAR_COUNT) * frequencyData.length,
+          );
+          const bucketEnd = Math.max(
+            bucketStart + 1,
+            Math.floor(
+              ((index + 1) / WAVEFORM_BAR_COUNT) * frequencyData.length,
+            ),
+          );
+          let total = 0;
 
-        for (let bucketIndex = bucketStart; bucketIndex < bucketEnd; bucketIndex += 1) {
-          total += frequencyData[bucketIndex] ?? 0;
-        }
+          for (
+            let bucketIndex = bucketStart;
+            bucketIndex < bucketEnd;
+            bucketIndex += 1
+          ) {
+            total += frequencyData[bucketIndex] ?? 0;
+          }
 
-        const average = total / (bucketEnd - bucketStart);
-        return Math.max(18, Math.min(100, 18 + (average / 255) * 82));
-      });
+          const average = total / (bucketEnd - bucketStart);
+          return Math.max(18, Math.min(100, 18 + (average / 255) * 82));
+        },
+      );
 
       setWaveformLevels(nextLevels);
-      animationFrameRef.current = window.requestAnimationFrame(readFrequencyData);
+      animationFrameRef.current =
+        window.requestAnimationFrame(readFrequencyData);
     }
 
     if (animationFrameRef.current === null) {
@@ -166,11 +176,14 @@ export function VoiceNoteCard({
       audioElementRef.current = element;
       onAudioRef(element);
     },
-    [onAudioRef]
+    [onAudioRef],
   );
 
   return (
-    <div className="relative h-fit w-full rounded-xl border border-white/10 bg-white/10 px-3  shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur">
+    <div
+      className="relative h-fit w-full rounded-xl border border-white/10 bg-white/10 px-3  shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur"
+      style={{ mixBlendMode: "multiply" }}
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="pixel truncate text-xs tracking-tight text-white">
           {title}
