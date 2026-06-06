@@ -102,6 +102,8 @@ export function CanvasTextNode({
     onInput(event.currentTarget.value);
   }
 
+  const shouldUseDifferenceBlend = node.style.backgroundColor === "transparent";
+
   return (
     <div
       className="group absolute"
@@ -135,7 +137,7 @@ export function CanvasTextNode({
             color: node.style.color,
             fontFamily: node.style.fontFamily,
             fontSize: node.style.fontSize,
-            mixBlendMode: "multiply",
+            mixBlendMode: shouldUseDifferenceBlend ? "difference" : "normal",
           }}
           value={node.text}
           onBlur={onBlur}
@@ -156,7 +158,7 @@ export function CanvasTextNode({
             color: node.style.color,
             fontFamily: node.style.fontFamily,
             fontSize: node.style.fontSize,
-            mixBlendMode: "multiply",
+            mixBlendMode: shouldUseDifferenceBlend ? "difference" : "normal",
           }}
         >
           {node.text}

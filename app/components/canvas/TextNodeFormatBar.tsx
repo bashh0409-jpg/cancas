@@ -3,6 +3,7 @@ import {
   CANVAS_TEXT_COLORS,
   CANVAS_TEXT_FONTS,
 } from "./canvasTextOptions";
+import { Droplet, Minus, Palette, Plus, Text } from "lucide-react";
 
 type TextNodeFormatBarProps = {
   backgroundColor: string;
@@ -63,33 +64,35 @@ export function TextNodeFormatBar({
 }: TextNodeFormatBarProps) {
   return (
     <div
-      className="pointer-events-auto fixed left-1/2 top-16 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1.5 text-white shadow-[0_12px_32px_rgba(0,0,0,0.38)] backdrop-blur"
+      className="pointer-events-auto fixed left-1/2 top-16 z-[60] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-full border border-white/10 bg-slate-950/95 px-2 py-1.5 text-white shadow-[0_12px_32px_rgba(0,0,0,0.30)] backdrop-blur"
       role="toolbar"
-      style={{ mixBlendMode: "multiply" }}
       onPointerDown={(event) => event.stopPropagation()}
       onWheel={(event) => event.stopPropagation()}
     >
-      <select
-        aria-label="Font family"
-        className="h-8 max-w-44 rounded-full border border-white/15 bg-zinc-950/80 px-3 text-xs text-white outline-none transition hover:bg-zinc-900"
-        value={fontFamily}
-        onChange={(event) => onFontFamilyChange(event.currentTarget.value)}
-      >
-        {CANVAS_TEXT_FONTS.map((font) => (
-          <option key={font.label} value={font.value}>
-            {font.label} ({font.source})
-          </option>
-        ))}
-      </select>
+      <div className="flex h-8 items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-2 text-white transition hover:bg-slate-900">
+        <Text className="h-4 w-4 text-white/70" />
+        <select
+          aria-label="Font family"
+          className="h-8 min-w-[120px] rounded-full bg-transparent px-1 text-[11px] text-white outline-none appearance-none"
+          value={fontFamily}
+          onChange={(event) => onFontFamilyChange(event.currentTarget.value)}
+        >
+          {CANVAS_TEXT_FONTS.map((font) => (
+            <option key={font.label} value={font.value}>
+              {font.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <div className="flex h-8 items-center rounded-full border border-white/15 bg-zinc-950/50">
+      <div className="flex h-8 items-center gap-1 rounded-full border border-white/10 bg-slate-900/80 px-1">
         <button
           aria-label="Decrease font size"
           className="h-8 w-8 rounded-l-full text-white/70 transition hover:bg-white/10 hover:text-white"
           type="button"
           onClick={() => onFontSizeChange(Math.max(8, fontSize - 2))}
         >
-          -
+          <Minus className="h-4 w-4" />
         </button>
         <input
           aria-label="Font size"
@@ -113,13 +116,16 @@ export function TextNodeFormatBar({
           type="button"
           onClick={() => onFontSizeChange(Math.min(240, fontSize + 2))}
         >
-          +
+          <Plus className="h-4 w-4" />
         </button>
       </div>
 
       <div className="hidden h-5 w-px bg-white/15 sm:block" />
 
-      <div className="flex items-center gap-1">
+      <div className="flex h-8 items-center gap-1 rounded-full border border-white/10 bg-slate-900/80 px-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70">
+          <Palette className="h-4 w-4" />
+        </span>
         {CANVAS_TEXT_COLORS.map((entry) => (
           <Swatch
             key={entry}
@@ -140,7 +146,10 @@ export function TextNodeFormatBar({
 
       <div className="hidden h-5 w-px bg-white/15 sm:block" />
 
-      <div className="flex items-center gap-1">
+      <div className="flex h-8 items-center gap-1 rounded-full border border-white/10 bg-slate-900/80 px-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70">
+          <Droplet className="h-4 w-4" />
+        </span>
         {CANVAS_TEXT_BACKGROUNDS.map((entry) => (
           <Swatch
             key={entry}

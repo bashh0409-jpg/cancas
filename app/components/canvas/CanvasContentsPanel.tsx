@@ -62,7 +62,7 @@ export function CanvasContentsPanel({
             "border border-black/10 bg-white/95",
             "shadow-[0_16px_36px_rgba(0,0,0,0.12)] backdrop-blur-xl",
             "transition-all duration-200 ease-out",
-            "rounded-md", // less rounded
+            "rounded-xl", // less rounded
             isOpen
               ? "pointer-events-auto translate-y-0 opacity-100"
               : "pointer-events-none translate-y-1 opacity-0",
@@ -115,7 +115,7 @@ export function CanvasContentsPanel({
             "bg-white/95 px-3 text-black",
             "shadow-[0_10px_28px_rgba(0,0,0,0.10)] backdrop-blur-xl",
             "transition",
-            isOpen ? "ring-2 ring-[#2244ec]/15" : "",
+            isOpen ? "ring-2 ring-[#0d99ff]/15" : "",
           ].join(" ")}
         >
           <Layers3 className="h-4 w-4 text-black/60" />

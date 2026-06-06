@@ -24,7 +24,7 @@ export function CanvasZoomControls({
       role="group"
       onWheel={(event) => event.stopPropagation()}
     >
-      <div className="flex items-center gap-1 rounded-xl border border-black/10 bg-white/95 p-1 text-black shadow-[0_10px_30px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+      <div className="flex flex-col w-10 items-center gap-1 rounded-xl border border-black/10 bg-white/95 p-1 text-black shadow-[0_10px_30px_rgba(0,0,0,0.10)] backdrop-blur-xl">
         <ZoomButton disabled={!canZoomOut} label="Zoom out" onClick={onZoomOut}>
           <Minus className="h-3.5 w-3.5" />
         </ZoomButton>
