@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { siDiscord, siYoutube } from "simple-icons";
 import {
+  ArrowRight,
   BadgeQuestionMark,
   ChevronDown,
   ChevronLeft,
@@ -428,50 +429,106 @@ function FilesPage({
   errorMessage: string | undefined;
   createCanvasAction: () => Promise<void>;
 }) {
+const scrollRef = useRef<HTMLDivElement>(null);
+
+const [canScrollRight, setCanScrollRight] = useState(true);
+
+const updateScrollState = () => {
+  const el = scrollRef.current;
+
+  if (!el) return;
+
+  // prevents tiny sub-pixel inaccuracies at the end
+  const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+
+  setCanScrollRight(!isAtEnd);
+};
+
+useEffect(() => {
+  updateScrollState();
+
+  const el = scrollRef.current;
+
+  if (!el) return;
+
+  el.addEventListener("scroll", updateScrollState);
+
+  return () => {
+    el.removeEventListener("scroll", updateScrollState);
+  };
+}, []);
+
+const handleScroll = () => {
+  scrollRef.current?.scrollBy({
+    left: 220,
+    behavior: "smooth",
+  });
+};
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => createCanvasAction()}
-            className="bg-white/20 hidden cursor-pointer pixel text-white rounded-lg px-3 py-2 text-sm"
+            className="pixel hidden cursor-pointer rounded-lg bg-white/20 px-3 py-2 text-sm text-white"
           >
             New File
           </button>
-          <div className="text-sm  mono tracking-tight text-white">
+
+          <div className="mono text-sm tracking-tight text-white">
             {firstName} {lastName}&apos;s Workspace
           </div>
-          <div className="text-white hidden text-sm pixel px-3 py-2 bg-white/20 rounded-md flex items-center gap-2 flex-wrap">
+
+          <div className="pixel hidden flex items-center gap-2 rounded-md bg-white/20 px-3 py-2 text-sm text-white">
             Unlock unlimited creation
-            <span className="bg-blue-500 px-2 py-1 rounded text-xs">
+            <span className="rounded bg-blue-500 px-2 py-1 text-xs">
               Upgrade to Pro
             </span>
           </div>
         </div>
+
         <CreditsBadge credits={credits} />
       </div>
 
-      <div className="p-3 text-white text-sm pixel bg-white/10 rounded-lg">
-        <p className="mb-3">
+      <div className="mono rounded-md bg-white/10 p-3 text-xs text-white">
+        <p className="mb-3 max-w-60 tracking-tight">
           Learn how to use the canvas with our step-by-step guides.
         </p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="shrink-0 min-w-[200px] h-36 bg-white/10 rounded-lg"
-            />
-          ))}
+
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            className="scrollbar-none flex gap-2 overflow-x-auto pr-14"
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-video h-36 min-w-[200px] shrink-0 rounded bg-white/10"
+              />
+            ))}
+          </div>
+
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={handleScroll}
+              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center bg-white text-black"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex border-b pb-3 flex-wrap items-center justify-between gap-2 mt-2">
-        <h2 className="text-white text-sm tracking-tight mono">My Files</h2>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+        <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
+
         <div>
-        <input
-          type="text"
-          placeholder="Search files..."
-          className="bg-white/20 py-1 px-4 font-medium tracking-tight rounded text-white placeholder:text-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-auto"
+          <input
+            type="text"
+            placeholder="Search files..."
+            className="w-full rounded border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto"
           />
         </div>
       </div>
@@ -481,6 +538,7 @@ function FilesPage({
           {projectsError}
         </div>
       )}
+
       {errorMessage && (
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100">
           {errorMessage}
@@ -495,8 +553,8 @@ function FilesPage({
 function RecentlyDeletedPage() {
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="text-white text-lg pixel">Recently Deleted</h2>
-      <p className="text-white/50 text-xs">
+      <h2 className="text-white text-sm tracking-tight mono">Recently Deleted</h2>
+      <p className="text-white/50 text-xs mono">
         Files moved here are permanently deleted after 30 days.
       </p>
     </div>
