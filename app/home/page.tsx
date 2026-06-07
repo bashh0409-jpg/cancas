@@ -51,7 +51,7 @@ export default async function HomePage({
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
     projectsError =
-      "Could not load projects. Run the Supabase migrations in supabase/migrations in your SQL editor.";
+      "Could not load projects. Reload your brouser .";
   }
 
   try {

@@ -80,7 +80,7 @@ export function WebsitePreviewModal({
             PREVIEW CARD
         ========================== */}
         <article
-          className="flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
+          className="flex w-full max-w-4xl flex-col overflow-hidden rounded border border-black bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
           role="dialog"
           aria-modal="true"
         >

@@ -45,7 +45,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
 
   async function handleDelete(canvasId: string, canvasName: string) {
     const confirmed = window.confirm(
-      `Delete "${canvasName}"? This cannot be undone.`
+      `Move "${canvasName}" to trash.`
     );
 
     if (!confirmed) {
@@ -93,7 +93,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
             type="button"
             onClick={() => handleDelete(canvas.id, canvas.name)}
           >
-            {deletingId === canvas.id ? "Deleting…" : "Delete"}
+            {deletingId === canvas.id ? "Movint to trash…" : "Trash"}
           </button>
 
           <Link className="flex flex-col p-4" href={`/canvas/${canvas.slug}`}>
