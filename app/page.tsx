@@ -3,17 +3,23 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import { Pricing } from "./components/Pricing";
 import Faq from "./components/Faq";
+import Footer from "./components/Footer";
 
 const page = () => {
   return (
     <div className="text-white">
-      <div className="relative h-screen overflow-hidden">
-        <Navbar />
-        <Hero />
+      <div>
+        <div className="relative h-screen mb-60 overflow-hidden">
+          <Navbar />
+          <Hero />
+        </div>
+        <Pricing />
+        <Faq />
+        <Footer />
       </div>
-      <Pricing />
-      <Faq />
-
+      <div className="min-h-[60vh] absolute z-1 text-[30vw] flex items-center justify-center">
+        SLATE
+      </div>
     </div>
   );
 };

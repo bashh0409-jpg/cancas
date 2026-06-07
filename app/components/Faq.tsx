@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 type FaqItem = {
   question: string;
@@ -48,47 +49,90 @@ const FAQ_ITEMS: FaqItem[] = [
 export default function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const answerRefs = useRef<Array<HTMLDivElement | null>>([]);
+
   const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i);
+
+  // hover animation (question row lift + glow)
+  const onEnter = (i: number) => {
+    const el = itemRefs.current[i];
+    if (!el) return;
+
+    gsap.to(el, {
+      x: 6,
+      duration: 0.25,
+      ease: "power2.out",
+    });
+  };
+
+  const onLeave = (i: number) => {
+    const el = itemRefs.current[i];
+    if (!el) return;
+
+    gsap.to(el, {
+      x: 0,
+      duration: 0.25,
+      ease: "power2.out",
+    });
+  };
+
+  // smooth accordion animation
+  useLayoutEffect(() => {
+    answerRefs.current.forEach((el, i) => {
+      if (!el) return;
+
+      const isOpen = openIndex === i;
+
+      gsap.to(el, {
+        height: isOpen ? "auto" : 0,
+        opacity: isOpen ? 1 : 0,
+        duration: 0.35,
+        ease: "power2.inOut",
+      });
+    });
+  }, [openIndex]);
 
   return (
     <section className="w-full bg-[#111] min-h-screen px-6 md:px-16 py-24">
-      {/* Section label */}
-      <p className="text-white/40 text-xs tracking-widest uppercase mb-12 flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-white/40 inline-block" />
-        FAQs
-      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 ">
-        {/* Left — headline, sticky on large screens */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <h2 className="text-5xl flex items-center gap-2 xl:text-5xl pixel font-bold text-white leading-[1.05] tracking-tight">
-            <span className="w-3 h-3 rounded-full bg-white inline-block" /> FAQ
+            <span className="w-3 h-3 rounded-full bg-white inline-block" />
+            FAQs
           </h2>
         </div>
 
-        {/* Right — accordion */}
         <div className="flex flex-col col-span-2">
-          <h2 className="text-3xl mb-4 mt-2  xl:text-6xl pixel font-bold text-white leading-[1.05] tracking-tight">
+          <h2 className="text-3xl mb-4 mt-2 xl:text-6xl pixel font-bold text-white leading-[1.05] tracking-tight">
             We&apos;ve heard every concern. Here&apos;s what you really need to
             know.
           </h2>
+
           {FAQ_ITEMS.map((item, i) => {
             const isOpen = openIndex === i;
+
             return (
               <div
                 key={i}
+                ref={(el) => {
+                  itemRefs.current[i] = el;
+                }}
+                onMouseEnter={() => onEnter(i)}
+                onMouseLeave={() => onLeave(i)}
                 className="border-t border-white/10 last:border-b last:border-white/10"
               >
                 <button
                   type="button"
                   onClick={() => toggle(i)}
-                  className="w-full flex hover:bg-white hover:text-black items-center justify-between gap-6 py-5 text-left group"
+                  className="w-full flex  hover:text-black items-center justify-between gap-6 py-5 text-left group"
                   aria-expanded={isOpen}
                 >
                   <span className="text-[22px] tracking-tight text-white/80 group-hover:text-white transition-colors duration-200 leading-snug">
                     {item.question}
                   </span>
-                  {/* Small circle indicator matching the reference */}
+
                   <span
                     className={[
                       "shrink-0 w-2 h-2 rounded-full border border-white/40 transition-all duration-300",
@@ -98,14 +142,16 @@ export default function Faq() {
                 </button>
 
                 <div
-                  className={[
-                    "overflow-hidden transition-all duration-300 ease-in-out",
-                    isOpen ? "max-h-64 pb-5" : "max-h-0",
-                  ].join(" ")}
+                  ref={(el) => {
+                    answerRefs.current[i] = el;
+                  }}
+                  style={{ overflow: "hidden", height: 0, opacity: 0 }}
                 >
-                  <p className="text-sm text-white/40 leading-relaxed">
-                    {item.answer}
-                  </p>
+                  <div className="pb-5">
+                    <p className="text-sm text-white/40 leading-relaxed">
+                      {item.answer}
+                    </p>
+                  </div>
                 </div>
               </div>
             );

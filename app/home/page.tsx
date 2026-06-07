@@ -51,7 +51,7 @@ export default async function HomePage({
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
     projectsError =
-      "Could not load projects. Reload your brouser .";
+      "Could not load projects. Refresh this page.";
   }
 
   try {
