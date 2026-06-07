@@ -238,7 +238,7 @@ export function HomeShell({
               </span>
             </div>
           </div>
-
+          
           <button
             onClick={() => setCollapsed((c) => !c)}
             className="shrink-0 flex items-center justify-center w-6 h-6 rounded-md
@@ -255,6 +255,7 @@ export function HomeShell({
 
         {/* ── Account button ── */}
         <div className="px-1 mb-4">
+          
           <button
             onClick={() => setAccountOpen((o) => !o)}
             title={collapsed ? fullName : undefined}
