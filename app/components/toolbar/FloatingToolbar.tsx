@@ -12,7 +12,7 @@ export default function FloatingToolbar() {
   return (
     <div
       aria-label="Canvas tools"
-      className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center rounded-xl border border-black/10 bg-white p-1 text-black shadow-[0_8px_24px_rgba(0,0,0,0.28)]"
+      className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center rounded-lg border border-black/10 bg-white p-0.5 text-black shadow-[0_8px_24px_rgba(0,0,0,0.28)]"
       role="toolbar"
     >
       <ToolGroup>

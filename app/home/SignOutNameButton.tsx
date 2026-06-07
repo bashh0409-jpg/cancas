@@ -2,13 +2,20 @@
 
 type SignOutNameButtonProps = {
   firstName: string;
+  lastName: string;
+  fullName?: string;
   signOutAction: (formData: FormData) => void | Promise<void>;
 };
 
 export function SignOutNameButton({
   firstName,
+  lastName,
+  fullName: userFullName,
+
   signOutAction,
 }: SignOutNameButtonProps) {
+  const fullName = userFullName || `${firstName} ${lastName}`;
+
   return (
     <form
       action={signOutAction}
@@ -25,7 +32,7 @@ export function SignOutNameButton({
         type="submit"
         className="cursor-pointer underline-offset-4 hover:underline"
       >
-        {firstName}
+        {fullName}
       </button>
     </form>
   );

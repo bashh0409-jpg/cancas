@@ -15,6 +15,10 @@ export default async function HomePage() {
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
     user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
     "User";
+  const lastName =
+    (user.user_metadata?.full_name as string | undefined)?.split(" ")[1] ??
+    user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
+    "User";
 
   return (
     <div className="flex min-h-screen w-full bg-black dark:bg-black text-zinc-950 dark:text-zinc-50">

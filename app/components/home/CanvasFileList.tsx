@@ -73,7 +73,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
 
   if (canvases.length === 0) {
     return (
-      <div className="flex min-h-[200px] items-start rounded-lg bg-white/5 p-3 text-sm text-white pixel">
+      <div className="flex min-h-[400px] items-start rounded-lg bg-white/10 p-3 text-sm text-white pixel">
         <p>You don&apos;t have any projects yet. Click New File to create one.</p>
       </div>
     );
@@ -112,7 +112,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
                 />
               </svg>
             </div>
-            <h3 className="truncate text-sm font-semibold text-white">
+            <h3 className="truncate text-sm  text-white">
               {canvas.name}
             </h3>
             <p className="mt-1 text-xs text-white/50">

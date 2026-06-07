@@ -1,6 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { X, CheckIcon, ArrowRightIcon } from "lucide-react";
+import { PlanCard } from "./PlanCard";
+import { BillingToggle } from "./BillingToggle";
+import { TrustedBy } from "./TrustedBy";
+
+type CurrencyData = {
+  currency: string;
+  rate: number;
+};
 
 type CreditsBadgeProps = {
   credits: number;
@@ -9,10 +18,33 @@ type CreditsBadgeProps = {
 
 export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
   const [open, setOpen] = useState(false);
+  const [currencyData, setCurrencyData] = useState<CurrencyData>({
+    currency: "USD",
+    rate: 1,
+  });
+  const [loadingCurrency, setLoadingCurrency] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+  }, [open]);
+
+  // Fetch once on first open, then cache in state for the session
+  useEffect(() => {
+    if (!open || currencyData.rate !== 1 || currencyData.currency !== "USD")
+      return;
+
+    setLoadingCurrency(true);
+    fetch("/api/currency")
+      .then((r) => r.json())
+      .then((data: CurrencyData) => setCurrencyData(data))
+      .catch(() => {}) // already defaults to USD on API failure
+      .finally(() => setLoadingCurrency(false));
+  }, [open]);
+
+  const plans = buildPlans(currencyData);
 
   return (
     <>
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -23,75 +55,213 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         ].join(" ")}
       >
         <Icon />
-
-        <span className="text-sm leading-none">
-          {credits}
-        </span>
-
+        <span className="text-sm leading-none">{credits}</span>
         <span className="text-white/80 text-sm leading-none">credits</span>
       </button>
 
-      {/* Overlay */}
       {open && (
-        <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md flex items-center justify-center">
-          <div className="relative w-full max-w-4xl mx-4 rounded-2xl border border-white/10 bg-zinc-950 p-6 text-white shadow-2xl">
-            {/* Close */}
-            <button
-              onClick={() => setOpen(false)}
-              className="absolute right-4 top-4 h-9 w-9 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition"
-              aria-label="Close plans"
-            >
-              ✕
-            </button>
+        <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="absolute right-8 top-8 text-white/80 hover:text-white"
+          >
+            <X size={20} />
+          </button>
 
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold tracking-tight">
-                Choose your plan
-              </h2>
-              <p className="text-white/60 text-sm mt-1">
-                Upgrade to unlock more creation power
-              </p>
+          <div className="grid place-items-center h-full px-4 overflow-y-auto">
+            <div className="flex flex-col items-center mt-30 mb-30 text-center">
+              <h1 className="text-5xl tracking-tight text-white">
+                Choose the best plan for you
+              </h1>
+              <BillingToggle />
+              {loadingCurrency && (
+                <p className="text-white/40 text-xs mt-3">
+                  Detecting your currency…
+                </p>
+              )}
             </div>
 
-            {/* Plans */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <PlanCard
-                title="Free"
-                price="R0"
-                features={["Limited credits", "Basic canvas tools"]}
-                cta="Current Plan"
-                disabled
-              />
+            <div className="flex max-w-7xl gap-2 items-stretch text-white w-full wrap">
+              {plans.map((plan) => (
+                <PlanCard
+                  key={plan.name}
+                  plan={plan}
+                  currency={currencyData.currency}
+                />
+              ))}
+            </div>
 
-              <PlanCard
-                title="Pro"
-                price="R99/mo"
-                features={[
-                  "More credits",
-                  "High quality exports",
-                  "Priority processing",
-                ]}
-                cta="Upgrade"
-                highlight
-              />
+            <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
+              <div className="flex flex-col gap-2 shrink-0">
+                <p className="text-white font-medium text-xl tracking-tight">
+                  Need more than Ultra?
+                </p>
+                <p className="text-white/50 text-xs leading-relaxed max-w-64">
+                  Enterprise is coming soon. Join the waitlist and we&apos;ll
+                  reach out as soon as it&apos;s ready.
+                </p>
+                <button
+                  onClick={() => console.log("contact sales")}
+                  className="mt-1 w-fit flex items-center gap-1 text-xs bg-white/10 hover:bg-white/15 transition text-white px-4 py-2 rounded-md"
+                >
+                  Join the waitlist{" "}
+                  <span>
+                    <ArrowRightIcon className="w-4.5 h-4.5" />
+                  </span>
+                </button>
+              </div>
 
-              <PlanCard
-                title="Studio"
-                price="R199/mo"
-                features={[
-                  "Unlimited workflows",
-                  "Advanced AI tools",
-                  "Team features",
-                ]}
-                cta="Upgrade"
-              />
+              <div className="w-px self-stretch bg-white/10 shrink-0" />
+
+              <div className="flex flex-col gap-1.5">
+                <p className="text-white/40 text-[11px] uppercase mb-1">
+                  Enterprise includes everything in Ultra, plus
+                </p>
+                {[
+                  { label: "Custom credit allocation" },
+                  { label: "Team training" },
+                  { label: "Premium customer support on Slack" },
+                  { label: "Your own API keys" },
+                  { label: "Run workflows through API", soon: true },
+                ].map(({ label, soon }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-2 text-xs text-white/70"
+                  >
+                    <CheckIcon className="w-4.5 h-4.5" />
+                    <span>{label}</span>
+                    {soon && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/40 leading-none">
+                        coming soon
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto mt-20 mb-40 text-white/80 text-center px-4">
+              <p>Empowering production grade creative work at:</p>
+              <div>
+                <TrustedBy />
+              </div>
             </div>
           </div>
         </div>
       )}
     </>
   );
+}
+
+// Keeps plan data co-located and reactive to currency changes
+function buildPlans(currency: CurrencyData) {
+  const fmt = (usd: number) =>
+    formatPrice(usd, currency.currency, currency.rate);
+
+  return [
+    {
+      name: "Free",
+      price: fmt(0),
+      popular: false,
+      description:
+        "Explore AI-powered creation with chat, canvas, and generation tools.",
+      credits: {
+        amount: "100 monthly credits",
+        equivalence: "=100 AI actions",
+      },
+      features: [
+        "Access to core AI models",
+        "Basic image and website generation",
+        "3 active workflows",
+        "Limited workflow history",
+        "Community asset browsing",
+      ],
+      isCurrent: true,
+    },
+    {
+      name: "Starter",
+      popular: false,
+      price: fmt(15),
+      description:
+        "For creators and students building projects with AI every day.",
+      credits: {
+        amount: "1,000 monthly credits",
+        equivalence: "=1,000 AI actions",
+      },
+      features: [
+        "Access to all standard AI models",
+        "Advanced canvas and editing tools",
+        "20 active workflows",
+        "Full workflow history",
+        "Priority generation speeds",
+        "Import assets from shared workspaces",
+      ],
+      isCurrent: false,
+      onSelect: () => console.log("upgrade to starter"),
+    },
+    {
+      name: "Pro",
+      popular: true,
+      price: fmt(35),
+      description:
+        "Built for advanced creators shipping products, designs, and AI workflows.",
+      credits: {
+        amount: "5,000 monthly credits",
+        equivalence: "=5,000 AI actions",
+      },
+      features: [
+        "Access to premium reasoning models",
+        "Fastest AI processing speeds",
+        "Unlimited workflows",
+        "Version history and restore",
+        "Voice, image, and web agents",
+        "Shared asset libraries",
+        "Early access AI features",
+      ],
+      isCurrent: false,
+      onSelect: () => console.log("upgrade to pro"),
+    },
+    {
+      name: "Ultra",
+      popular: false,
+      price: fmt(79),
+      description:
+        "High-compute plan for heavy AI usage and large creative pipelines.",
+      credits: {
+        amount: "20,000 monthly credits",
+        equivalence: "=12,000 AI actions",
+      },
+      features: [
+        "Everything in Pro",
+        "Highest priority compute",
+        "Large shared asset storage",
+        "Advanced workflow automations",
+        "Experimental AI systems",
+        "Premium support",
+        "Future collaboration features",
+      ],
+      isCurrent: false,
+      onSelect: () => console.log("upgrade to ultra"),
+    },
+  ];
+}
+
+function formatPrice(
+  usdAmount: number,
+  currency: string,
+  rate: number,
+): string {
+  if (usdAmount === 0) return "$0";
+
+  const converted = usdAmount * rate;
+
+  // Intl.NumberFormat handles symbol, decimal rules, and rounding per locale
+  return new Intl.NumberFormat("en", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0, // no cents — cleaner for pricing pages
+  }).format(converted);
 }
 
 function Icon() {
@@ -103,75 +273,9 @@ function Icon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M12 3.75V20.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M4.5 7.5L19.5 16.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M4.5 16.5L19.5 7.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+      <path d="M12 3.75V20.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="1.5" />
     </svg>
-  );
-}
-
-type PlanCardProps = {
-  title: string;
-  price: string;
-  features: string[];
-  cta: string;
-  highlight?: boolean;
-  disabled?: boolean;
-};
-
-function PlanCard({
-  title,
-  price,
-  features,
-  cta,
-  highlight,
-  disabled,
-}: PlanCardProps) {
-  return (
-    <div
-      className={[
-        "rounded-xl border p-4 flex flex-col gap-3",
-        "bg-white/5 border-white/10",
-        highlight ? "ring-2 ring-blue-500/40" : "",
-      ].join(" ")}
-    >
-      <div>
-        <div className="text-sm font-semibold">{title}</div>
-        <div className="text-white/70 text-sm">{price}</div>
-      </div>
-
-      <ul className="text-xs text-white/60 space-y-1">
-        {features.map((f) => (
-          <li key={f}>• {f}</li>
-        ))}
-      </ul>
-
-      <button
-        disabled={disabled}
-        className={[
-          "mt-auto h-9 rounded-md text-sm font-medium transition",
-          disabled
-            ? "bg-white/10 text-white/40 cursor-not-allowed"
-            : "bg-blue-50text-white",
-        ].join(" ")}
-      >
-        {cta}
-      </button>
-    </div>
   );
 }

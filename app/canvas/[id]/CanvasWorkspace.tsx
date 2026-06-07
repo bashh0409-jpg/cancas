@@ -90,7 +90,6 @@ type ImageCanvasNode = {
 type ImageSyncStats = {
   synced: number;
   total: number;
-  failed: number;
 };
 
 type CanvasWorkspaceProps = {
@@ -623,7 +622,6 @@ export default function CanvasWorkspace({
     onImageSyncStatsChange?.({
       synced: cloudSyncedCount,
       total: totalImageCount,
-      failed: 0,
     });
   }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
 
@@ -2621,6 +2619,7 @@ export default function CanvasWorkspace({
         <WebsitePreviewModal
           title={activeWebNode.title}
           url={activeWebNode.url}
+          onOpenInNewTab={() => window.open(activeWebNode.url, "_blank")}
           onClose={() => setActiveWebNodeId(null)}
         />
       )}

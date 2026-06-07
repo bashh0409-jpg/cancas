@@ -97,7 +97,7 @@ export function CanvasContentsPanel({
                         {config.label}
                       </div>
                     </div>
-                    <Cloud className="h-3.5 w-3.5 text-blue-500" />
+                    <Cloud className="h-3.5 w-3.5 text-black" />
                   </button>
                 );
               })

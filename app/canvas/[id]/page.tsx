@@ -58,6 +58,10 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
     user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
     "User";
+  const lastName =
+    (user.user_metadata?.full_name as string | undefined)?.split(" ")[1] ??
+    user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
+    "User";
 
   const credits = await getUserCredits(supabase, user.id);
 
@@ -67,6 +71,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
       canvasName={canvas.name}
       credits={credits}
       firstName={firstName}
+      lastName={lastName}
       initialContent={initialContent}
       serverUpdatedAt={canvas.updated_at}
       signOutAction={signOut}

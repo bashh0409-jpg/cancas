@@ -1,108 +1,237 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { WebsitePreviewFrame } from "./WebsitePreviewFrame";
 import { parseWebsiteUrl } from "./utils";
+import { ArrowUpRight, Globe, Trash2Icon, X, BookOpen } from "lucide-react";
 
 type WebsitePreviewModalProps = {
   url: string;
   title: string;
   onClose: () => void;
+  onOpenInNewTab: () => void;
+};
+
+type ReaderData = {
+  title?: string;
+  excerpt?: string;
+  byline?: string;
+  content?: string;
 };
 
 export function WebsitePreviewModal({
   url,
   title,
   onClose,
+  onOpenInNewTab,
 }: WebsitePreviewModalProps) {
   const meta = parseWebsiteUrl(url);
   const displayTitle = title || meta.hostname;
-  const initial = displayTitle.slice(0, 1).toUpperCase();
+
+  const [readerMode, setReaderMode] = useState(false);
+  const [readerLoading, setReaderLoading] = useState(false);
+  const [readerData, setReaderData] = useState<ReaderData | null>(null);
+
+  /* =========================
+     LOCK BACKGROUND SCROLL
+  ========================== */
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  /* =========================
+     LOAD READER MODE
+  ========================== */
+  const loadReaderMode = async () => {
+    try {
+      setReaderLoading(true);
+
+      const res = await fetch(`/api/reader?url=${encodeURIComponent(url)}`);
+
+      if (!res.ok) throw new Error("Failed to load reader mode");
+
+      const data = await res.json();
+
+      setReaderData(data);
+      setReaderMode(true);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to load reader mode for this page.");
+    } finally {
+      setReaderLoading(false);
+    }
+  };
 
   return (
     <div
-      className="absolute inset-0 z-[70] grid place-items-center bg-[#1a1814]/55 p-4 backdrop-blur-md sm:p-8"
+      className="absolute inset-0 z-[70] grid place-items-center bg-black/60 p-4 backdrop-blur-md sm:p-8"
       onClick={onClose}
       role="presentation"
     >
-      <article
-        className="flex w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-black/[0.06] bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-labelledby="website-preview-title"
-        aria-modal="true"
+      <div
+        className="flex flex-col items-center gap-4 w-full"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-[min(56vh,420px)] min-h-[280px] shrink-0 overflow-hidden">
-          <WebsitePreviewFrame interactive url={url} />
+        {/* =========================
+            PREVIEW CARD
+        ========================== */}
+        <article
+          className="flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative h-[min(70vh,920px)] min-h-[380px] overflow-hidden bg-white">
+            {readerMode ? (
+              /* =========================
+                  READER MODE UI
+              ========================== */
+              <div className="h-full overflow-y-auto bg-[#faf8f4]">
+                {readerLoading ? (
+                  <div className="flex h-full items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin h-6 w-6 border-2 border-black/20 border-t-black rounded-full mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">
+                        Loading article...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mx-auto max-w-2xl px-6 sm:px-10 py-14">
+                    {/* Title */}
+                    <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-black leading-tight">
+                      {readerData?.title}
+                    </h1>
 
-          <button
-            aria-label="Close preview"
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg border border-black/[0.08] bg-white/90 text-[#5C574E] shadow-[0_4px_16px_rgba(24,20,12,0.1)] transition hover:bg-white hover:text-[#1E1C18]"
-            type="button"
-            onClick={onClose}
-          >
-            <svg
-              aria-hidden
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
+                    {/* Meta */}
+                    {(readerData?.byline || readerData?.excerpt) && (
+                      <div className="mt-5 space-y-3">
+                        {readerData?.byline && (
+                          <p className="text-sm text-gray-500">
+                            {readerData.byline}
+                          </p>
+                        )}
+
+                        {readerData?.excerpt && (
+                          <p className="text-base sm:text-lg text-gray-700 leading-relaxed">
+                            {readerData.excerpt}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="my-8 h-px w-full bg-black/10" />
+
+                    {/* Content */}
+                    <article
+                      className="
+                        prose prose-lg max-w-none
+                        prose-headings:font-semibold
+                        prose-p:leading-7
+                        prose-p:text-gray-800
+                        prose-a:text-blue-600
+                        prose-a:no-underline hover:prose-a:underline
+                        prose-img:rounded-lg
+                      "
+                      dangerouslySetInnerHTML={{
+                        __html: readerData?.content ?? "",
+                      }}
+                    />
+
+                    <div className="h-16" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* =========================
+                  NORMAL PREVIEW
+              ========================== */
+              <WebsitePreviewFrame interactive url={url} />
+            )}
+          </div>
+        </article>
+
+        {/* =========================
+            FLOATING TOOLBAR
+        ========================== */}
+        <div className="flex items-center justify-between gap-4 bg-white p-2 rounded-lg min-w-[360px] w-fit shadow-lg">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Globe className="h-4.5 w-4.5 shrink-0" />
+
+            <span
+              className="text-[13px] font-medium tracking-tight truncate"
+              title={url}
             >
-              <path
-                d="M6 6l12 12M18 6L6 18"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.8"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="px-6 pb-6 pt-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-black/[0.07] bg-white text-base font-semibold text-[#2C2924] shadow-[0_4px_14px_rgba(24,20,12,0.08)]">
-              {initial}
+              {displayTitle}
             </span>
-            <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#8A8478]">
-                {meta.hostname}
-              </p>
-              <h2
-                id="website-preview-title"
-                className="mt-1 text-xl font-medium leading-tight tracking-tight text-[#1E1C18] sm:text-2xl"
-              >
-                {displayTitle}
-              </h2>
-              {meta.path ? (
-                <p className="mt-1 truncate text-sm text-[#9A9488]">{meta.path}</p>
-              ) : null}
-            </div>
           </div>
 
-          <div className="mt-4 rounded-lg border border-black/[0.06] bg-white/70 px-4 py-3">
-            <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#9A9488]">
-              URL
-            </p>
-            <p className="mt-1 break-all text-sm text-[#3D3A34]">{url}</p>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <a
-              className="inline-flex items-center justify-center rounded-lg bg-[#2C2924] px-5 py-2.5 text-sm font-medium text-[#FAF8F4] transition hover:bg-[#1E1C18]"
-              href={url}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Open in browser
-            </a>
+          <div className="flex items-center gap-3">
+            {/* Open in new tab */}
             <button
-              className="inline-flex items-center justify-center rounded-lg border border-black/[0.08] bg-white px-5 py-2.5 text-sm font-medium text-[#3D3A34] transition hover:bg-[#F3F0E8]"
               type="button"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenInNewTab();
+              }}
+              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
+              aria-label="Open in new tab"
             >
-              Close
+              <ArrowUpRight className="h-5 w-5" />
+            </button>
+
+            {/* Reader Mode */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+
+                if (readerMode) {
+                  setReaderMode(false);
+                } else {
+                  loadReaderMode();
+                }
+              }}
+              className={`rounded-md p-1 transition-colors ${
+                readerMode ? "bg-black text-white" : "hover:bg-gray-100"
+              } ${readerLoading ? "opacity-50" : ""}`}
+              aria-label="Reader mode"
+            >
+              <BookOpen className="h-4.5 w-4.5" />
+            </button>
+
+            {/* Delete */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("Delete clicked");
+              }}
+              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
+              aria-label="Delete"
+            >
+              <Trash2Icon className="h-4.5 w-4.5" />
+            </button>
+
+            {/* Close */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4.5 w-4.5" />
             </button>
           </div>
         </div>
-      </article>
+      </div>
     </div>
   );
 }
