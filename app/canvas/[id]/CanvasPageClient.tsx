@@ -19,6 +19,7 @@ type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 type ImageSyncStats = {
   synced: number;
   total: number;
+  failed: number;
 };
 
 type CanvasPageClientProps = {
@@ -45,11 +46,12 @@ export default function CanvasPageClient({
   signOutAction,
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
-  const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
-    synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
-      .length,
-    total: initialContent.imageNodes.length,
-  }));
+const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
+  synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
+    .length,
+  total: initialContent.imageNodes.length,
+  failed: 0,
+}));
 
   const [uploadDebugEntries, setUploadDebugEntries] = useState<
     UploadDebugEntry[]

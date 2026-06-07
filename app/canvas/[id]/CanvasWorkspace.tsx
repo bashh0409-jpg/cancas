@@ -90,6 +90,7 @@ type ImageCanvasNode = {
 type ImageSyncStats = {
   synced: number;
   total: number;
+  failed: number;
 };
 
 type CanvasWorkspaceProps = {
@@ -618,13 +619,13 @@ export default function CanvasWorkspace({
     [imageNodes, voiceNodes, webNodes],
   );
 
-  useEffect(() => {
-    onImageSyncStatsChange?.({
-      synced: cloudSyncedCount,
-      total: totalImageCount,
-    });
-  }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
-
+useEffect(() => {
+  onImageSyncStatsChange?.({
+    synced: cloudSyncedCount,
+    total: totalImageCount,
+    failed: 0,
+  });
+}, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
   useEffect(() => {
     const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
 

@@ -82,9 +82,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
       >
         <div className="flex items-center justify-center">{config.icon}</div>
 
-        <span className="text-[11px]  tracking-tight">
-          {config.label}
-        </span>
+        <span className="text-[11px]  tracking-tight">{config.label}</span>
 
         {status === "syncing" ? (
           <div className="flex items-center gap-[2px]">

@@ -72,7 +72,6 @@ export default async function HomePage({
         <HomeShell
           firstName={firstName}
           lastName={lastName}
-          fullName={fullName}
           canvases={canvases}
           credits={credits}
           projectsError={projectsError}

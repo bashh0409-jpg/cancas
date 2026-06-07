@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Prevent invalid URLs from crashing fetch
+    new URL(url);
+
     const response = await fetch(url, {
       headers: {
         "User-Agent":
@@ -20,11 +23,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch page" },
+        { status: response.status },
+      );
+    }
+
     const html = await response.text();
 
-    const dom = new JSDOM(html, {
-      url,
-    });
+    const dom = new JSDOM(html, { url });
 
     const article = new Readability(dom.window.document).parse();
 
