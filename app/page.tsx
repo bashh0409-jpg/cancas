@@ -17,8 +17,8 @@ const page = () => {
         <Faq />
         <Footer />
       </div>
-      <div className="min-h-[60vh] absolute z-1 text-[30vw] flex items-center justify-center">
-        SLATE
+      <div className="h-fit absolute z-1 text-[30vw] flex items-center justify-center">
+        DUALL
       </div>
     </div>
   );

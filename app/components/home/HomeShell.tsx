@@ -346,7 +346,7 @@ export function HomeShell({
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-col gap-0.5 px-1">
           <SidebarLink
-            href="/app/docs"
+            href="/docs"
             icon={<BadgeQuestionMark className="w-4 h-4" />}
             label="Help"
             collapsed={collapsed}
@@ -465,13 +465,15 @@ function FilesPage({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-        <h2 className="text-white text-lg pixel">My Files</h2>
+      <div className="flex border-b pb-3 flex-wrap items-center justify-between gap-2 mt-2">
+        <h2 className="text-white text-sm tracking-tight mono">My Files</h2>
+        <div>
         <input
           type="text"
           placeholder="Search files..."
-          className="bg-white/20 py-1 px-4 font-medium tracking-tight rounded-full text-white placeholder:text-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-auto"
-        />
+          className="bg-white/20 py-1 px-4 font-medium tracking-tight rounded text-white placeholder:text-white/60 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-auto"
+          />
+        </div>
       </div>
 
       {projectsError && (

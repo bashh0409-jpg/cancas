@@ -158,15 +158,6 @@ const Navbar = () => {
               </Link>
             ))}
           </div>
-
-          <Link
-            href="/signin"
-            onClick={() => setOpen(false)}
-            className="flex w-fit items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black"
-          >
-            Start a project
-            <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
-          </Link>
         </div>
       </div>
     </>
