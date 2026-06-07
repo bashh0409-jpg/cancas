@@ -9,17 +9,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ClockFading,
-  CreditCard,
   Folder,
   LogOut,
   Plus,
   Settings,
   Trash2,
   User,
-  Zap,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
-import { SignOutNameButton } from "@/app/home/SignOutNameButton";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
@@ -54,9 +51,9 @@ function AccountCard({
   onSettings: () => void;
   onClose: () => void;
 }) {
-    const cardRef = useRef<HTMLDivElement>(null);
-    
-    const plan = credits > 1000 ? "Pro" : "Free";
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const plan = credits > 1000 ? "Pro" : "Free";
 
   // Mount animation
   useEffect(() => {
@@ -96,7 +93,9 @@ function AccountCard({
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded lime flex items-center justify-center shrink-0">
             <div className="font-sm items-center flex justify-center">
-              <p className="text-black/50 text-sm items-center">{firstName.charAt(0)}</p>
+              <p className="text-black/50 text-sm items-center">
+                {firstName.charAt(0)}
+              </p>
             </div>
           </div>
           <div className="min-w-0">
@@ -110,18 +109,26 @@ function AccountCard({
       {/* Credits row */}
       <div className="px-3 py-2.5 mb-2 mt-4 flex items-center justify-between">
         <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
-                  <span>Credits</span>
-                  <div className="flex gap-1 "><Icon /> <span>{credits}</span></div>
-              </div>
-              <button className='text-xs text-white bg-transparent hover:bg-white/10 underligned'><span className="underline cursor-pointer">Upgrade for more</span></button>
+          <span>Credits</span>
+          <div className="flex gap-1 ">
+            <Icon /> <span>{credits}</span>
+          </div>
+        </div>
+        <button className="text-xs text-white bg-transparent hover:bg-white/10 underligned">
+          <span className="underline cursor-pointer">Upgrade for more</span>
+        </button>
       </div>
       {/* Plan row */}
       <div className="px-3 py-2.5 flex items-center justify-between">
         <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
-                  <span>Plan</span>
-                  <div className="flex gap-1 "><span>{plan}</span></div>
-              </div>
-              <button className='text-xs text-white bg-transparent hover:bg-white/10 underligned'><span className="underline cursor-pointer">Upgrade</span></button>
+          <span>Plan</span>
+          <div className="flex gap-1 ">
+            <span>{plan}</span>
+          </div>
+        </div>
+        <button className="text-xs text-white bg-transparent hover:bg-white/10 underligned">
+          <span className="underline cursor-pointer">Upgrade</span>
+        </button>
       </div>
 
       {/* Actions */}
@@ -322,8 +329,8 @@ export function HomeShell({
             collapsed={collapsed}
             labelRef={addLabelRef}
             onClick={() => setActivePage("recently-deleted")}
-                  />
-                  {/* Future nav items can go here 
+          />
+          {/* Future nav items can go here 
           <NavItem
             icon={<User className="w-4 h-4" />}
             label="Account"
@@ -385,6 +392,8 @@ export function HomeShell({
       <main className="flex-1 min-w-0 overflow-y-auto p-8 flex flex-col gap-4">
         {activePage === "files" && (
           <FilesPage
+            firstName={firstName}
+            lastName={lastName}
             canvases={canvases}
             credits={credits}
             projectsError={projectsError}
@@ -402,12 +411,16 @@ export function HomeShell({
 // ── Sub-pages ──────────────────────────────────────────────────────────────
 
 function FilesPage({
+  firstName,
+  lastName,
   canvases,
   credits,
   projectsError,
   errorMessage,
   createCanvasAction,
 }: {
+  firstName: string;
+  lastName: string;
   canvases: CanvasListItem[];
   credits: number;
   projectsError: string | null;
@@ -420,13 +433,16 @@ function FilesPage({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => createCanvasAction()}
-            className="bg-white/20 cursor-pointer pixel text-white rounded-lg px-3 py-2 text-sm"
+            className="bg-white/20 hidden cursor-pointer pixel text-white rounded-lg px-3 py-2 text-sm"
           >
             New File
           </button>
-          <div className="text-white text-sm pixel px-3 py-2 bg-white/20 rounded-lg flex items-center gap-2 flex-wrap">
+          <div className="text-sm  mono tracking-tight text-white">
+            {firstName} {lastName}&apos;s Workspace
+          </div>
+          <div className="text-white hidden text-sm pixel px-3 py-2 bg-white/20 rounded-md flex items-center gap-2 flex-wrap">
             Unlock unlimited creation
-            <span className="bg-blue-500 px-2 py-1 rounded-lg text-xs">
+            <span className="bg-blue-500 px-2 py-1 rounded text-xs">
               Upgrade to Pro
             </span>
           </div>
