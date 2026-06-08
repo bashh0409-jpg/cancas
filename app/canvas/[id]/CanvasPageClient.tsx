@@ -26,6 +26,7 @@ type CanvasPageClientProps = {
   canvasId: string;
   canvasName: string;
   initialContent: CanvasContent;
+  canvases: { id: string; name: string; slug: string }[]; // 👈 add this
   serverUpdatedAt: string;
   userId: string;
   firstName: string;
@@ -38,6 +39,7 @@ export default function CanvasPageClient({
   canvasId,
   canvasName,
   initialContent,
+  canvases,
   serverUpdatedAt,
   userId,
   firstName,
@@ -57,14 +59,11 @@ export default function CanvasPageClient({
   const [uploadDebugEntries, setUploadDebugEntries] = useState<
     UploadDebugEntry[]
   >([]);
-  const [showUploadDebug, setShowUploadDebug] = useState(false);
+  // const [showUploadDebug, setShowUploadDebug] = useState(false);
 
-  // NOTE: required for dropdown to know available canvases + active canvas
-  const canvases = initialContent.canvases ?? []; // adjust if your shape differs
-
-  useEffect(() => {
-    setShowUploadDebug(isUploadDebugEnabled());
-  }, []);
+  // useEffect(() => {
+  //   setShowUploadDebug(isUploadDebugEnabled());
+  // }, []);
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#111111]">
@@ -125,7 +124,7 @@ export default function CanvasPageClient({
         </div>
       </div>
 
-      {/* DEBUG */}
+      {/* DEBUG 
       {showUploadDebug && (
         <div className="absolute right-4 top-16 z-[60] max-w-md rounded-lg border border-red-500/40 bg-black/90 p-3 text-xs text-white shadow-lg">
           <p className="mb-2 font-medium text-red-300">Upload debug (dev)</p>
@@ -149,7 +148,7 @@ export default function CanvasPageClient({
             </ul>
           )}
         </div>
-      )}
+      )}*/}
 
       {/* BOTTOM BAR */}
       <div className="absolute bottom-0 left-0 z-50 flex w-fit items-center p-4">

@@ -1,10 +1,7 @@
-import { getUserCanvas } from "@/lib/canvas/repository";
+import { getUserCanvas, getUserCanvases } from "@/lib/canvas/repository";
 import { getUserCredits } from "@/lib/credits/repository";
 import { createClient } from "@/lib/supabase/server";
-import {
-  EMPTY_CANVAS_CONTENT,
-  parseCanvasContent,
-} from "@/types/canvas";
+import { EMPTY_CANVAS_CONTENT, parseCanvasContent } from "@/types/canvas";
 import { notFound, redirect } from "next/navigation";
 import CanvasPageClient from "./CanvasPageClient";
 
@@ -17,7 +14,6 @@ type CanvasPageProps = {
 export default async function CanvasPage({ params }: CanvasPageProps) {
   async function signOut(formData: FormData) {
     "use server";
-
     void formData;
 
     const supabase = await createClient();
@@ -31,21 +27,15 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  if (!user) {
-    redirect("/signin");
-  }
+  if (!user) redirect("/signin");
 
-  let canvas;
+  const [canvas, canvases, credits] = await Promise.all([
+    getUserCanvas(supabase, user.id, id),
+    getUserCanvases(supabase, user.id),
+    getUserCredits(supabase, user.id),
+  ]);
 
-  try {
-    canvas = await getUserCanvas(supabase, user.id, id);
-  } catch {
-    notFound();
-  }
-
-  if (!canvas) {
-    notFound();
-  }
+  if (!canvas) notFound();
 
   if (id !== canvas.slug) {
     redirect(`/canvas/${canvas.slug}`);
@@ -54,24 +44,19 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
   const initialContent =
     parseCanvasContent(canvas.content) ?? EMPTY_CANVAS_CONTENT;
 
-  const firstName =
-    (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
-    user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
+  const baseName =
+    (user.user_metadata?.full_name as string | undefined)?.split(" ")?.[0] ??
+    user.email?.split("@")[0] ??
     "User";
-  const lastName =
-    (user.user_metadata?.full_name as string | undefined)?.split(" ")[1] ??
-    user.email?.split("@")[0].replace(/^./, (c) => c.toUpperCase()) ??
-    "User";
-
-  const credits = await getUserCredits(supabase, user.id);
 
   return (
     <CanvasPageClient
       canvasId={canvas.id}
       canvasName={canvas.name}
+      canvases={canvases} // ✅ FIX: required prop
       credits={credits}
-      firstName={firstName}
-      lastName={lastName}
+      firstName={baseName}
+      lastName={baseName}
       initialContent={initialContent}
       serverUpdatedAt={canvas.updated_at}
       signOutAction={signOut}
