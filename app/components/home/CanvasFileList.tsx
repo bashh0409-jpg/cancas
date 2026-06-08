@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
+import { Trash2, Loader2 } from "lucide-react";
+
 
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
@@ -76,9 +78,10 @@ export function CanvasFileList({
 
   if (canvases.length === 0) {
     return (
-      <div className="flex min-h-[400px] items-start rounded-lg bg-white/10 p-3 text-sm text-white pixel">
-        <p>
-          You don&apos;t have any projects yet. Click New File to create one.
+      <div className="flex min-h-[400px] items-center justify-center rounded-md bg-white/10 p-6 text-sm text-white pixel">
+        <p className="max-w-sm text-center leading-relaxed opacity-80">
+          You don&apos;t have any projects yet. Click{" "}
+          <span className="underline cursor-pointer">New File</span> to create one.
         </p>
       </div>
     );
@@ -89,23 +92,28 @@ export function CanvasFileList({
       {canvases.map((canvas) => (
         <article
           key={canvas.id}
-          className="group relative flex flex-col rounded transition "
+          className="group relative flex flex-col rounded transition"
         >
           <button
             aria-label={`Delete ${canvas.name}`}
-            className="absolute right-2 top-2 z-10 rounded-md border border-white/10 bg-black/60 px-2 py-1 text-[10px] font-semibold text-white/70 opacity-0 transition hover:bg-red-500/20 hover:text-red-200 group-hover:opacity-100 disabled:opacity-50"
+            className="absolute right-2 top-2 z-10 flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-200 disabled:opacity-50"
             disabled={deletingId === canvas.id}
             type="button"
             onClick={() => handleDelete(canvas.id, canvas.name)}
           >
-            {deletingId === canvas.id ? "Moving to trash…" : "Trash"}
+            {deletingId === canvas.id ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
           </button>
 
-          <Link className="flex flex-col " href={`/canvas/${canvas.slug}`}>
-            <div className="mb-3 flex  items-center justify-center rounded bg-white/10 aspect-square text-white/30 transition">
+          <Link className="flex flex-col" href={`/canvas/${canvas.slug}`}>
+            <div className="mb-3 flex aspect-square items-center justify-center rounded bg-white/10 text-white/30 transition">
               <CanvasPlaceholderIcon />
             </div>
-            <h3 className="truncate text-sm  text-white">{canvas.name}</h3>
+
+            <h3 className="truncate text-sm text-white">{canvas.name}</h3>
             <p className="mt-1 text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>

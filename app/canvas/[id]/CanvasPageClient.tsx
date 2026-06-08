@@ -132,30 +132,7 @@ const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
                   ></path>
                 </svg>
               </button>
-              <button className="h-7 w-7 bg-black/10 p-1 font-semibold items-center justify-center flex rounded-md text-black/50">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M16.875 12.75L21.375 8.25L16.875 3.75"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                  <path
-                    d="M16.875 18.75H12.75H8.625C7.23261 18.75 5.89726 18.1969 4.91269 17.2123C3.92812 16.2277 3.375 14.8924 3.375 13.5C3.375 12.1076 3.92812 10.7723 4.91269 9.78769C5.89726 8.80312 7.23261 8.25 8.625 8.25H21.375"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                </svg>
-              </button>
+          
             </div>
           </div>
 

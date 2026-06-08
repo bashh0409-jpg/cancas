@@ -253,18 +253,18 @@ const buildEmbedUrl = (videoId: string) => {
                 key={i}
                 type="button"
                 onClick={() => openVideo(video)}
-                className="group relative aspect-video h-36 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
+                className="group relative aspect-video h-40 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
               >
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  className="h-full w-full object-cover transition-transform duration-300"
                 />
 
-                <div className="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40" />
+                <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
 
-                <div className="absolute left-2 top-2">
-                  <p className="line-clamp-2 max-w-[160px] text-[11px] font-medium tracking-tight text-white">
+                <div className="absolute left-2 bottom-2">
+                  <p className="line-clamp-2 max-w-[160px] trancate text-[10px] font-medium tracking-tight text-white">
                     {video.title}
                   </p>
                 </div>
