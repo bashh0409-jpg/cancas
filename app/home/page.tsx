@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import MobileNotifier from "@/app/components/home/MobileNotifier";
 import { HomeShell } from "@/app/components/home/HomeShell";
+import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
 
 export default async function HomePage({
   searchParams,
@@ -65,6 +66,12 @@ export default async function HomePage({
     // Silently fail
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nickname")
+    .eq("id", user.id)
+    .single();
+
   return (
     <div className="min-h-screen bg-black/70">
       <MobileNotifier
@@ -89,7 +96,15 @@ export default async function HomePage({
           errorMessage={errorMessage}
           createCanvasAction={createCanvasAction}
           signOut={signOut}
+          profile={{
+            firstName,
+            lastName,
+            email: user.email ?? "",
+            nickname: profile?.nickname ?? "",
+          }}
+          updateNicknameAction={updateNicknameAction}
         />
+
       </div>
     </div>
   );

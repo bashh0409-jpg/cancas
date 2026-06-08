@@ -195,6 +195,8 @@ export function HomeShell({
   errorMessage,
   createCanvasAction,
   signOut,
+  profile,
+  updateNicknameAction,
 }: HomeShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState<ActivePage>("files");
@@ -243,6 +245,25 @@ export function HomeShell({
     if (el && !labelsRef.current.includes(el)) {
       labelsRef.current.push(el);
     }
+  };
+  type HomeShellProps = {
+    firstName: string;
+    lastName: string;
+    credits: number;
+    canvases: CanvasListItem[];
+    projectsError: boolean;
+    errorMessage?: string;
+    createCanvasAction: () => Promise<void>;
+    signOut: (formData: FormData) => void;
+
+    profile: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      nickname?: string | null;
+    };
+
+    updateNicknameAction: (formData: FormData) => Promise<void>;
   };
 
   return (
@@ -306,7 +327,7 @@ export function HomeShell({
               </div>
               <span
                 ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
-                className={`whitespace-nowrap text-white ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
+                className={`whitespace-nowrap mono uppercase text-white ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
               >
                 {fullName}
               </span>
@@ -429,7 +450,12 @@ export function HomeShell({
             createCanvasAction={createCanvasAction}
           />
         )}
-        {activePage === "account" && <AccountPage />}
+        {activePage === "account" && (
+          <AccountPage
+            profile={profile}
+            updateNicknameAction={updateNicknameAction}
+          />
+        )}
         {activePage === "tutorials" && <TutorialPage />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
       </main>

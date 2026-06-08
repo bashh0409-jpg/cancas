@@ -116,3 +116,34 @@ begin
     alter publication supabase_realtime add table public.canvases;
   end if;
 end $$;
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  nickname text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, nickname)
+  values (new.id, null);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute procedure public.handle_new_user();
+
+
+alter table public.profiles enable row level security;
+
+create policy "Users can read their own profile"
+on public.profiles for select
+using (auth.uid() = id);
+
+create policy "Users can update their own profile"
+on public.profiles for update
+using (auth.uid() = id);
