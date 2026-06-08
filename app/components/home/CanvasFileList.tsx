@@ -7,9 +7,9 @@ import { useEffect, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 import { Trash2, Loader2 } from "lucide-react";
 
-
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
+  isTrash?: boolean;
 };
 
 function formatRelativeDate(value: string) {
@@ -39,16 +39,41 @@ function formatRelativeDate(value: string) {
 
 export function CanvasFileList({
   canvases: initialCanvases,
+  isTrash = false,
 }: CanvasFileListProps) {
   const router = useRouter();
   const [canvases, setCanvases] = useState(initialCanvases);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [recoveringId, setRecoveringId] = useState<string | null>(null);
 
   useEffect(() => {
     setCanvases(initialCanvases);
   }, [initialCanvases]);
 
   async function handleDelete(canvasId: string, canvasName: string) {
+    // If in trash view, this is permanent delete
+    if (isTrash) {
+      const confirmed = window.confirm(
+        `Permanently delete "${canvasName}"? This cannot be undone.`,
+      );
+      if (!confirmed) return;
+
+      setDeletingId(canvasId);
+      try {
+        const res = await fetch(`/api/canvases/${canvasId}/permanent`, {
+          method: "DELETE",
+        });
+        if (!res.ok) return;
+        setCanvases((current) => current.filter((c) => c.id !== canvasId));
+        window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
+        router.refresh();
+      } finally {
+        setDeletingId(null);
+      }
+
+      return;
+    }
+
     const confirmed = window.confirm(`Move "${canvasName}" to trash.`);
 
     if (!confirmed) {
@@ -80,8 +105,15 @@ export function CanvasFileList({
     return (
       <div className="flex min-h-[400px] items-center justify-center rounded-md bg-white/10 p-6 text-sm text-white pixel">
         <p className="max-w-sm text-center leading-relaxed opacity-80">
-          You don&apos;t have any projects yet. Click{" "}
-          <span className="underline cursor-pointer">New File</span> to create one.
+          {isTrash ? (
+            "Trash is empty. Files in the trash will be permanently deleted after 30 days."
+          ) : (
+            <>
+              You don&apos;t have any projects yet. Click{" "}
+              <span className="underline cursor-pointer">New File</span> to
+              create one.
+            </>
+          )}
         </p>
       </div>
     );
@@ -94,19 +126,90 @@ export function CanvasFileList({
           key={canvas.id}
           className="group relative flex flex-col rounded transition"
         >
-          <button
-            aria-label={`Delete ${canvas.name}`}
-            className="absolute right-2 top-2 z-10 flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-200 disabled:opacity-50"
-            disabled={deletingId === canvas.id}
-            type="button"
-            onClick={() => handleDelete(canvas.id, canvas.name)}
-          >
-            {deletingId === canvas.id ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+            {!isTrash ? (
+              <button
+                aria-label={`Delete ${canvas.name}`}
+                className="flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-200 disabled:opacity-50"
+                disabled={deletingId === canvas.id}
+                type="button"
+                onClick={() => handleDelete(canvas.id, canvas.name)}
+              >
+                {deletingId === canvas.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+              </button>
             ) : (
-              <Trash2 className="h-3.5 w-3.5" />
+              <>
+                <button
+                  aria-label={`Recover ${canvas.name}`}
+                  className="flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-green-500/20 hover:text-green-200 disabled:opacity-50"
+                  disabled={recoveringId === canvas.id}
+                  type="button"
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      `Recover \"${canvas.name}\"?`,
+                    );
+                    if (!confirmed) return;
+                    setRecoveringId(canvas.id);
+                    try {
+                      const res = await fetch(
+                        `/api/canvases/${canvas.id}/recover`,
+                        { method: "POST" },
+                      );
+                      if (!res.ok) return;
+                      setCanvases((current) =>
+                        current.filter((c) => c.id !== canvas.id),
+                      );
+                      router.refresh();
+                    } finally {
+                      setRecoveringId(null);
+                    }
+                  }}
+                >
+                  {recoveringId === canvas.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <svg
+                      className="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M21 10v6a2 2 0 0 1-2 2H7"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M3 13V7a2 2 0 0 1 2-2h12"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  aria-label={`Permanently delete ${canvas.name}`}
+                  className="flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-600/20 hover:text-red-200 disabled:opacity-50"
+                  disabled={deletingId === canvas.id}
+                  type="button"
+                  onClick={() => handleDelete(canvas.id, canvas.name)}
+                >
+                  {deletingId === canvas.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </>
             )}
-          </button>
+          </div>
 
           <Link className="flex flex-col" href={`/canvas/${canvas.slug}`}>
             <div className="mb-3 flex aspect-square items-center justify-center rounded bg-white/10 text-white/30 transition">
@@ -117,6 +220,21 @@ export function CanvasFileList({
             <p className="mt-1 text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>
+            {isTrash && (canvas as any).deleted_at && (
+              <p className="mt-1 text-xs text-amber-300">
+                {(() => {
+                  const deletedAt = new Date(
+                    (canvas as any).deleted_at,
+                  ).getTime();
+                  const msPerDay = 1000 * 60 * 60 * 24;
+                  const daysSince = Math.floor(
+                    (Date.now() - deletedAt) / msPerDay,
+                  );
+                  const daysLeft = Math.max(0, 30 - daysSince);
+                  return `${daysLeft} day${daysLeft === 1 ? "" : "s"} left`;
+                })()}
+              </p>
+            )}
           </Link>
         </article>
       ))}

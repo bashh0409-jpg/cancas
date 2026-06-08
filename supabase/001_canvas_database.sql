@@ -1,5 +1,5 @@
 -- =============================================================================
--- CanvasAI / Slate — RESET DATABASE FROM SCRATCH
+-- ENDLESS.AI — RESET DATABASE FROM SCRATCH
 -- =============================================================================
 -- WARNING: Permanently deletes ALL canvas projects (database rows).
 --

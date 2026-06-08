@@ -60,6 +60,7 @@ export type CanvasListItem = {
   name: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
 };
 
 export const EMPTY_CANVAS_CONTENT: CanvasContent = {

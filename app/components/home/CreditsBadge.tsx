@@ -49,24 +49,24 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          "flex items-center gap-1 bg-white/10 h-8 px-2 rounded-md text-white pixel",
+          "flex items-center gap-1 bg-white/10 border border-white/20 h-8 px-2 rounded text-white mono uppercase text-xs tracking-tight",
           "hover:bg-white/15 transition",
           className ?? "",
         ].join(" ")}
       >
         <Icon />
         <span className="text-sm leading-none">{credits}</span>
-        <span className="text-white/80 text-sm leading-none">credits</span>
+        <span className="text-white text-xs  leading-none">credits</span>
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-[999] bg-black backdrop-blur-md">
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="absolute right-8 top-8 text-white/80 hover:text-white"
           >
-            <X size={20} />
+            <X size={30} />
           </button>
 
           <div className="grid place-items-center h-full px-4 overflow-y-auto">

@@ -12,7 +12,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "What are credits and how do they work?",
     answer:
-      "Credits are the currency for AI actions inside Slate — generating images, running agents, transforming canvas content, and more. Each action costs a set number of credits. Your credits reset monthly on your billing date, and unused credits don't roll over.",
+      "Credits are the currency for AI actions inside ENDLESS — generating images, running agents, transforming canvas content, and more. Each action costs a set number of credits. Your credits reset monthly on your billing date, and unused credits don't roll over.",
   },
   {
     question: "Can I change or cancel my plan at any time?",
@@ -30,9 +30,9 @@ const FAQ_ITEMS: FaqItem[] = [
       "The Free plan gives you 100 credits per month to explore Slate at no cost — no credit card required. We don't currently offer a time-limited trial, but you can upgrade and cancel at any time with no lock-in.",
   },
   {
-    question: "Which AI models does Slate use?",
+    question: "Which AI models does ENDLESS use?",
     answer:
-      "Slate uses a mix of models depending on the task — image generation, code, reasoning, and multimodal understanding each draw from the best available model for that job. Pro and Ultra plans unlock access to premium reasoning models and faster processing queues.",
+      "ENDLESS uses a mix of models depending on the task — image generation, code, reasoning, and multimodal understanding each draw from the best available model for that job. Pro and Ultra plans unlock access to premium reasoning models and faster processing queues.",
   },
   {
     question: "How does billing work for annual plans?",

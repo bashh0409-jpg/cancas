@@ -1,0 +1,21 @@
+name: Daily Purge Trashed Canvases
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  purge-trash:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger purge endpoint
+        run: |
+          curl -X POST "${{ secrets.APP_URL }}/api/admin/purge-trash" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            --max-time 30 \
+            -w "\nHTTP Status: %{http_code}\n"
+        env:
+          APP_URL: ${{ secrets.APP_URL }}

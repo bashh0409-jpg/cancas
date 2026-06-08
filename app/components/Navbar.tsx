@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
 
 const NAV_LINKS = [
@@ -25,11 +27,32 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(false);
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const linksRef = useRef<HTMLAnchorElement[]>([]);
 
+  async function handleStartProject() {
+    setCheckingSession(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        router.push("/home");
+      } else {
+        router.push("/signin");
+      }
+    } catch (error) {
+      console.error("Error checking session:", error);
+      router.push("/signin");
+    } finally {
+      setCheckingSession(false);
+    }
+  }
   useLayoutEffect(() => {
     const overlay = overlayRef.current;
     if (!overlay) return;
@@ -84,7 +107,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
         <h1 className="pixel mix-blend-difference text-2xl font-semibold tracking-tight text-white">
-          SLATE
+          ENDLESS
         </h1>
 
         {/* Desktop */}
@@ -99,38 +122,42 @@ const Navbar = () => {
             </Link>
           ))}
 
-          <Link
-            href="/signin"
-            className="ml-2 flex items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90"
+          <button
+            onClick={handleStartProject}
+            disabled={checkingSession}
+            className="ml-2 flex items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
             Start a project
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
-          </Link>
+          </button>
         </div>
 
         {/* Mobile button */}
         <div className="flex gap-2 md:hidden">
           {" "}
-          <Link
-            href="/signin"
-            onClick={() => setOpen(false)}
-            className="flex w-fit items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black"
+          <button
+            onClick={() => {
+              handleStartProject();
+              setOpen(false);
+            }}
+            disabled={checkingSession}
+            className="flex w-fit items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black disabled:opacity-70"
           >
             Start a project
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
-          </Link>        <button
-          onClick={() => setOpen((prev) => !prev)}
-          className="grid h-9 w-9 place-items-center rounded bg-white lg:hidden"
-          aria-label="Toggle Menu"
-        >
-          {open ? (
-            <X className="h-5 w-5 text-black" />
-          ) : (
-            <Menu className="h-5 w-5 text-black" />
-          )}
-        </button>
+          </button>{" "}
+          <button
+            onClick={() => setOpen((prev) => !prev)}
+            className="grid h-9 w-9 place-items-center rounded bg-white lg:hidden"
+            aria-label="Toggle Menu"
+          >
+            {open ? (
+              <X className="h-5 w-5 text-black" />
+            ) : (
+              <Menu className="h-5 w-5 text-black" />
+            )}
+          </button>
         </div>
-
       </nav>
 
       {/* Mobile overlay */}

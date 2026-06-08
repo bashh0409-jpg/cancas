@@ -10,20 +10,21 @@ import { Suspense } from "react";
 import MobileNotifier from "@/app/components/home/MobileNotifier";
 import { HomeShell } from "@/app/components/home/HomeShell";
 import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
+import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { error?: string | string[] };
+  searchParams: Promise<{ error?: string | string[] }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const errorMessage =
-    searchParams.error === "no_credits"
+    resolvedSearchParams.error === "no_credits"
       ? "No credits available. Unable to create a new file."
       : undefined;
 
-  async function signOut(formData: FormData) {
+  async function signOut() {
     "use server";
-    void formData;
     const supabase = await createClient();
     await supabase.auth.signOut();
     redirect("/signin");
@@ -42,7 +43,6 @@ export default async function HomePage({
   const lastName =
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[1] ??
     "User";
-  const fullName = `${firstName} ${lastName}`;
 
   let canvases: CanvasListItem[] = [];
   let projectsError: string | null = null;
@@ -52,12 +52,11 @@ export default async function HomePage({
     "use server";
     void page;
   };
-  
+
   try {
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
-    projectsError =
-      "Could not load projects. Refresh this page.";
+    projectsError = "Could not load projects. Refresh this page.";
   }
 
   try {
@@ -96,6 +95,7 @@ export default async function HomePage({
           errorMessage={errorMessage}
           createCanvasAction={createCanvasAction}
           signOut={signOut}
+          deleteAccountAction={deleteAccountAction}
           profile={{
             firstName,
             lastName,
@@ -104,7 +104,6 @@ export default async function HomePage({
           }}
           updateNicknameAction={updateNicknameAction}
         />
-
       </div>
     </div>
   );

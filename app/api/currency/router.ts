@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const BASE_PRICES_USD = { Free: 0, Starter: 15, Pro: 35, Ultra: 79 };
+const BASE_PRICES_USD = { Free: 0, Starter: 10, Pro: 25, Ultra: 50 };
 
 // Maps country code → ISO 4217 currency code
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {

@@ -41,7 +41,7 @@ const rinter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "OO.AI",
+  title: "ENDLESS.AI",
   description: "discover the power of collaborative creativity with Slate, the ultimate canvas for your ideas.",
 };
 

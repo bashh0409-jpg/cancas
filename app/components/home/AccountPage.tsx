@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Settings, User, Loader2 } from "lucide-react";
+import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
 
 type AccountTab = "profile" | "settings";
 
@@ -28,14 +30,13 @@ const TABS: { id: AccountTab; label: string; icon: React.ReactNode }[] = [
 export function AccountPage({
   profile,
   updateNicknameAction,
+  deleteAccountAction,
+  signOut,
 }: {
-  profile?: {
-    nickname?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  };
+  profile: Profile;
   updateNicknameAction: (formData: FormData) => Promise<void>;
+  deleteAccountAction: () => Promise<void>;
+  signOut: () => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<AccountTab>("profile");
 
@@ -93,13 +94,18 @@ export function AccountPage({
 
           {activeTab === "profile" && (
             <ProfileTab
-              profile={profile}
+              profile={safeProfile}
               fullName={fullName}
               updateNicknameAction={updateNicknameAction}
             />
           )}
 
-          {activeTab === "settings" && <SettingsTab />}
+          {activeTab === "settings" && (
+            <SettingsTab
+              deleteAccountAction={deleteAccountAction}
+              signOut={signOut}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -230,73 +236,43 @@ function ProfileTab({
   );
 }
 
-function SettingsTab() {
+function SettingsTab({
+  deleteAccountAction,
+  signOut,
+}: {
+  deleteAccountAction: () => Promise<void>;
+  signOut: () => Promise<void>;
+}) {
+  const router = useRouter();
   const [openDelete, setOpenDelete] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const canDelete = confirmText.trim() === "Yes i want to delete my account";
 
-  function DeleteAccountModal() {
-    if (!openDelete) return null;
+  async function handleDeleteAccount(confirmText: string) {
+    const canDelete = confirmText.trim() === "Yes i want to delete my account";
+    if (!canDelete) return;
 
-    function handleDeleteAccount() {
-      // TODO: connect server action here
-      console.log("account deleted");
+    setDeleting(true);
+    setDeleteError(null);
+    setOpenDelete(false);
 
-      setOpenDelete(false);
+    try {
+      await deleteAccountAction();
+      await signOut();
+      router.push("/signin");
       setConfirmText("");
+    } catch (error) {
+      setDeleting(false);
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : String(error) || "Unable to delete account.",
+      );
+      setOpenDelete(true);
     }
-
-    return (
-      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
-        <div className="w-full max-w-md rounded border border-white/10 bg-[#212529] p-5">
-          <h3 className="text-sm font-medium text-white">
-            Confirm account deletion
-          </h3>
-
-          <p className="mt-1 text-xs text-white/40">
-            Type the exact phrase to confirm.
-          </p>
-
-          <p className="mt-3 rounded bg-black/30 p-2 text-[11px] text-white/60">
-            Yes i want to delete my account
-          </p>
-
-          <input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            className="mt-3 h-9 w-full rounded border border-white/10 bg-black/30 px-3 text-xs text-white outline-none focus:border-white/20"
-            placeholder="Type confirmation text..."
-          />
-
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              onClick={() => {
-                setOpenDelete(false);
-                setConfirmText("");
-              }}
-              className="h-9 rounded px-3 text-xs text-white/60 hover:text-white"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleDeleteAccount}
-              disabled={!canDelete}
-              className="
-                h-9 rounded border border-rose-500/30 px-3
-                text-xs font-medium text-rose-400
-                transition
-                disabled:cursor-not-allowed disabled:opacity-40
-                enabled:hover:bg-rose-500/10
-              "
-            >
-              Delete account
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -387,26 +363,35 @@ function SettingsTab() {
         </div>
       </div>
 
-      <DeleteAccountModal />
+      <DeleteAccountModal
+        open={openDelete}
+        onClose={() => {
+          if (!deleting) {
+            setOpenDelete(false);
+            setConfirmText("");
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={handleDeleteAccount}
+      />
+
+      {deleteError ? (
+        <div className="mt-4 rounded border border-rose-500/50 bg-rose-500/10 p-3 text-xs text-rose-200">
+          {deleteError}
+        </div>
+      ) : null}
+
+      {deleting ? (
+        <div
+          aria-label="Deleting account"
+          aria-live="polite"
+          className="fixed inset-0 z-[1000] grid place-items-center bg-black"
+          role="status"
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+        </div>
+      ) : null}
     </>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-white/30 text-[11px] uppercase tracking-widest">
-        {title}
-      </p>
-
-      {children}
-    </div>
   );
 }
 

@@ -8,7 +8,7 @@ type Props = {
   fullName?: string;
   email?: string;
   credits: number;
-  signOut: (formData: FormData) => void;
+  signOut: () => void;
   setActivePage: (page: string) => void;
 };
 
@@ -69,7 +69,7 @@ const MobileNotifier: React.FC<Props> = ({
             setActivePage("account");
             setAccountOpen(false);
           }}
-          onSignOut={() => signOut(new FormData())}
+          onSignOut={() => signOut()}
         />
       )}
 

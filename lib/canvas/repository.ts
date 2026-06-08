@@ -1,4 +1,8 @@
-import type { CanvasContent, CanvasListItem, CanvasRecord } from "@/types/canvas";
+import type {
+  CanvasContent,
+  CanvasListItem,
+  CanvasRecord,
+} from "@/types/canvas";
 import { parseCanvasContent } from "@/types/canvas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUuid, slugifyCanvasName } from "./slug";
@@ -7,7 +11,7 @@ async function createUniqueCanvasSlug(
   supabase: SupabaseClient,
   userId: string,
   name: string,
-  excludeCanvasId?: string
+  excludeCanvasId?: string,
 ) {
   const baseSlug = slugifyCanvasName(name);
 
@@ -40,25 +44,42 @@ async function createUniqueCanvasSlug(
 
 export async function listUserCanvases(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<CanvasListItem[]> {
-  const { data, error } = await supabase
-    .from("canvases")
-    .select("id, slug, name, created_at, updated_at")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("canvases")
+      .select("id, slug, name, created_at, updated_at, deleted_at")
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  } catch (err: any) {
+    // If the deleted_at column doesn't exist, fall back to querying without it.
+    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+      const { data, error } = await supabase
+        .from("canvases")
+        .select("id, slug, name, created_at, updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    }
+
+    throw err;
   }
-
-  return data ?? [];
 }
 
 export async function createUserCanvas(
   supabase: SupabaseClient,
   userId: string,
-  name = "Untitled"
+  name = "Untitled",
 ): Promise<string> {
   const slug = await createUniqueCanvasSlug(supabase, userId, name);
   const { data, error } = await supabase
@@ -81,37 +102,69 @@ export async function createUserCanvas(
 export async function getUserCanvas(
   supabase: SupabaseClient,
   userId: string,
-  identifier: string
+  identifier: string,
 ): Promise<CanvasRecord | null> {
-  let query = supabase
-    .from("canvases")
-    .select("id, slug, name, content, created_at, updated_at")
-    .eq("user_id", userId);
+  try {
+    let query = supabase
+      .from("canvases")
+      .select("id, slug, name, content, created_at, updated_at, deleted_at")
+      .eq("user_id", userId)
+      .is("deleted_at", null);
 
-  query = isUuid(identifier)
-    ? query.eq("id", identifier)
-    : query.eq("slug", identifier);
+    query = isUuid(identifier)
+      ? query.eq("id", identifier)
+      : query.eq("slug", identifier);
 
-  const { data, error } = await query.maybeSingle();
+    const { data, error } = await query.maybeSingle();
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    const parsedContent = parseCanvasContent(data.content);
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      content: parsedContent ?? {},
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+  } catch (err: any) {
+    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+      let query = supabase
+        .from("canvases")
+        .select("id, slug, name, content, created_at, updated_at")
+        .eq("user_id", userId);
+
+      query = isUuid(identifier)
+        ? query.eq("id", identifier)
+        : query.eq("slug", identifier);
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const parsedContent = parseCanvasContent(data.content);
+
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        content: parsedContent ?? {},
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    }
+
+    throw err;
   }
-
-  if (!data) {
-    return null;
-  }
-
-  const parsedContent = parseCanvasContent(data.content);
-
-  return {
-    id: data.id,
-    slug: data.slug,
-    name: data.name,
-    content: parsedContent ?? {},
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-  };
 }
 
 export async function saveUserCanvasContent(
@@ -119,7 +172,7 @@ export async function saveUserCanvasContent(
   userId: string,
   canvasId: string,
   content: CanvasContent,
-  name?: string
+  name?: string,
 ): Promise<{ updated_at: string }> {
   const updated_at = new Date().toISOString();
   const payload: {
@@ -152,7 +205,7 @@ export async function updateUserCanvasName(
   supabase: SupabaseClient,
   userId: string,
   canvasId: string,
-  name: string
+  name: string,
 ): Promise<{ updated_at: string; slug: string }> {
   const updated_at = new Date().toISOString();
   const slug = await createUniqueCanvasSlug(supabase, userId, name, canvasId);
@@ -176,16 +229,63 @@ export async function updateUserCanvasName(
 export async function deleteUserCanvas(
   supabase: SupabaseClient,
   userId: string,
-  canvasId: string
+  canvasId: string,
 ) {
   const rootPath = `${userId}/${canvasId}`;
-  const { data: nodeFolders, error: listError } = await supabase.storage
-    .from("canvas-files")
-    .list(rootPath);
 
-  if (listError) {
-    throw listError;
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  async function listWithRetry(path: string) {
+    const bucket = "canvas-files";
+    let attempt = 0;
+    let delay = 500;
+
+    while (attempt < 6) {
+      const { data, error } = await supabase.storage.from(bucket).list(path);
+
+      if (!error) return data ?? [];
+
+      const status = (error as any)?.status;
+
+      if (status === 429 || status === 503) {
+        attempt += 1;
+        await wait(delay);
+        delay = Math.min(5000, delay * 2);
+        continue;
+      }
+
+      throw error;
+    }
+
+    throw new Error("Exceeded retries listing storage path");
   }
+
+  async function removeWithRetry(paths: string[]) {
+    const bucket = "canvas-files";
+    let attempt = 0;
+    let delay = 500;
+
+    while (attempt < 6) {
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+
+      if (!error) return;
+
+      const status = (error as any)?.status;
+
+      if (status === 429 || status === 503) {
+        attempt += 1;
+        await wait(delay);
+        delay = Math.min(5000, delay * 2);
+        continue;
+      }
+
+      throw error;
+    }
+
+    throw new Error("Exceeded retries removing storage objects");
+  }
+
+  const nodeFolders = await listWithRetry(rootPath);
 
   const pathsToRemove: string[] = [];
 
@@ -195,9 +295,7 @@ export async function deleteUserCanvas(
     }
 
     const nodePath = `${rootPath}/${entry.name}`;
-    const { data: files } = await supabase.storage
-      .from("canvas-files")
-      .list(nodePath);
+    const files = await listWithRetry(nodePath);
 
     for (const file of files ?? []) {
       if (file.name) {
@@ -207,13 +305,7 @@ export async function deleteUserCanvas(
   }
 
   if (pathsToRemove.length > 0) {
-    const { error: removeError } = await supabase.storage
-      .from("canvas-files")
-      .remove(pathsToRemove);
-
-    if (removeError) {
-      throw removeError;
-    }
+    await removeWithRetry(pathsToRemove);
   }
 
   const { error } = await supabase
@@ -228,12 +320,100 @@ export async function deleteUserCanvas(
 }
 
 export async function getUserCanvases(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("canvases")
-    .select("id,name,slug")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("canvases")
+      .select("id,name,slug,deleted_at")
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
 
-  if (error) throw error;
-  return data ?? [];
+    if (error) throw error;
+    return data ?? [];
+  } catch (err: any) {
+    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+      const { data, error } = await supabase
+        .from("canvases")
+        .select("id,name,slug")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    }
+
+    throw err;
+  }
+}
+
+export async function listUserTrashedCanvases(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<CanvasListItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from("canvases")
+      .select("id,slug,name,created_at,updated_at,deleted_at")
+      .eq("user_id", userId)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (err: any) {
+    // If deleted_at doesn't exist yet, return empty
+    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+      return [];
+    }
+    throw err;
+  }
+}
+
+export async function moveUserCanvasToTrash(
+  supabase: SupabaseClient,
+  userId: string,
+  canvasId: string,
+) {
+  const deleted_at = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("canvases")
+    .update({ deleted_at })
+    .eq("id", canvasId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function purgeTrashedCanvases(
+  supabase: SupabaseClient,
+  olderThanDays = 30,
+) {
+  const cutoff = new Date(
+    Date.now() - olderThanDays * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const { data: canvases, error: listError } = await supabase
+    .from("canvases")
+    .select("id, user_id")
+    .lte("deleted_at", cutoff);
+
+  if (listError) {
+    throw listError;
+  }
+
+  const purged: Array<{ id: string; user_id: string }> = canvases ?? [];
+
+  for (const c of purged) {
+    try {
+      await deleteUserCanvas(supabase, c.user_id, c.id);
+    } catch (e) {
+      // continue with others, but surface the error at the end if needed
+      console.error("Failed to purge canvas", c.id, e);
+    }
+  }
+
+  return purged.map((p) => p.id);
 }

@@ -1,5 +1,6 @@
 import {
   deleteUserCanvas,
+  moveUserCanvasToTrash,
   getUserCanvas,
   saveUserCanvasContent,
   updateUserCanvasName,
@@ -38,7 +39,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   } catch {
     return NextResponse.json(
       { error: "Unable to load canvas" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -56,8 +57,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const body = await request.json();
     const hasContent = body.content !== undefined && body.content !== null;
-    const name =
-      typeof body.name === "string" ? body.name.trim() : undefined;
+    const name = typeof body.name === "string" ? body.name.trim() : undefined;
 
     if (hasContent) {
       const content = parseCanvasContent(body.content);
@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       if (!content) {
         return NextResponse.json(
           { error: "Invalid canvas content" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         user.id,
         id,
         content,
-        name
+        name,
       );
 
       return NextResponse.json({ ok: true, updated_at: updated.updated_at });
@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   } catch {
     return NextResponse.json(
       { error: "Unable to save canvas" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -112,13 +112,13 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await deleteUserCanvas(supabase, user.id, id);
+    await moveUserCanvasToTrash(supabase, user.id, id);
 
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(
       { error: "Unable to delete canvas" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

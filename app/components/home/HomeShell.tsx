@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { siDiscord} from "simple-icons";
+import { siDiscord } from "simple-icons";
 import {
   ChevronDown,
   ChevronLeft,
@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
+import { Loader2 } from "lucide-react";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
@@ -33,7 +34,15 @@ interface HomeShellProps {
   projectsError: string | null;
   errorMessage: string | undefined;
   createCanvasAction: () => Promise<void>;
-  signOut: (formData: FormData) => Promise<void>;
+  signOut: () => Promise<void>;
+  deleteAccountAction: () => Promise<void>;
+  profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    nickname?: string | null;
+  };
+  updateNicknameAction: (formData: FormData) => Promise<void>;
 }
 
 // ── Account card popup ─────────────────────────────────────────────────────
@@ -195,6 +204,7 @@ export function HomeShell({
   errorMessage,
   createCanvasAction,
   signOut,
+  deleteAccountAction,
   profile,
   updateNicknameAction,
 }: HomeShellProps) {
@@ -246,25 +256,6 @@ export function HomeShell({
       labelsRef.current.push(el);
     }
   };
-  type HomeShellProps = {
-    firstName: string;
-    lastName: string;
-    credits: number;
-    canvases: CanvasListItem[];
-    projectsError: boolean;
-    errorMessage?: string;
-    createCanvasAction: () => Promise<void>;
-    signOut: (formData: FormData) => void;
-
-    profile: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      nickname?: string | null;
-    };
-
-    updateNicknameAction: (formData: FormData) => Promise<void>;
-  };
 
   return (
     <div className="flex h-screen border border-white/10">
@@ -286,7 +277,7 @@ export function HomeShell({
               className={`flex items-center gap-1.5 overflow-hidden whitespace-nowrap ${collapsed ? "pointer-events-none" : ""}`}
             >
               <span className="text-white text-base font-semibold uppercase tracking-widest leading-none">
-                Slate
+                ENDLESS
               </span>
               <span className="uppercase bg-white/10 text-[9px] text-white/50 px-1.5 py-0.5 rounded font-semibold tracking-wide leading-none">
                 BETA
@@ -354,7 +345,7 @@ export function HomeShell({
               setActivePage("account");
               setAccountOpen(false);
             }}
-            onSignOut={() => signOut(new FormData())}
+            onSignOut={() => signOut()}
           />
         )}
 
@@ -454,6 +445,8 @@ export function HomeShell({
           <AccountPage
             profile={profile}
             updateNicknameAction={updateNicknameAction}
+            deleteAccountAction={deleteAccountAction}
+            signOut={signOut}
           />
         )}
         {activePage === "tutorials" && <TutorialPage />}
@@ -482,42 +475,6 @@ function FilesPage({
   errorMessage: string | undefined;
   createCanvasAction: () => Promise<void>;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const updateScrollState = () => {
-    const el = scrollRef.current;
-
-    if (!el) return;
-
-    // prevents tiny sub-pixel inaccuracies at the end
-    const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
-
-    setCanScrollRight(!isAtEnd);
-  };
-
-  useEffect(() => {
-    updateScrollState();
-
-    const el = scrollRef.current;
-
-    if (!el) return;
-
-    el.addEventListener("scroll", updateScrollState);
-
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-    };
-  }, []);
-
-  const handleScroll = () => {
-    scrollRef.current?.scrollBy({
-      left: 220,
-      behavior: "smooth",
-    });
-  };
-
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -571,14 +528,45 @@ function FilesPage({
 }
 
 function RecentlyDeletedPage() {
+  const [loading, setLoading] = useState(true);
+  const [canvases, setCanvases] = useState<CanvasListItem[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/canvases/trashed");
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!mounted) return;
+        setCanvases(json.canvases ?? []);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col gap-2">
-      <h2 className="text-white text-sm tracking-tight mono">
-        Recently Deleted
-      </h2>
-      <p className="text-white/50 text-xs mono">
-        Files moved here are permanently deleted after 30 days.
-      </p>
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-white text-sm tracking-tight mono">
+          Recently Deleted
+        </h2>
+        <p className="text-white/50 text-xs mono">
+          All recently deleted files will appear here.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="animate-spin" />
+        </div>
+      ) : (
+        <CanvasFileList canvases={canvases} isTrash />
+      )}
     </div>
   );
 }
@@ -592,62 +580,62 @@ type TutorialItem = {
 const tutorials: TutorialItem[] = [
   {
     id: "1",
-    title: "Canvas Basics",
+    title: "Getting Started with Canvas",
     description: "",
   },
   {
     id: "2",
-    title: "Working with Nodes",
+    title: "Creating and Managing Projects",
     description: "",
   },
   {
     id: "3",
-    title: "Image Handling",
+    title: "Working with Images",
     description: "",
   },
   {
     id: "4",
-    title: "Layout System",
+    title: "Text and Typography",
     description: "",
   },
   {
     id: "5",
-    title: "Performance Tips",
+    title: "Advanced Layout Techniques",
     description: "",
   },
   {
     id: "6",
-    title: "Exporting Work",
+    title: "Exporting Your Work",
     description: "",
   },
   {
     id: "7",
-    title: "Exporting Work",
+    title: "Collaboration Features",
     description: "",
   },
   {
     id: "8",
-    title: "Exporting Work",
-    description: "",
-  },
-  {
-    id: "8",
-    title: "Exporting Work",
+    title: "Keyboard Shortcuts & Tips",
     description: "",
   },
   {
     id: "9",
-    title: "Exporting Work",
+    title: "Design System Setup",
     description: "",
   },
   {
     id: "10",
-    title: "Exporting Work",
-    description: ".",
+    title: "Performance Optimization",
+    description: "",
   },
   {
-    id: "10",
-    title: "Exporting Work",
+    id: "11",
+    title: "Prototyping and Animation",
+    description: "",
+  },
+  {
+    id: "12",
+    title: "Best Practices Guide",
     description: "",
   },
 ];
@@ -658,10 +646,10 @@ function TutorialPage() {
       {/* header */}
       <div className="flex flex-col gap-2">
         <h2 className="text-white text-sm tracking-tight mono">
-          Tutoring Lessons.
+          Tutorial Lessons.
         </h2>
         <p className="text-white/50 text-xs mono">
-          Tutoring videos will appear here. New video every week will be
+          Tutorial videos will appear here. New video every week will be
           released.
         </p>
       </div>
@@ -677,14 +665,7 @@ function TutorialPage() {
               <h3 className="text-white text-xs mono font-medium tracking-tight">
                 {item.title}
               </h3>
-
-              <p className="mt-1 text-white/50 text-xs leading-snug">
-                {item.description}
-              </p>
             </div>
-                          <p className="mt-1 text-white/50 text-xs leading-snug">
-                {item.description}
-              </p>
           </div>
         ))}
       </div>
@@ -716,7 +697,7 @@ function NavItem({
       onClick={onClick}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-8 rounded flex items-center text-sm font-light
+        w-full h-8 mt-1 rounded flex items-center text-sm font-light
         text-white transition-colors
         ${active ? "bg-white/15" : "hover:bg-white/10"}
         ${collapsed ? "justify-center h-8 w-8 px-0" : "justify-between px-2"}
