@@ -15,6 +15,7 @@ const page = () => {
         </div>
         <Pricing />
         <Faq />
+        
         <Footer />
       </div>
       <div className="h-fit absolute z-1 text-[30vw] flex items-center justify-center">

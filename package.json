@@ -11,6 +11,7 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@mozilla/readability": "^0.6.0",
+    "@notionhq/client": "^5.22.0",
     "@opentelemetry/exporter-logs-otlp-http": "^0.218.0",
     "@opentelemetry/resources": "^2.7.1",
     "@opentelemetry/sdk-logs": "^0.218.0",

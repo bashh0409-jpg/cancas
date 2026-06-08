@@ -5,7 +5,6 @@ import gsap from "gsap";
 import { siDiscord, siYoutube } from "simple-icons";
 import {
   ArrowRight,
-  BadgeQuestionMark,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +15,8 @@ import {
   Settings,
   Trash2,
   User,
+  Bug,
+  MessageSquareHeart,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
@@ -239,7 +240,7 @@ export function HomeShell({
               </span>
             </div>
           </div>
-          
+
           <button
             onClick={() => setCollapsed((c) => !c)}
             className="shrink-0 flex items-center justify-center w-6 h-6 rounded-md
@@ -256,7 +257,6 @@ export function HomeShell({
 
         {/* ── Account button ── */}
         <div className="px-1 mb-4">
-          
           <button
             onClick={() => setAccountOpen((o) => !o)}
             title={collapsed ? fullName : undefined}
@@ -325,7 +325,7 @@ export function HomeShell({
           />
           <NavItem
             icon={<Trash2 className="w-4 h-4" />}
-            label="Recently Deleted"
+            label="Trash"
             endIcon={<ClockFading className="w-3.5 h-3.5 opacity-50" />}
             active={activePage === "recently-deleted"}
             collapsed={collapsed}
@@ -347,31 +347,7 @@ export function HomeShell({
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-col gap-0.5 px-1">
           <SidebarLink
-            href="/docs"
-            icon={<BadgeQuestionMark className="w-4 h-4" />}
-            label="Help"
-            collapsed={collapsed}
-            labelRef={addLabelRef}
-          />
-          <SidebarLink
-            href="https://youtube.com/slateai"
-            icon={
-              <svg
-                role="img"
-                viewBox="0 0 24 24"
-                aria-label="YouTube"
-                className="w-4 h-4 shrink-0 fill-current"
-                dangerouslySetInnerHTML={{
-                  __html: `<path d="${siYoutube.path}" />`,
-                }}
-              />
-            }
-            label="YouTube"
-            collapsed={collapsed}
-            labelRef={addLabelRef}
-          />
-          <SidebarLink
-            href="https://discord.gg/slate"
+            href="https://discord.gg/xexnRhqBP"
             icon={
               <svg
                 role="img"
@@ -627,8 +603,8 @@ function SidebarLink({
       rel="noopener noreferrer"
       title={collapsed ? label : undefined}
       className={`
-        flex items-center h-8 rounded-md text-sm
-        text-white/60 hover:text-white hover:bg-white/10 transition-colors
+        flex items-center h-8 rounded tracking-tight text-sm
+        text-white mono  hover:text-white hover:bg-white/10 transition-colors
         ${collapsed ? "justify-center px-0 gap-0" : "gap-2.5 px-2"}
       `}
     >
