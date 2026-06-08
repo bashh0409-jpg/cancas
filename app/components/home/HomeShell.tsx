@@ -659,7 +659,7 @@ function TutorialPage() {
         {tutorials.map((item) => (
           <div
             key={item.id}
-            className="w-full aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between"
+            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between"
           >
             <div>
               <h3 className="text-white text-xs mono font-medium tracking-tight">
