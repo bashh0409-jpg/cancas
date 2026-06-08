@@ -4,6 +4,7 @@ import type { CanvasListItem } from "@/types/canvas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
@@ -34,7 +35,9 @@ function formatRelativeDate(value: string) {
   });
 }
 
-export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProps) {
+export function CanvasFileList({
+  canvases: initialCanvases,
+}: CanvasFileListProps) {
   const router = useRouter();
   const [canvases, setCanvases] = useState(initialCanvases);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -44,9 +47,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
   }, [initialCanvases]);
 
   async function handleDelete(canvasId: string, canvasName: string) {
-    const confirmed = window.confirm(
-      `Move "${canvasName}" to trash.`
-    );
+    const confirmed = window.confirm(`Move "${canvasName}" to trash.`);
 
     if (!confirmed) {
       return;
@@ -63,7 +64,9 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
         return;
       }
 
-      setCanvases((current) => current.filter((canvas) => canvas.id !== canvasId));
+      setCanvases((current) =>
+        current.filter((canvas) => canvas.id !== canvasId),
+      );
       window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
       router.refresh();
     } finally {
@@ -74,7 +77,9 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
   if (canvases.length === 0) {
     return (
       <div className="flex min-h-[400px] items-start rounded-lg bg-white/10 p-3 text-sm text-white pixel">
-        <p>You don&apos;t have any projects yet. Click New File to create one.</p>
+        <p>
+          You don&apos;t have any projects yet. Click New File to create one.
+        </p>
       </div>
     );
   }
@@ -84,7 +89,7 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
       {canvases.map((canvas) => (
         <article
           key={canvas.id}
-          className="group relative flex flex-col rounded-lg border border-white/10 bg-white/5 transition hover:border-white/25 hover:bg-white/10"
+          className="group relative flex flex-col rounded transition "
         >
           <button
             aria-label={`Delete ${canvas.name}`}
@@ -93,28 +98,14 @@ export function CanvasFileList({ canvases: initialCanvases }: CanvasFileListProp
             type="button"
             onClick={() => handleDelete(canvas.id, canvas.name)}
           >
-            {deletingId === canvas.id ? "Movint to trash…" : "Trash"}
+            {deletingId === canvas.id ? "Moving to trash…" : "Trash"}
           </button>
 
-          <Link className="flex flex-col p-4" href={`/canvas/${canvas.slug}`}>
-            <div className="mb-3 flex h-28 items-center justify-center rounded-lg bg-white/10 text-white/30 transition group-hover:bg-white/15">
-              <svg
-                aria-hidden
-                className="h-10 w-10"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M4 5h16v14H4V5zm2 2v10h12V7H6zm2 2h8v2H8V9zm0 3h5v2H8v-2z"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                />
-              </svg>
+          <Link className="flex flex-col " href={`/canvas/${canvas.slug}`}>
+            <div className="mb-3 flex  items-center justify-center rounded bg-white/10 aspect-square text-white/30 transition">
+              <CanvasPlaceholderIcon />
             </div>
-            <h3 className="truncate text-sm  text-white">
-              {canvas.name}
-            </h3>
+            <h3 className="truncate text-sm  text-white">{canvas.name}</h3>
             <p className="mt-1 text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>

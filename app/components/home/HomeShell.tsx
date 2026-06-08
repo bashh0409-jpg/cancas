@@ -15,12 +15,15 @@ import {
   Settings,
   Trash2,
   User,
+  Play,
+  Expand
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import { AccountPage } from "@/app/components/home/AccountPage";
+import Tutorials from "./Tutorials";
 
 type ActivePage = "files" | "account" | "recently-deleted";
 
@@ -497,61 +500,28 @@ const handleScroll = () => {
 
         <CreditsBadge credits={credits} />
       </div>
-
-      <div className="mono rounded-md bg-white/10 p-3 text-xs text-white">
-        <p className="mb-3 max-w-60 tracking-tight">
-          Learn how to use the canvas with our step-by-step guides.
-        </p>
-
-        <div className="relative">
-          <div
-            ref={scrollRef}
-            className="scrollbar-none flex gap-2 overflow-x-auto pr-14"
-          >
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-video h-36 min-w-[200px] shrink-0 rounded bg-white/10"
-              />
-            ))}
-          </div>
-
-          {canScrollRight && (
-            <button
-              type="button"
-              onClick={handleScroll}
-              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center bg-white text-black"
-            >
-              <ArrowRight className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+      <Tutorials />
+      <div className="mt-2 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-3">
         <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
 
         <div>
           <input
             type="text"
             placeholder="Search files..."
-            className="w-full rounded border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto"
+            className="w-full mono rounded border border-white/20 bg-white/20 px-4 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
           />
         </div>
       </div>
-
       {projectsError && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
           {projectsError}
         </div>
       )}
-
       {errorMessage && (
         <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100">
           {errorMessage}
         </div>
       )}
-
       <CanvasFileList canvases={canvases} />
     </>
   );
