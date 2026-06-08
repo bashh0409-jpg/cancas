@@ -2,21 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { siDiscord, siYoutube } from "simple-icons";
+import { siDiscord} from "simple-icons";
 import {
-  ArrowRight,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClockFading,
-  Folder,
   LogOut,
   Plus,
   Settings,
-  Trash2,
   User,
-  Play,
-  Expand
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
@@ -24,8 +19,11 @@ import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import { AccountPage } from "@/app/components/home/AccountPage";
 import Tutorials from "./Tutorials";
+import { FolderIcon } from "@/public/icons/custom/FolderIcon";
+import { TrashIcon } from "@/public/icons/custom/TrashIcon";
+import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 
-type ActivePage = "files" | "account" | "recently-deleted";
+type ActivePage = "files" | "account" | "recently-deleted" | "tutorials";
 
 interface HomeShellProps {
   firstName: string;
@@ -277,7 +275,7 @@ export function HomeShell({
 
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className="shrink-0 flex items-center justify-center w-6 h-6 rounded-md
+            className="shrink-0 flex hidden items-center justify-center w-6 h-6 rounded-md
               text-white/40 hover:text-white hover:bg-white/10 transition-colors"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -308,7 +306,7 @@ export function HomeShell({
               </div>
               <span
                 ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
-                className={`whitespace-nowrap text-sm ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
+                className={`whitespace-nowrap text-white ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
               >
                 {fullName}
               </span>
@@ -343,13 +341,29 @@ export function HomeShell({
         <div
           ref={createBtnRef}
           className={`px-1 mb-4 ${collapsed ? "pointer-events-none" : ""}`}
-        >
-          <CreateCanvasButton createCanvasAction={createCanvasAction} />
-        </div>
+        ></div>
+
         {/* ── Nav items ── */}
         <nav className="flex flex-col gap-2 px-1">
+          {/* Search */}
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search files..."
+              className="w-full rounded h-8 border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 "
+            />
+          </div>
+
+          {/* Create */}
+          <CreateCanvasButton
+            createCanvasAction={createCanvasAction}
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+          />
+
+          {/* Files */}
           <NavItem
-            icon={<Folder className="w-4 h-4" />}
+            icon={<FolderIcon className="w-4 h-4" />}
             label="My Files"
             endIcon={<Plus className="w-3.5 h-3.5 opacity-50" />}
             active={activePage === "files"}
@@ -357,25 +371,27 @@ export function HomeShell({
             labelRef={addLabelRef}
             onClick={() => setActivePage("files")}
           />
+
+          {/* Trash */}
           <NavItem
-            icon={<Trash2 className="w-4 h-4" />}
+            icon={<TutorialIcon className="w-4 h-4 text-white" />}
+            label="Tutorials"
+            endIcon={<ClockFading className="hidden" />}
+            active={activePage === "tutorials"}
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+            onClick={() => setActivePage("tutorials")}
+          />
+          {/* Trash */}
+          <NavItem
+            icon={<TrashIcon className="w-4 h-4 text-white" />}
             label="Trash"
-            endIcon={<ClockFading className="w-3.5 h-3.5 opacity-50" />}
+            endIcon={<ClockFading className="hidden" />}
             active={activePage === "recently-deleted"}
             collapsed={collapsed}
             labelRef={addLabelRef}
             onClick={() => setActivePage("recently-deleted")}
           />
-          {/* Future nav items can go here 
-          <NavItem
-            icon={<User className="w-4 h-4" />}
-            label="Account"
-            endIcon={<Settings className="w-3.5 h-3.5 opacity-50" />}
-            active={activePage === "account"}
-            collapsed={collapsed}
-            labelRef={addLabelRef}
-            onClick={() => setActivePage("account")}
-          />*/}
         </nav>
 
         {/* ── Bottom links ── */}
@@ -414,6 +430,7 @@ export function HomeShell({
           />
         )}
         {activePage === "account" && <AccountPage />}
+        {activePage === "tutorials" && <TutorialPage />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
       </main>
     </div>
@@ -439,41 +456,41 @@ function FilesPage({
   errorMessage: string | undefined;
   createCanvasAction: () => Promise<void>;
 }) {
-const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-const updateScrollState = () => {
-  const el = scrollRef.current;
+  const updateScrollState = () => {
+    const el = scrollRef.current;
 
-  if (!el) return;
+    if (!el) return;
 
-  // prevents tiny sub-pixel inaccuracies at the end
-  const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    // prevents tiny sub-pixel inaccuracies at the end
+    const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
 
-  setCanScrollRight(!isAtEnd);
-};
-
-useEffect(() => {
-  updateScrollState();
-
-  const el = scrollRef.current;
-
-  if (!el) return;
-
-  el.addEventListener("scroll", updateScrollState);
-
-  return () => {
-    el.removeEventListener("scroll", updateScrollState);
+    setCanScrollRight(!isAtEnd);
   };
-}, []);
 
-const handleScroll = () => {
-  scrollRef.current?.scrollBy({
-    left: 220,
-    behavior: "smooth",
-  });
-};
+  useEffect(() => {
+    updateScrollState();
+
+    const el = scrollRef.current;
+
+    if (!el) return;
+
+    el.addEventListener("scroll", updateScrollState);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+    };
+  }, []);
+
+  const handleScroll = () => {
+    scrollRef.current?.scrollBy({
+      left: 220,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <>
@@ -530,10 +547,121 @@ const handleScroll = () => {
 function RecentlyDeletedPage() {
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="text-white text-sm tracking-tight mono">Recently Deleted</h2>
+      <h2 className="text-white text-sm tracking-tight mono">
+        Recently Deleted
+      </h2>
       <p className="text-white/50 text-xs mono">
         Files moved here are permanently deleted after 30 days.
       </p>
+    </div>
+  );
+}
+
+type TutorialItem = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+const tutorials: TutorialItem[] = [
+  {
+    id: "1",
+    title: "Canvas Basics",
+    description: "",
+  },
+  {
+    id: "2",
+    title: "Working with Nodes",
+    description: "",
+  },
+  {
+    id: "3",
+    title: "Image Handling",
+    description: "",
+  },
+  {
+    id: "4",
+    title: "Layout System",
+    description: "",
+  },
+  {
+    id: "5",
+    title: "Performance Tips",
+    description: "",
+  },
+  {
+    id: "6",
+    title: "Exporting Work",
+    description: "",
+  },
+  {
+    id: "7",
+    title: "Exporting Work",
+    description: "",
+  },
+  {
+    id: "8",
+    title: "Exporting Work",
+    description: "",
+  },
+  {
+    id: "8",
+    title: "Exporting Work",
+    description: "",
+  },
+  {
+    id: "9",
+    title: "Exporting Work",
+    description: "",
+  },
+  {
+    id: "10",
+    title: "Exporting Work",
+    description: ".",
+  },
+  {
+    id: "10",
+    title: "Exporting Work",
+    description: "",
+  },
+];
+
+function TutorialPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* header */}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-white text-sm tracking-tight mono">
+          Tutoring Lessons.
+        </h2>
+        <p className="text-white/50 text-xs mono">
+          Tutoring videos will appear here. New video every week will be
+          released.
+        </p>
+      </div>
+
+      {/* grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+        {tutorials.map((item) => (
+          <div
+            key={item.id}
+            className="w-full aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between"
+          >
+            <div>
+              <h3 className="text-white text-xs mono font-medium tracking-tight">
+                {item.title}
+              </h3>
+
+              <p className="mt-1 text-white/50 text-xs leading-snug">
+                {item.description}
+              </p>
+            </div>
+                          <p className="mt-1 text-white/50 text-xs leading-snug">
+                {item.description}
+              </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -562,10 +690,10 @@ function NavItem({
       onClick={onClick}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-10 rounded-md flex items-center text-sm font-light
+        w-full h-8 rounded flex items-center text-sm font-light
         text-white transition-colors
         ${active ? "bg-white/15" : "hover:bg-white/10"}
-        ${collapsed ? "justify-center px-0" : "justify-between px-2"}
+        ${collapsed ? "justify-center h-8 w-8 px-0" : "justify-between px-2"}
       `}
     >
       <div className={`flex items-center ${collapsed ? "gap-0" : "gap-2"}`}>
@@ -574,7 +702,7 @@ function NavItem({
         </span>
         <span
           ref={labelRef as React.LegacyRef<HTMLSpanElement>}
-          className={`whitespace-nowrap ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
+          className={`whitespace-nowrap mono uppercase text-xs font-medium ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
         >
           {label}
         </span>

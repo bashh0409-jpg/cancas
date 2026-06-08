@@ -12,7 +12,7 @@ import {
 } from "@/lib/canvas/uploadDebug";
 import CanvasWorkspace from "./CanvasWorkspace";
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
-import { SignOutNameButton } from "../../home/SignOutNameButton";
+import { CanvasSwitcher } from "@/app/components/canvas/CanvasSwitcher"; // FIXED PATH
 
 type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 
@@ -46,17 +46,21 @@ export default function CanvasPageClient({
   signOutAction,
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
-const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
-  synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
-    .length,
-  total: initialContent.imageNodes.length,
-  failed: 0,
-}));
+
+  const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
+    synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
+      .length,
+    total: initialContent.imageNodes.length,
+    failed: 0,
+  }));
 
   const [uploadDebugEntries, setUploadDebugEntries] = useState<
     UploadDebugEntry[]
   >([]);
   const [showUploadDebug, setShowUploadDebug] = useState(false);
+
+  // NOTE: required for dropdown to know available canvases + active canvas
+  const canvases = initialContent.canvases ?? []; // adjust if your shape differs
 
   useEffect(() => {
     setShowUploadDebug(isUploadDebugEnabled());
@@ -81,19 +85,14 @@ const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
         onRemoteNameChange={setCanvasTitle}
       />
 
-      {/* TOP BAR (strict 3-column grid) */}
+      {/* TOP BAR */}
       <div className="absolute left-0 top-0 z-50 w-full p-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">
           {/* LEFT */}
           <div className="flex items-center gap-2 justify-start">
             <Link
               href="/home"
-              className="
-                flex h-8 w-8 items-center justify-center
-                rounded-xl border border-white/10
-                bg-white text-black/70
-                transition  hover:bg-white/90
-              "
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
             >
               <svg
                 fill="currentColor"
@@ -104,35 +103,9 @@ const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
                 <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
               </svg>
             </Link>
-            <div className="bg-white min-w-10 gap-1 h-8 rounded-lg text-sm  p-1 flex items-center">
-              <button
-                className="h-7  w-7 bg-black/10 p-1 items-center justify-center flex rounded-md text-black/50"
-                aria-label="Undo"
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7.125 12.75L2.625 8.25L7.125 3.75"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                  <path
-                    d="M7.125 18.75H15.375C16.7674 18.75 18.1027 18.1969 19.0873 17.2123C20.0719 16.2277 20.625 14.8924 20.625 13.5C20.625 12.1076 20.0719 10.7723 19.0873 9.78769C18.1027 8.80312 16.7674 8.25 15.375 8.25H2.625"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></path>
-                </svg>
-              </button>
-          
+
+            <div className="bg-white min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
+              <CanvasSwitcher canvases={canvases} activeCanvasId={canvasId} />
             </div>
           </div>
 

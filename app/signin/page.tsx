@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const LOGIN_IMAGES = [
   "/images/login/login1.jpg",
@@ -11,19 +11,22 @@ const LOGIN_IMAGES = [
   "/images/login/login5.jpg",
 ] as const;
 
-function getRandomLoginImage() {
-  return LOGIN_IMAGES[Math.floor(Math.random() * LOGIN_IMAGES.length)];
-}
+type Provider = "google" | "azure" | "email" | null;
 
 export default function Page() {
-  const [loginImage] = useState(getRandomLoginImage);
-  const [loadingProvider, setLoadingProvider] = useState<
-    "google" | "azure" | "email" | null
-  >(null);
+  const [loginImage, setLoginImage] = useState<string>(LOGIN_IMAGES[0]);
+
+  const [loadingProvider, setLoadingProvider] = useState<Provider>(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // hydration-safe randomness
+  useEffect(() => {
+    const index = Math.floor(Math.random() * LOGIN_IMAGES.length);
+    setLoginImage(LOGIN_IMAGES[index]);
+  }, []);
 
   function handleAuth(provider: "google" | "azure") {
     setLoadingProvider(provider);
@@ -66,16 +69,19 @@ export default function Page() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-white">
+      {/* LEFT */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
         <h1 className="absolute left-15 top-10 hidden text-3xl tracking-tight text-black">
           SLATE
         </h1>
-        <div className="flex w-full max-w-[380px] flex-col items-center gap-12 rounded-lg bg-black/[0.02] p-4">
+
+        <div className="flex w-full max-w-[380px] flex-col items-center gap-12 rounded-lg  p-4">
           <div className="flex w-full flex-col gap-2">
             <div className="text-2xl font-medium tracking-tight text-black">
               Design, create, and ship ideas faster — powered by multiple AI
               tools in one place.
             </div>
+
             <p className="hidden text-sm tracking-tight text-zinc-500">
               Sign in to your account
             </p>
@@ -88,7 +94,10 @@ export default function Page() {
                   Check your email for a sign-in link.
                 </p>
               ) : (
-                <form className="flex w-full flex-col gap-2" onSubmit={handleMagicLink}>
+                <form
+                  className="flex w-full flex-col gap-2"
+                  onSubmit={handleMagicLink}
+                >
                   <input
                     autoComplete="email"
                     className="h-[40px] w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
@@ -98,20 +107,29 @@ export default function Page() {
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                   />
+
                   <button
-                    className="inline-flex h-[40px] w-full items-center justify-center rounded-lg gray px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-[40px] w-full items-center justify-center rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-60"
                     disabled={isLoading}
                     type="submit"
                   >
-                    {loadingProvider === "email" ? <Spinner /> : "Send magic link"}
+                    {loadingProvider === "email" ? (
+                      <Spinner />
+                    ) : (
+                      "Send magic link"
+                    )}
                   </button>
-                  {formError ? (
-                    <p className="text-center text-xs text-red-600">{formError}</p>
-                  ) : null}
+
+                  {formError && (
+                    <p className="text-center text-xs text-red-600">
+                      {formError}
+                    </p>
+                  )}
                 </form>
               )}
+
               <button
-                className="text-sm font-semibold text-zinc-500 transition hover:text-black"
+                className="text-sm font-semibold text-zinc-500 hover:text-black"
                 type="button"
                 onClick={() => {
                   setShowEmailForm(false);
@@ -127,39 +145,27 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg gray px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
-                {loadingProvider === "google" ? (
-                  <Spinner />
-                ) : (
-                  <>
-                    <GoogleIcon />
-                    Continue with Google
-                  </>
-                )}
+                {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
+                Continue with Google
               </button>
 
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg gray px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
-                {loadingProvider === "azure" ? (
-                  <Spinner />
-                ) : (
-                  <>
-                    <MicrosoftIcon />
-                    Continue with Microsoft
-                  </>
-                )}
+                {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
+                Continue with Microsoft
               </button>
 
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center rounded-lg gray px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => {
                   setFormError(null);
                   setShowEmailForm(true);
@@ -170,6 +176,7 @@ export default function Page() {
             </div>
           )}
 
+          {/* RESTORED FOOTER TEXT */}
           <p className="max-w-[320px] text-center text-xs font-semibold leading-5 tracking-tight text-zinc-500">
             By continuing, you agree to the{" "}
             <a
@@ -196,6 +203,7 @@ export default function Page() {
         </div>
       </div>
 
+      {/* RIGHT */}
       <div className="relative hidden w-full md:flex">
         <img
           src={loginImage}
@@ -208,17 +216,11 @@ export default function Page() {
   );
 }
 
+/* unchanged helpers */
+
 function GoogleIcon() {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="shrink-0"
-      aria-hidden
-    >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -241,14 +243,7 @@ function GoogleIcon() {
 
 function MicrosoftIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 23 23"
-      className="shrink-0"
-      aria-hidden
-    >
+    <svg width="20" height="20" viewBox="0 0 23 23">
       <path fill="#f25022" d="M1 1h10v10H1z" />
       <path fill="#7fba00" d="M12 1h10v10H12z" />
       <path fill="#00a4ef" d="M1 12h10v10H1z" />

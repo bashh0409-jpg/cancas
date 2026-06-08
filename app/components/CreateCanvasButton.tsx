@@ -5,8 +5,12 @@ import { Loader2, Plus } from "lucide-react";
 
 export function CreateCanvasButton({
   createCanvasAction,
+  collapsed,
+  labelRef,
 }: {
   createCanvasAction: () => Promise<void>;
+  collapsed: boolean;
+  labelRef: (el: HTMLElement | null) => void;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -19,23 +23,40 @@ export function CreateCanvasButton({
     }
   };
 
+  const label = "Create new file";
+
   return (
     <button
       onClick={handleClick}
       disabled={loading}
-      className="cursor-pointer w-full h-8 rounded-md text-sm font-thin capitalize lime text-black flex items-center p-2 gap-2 hover:bg-lime-300 transition disabled:opacity-70 disabled:cursor-not-allowed"
+      title={collapsed ? label : undefined}
+      className={`
+        w-full h-8 lime rounded flex items-center text-sm
+        text-black transition-colors
+        hover:bg-white/10
+        disabled:opacity-60 disabled:cursor-not-allowed
+        ${collapsed ? "justify-center px-0" : "justify-between px-2"}
+      `}
     >
-      {loading ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          please wait...
-        </>
-      ) : (
-        <>
-          <Plus className="w-4 h-4" />
-          Create new file
-        </>
-      )}
+      <div className={`flex items-center ${collapsed ? "gap-0" : "gap-2"}`}>
+        <span className="shrink-0 flex items-center justify-center">
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </span>
+
+        <span
+          ref={labelRef as React.LegacyRef<HTMLSpanElement>}
+          className={`
+            whitespace-nowrap mono uppercase text-xs font-medium
+            ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}
+          `}
+        >
+          {loading ? "please wait..." : label}
+        </span>
+      </div>
     </button>
   );
 }
