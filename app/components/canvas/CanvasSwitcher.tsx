@@ -30,7 +30,7 @@ export function CanvasSwitcher({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="h-8 w-8 flex items-center justify-center rounded-lg bg-white text-black/70 hover:bg-white/90 transition"
+        className="h-8 w-8 flex items-center justify-center rounded-md bg-white text-black hover:bg-white/90 transition"
         aria-label="Switch canvas"
       >
         <Layers className="h-4 w-4" />
@@ -46,12 +46,12 @@ export function CanvasSwitcher({
           />
 
           {/* dropdown */}
-          <div className="absolute left-0 top-full mt-2 z-[1000] w-64 rounded-lg border bg-white shadow-lg">
-            <div className="p-2 text-xs text-black/50 border-b">Projects</div>
+          <div className="absolute left-0 top-full mt-2 z-[1000] w-64 rounded bg-white shadow-lg overflow-hidden">
 
-            <div className="max-h-64 overflow-auto p-1">
+            {/* list */}
+            <div className="max-h-64 overflow-auto p-1 scrollbar-hidden">
               {canvases.length === 0 ? (
-                <div className="px-2 py-3 text-sm text-black/50">
+                <div className="px-2 py-3 text-sm text-black/60">
                   No canvases found
                 </div>
               ) : (
@@ -60,9 +60,9 @@ export function CanvasSwitcher({
                     key={canvas.id}
                     href={`/canvas/${canvas.slug}`}
                     onClick={() => setOpen(false)}
-                    className={`block rounded px-2 py-2 text-sm transition hover:bg-black/5 ${
+                    className={`block rounded px-2 py-1 text-[13px] tracking-tight transition hover:bg-black/5 ${
                       canvas.id === activeCanvasId
-                        ? "bg-black/5 text-black"
+                        ? "lime border-black/20 border border-2 text-black"
                         : "text-black/80"
                     }`}
                   >

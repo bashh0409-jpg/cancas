@@ -108,3 +108,15 @@ body {
 .grain {
   animation: grain 0.8s steps(1) infinite;
 }
+
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* IE + Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome + Safari */
+}
+.max-h-64 {
+  scroll-behavior: smooth;
+}

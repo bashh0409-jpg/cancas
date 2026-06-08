@@ -94,12 +94,15 @@ export default function CanvasPageClient({
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
             >
               <svg
-                fill="currentColor"
-                width="18"
-                height="18"
-                viewBox="0 0 32 32"
+                xmlns="http://www.w3.org/2000/svg"
+                x="0px"
+                y="0px"
+                width="100"
+                height="100"
+                viewBox="0 0 24 24"
+                className="w-5 h-5"
               >
-                <path d="M26.025 14.496l-14.286-.001 6.366-6.366L15.979 6 5.975 16.003 15.971 26l2.129-2.129-6.367-6.366h14.29z" />
+                <path d="M 12 2.0996094 L 1 12 L 4 12 L 4 21 L 11 21 L 11 15 L 13 15 L 13 21 L 20 21 L 20 12 L 23 12 L 12 2.0996094 z M 12 4.7910156 L 18 10.191406 L 18 11 L 18 19 L 15 19 L 15 13 L 9 13 L 9 19 L 6 19 L 6 10.191406 L 12 4.7910156 z"></path>
               </svg>
             </Link>
 
