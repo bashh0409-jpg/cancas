@@ -47,6 +47,11 @@ export default async function HomePage({
   let projectsError: string | null = null;
   let credits = 0;
 
+  const setActivePage = async (page: string) => {
+    "use server";
+    void page;
+  };
+  
   try {
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
@@ -62,7 +67,13 @@ export default async function HomePage({
 
   return (
     <div className="min-h-screen bg-black/70">
-      <MobileNotifier />
+      <MobileNotifier
+        fullName={user?.user_metadata?.full_name}
+        email={user?.email}
+        credits={credits}
+        signOut={signOut}
+        setActivePage={setActivePage}
+      />
       <div className="hidden md:block">
         <CreditNotifier message={errorMessage} />
         <Suspense fallback={null}>

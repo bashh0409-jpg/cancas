@@ -15,8 +15,6 @@ import {
   Settings,
   Trash2,
   User,
-  Bug,
-  MessageSquareHeart,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
@@ -38,7 +36,7 @@ interface HomeShellProps {
 }
 
 // ── Account card popup ─────────────────────────────────────────────────────
-function AccountCard({
+export function AccountCard({
   firstName,
   lastName,
   credits,
@@ -93,23 +91,40 @@ function AccountCard({
       {/* User info header */}
       <div className="px-3 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded lime flex items-center justify-center shrink-0">
-            <div className="font-sm items-center flex justify-center">
-              <p className="text-black/50 text-sm items-center">
-                {firstName.charAt(0)}
-              </p>
-            </div>
+          <div className="h-7 w-7 shrink-0 rounded lime flex items-center justify-center">
+            <p className="text-black/60 text-sm font-medium">
+              {firstName.charAt(0)}
+            </p>
           </div>
-          <div className="min-w-0">
-            <p className="text-white text-sm font-medium leading-tight truncate">
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-white leading-tight">
               {firstName} {lastName}&apos;s Workspace
             </p>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onSettings}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={onSignOut}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Credits row */}
-      <div className="px-3 py-2.5 mb-2 mt-4 flex items-center justify-between">
+      <div className="px-3 py-2.5 mb-1 mt-2 flex items-center justify-between">
         <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
           <span>Credits</span>
           <div className="flex gap-1 ">
@@ -132,23 +147,39 @@ function AccountCard({
           <span className="underline cursor-pointer">Upgrade</span>
         </button>
       </div>
-
-      {/* Actions */}
-      <div className="p-1.5 border-t border-white/10 flex flex-col gap-0.5">
-        <button
-          onClick={onSettings}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-white hover:text-white hover:bg-white/10 transition-colors text-left"
+      {/* Feedback */}
+      <div className="px-3 py-2.5 flex flex-col border-y border-white/20  justify-between">
+        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+          <span>Feedback</span>
+          <div className=" ">
+            <span>Let us know what you think about the app.</span>
+          </div>
+        </div>
+        <a
+          href="https://form.typeform.com/to/zVygaA73"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs mt-1 w-fit text-white py-1 px-0.5 bg-transparent hover:bg-white/10 underligned"
         >
-          <Settings className="w-4.5 h-4.5" />
-          Settings
-        </button>
-        <button
-          onClick={onSignOut}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-white  hover:bg-rose-500/10 transition-colors text-left"
+          <span className="underline cursor-pointer">Submit feedback</span>
+        </a>
+      </div>
+      {/* bug report */}
+      <div className="px-3 py-2.5 flex flex-col  justify-between">
+        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+          <span>Bug report</span>
+          <div className=" ">
+            <span>Report any issues you encounter in the app.</span>
+          </div>
+        </div>
+        <a
+          href="https://form.typeform.com/to/kgiR8pAb"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs mt-1 w-fit py-1 px-0.5 text-white bg-transparent hover:bg-white/10 underligned"
         >
-          <LogOut className="w-4.5 h-4.5" />
-          Sign out
-        </button>
+          <span className="underline cursor-pointer">Submit bug report</span>
+        </a>
       </div>
     </div>
   );
