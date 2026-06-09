@@ -38,7 +38,9 @@ export class StripeClient {
   private planConfig: Record<StripeProductId, StripePlanConfig>;
 
   constructor(apiKey: string) {
-    this.stripe = new Stripe(apiKey, { apiVersion: "2024-11-20" });
+    this.stripe = new Stripe(apiKey, {
+      apiVersion: "2026-05-27.dahlia",
+    });
     this.planConfig = {
       starter: {
         productId: process.env.STRIPE_PRODUCT_STARTER_ID || "prod_starter",
