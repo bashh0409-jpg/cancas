@@ -107,7 +107,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
         <h1 className="pixel mix-blend-difference text-2xl font-semibold tracking-tight text-white">
-          ENDLESS
+          SWIPED
         </h1>
 
         {/* Desktop */}
@@ -125,7 +125,7 @@ const Navbar = () => {
           <button
             onClick={handleStartProject}
             disabled={checkingSession}
-            className="ml-2 flex items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
+            className="ml-2 flex cursor-pointer items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
             Start a project
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
@@ -141,7 +141,7 @@ const Navbar = () => {
               setOpen(false);
             }}
             disabled={checkingSession}
-            className="flex w-fit items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black disabled:opacity-70"
+            className="flex w-fit cursor-pointer items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black disabled:opacity-70"
           >
             Start a project
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />

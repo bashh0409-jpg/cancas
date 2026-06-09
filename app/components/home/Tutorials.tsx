@@ -248,9 +248,9 @@ const buildEmbedUrl = (videoId: string) => {
             ref={scrollRef}
             className="scrollbar-none flex gap-2 overflow-x-auto pr-14"
           >
-            {tutorials.map((video, i) => (
+            {tutorials.map((video) => (
               <button
-                key={i}
+                key={video.videoId}
                 type="button"
                 onClick={() => openVideo(video)}
                 className="group relative aspect-video h-40 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
@@ -264,7 +264,7 @@ const buildEmbedUrl = (videoId: string) => {
                 <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
 
                 <div className="absolute left-2 bottom-2">
-                  <p className="line-clamp-2 max-w-[160px] trancate text-[10px] font-medium tracking-tight text-white">
+                  <p className="line-clamp-2 max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
                     {video.title}
                   </p>
                 </div>
@@ -280,7 +280,8 @@ const buildEmbedUrl = (videoId: string) => {
             <button
               type="button"
               onClick={handleScroll}
-              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center bg-white text-black"
+              aria-label="Scroll tutorials right"
+              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-white text-black"
             >
               <ArrowRight className="h-5 w-5" />
             </button>

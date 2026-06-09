@@ -72,7 +72,7 @@ export default function Page() {
       {/* LEFT */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
         <h1 className="absolute left-15 top-10 hidden text-3xl tracking-tight text-black">
-          ENDLESS.AI
+          SWIPED.AI
         </h1>
 
         <div className="flex w-full max-w-[380px] flex-col items-center gap-12 rounded-lg  p-4">

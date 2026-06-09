@@ -18,12 +18,14 @@ interface Plan {
 interface PlanCardProps {
   plan: Plan;
   currency?: string;
+  annual?: boolean;
   className?: string;
 }
 
 export function PlanCard({
   plan,
   currency = "USD",
+  annual = false,
   className = "",
 }: PlanCardProps) {
   const {
@@ -56,14 +58,19 @@ export function PlanCard({
         <p className="text-sm text-white/70 mt-4 leading-snug">{description}</p>
       </div>
 
-      <div className="flex items-end justify-between mb-4">
-        <div className="flex items-baseline">
+      <div className="flex flex-col items-start mb-4">
+        <div className="flex items-baseline gap-2">
           <h2 className="text-5xl tracking-tight">{price}</h2>
-          <p className="text-xs text-white/70 ml-2">
+          <p className="text-xs text-white/70">
             {/* Show currency code alongside /month when it's not obvious from symbol */}
             {currency !== "USD" ? `${currency} ` : ""}/month
           </p>
         </div>
+        {annual && price !== "$0" && (
+          <p className="text-[11px] text-white/40 mt-1">
+            Billed annually — save 15%
+          </p>
+        )}
       </div>
 
       {isCurrent ? (

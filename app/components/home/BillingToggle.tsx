@@ -1,15 +1,24 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 type BillingCycle = "monthly" | "annually";
 
-export function BillingToggle() {
+interface BillingToggleProps {
+  value?: BillingCycle;
+  onChange?: (cycle: BillingCycle) => void;
+}
+
+export function BillingToggle({ value, onChange }: BillingToggleProps) {
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
-  const indicatorRef = useRef<HTMLDivElement>(null);
+  const selectedCycle = value ?? cycle;
 
   const handleSelect = (selected: BillingCycle) => {
-    setCycle(selected);
+    if (onChange) {
+      onChange(selected);
+    } else {
+      setCycle(selected);
+    }
   };
 
   return (
@@ -19,7 +28,7 @@ export function BillingToggle() {
         className="absolute top-1 bottom-1 w-[calc(50%-6px)] rounded-md lime transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
           transform:
-            cycle === "annually"
+            selectedCycle === "annually"
               ? "translateX(calc(100% + 4px))"
               : "translateX(0)",
           left: "4px",
@@ -29,7 +38,7 @@ export function BillingToggle() {
       <button
         onClick={() => handleSelect("monthly")}
         className="relative z-10 h-8 min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
-        style={{ color: cycle === "monthly" ? "#000" : "#fff" }}
+        style={{ color: selectedCycle === "monthly" ? "#000" : "#fff" }}
       >
         Monthly
       </button>
@@ -37,10 +46,12 @@ export function BillingToggle() {
       <button
         onClick={() => handleSelect("annually")}
         className="relative z-10 h-8 min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
-        style={{ color: cycle === "annually" ? "#000" : "#fff" }}
+        style={{ color: selectedCycle === "annually" ? "#000" : "#fff" }}
       >
-        Annually <span className="ml-1">-20%</span>
+        Annually <span className="ml-1">-15%</span>
       </button>
     </div>
   );
 }
+
+export type { BillingCycle };

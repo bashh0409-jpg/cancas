@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, CheckIcon, ArrowRightIcon } from "lucide-react";
 import { PlanCard } from "./PlanCard";
-import { BillingToggle } from "./BillingToggle";
+import { BillingToggle, type BillingCycle } from "./BillingToggle";
 import { TrustedBy } from "./TrustedBy";
 
 type CurrencyData = {
@@ -22,6 +22,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
     currency: "USD",
     rate: 1,
   });
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [loadingCurrency, setLoadingCurrency] = useState(false);
 
   useEffect(() => {
@@ -30,18 +31,28 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
 
   // Fetch once on first open, then cache in state for the session
   useEffect(() => {
-    if (!open || currencyData.rate !== 1 || currencyData.currency !== "USD")
+    if (!open || currencyData.rate !== 1 || currencyData.currency !== "USD") {
       return;
+    }
 
-    setLoadingCurrency(true);
-    fetch("/api/currency")
-      .then((r) => r.json())
-      .then((data: CurrencyData) => setCurrencyData(data))
-      .catch(() => {}) // already defaults to USD on API failure
-      .finally(() => setLoadingCurrency(false));
-  }, [open]);
+    async function loadCurrency() {
+      setLoadingCurrency(true);
 
-  const plans = buildPlans(currencyData);
+      try {
+        const response = await fetch("/api/currency");
+        const data: CurrencyData = await response.json();
+        setCurrencyData(data);
+      } catch {
+        // already defaults to USD on API failure
+      } finally {
+        setLoadingCurrency(false);
+      }
+    }
+
+    loadCurrency();
+  }, [open, currencyData.currency, currencyData.rate]);
+
+  const plans = buildPlans(currencyData, billingCycle);
 
   return (
     <>
@@ -74,7 +85,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
               <h1 className="text-5xl tracking-tight text-white">
                 Choose the best plan for you
               </h1>
-              <BillingToggle />
+              <BillingToggle value={billingCycle} onChange={setBillingCycle} />
               {loadingCurrency && (
                 <p className="text-white/40 text-xs mt-3">
                   Detecting your currency…
@@ -88,6 +99,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
                   key={plan.name}
                   plan={plan}
                   currency={currencyData.currency}
+                  annual={billingCycle === "annually"}
                 />
               ))}
             </div>
@@ -155,9 +167,10 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
 }
 
 // Keeps plan data co-located and reactive to currency changes
-function buildPlans(currency: CurrencyData) {
+function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
+  const discount = billingCycle === "annually" ? 0.15 : 0;
   const fmt = (usd: number) =>
-    formatPrice(usd, currency.currency, currency.rate);
+    formatPrice(usd * (1 - discount), currency.currency, currency.rate);
 
   return [
     {
@@ -252,11 +265,10 @@ function formatPrice(
   currency: string,
   rate: number,
 ): string {
-  if (usdAmount === 0) return "$0";
-
   const converted = usdAmount * rate;
 
-  // Intl.NumberFormat handles symbol, decimal rules, and rounding per locale
+  // Intl.NumberFormat handles symbol, decimal rules, and rounding per locale.
+  // Use it for zero too so free plans still respect local currency formatting.
   return new Intl.NumberFormat("en", {
     style: "currency",
     currency,

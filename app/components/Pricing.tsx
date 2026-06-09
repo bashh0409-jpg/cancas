@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, ArrowRightIcon } from "lucide-react";
 import { PlanCard } from "./home/PlanCard";
-import { BillingToggle } from "./home/BillingToggle";
+import { BillingToggle, type BillingCycle } from "./home/BillingToggle";
 import { TrustedBy } from "./home/TrustedBy";
 
 type CurrencyData = {
@@ -11,11 +11,14 @@ type CurrencyData = {
   rate: number;
 };
 
+const ANNUAL_DISCOUNT = 0.15;
+
 export function Pricing() {
   const [currencyData, setCurrencyData] = useState<CurrencyData>({
     currency: "USD",
     rate: 1,
   });
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [loadingCurrency, setLoadingCurrency] = useState(true);
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export function Pricing() {
       .finally(() => setLoadingCurrency(false));
   }, []);
 
-  const plans = buildPlans(currencyData);
+  const plans = buildPlans(currencyData, billingCycle);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -36,7 +39,7 @@ export function Pricing() {
           <h1 className="text-5xl tracking-tight text-white">
             Choose the best plan for you
           </h1>
-          <BillingToggle />
+          <BillingToggle value={billingCycle} onChange={setBillingCycle} />
           {loadingCurrency && (
             <p className="text-white/40 text-xs mt-3">
               Detecting your currency…
@@ -51,6 +54,7 @@ export function Pricing() {
               key={plan.name}
               plan={plan}
               currency={currencyData.currency}
+              annual={billingCycle === "annually"}
             />
           ))}
         </div>
@@ -114,9 +118,10 @@ export function Pricing() {
 
 // Identical to CreditsBadge — kept co-located so Pricing is self-contained
 // if you ever want to diverge plans between the two surfaces.
-function buildPlans(currency: CurrencyData) {
+function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
+  const discount = billingCycle === "annually" ? ANNUAL_DISCOUNT : 0;
   const fmt = (usd: number) =>
-    formatPrice(usd, currency.currency, currency.rate);
+    formatPrice(usd * (1 - discount), currency.currency, currency.rate);
 
   return [
     {
@@ -211,10 +216,11 @@ function formatPrice(
   currency: string,
   rate: number,
 ): string {
-  if (usdAmount === 0) return "$0";
+  const converted = usdAmount * rate;
+
   return new Intl.NumberFormat("en", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
-  }).format(usdAmount * rate);
+  }).format(converted);
 }

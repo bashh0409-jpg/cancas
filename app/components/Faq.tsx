@@ -12,7 +12,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "What are credits and how do they work?",
     answer:
-      "Credits are the currency for AI actions inside ENDLESS — generating images, running agents, transforming canvas content, and more. Each action costs a set number of credits. Your credits reset monthly on your billing date, and unused credits don't roll over.",
+      "Credits are the currency for AI actions inside SWIPED — generating images, running agents, transforming canvas content, and more. Each action costs a set number of credits. Your credits reset monthly on your billing date, and unused credits don't roll over.",
   },
   {
     question: "Can I change or cancel my plan at any time?",
@@ -30,9 +30,9 @@ const FAQ_ITEMS: FaqItem[] = [
       "The Free plan gives you 100 credits per month to explore Slate at no cost — no credit card required. We don't currently offer a time-limited trial, but you can upgrade and cancel at any time with no lock-in.",
   },
   {
-    question: "Which AI models does ENDLESS use?",
+    question: "Which AI models does SWIPED use?",
     answer:
-      "ENDLESS uses a mix of models depending on the task — image generation, code, reasoning, and multimodal understanding each draw from the best available model for that job. Pro and Ultra plans unlock access to premium reasoning models and faster processing queues.",
+      "SWIPED uses a mix of models depending on the task — image generation, code, reasoning, and multimodal understanding each draw from the best available model for that job. Pro and Ultra plans unlock access to premium reasoning models and faster processing queues.",
   },
   {
     question: "How does billing work for annual plans?",
@@ -95,7 +95,6 @@ export default function Faq() {
 
   return (
     <section className="w-full bg-[#111] min-h-screen px-6 md:px-16 py-24">
-
       <div className="grid grid-cols-1 lg:grid-cols-3 ">
         <div className="lg:sticky lg:top-24 lg:self-start">
           <h2 className="text-5xl flex items-center gap-2 xl:text-5xl pixel font-bold text-white leading-[1.05] tracking-tight">

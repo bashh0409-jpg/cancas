@@ -220,12 +220,10 @@ export function CanvasFileList({
             <p className="mt-1 text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>
-            {isTrash && (canvas as any).deleted_at && (
+            {isTrash && canvas.deleted_at && (
               <p className="mt-1 text-xs text-amber-300">
                 {(() => {
-                  const deletedAt = new Date(
-                    (canvas as any).deleted_at,
-                  ).getTime();
+                  const deletedAt = new Date(canvas.deleted_at).getTime();
                   const msPerDay = 1000 * 60 * 60 * 24;
                   const daysSince = Math.floor(
                     (Date.now() - deletedAt) / msPerDay,

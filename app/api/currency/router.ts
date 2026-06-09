@@ -43,11 +43,18 @@ export async function GET(req: Request) {
     if (!countryCode) {
       const ip =
         req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-      const geoRes = await fetch(`https://ipapi.co/${ip}/country/`, {
-        // short cache so we don't hammer the free tier
-        next: { revalidate: 3600 },
-      });
-      countryCode = (await geoRes.text()).trim().toUpperCase();
+      try {
+        const geoRes = await fetch(`https://ipapi.co/${ip}/country/`, {
+          // short cache so we don't hammer the free tier
+          next: { revalidate: 3600 },
+        });
+        countryCode = (await geoRes.text()).trim().toUpperCase();
+      } catch {
+        // Fall back on the browser locale if geo lookup fails.
+        const locale = acceptLang.split(",")[0]?.trim();
+        const localeParts = locale.split("-");
+        countryCode = localeParts[1]?.toUpperCase() ?? null;
+      }
     }
 
     const currency = COUNTRY_CURRENCY_MAP[countryCode ?? ""] ?? "USD";

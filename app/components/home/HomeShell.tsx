@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { siDiscord } from "simple-icons";
+import { siDiscord, siYoutube } from "simple-icons";
 import {
   ChevronDown,
   ChevronLeft,
@@ -211,6 +211,7 @@ export function HomeShell({
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState<ActivePage>("files");
   const [accountOpen, setAccountOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fullName = `${firstName} ${lastName}`;
   const labelsRef = useRef<HTMLElement[]>([]);
@@ -277,7 +278,7 @@ export function HomeShell({
               className={`flex items-center gap-1.5 overflow-hidden whitespace-nowrap ${collapsed ? "pointer-events-none" : ""}`}
             >
               <span className="text-white text-base font-semibold uppercase tracking-widest leading-none">
-                ENDLESS
+                SWIPED
               </span>
               <span className="uppercase bg-white/10 text-[9px] text-white/50 px-1.5 py-0.5 rounded font-semibold tracking-wide leading-none">
                 BETA
@@ -306,7 +307,7 @@ export function HomeShell({
             title={collapsed ? fullName : undefined}
             className={`
               w-[70%] rounded-md flex items-center text-sm py-1
-              text-white/70 hover:bg-white/10 hover:text-white transition-colors
+              text-white/70 hover:bg-white/10 transition-colors
               ${collapsed ? "justify-center px-0" : "justify-between px-2"}
             `}
           >
@@ -362,7 +363,9 @@ export function HomeShell({
             <input
               type="text"
               placeholder="Search files..."
-              className="w-full rounded h-8 border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 "
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded h-8 mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 "
             />
           </div>
 
@@ -409,6 +412,23 @@ export function HomeShell({
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-col gap-0.5 px-1">
           <SidebarLink
+            href="https://youtube.com/@swiped-h2u?si=lfJd-iQSIMv0an7X"
+            icon={
+              <svg
+                role="img"
+                viewBox="0 0 24 24"
+                aria-label="Youtube"
+                className="w-4 h-4 shrink-0 fill-current"
+                dangerouslySetInnerHTML={{
+                  __html: `<path d="${siYoutube.path}" />`,
+                }}
+              />
+            }
+            label="Youtube"
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+          />
+          <SidebarLink
             href="https://discord.gg/xexnRhqBP"
             icon={
               <svg
@@ -439,6 +459,8 @@ export function HomeShell({
             projectsError={projectsError}
             errorMessage={errorMessage}
             createCanvasAction={createCanvasAction}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         )}
         {activePage === "account" && (
@@ -466,6 +488,8 @@ function FilesPage({
   projectsError,
   errorMessage,
   createCanvasAction,
+  searchQuery = "",
+  onSearchChange = () => {},
 }: {
   firstName: string;
   lastName: string;
@@ -474,7 +498,19 @@ function FilesPage({
   projectsError: string | null;
   errorMessage: string | undefined;
   createCanvasAction: () => Promise<void>;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }) {
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  const filteredCanvases = canvases.filter((canvas) =>
+    canvas.name.toLowerCase().includes(localSearch.toLowerCase()),
+  );
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -508,6 +544,11 @@ function FilesPage({
           <input
             type="text"
             placeholder="Search files..."
+            value={localSearch}
+            onChange={(e) => {
+              setLocalSearch(e.target.value);
+              onSearchChange(e.target.value);
+            }}
             className="w-full mono rounded border border-white/20 bg-white/20 px-4 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
           />
         </div>
@@ -522,7 +563,7 @@ function FilesPage({
           {errorMessage}
         </div>
       )}
-      <CanvasFileList canvases={canvases} />
+      <CanvasFileList canvases={filteredCanvases} />
     </>
   );
 }
@@ -697,8 +738,8 @@ function NavItem({
       onClick={onClick}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-8 mt-1 rounded flex items-center text-sm font-light
-        text-white transition-colors
+        w-full h-8 cursor-pointer mt-1 rounded flex items-center text-sm font-light
+        text-white hover:bg-white/15 transition-colors
         ${active ? "bg-white/15" : "hover:bg-white/10"}
         ${collapsed ? "justify-center h-8 w-8 px-0" : "justify-between px-2"}
       `}
@@ -740,7 +781,7 @@ function SidebarLink({
       title={collapsed ? label : undefined}
       className={`
         flex items-center h-8 rounded tracking-tight text-sm
-        text-white mono  hover:text-white hover:bg-white/10 transition-colors
+        text-white mono hover:bg-white/10 transition-colors
         ${collapsed ? "justify-center px-0 gap-0" : "gap-2.5 px-2"}
       `}
     >

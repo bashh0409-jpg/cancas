@@ -1,5 +1,5 @@
 -- =============================================================================
--- ENDLESS.AI — RESET DATABASE FROM SCRATCH
+-- SWIPED.AI — RESET DATABASE FROM SCRATCH
 -- =============================================================================
 -- WARNING: Permanently deletes ALL canvas projects (database rows).
 --
