@@ -52,7 +52,12 @@ export async function POST(req: Request) {
     // Handle different Stripe events
     switch (event.type) {
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+        type StripeSubscriptionEventObject = Stripe.Subscription & {
+          current_period_start?: number | null;
+          current_period_end?: number | null;
+        };
+
+        const subscription = event.data.object as StripeSubscriptionEventObject;
         const userId = subscription.metadata?.userId;
 
         if (!userId) {
@@ -60,22 +65,29 @@ export async function POST(req: Request) {
           break;
         }
 
-        const currentPeriodStart = new Date(
-          subscription.current_period_start * 1000,
-        ).toISOString();
-        const currentPeriodEnd = new Date(
-          subscription.current_period_end * 1000,
-        ).toISOString();
+        const currentPeriodStart = subscription.current_period_start
+          ? new Date(subscription.current_period_start * 1000).toISOString()
+          : undefined;
+        const currentPeriodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : undefined;
 
-        await updateSubscription(supabase, userId, {
+        const updatePayload: Parameters<typeof updateSubscription>[2] = {
           provider_subscription_id: subscription.id,
-          current_period_start: currentPeriodStart,
-          current_period_end: currentPeriodEnd,
           cancel_at_period_end: subscription.cancel_at_period_end,
           metadata: {
             lastWebhookAt: new Date().toISOString(),
           },
-        });
+        };
+
+        if (currentPeriodStart) {
+          updatePayload.current_period_start = currentPeriodStart;
+        }
+        if (currentPeriodEnd) {
+          updatePayload.current_period_end = currentPeriodEnd;
+        }
+
+        await updateSubscription(supabase, userId, updatePayload);
 
         console.log(`Stripe subscription updated: ${subscription.id}`);
         break;
@@ -108,7 +120,8 @@ export async function POST(req: Request) {
         const customerId = invoice.customer as string;
 
         // Update subscription status to active if payment succeeded
-        const subscription = invoice.subscription as string | null;
+        const subscription =
+          invoice.parent?.subscription_details?.subscription as string | null;
         if (subscription) {
           // Find user by subscription in database
           const { data: subs } = await supabase
@@ -133,7 +146,8 @@ export async function POST(req: Request) {
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscription = invoice.subscription as string | null;
+        const subscription =
+          invoice.parent?.subscription_details?.subscription as string | null;
 
         if (subscription) {
           const { data: subs } = await supabase

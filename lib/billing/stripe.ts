@@ -139,9 +139,16 @@ export class StripeClient {
 
     if (!subscription) return null;
 
+    const subscriptionWithPeriods = subscription as
+      | (Stripe.Subscription & {
+          current_period_start?: number | null;
+          current_period_end?: number | null;
+        })
+      | null;
+
     const priceId =
-      subscription.items.data[0]?.price.id ||
-      subscription.items.data[0]?.price.id;
+      subscriptionWithPeriods?.items.data[0]?.price.id ||
+      subscriptionWithPeriods?.items.data[0]?.price.id;
 
     return {
       customerId: subscription.customer as string,
@@ -149,8 +156,8 @@ export class StripeClient {
       productId: subscription.items.data[0]?.price.product as string,
       priceId: priceId || "",
       status: subscription.status,
-      currentPeriodStart: subscription.current_period_start,
-      currentPeriodEnd: subscription.current_period_end,
+      currentPeriodStart: subscriptionWithPeriods?.current_period_start || 0,
+      currentPeriodEnd: subscriptionWithPeriods?.current_period_end || 0,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     };
   }

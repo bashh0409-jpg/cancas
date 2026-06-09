@@ -92,9 +92,7 @@ export class PayFastClient {
    * Verify webhook signature
    */
   verifyWebhookSignature(data: PayFastWebhookData): boolean {
-    const signature = data.signature;
-    const dataWithoutSignature = { ...data };
-    delete dataWithoutSignature.signature;
+    const { signature, ...dataWithoutSignature } = data;
 
     const computedSignature = this.generateSignature(
       dataWithoutSignature as Record<string, string>,
