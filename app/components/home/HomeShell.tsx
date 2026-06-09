@@ -116,7 +116,7 @@ export function AccountCard({
           <div className="flex items-center gap-1">
             <button
               onClick={onSettings}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Settings"
             >
               <Settings className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function AccountCard({
 
             <button
               onClick={onSignOut}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              className="flex h-7 w-7 items-center justify-center rounded-xs text-white/70 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
