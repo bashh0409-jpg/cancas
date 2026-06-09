@@ -147,3 +147,24 @@ using (auth.uid() = id);
 create policy "Users can update their own profile"
 on public.profiles for update
 using (auth.uid() = id);
+
+create or replace function public.handle_new_user_credits()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.user_credits (user_id, balance, lifetime_earned)
+  values (new.id, 0, 0)
+  on conflict (user_id) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_credits on auth.users;
+
+create trigger on_auth_user_created_credits
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user_credits();
