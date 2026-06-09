@@ -28,10 +28,7 @@ function readCreditValue(record: Record<string, unknown>) {
   return 0;
 }
 
-async function selectUserCreditsRow(
-  supabase: SupabaseClient,
-  userId: string
-) {
+async function selectUserCreditsRow(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from("user_credits")
     .select("*")
@@ -73,7 +70,7 @@ function findCreditField(record: Record<string, unknown>) {
 export async function consumeUserCredits(
   supabase: SupabaseClient,
   userId: string,
-  amount = 2
+  amount = 2,
 ) {
   const record = await selectUserCreditsRow(supabase, userId);
 
@@ -103,10 +100,7 @@ export async function consumeUserCredits(
   return true;
 }
 
-export async function getUserCredits(
-  supabase: SupabaseClient,
-  userId: string
-) {
+export async function getUserCredits(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from("user_credits")
     .select("*")
@@ -119,4 +113,45 @@ export async function getUserCredits(
   }
 
   return readCreditValue(data as Record<string, unknown>);
+}
+
+/**
+ * Set or upsert the user's credits to a specific value.
+ * This will insert a row if none exists, or update the existing credit field.
+ */
+export async function setUserCredits(
+  supabase: SupabaseClient,
+  userId: string,
+  amount: number,
+) {
+  // Try update first on common field names
+  const possibleFields = [
+    "credits",
+    "remaining_credits",
+    "credits_remaining",
+    "balance",
+    "ai_credits",
+  ];
+
+  for (const field of possibleFields) {
+    const { error } = await supabase
+      .from("user_credits")
+      .update({ [field]: amount })
+      .eq("user_id", userId);
+
+    if (!error) {
+      return true;
+    }
+  }
+
+  // If update failed (no row), insert a new row with `credits` field
+  const { error } = await supabase.from("user_credits").insert([
+    {
+      user_id: userId,
+      credits: amount,
+    },
+  ]);
+
+  if (error) throw error;
+  return true;
 }

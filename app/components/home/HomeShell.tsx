@@ -511,12 +511,6 @@ function FilesPage({
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => createCanvasAction()}
-            className="pixel hidden cursor-pointer rounded-lg bg-white/20 px-3 py-2 text-sm text-white"
-          >
-            New File
-          </button>
 
           <div className="mono text-sm tracking-tight text-white">
             {firstName} {lastName}&apos;s Workspace

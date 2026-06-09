@@ -148,6 +148,45 @@ create policy "Users can update their own profile"
 on public.profiles for update
 using (auth.uid() = id);
 
+create table if not exists public.user_subscriptions (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  provider text not null default 'local',
+  provider_customer_id text,
+  provider_subscription_id text,
+  plan text not null,
+  status text not null default 'active' check (status in ('active','trialing','canceled','past_due','unpaid','expired','paused')),
+  billing_cycle text not null default 'monthly' check (billing_cycle in ('monthly','annual','one_time','custom')),
+  current_period_start timestamptz,
+  current_period_end timestamptz,
+  trial_end timestamptz,
+  cancel_at_period_end boolean not null default false,
+  canceled_at timestamptz,
+  metadata jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists user_subscriptions_provider_idx on public.user_subscriptions(provider);
+create index if not exists user_subscriptions_status_idx on public.user_subscriptions(status);
+
+alter table public.user_subscriptions enable row level security;
+
+create policy "Users can read their own subscription"
+  on public.user_subscriptions for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own subscription"
+  on public.user_subscriptions for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own subscription"
+  on public.user_subscriptions for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own subscription"
+  on public.user_subscriptions for delete
+  using (auth.uid() = user_id);
+
 create or replace function public.handle_new_user_credits()
 returns trigger
 language plpgsql

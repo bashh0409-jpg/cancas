@@ -52,7 +52,35 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
     loadCurrency();
   }, [open, currencyData.currency, currencyData.rate]);
 
-  const plans = buildPlans(currencyData, billingCycle);
+  async function initiateCheckout(planId: string) {
+    try {
+      const countryCode = currencyData.currency === "ZAR" ? "ZA" : "US";
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: planId,
+          billingCycle,
+          countryCode,
+          returnUrl: `${window.location.origin}/billing/success`,
+          cancelUrl: `${window.location.origin}/billing/cancel`,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to start checkout");
+      }
+
+      const { checkoutUrl } = await res.json();
+      if (checkoutUrl) window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error("Checkout initiation failed:", err);
+      alert(err instanceof Error ? err.message : "Checkout failed");
+    }
+  }
+
+  const plans = buildPlans(currencyData, billingCycle, initiateCheckout);
 
   return (
     <>
@@ -60,7 +88,6 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          
           "flex items-center gap-1 cursor-pointer bg-white/20 border-2 border-white/5 h-6 px-1 rounded-xs text-white uppercase text-xs tracking-tight",
           "hover:bg-white/40 transition",
           className ?? "",
@@ -168,7 +195,11 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
 }
 
 // Keeps plan data co-located and reactive to currency changes
-function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
+function buildPlans(
+  currency: CurrencyData,
+  billingCycle: BillingCycle,
+  initiateCheckout: (planId: string) => Promise<void>,
+) {
   const discount = billingCycle === "annually" ? 0.15 : 0;
   const fmt = (usd: number) =>
     formatPrice(usd * (1 - discount), currency.currency, currency.rate);
@@ -212,7 +243,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
         "Import assets from shared workspaces",
       ],
       isCurrent: false,
-      onSelect: () => console.log("upgrade to starter"),
+      onSelect: () => initiateCheckout("starter"),
     },
     {
       name: "Pro",
@@ -234,7 +265,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
         "Early access AI features",
       ],
       isCurrent: false,
-      onSelect: () => console.log("upgrade to pro"),
+      onSelect: () => initiateCheckout("pro"),
     },
     {
       name: "Ultra",
@@ -256,7 +287,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
         "Future collaboration features",
       ],
       isCurrent: false,
-      onSelect: () => console.log("upgrade to ultra"),
+      onSelect: () => initiateCheckout("ultra"),
     },
   ];
 }

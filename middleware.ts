@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   // Only validate protected routes
   const protectedPaths = ["/home", "/canvas"];
   const isProtectedRoute = protectedPaths.some((path) =>
-    requestUrl.pathname.startsWith(path)
+    requestUrl.pathname.startsWith(path),
   );
 
   if (!isProtectedRoute) {
@@ -36,11 +36,11 @@ export async function middleware(request: NextRequest) {
               sameSite: options?.sameSite ?? "lax",
               secure: process.env.NODE_ENV === "production",
               path: options?.path ?? "/",
-            })
+            }),
           );
         },
       },
-    }
+    },
   );
 
   // Get the current session
