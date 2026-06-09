@@ -1,11 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { initPayFastClient } from "@/lib/billing/payfast";
 import {
   updateSubscription,
   getPlanDetails,
 } from "@/lib/subscriptions/repository";
-import { setUserCredits } from "@/lib/credits/repository";
+import { addUserCredits } from "@/lib/credits/repository";
 import { NextResponse } from "next/server";
 
 /**
@@ -83,15 +82,17 @@ export async function POST(req: Request) {
       },
     });
 
-    // If subscription is now active, grant monthly credits based on plan
+    // If subscription is now active, grant credits based on plan and billing frequency
     if (subscriptionStatus === "active") {
       try {
         const planKey = (plan as string).toLowerCase() as any;
         const details = getPlanDetails(planKey);
-        const creditsToGrant = details.monthlyCredits || 0;
+        const frequency = webhookData.billing_frequency;
+        const isAnnual = frequency === "6" || frequency === "annual";
+        const creditsToGrant = details.monthlyCredits * (isAnnual ? 12 : 1);
 
         if (creditsToGrant > 0) {
-          await setUserCredits(supabase, userId, creditsToGrant);
+          await addUserCredits(supabase, userId, creditsToGrant);
           console.log(`Granted ${creditsToGrant} credits to user ${userId}`);
         }
       } catch (err) {

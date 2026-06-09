@@ -87,20 +87,25 @@ export async function createSubscription(
 ): Promise<UserSubscription> {
   const { data, error } = await supabase
     .from("user_subscriptions")
-    .insert([
+    .upsert(
+      [
+        {
+          user_id: input.user_id,
+          provider: input.provider,
+          plan: input.plan,
+          billing_cycle: input.billing_cycle || "monthly",
+          provider_customer_id: input.provider_customer_id,
+          provider_subscription_id: input.provider_subscription_id,
+          current_period_start: input.current_period_start,
+          current_period_end: input.current_period_end,
+          trial_end: input.trial_end,
+          metadata: input.metadata,
+        },
+      ],
       {
-        user_id: input.user_id,
-        provider: input.provider,
-        plan: input.plan,
-        billing_cycle: input.billing_cycle || "monthly",
-        provider_customer_id: input.provider_customer_id,
-        provider_subscription_id: input.provider_subscription_id,
-        current_period_start: input.current_period_start,
-        current_period_end: input.current_period_end,
-        trial_end: input.trial_end,
-        metadata: input.metadata,
+        onConflict: "user_id",
       },
-    ])
+    )
     .select()
     .single();
 

@@ -1,8 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { initStripeClient } from "@/lib/billing/stripe";
+import { addUserCredits } from "@/lib/credits/repository";
 import {
   updateSubscription,
-  getUserSubscription,
+  getPlanDetails,
 } from "@/lib/subscriptions/repository";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -47,7 +48,26 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabase = await createClient();
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      console.error("NEXT_PUBLIC_SUPABASE_URL is not configured");
+      return NextResponse.json(
+        { error: "Supabase URL not configured" },
+        { status: 500 },
+      );
+    }
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+      return NextResponse.json(
+        { error: "Supabase service role key not configured" },
+        { status: 500 },
+      );
+    }
+
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    );
 
     // Handle different Stripe events
     switch (event.type) {
@@ -117,18 +137,27 @@ export async function POST(req: Request) {
 
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
-        const customerId = invoice.customer as string;
+        const subscriptionId =
+          typeof (invoice as any).subscription === "string"
+            ? (invoice as any).subscription
+            : ((invoice as any).parent?.subscription_details?.subscription as
+                | string
+                | null);
 
-        // Update subscription status to active if payment succeeded
-        const subscription =
-          invoice.parent?.subscription_details?.subscription as string | null;
-        if (subscription) {
-          // Find user by subscription in database
-          const { data: subs } = await supabase
+        if (subscriptionId) {
+          const { data: subs, error: subsError } = await supabase
             .from("user_subscriptions")
-            .select("user_id")
-            .eq("provider_subscription_id", subscription)
+            .select("user_id, plan, billing_cycle")
+            .eq("provider_subscription_id", subscriptionId)
             .single();
+
+          if (subsError) {
+            console.error(
+              "Failed to lookup subscription for Stripe invoice:",
+              subsError,
+            );
+            break;
+          }
 
           if (subs) {
             await updateSubscription(supabase, subs.user_id, {
@@ -137,6 +166,25 @@ export async function POST(req: Request) {
                 lastPaymentSucceeded: new Date().toISOString(),
               },
             });
+
+            try {
+              const cycleMultiplier =
+                subs.billing_cycle === "annual" ? 12 : 1;
+              const creditsToGrant =
+                getPlanDetails(subs.plan).monthlyCredits * cycleMultiplier;
+
+              if (creditsToGrant > 0) {
+                await addUserCredits(supabase, subs.user_id, creditsToGrant);
+                console.log(
+                  `Granted ${creditsToGrant} credits to user ${subs.user_id}`,
+                );
+              }
+            } catch (err) {
+              console.error(
+                "Failed to grant credits for Stripe invoice payment:",
+                err,
+              );
+            }
           }
         }
 

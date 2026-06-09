@@ -32,6 +32,9 @@ export async function POST(req: Request) {
       cancelUrl,
     } = body;
 
+    const normalizedBillingCycle =
+      billingCycle === "annually" ? "annual" : billingCycle;
+
     if (!plan || !countryCode) {
       return NextResponse.json(
         { error: "Missing required fields: plan, countryCode" },
@@ -43,7 +46,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    if (!["monthly", "annual"].includes(billingCycle)) {
+    if (!["monthly", "annual"].includes(normalizedBillingCycle)) {
       return NextResponse.json(
         { error: "Invalid billing cycle" },
         { status: 400 },
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
 
     // Get payment provider for user's country
     const provider = getPaymentProviderForCountry(countryCode);
-    const pricing = getPricingForProvider(provider, plan, billingCycle);
+    const pricing = getPricingForProvider(provider, plan, normalizedBillingCycle);
 
     // Initialize appropriate payment provider
     const paymentClient = initializePaymentProvider(provider);
@@ -74,7 +77,8 @@ export async function POST(req: Request) {
         plan,
         amount: pricing.amount.toString(),
         description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
-        frequency: billingCycle === "annual" ? "annual" : "monthly",
+        frequency:
+          normalizedBillingCycle === "annual" ? "annual" : "monthly",
       });
 
       checkoutUrl = payfastClient.createCheckoutUrl({
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
         userId: user.id,
         userEmail: user.email || "",
         plan: plan as "starter" | "pro" | "ultra",
-        billingCycle: billingCycle as "monthly" | "annual",
+        billingCycle: normalizedBillingCycle as "monthly" | "annual",
         successUrl:
           returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/success`,
         cancelUrl:
@@ -116,7 +120,7 @@ export async function POST(req: Request) {
       user_id: user.id,
       provider: provider as SubscriptionProvider,
       plan: plan as "starter" | "pro" | "ultra",
-      billing_cycle: billingCycle as "monthly" | "annual",
+      billing_cycle: normalizedBillingCycle as "monthly" | "annual",
       provider_customer_id: providerCustomerId,
       metadata: {
         countryCode,
@@ -133,9 +137,24 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Checkout error:", error);
-    return NextResponse.json(
-      { error: "Failed to initialize checkout" },
-      { status: 500 },
-    );
+
+    let message = "Failed to initialize checkout";
+
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (
+      error &&
+      typeof error === "object" &&
+      "message" in error
+    ) {
+      const maybeMessage = (error as Record<string, unknown>).message;
+      if (typeof maybeMessage === "string") {
+        message = maybeMessage;
+      }
+    } else if (typeof error === "string") {
+      message = error;
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
