@@ -281,7 +281,7 @@ const buildEmbedUrl = (videoId: string) => {
               type="button"
               onClick={handleScroll}
               aria-label="Scroll tutorials right"
-              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-white text-black"
+              className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-xs bg-white text-black"
             >
               <ArrowRight className="h-5 w-5" />
             </button>

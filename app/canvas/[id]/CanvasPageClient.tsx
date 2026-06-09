@@ -13,6 +13,7 @@ import {
 import CanvasWorkspace from "./CanvasWorkspace";
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
 import { CanvasSwitcher } from "@/app/components/canvas/CanvasSwitcher"; // FIXED PATH
+import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 
 type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 
@@ -121,8 +122,8 @@ export default function CanvasPageClient({
           </div>
 
           {/* RIGHT */}
-          <div className="justify-self-end pixel text-sm tracking-tight text-white">
-            You have {credits} credits left.
+          <div className="justify-self-end  text-sm tracking-tight text-white">
+            <CreditsBadge credits={credits} />
           </div>
         </div>
       </div>

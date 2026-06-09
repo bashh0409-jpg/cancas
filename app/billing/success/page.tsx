@@ -6,17 +6,17 @@ export default function BillingSuccess() {
     <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white flex items-center justify-center p-4">
       <div className="text-center max-w-md">
         <div className="flex justify-center mb-6">
-          <CheckCircle className="w-16 h-16 text-green-500" />
+          <CheckCircle className=" text-green-500" />
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
+        <h1 className="text-3xl mono mb-2">Payment Successful!</h1>
 
-        <p className="text-gray-400 mb-8">
+        <p className="text-white tracking-tight text-sm mono ">
           Your subscription has been activated. You now have access to all
           premium features.
         </p>
 
-        <div className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
+        <div className="bg-white/10 tracking-tight rounded-xs p-4 mb-8 mono text-sm mt-4 ">
           <p className="text-sm text-gray-400 mb-2">Next Steps:</p>
           <ul className="text-left space-y-2">
             <li className="flex items-center gap-2">
@@ -34,17 +34,17 @@ export default function BillingSuccess() {
           </ul>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 flex text-sm mono gap-2 items-center ">
           <Link
             href="/home"
-            className="block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
+            className="block w-full bg-blue-600 rounded  transition-colors"
           >
             Go to Dashboard
           </Link>
 
           <Link
             href="/billing/manage"
-            className="block w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
+            className="block w-full bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
           >
             Manage Subscription
           </Link>

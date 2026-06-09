@@ -95,7 +95,7 @@ export function EditableCanvasName({
 
   return (
     <button
-      className="pixel max-w-[min(40vw,280px)] truncate text-sm tracking-tight text-white transition hover:text-white/80"
+      className="max-w-[min(40vw,280px)] mono truncate text-sm tracking-tight text-white transition hover:text-white/80"
       title="Click to rename"
       type="button"
       onClick={() => setIsEditing(true)}
