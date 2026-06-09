@@ -503,10 +503,6 @@ function FilesPage({
 }) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
-
   const filteredCanvases = canvases.filter((canvas) =>
     canvas.name.toLowerCase().includes(localSearch.toLowerCase()),
   );
