@@ -221,25 +221,29 @@ const Footer = () => {
           </div>
 
           <div className="mt-4 flex gap-6 uppercase">
-            <button
-              type="button"
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Terms-of-Service-fce1fe0dccfc4fe0a05ad64f7363266e?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
               className="mono text-xs text-white/40 transition hover:text-white/70"
             >
               Terms & Conditions
-            </button>
+            </a>
 
-            <button
-              type="button"
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Privacy-Policy-5a5e723ba16e4f44af9c888898f7746e?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
               className="mono text-xs text-white/40 transition hover:text-white/70"
             >
               Privacy Policy
-            </button>
+            </a>
           </div>
         </div>
       </div>
 
       {/* Footer graphic */}
-      <div className="-mt-16 w-full lg:-mt-24">
+      <div className="-mt-16 w-full lg:-mt-18">
         <img
           src="/images/footer.png"
           alt="Swiped footer graphic"

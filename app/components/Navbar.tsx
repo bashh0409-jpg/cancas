@@ -108,7 +108,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
         <Image
-          src="/images/swiped.png"
+          src="/images/footer.png"
           alt="Swiped logo"
           width={180}
           height={48}
@@ -117,7 +117,7 @@ const Navbar = () => {
         />
 
         {/* Desktop */}
-        <div className="hidden items-center gap-1 lg:flex">
+        <div className="hidden bg-black p-2 rounded items-center gap-1 lg:flex">
           {NAV_LINKS.map((item) => (
             <Link
               key={item.label}

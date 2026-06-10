@@ -62,7 +62,7 @@ export function Pricing() {
         {/* Enterprise banner */}
         <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-10 py-10 rounded-md flex items-center justify-between gap-8 flex-wrap">
           <div className="flex flex-col gap-2 shrink-0">
-            <p className="text-white font-medium text-xl tracking-tight pixel">
+            <p className="text-white font-medium text-xl tracking-tight">
               Need more than Ultra?
             </p>
             <p className="text-white/50 text-xs leading-relaxed max-w-64">
