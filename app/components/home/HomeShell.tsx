@@ -23,8 +23,9 @@ import Tutorials from "./Tutorials";
 import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
+import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
 
-type ActivePage = "files" | "account" | "recently-deleted" | "tutorials";
+type ActivePage = "files" | "account" | "recently-deleted" | "tutorials" | "library";
 
 interface HomeShellProps {
   firstName: string;
@@ -397,6 +398,16 @@ export function HomeShell({
             labelRef={addLabelRef}
             onClick={() => setActivePage("tutorials")}
           />
+          {/* Library */}
+          <NavItem
+            icon={<LibraryIcon className="w-4 h-4 text-white" />}
+            label="Library"
+            endIcon={<ClockFading className="hidden" />}
+            active={activePage === "library"}
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+            onClick={() => setActivePage("library")}
+          />
           {/* Trash */}
           <NavItem
             icon={<TrashIcon className="w-4 h-4 text-white" />}
@@ -408,6 +419,9 @@ export function HomeShell({
             onClick={() => setActivePage("recently-deleted")}
           />
         </nav>
+        <div className="p-1 hidden w-full min-h-30">
+          <div className="w-full bg-white/20 min-h-60 rounded"></div>
+        </div>
 
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-col gap-0.5 px-1">
@@ -472,6 +486,7 @@ export function HomeShell({
           />
         )}
         {activePage === "tutorials" && <TutorialPage />}
+        {activePage === "library" && <LibraryPage />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
       </main>
     </div>
@@ -675,11 +690,11 @@ function TutorialPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* header */}
-      <div className="flex flex-col gap-2">
+      <div className="flex max-w-sm flex-col gap-2">
         <h2 className="text-white text-sm tracking-tight mono">
           Tutorial Lessons.
         </h2>
-        <p className="text-white/50 text-xs mono">
+        <p className="text-white/50 text-xs  mono">
           Tutorial videos will appear here. New video every week will be
           released.
         </p>
@@ -700,6 +715,22 @@ function TutorialPage() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+function LibraryPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* header */}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-white text-sm tracking-tight mono">
+          My Library.
+        </h2>
+        <p className="text-white/50 text-xs mono">
+          All files from all canvases will appear here.
+        </p>
+      </div>
+
     </div>
   );
 }

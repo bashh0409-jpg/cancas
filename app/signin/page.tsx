@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const LOGIN_IMAGES = [
@@ -100,7 +101,7 @@ export default function Page() {
                 >
                   <input
                     autoComplete="email"
-                    className="h-[40px] w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
+                    className="h-[40px] w-full rounded border-2 border-black/10 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
                     disabled={isLoading}
                     placeholder="you@example.com"
                     type="email"
@@ -129,7 +130,7 @@ export default function Page() {
               )}
 
               <button
-                className="text-sm font-semibold text-zinc-500 hover:text-black"
+                className="text-sm  text-zinc-500 hover:text-black"
                 type="button"
                 onClick={() => {
                   setShowEmailForm(false);
@@ -145,7 +146,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
                 {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
@@ -155,7 +156,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -165,19 +166,20 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center justify-center rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
                 onClick={() => {
                   setFormError(null);
                   setShowEmailForm(true);
                 }}
-              >
+                >
+                  <Mail className="w-5 h-5 text-black/50 mr-2"/>
                 Sign in with email
               </button>
             </div>
           )}
 
           {/* RESTORED FOOTER TEXT */}
-          <p className="max-w-[320px] text-center text-xs font-semibold leading-5 tracking-tight text-zinc-500">
+          <p className="max-w-[320px] text-center text-xs font-medium leading-5 tracking-tight text-zinc-500">
             By continuing, you agree to the{" "}
             <a
               href="#"

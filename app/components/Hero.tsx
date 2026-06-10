@@ -194,23 +194,9 @@ HeroShader.displayName = "HeroShader";
 // ── Hero ───────────────────────────────────────────────────
 export default function Hero() {
   return (
-    <section className="relative flex h-full w-full flex-col items-center justify-center px-6 py-16 text-center sm:px-8">
-      <HeroShader />
-      <div className="relative z-10 flex flex-col items-center">
-        <h1 className="pixel max-w-4xl text-2xl font-semibold tracking-normal text-white sm:text-7xl lg:text-8xl">
-          Everything you need for art-directed design.
-        </h1>
-        <p className="mt-6 max-w-2xl text-sm text-white/70 sm:text-lg">
-          Design, create, and ship ideas faster — powered by multiple AI tools
-          in one place.
-        </p>
-        <Link
-          href="/signup"
-          className="mt-8 rounded-full bg-white px-5 py-2 text-sm font-semibold tracking-tight text-black transition hover:bg-white/85"
-        >
-          Start for free
-        </Link>
-      </div>
+    <section className="relative flex  w-full flex-col items-center justify-center px-6 py-16 text-center sm:px-8">
+   {/**  <HeroShader /> */} 
+
     </section>
   );
 }

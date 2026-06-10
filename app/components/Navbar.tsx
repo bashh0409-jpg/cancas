@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -106,9 +107,14 @@ const Navbar = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
-        <h1 className="pixel mix-blend-difference text-2xl font-semibold tracking-tight text-white">
-          SWIPED
-        </h1>
+        <Image
+          src="/images/swiped.png"
+          alt="Swiped logo"
+          width={180}
+          height={48}
+          priority
+          className="h-8 w-auto mix-blend-difference"
+        />
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 lg:flex">
@@ -121,13 +127,14 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-
+        </div>
+        <div className="hidden items-center gap-1 lg:flex">
           <button
             onClick={handleStartProject}
             disabled={checkingSession}
             className="ml-2 flex cursor-pointer items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
-            Start a project
+            Start Now
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
           </button>
         </div>
@@ -143,7 +150,7 @@ const Navbar = () => {
             disabled={checkingSession}
             className="flex w-fit cursor-pointer items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black disabled:opacity-70"
           >
-            Start a project
+            Start Now
             <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
           </button>{" "}
           <button
