@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
@@ -25,7 +26,12 @@ import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
 
-type ActivePage = "files" | "account" | "recently-deleted" | "tutorials" | "library";
+type ActivePage =
+  | "files"
+  | "account"
+  | "recently-deleted"
+  | "tutorials"
+  | "library";
 
 interface HomeShellProps {
   firstName: string;
@@ -387,17 +393,6 @@ export function HomeShell({
             labelRef={addLabelRef}
             onClick={() => setActivePage("files")}
           />
-
-          {/* Trash */}
-          <NavItem
-            icon={<TutorialIcon className="w-4 h-4 text-white" />}
-            label="Tutorials"
-            endIcon={<ClockFading className="hidden" />}
-            active={activePage === "tutorials"}
-            collapsed={collapsed}
-            labelRef={addLabelRef}
-            onClick={() => setActivePage("tutorials")}
-          />
           {/* Library */}
           <NavItem
             icon={<LibraryIcon className="w-4 h-4 text-white" />}
@@ -408,6 +403,17 @@ export function HomeShell({
             labelRef={addLabelRef}
             onClick={() => setActivePage("library")}
           />
+          {/* Tutorials */}
+          <NavItem
+            icon={<TutorialIcon className="w-4 h-4 text-white" />}
+            label="Tutorials"
+            endIcon={<ClockFading className="hidden" />}
+            active={activePage === "tutorials"}
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+            onClick={() => setActivePage("tutorials")}
+          />
+          
           {/* Trash */}
           <NavItem
             icon={<TrashIcon className="w-4 h-4 text-white" />}
@@ -472,7 +478,6 @@ export function HomeShell({
             credits={credits}
             projectsError={projectsError}
             errorMessage={errorMessage}
-            createCanvasAction={createCanvasAction}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
@@ -486,7 +491,7 @@ export function HomeShell({
           />
         )}
         {activePage === "tutorials" && <TutorialPage />}
-        {activePage === "library" && <LibraryPage />}
+        {activePage === "library" && <LibraryPage canvases={canvases} />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
       </main>
     </div>
@@ -502,7 +507,6 @@ function FilesPage({
   credits,
   projectsError,
   errorMessage,
-  createCanvasAction,
   searchQuery = "",
   onSearchChange = () => {},
 }: {
@@ -512,7 +516,6 @@ function FilesPage({
   credits: number;
   projectsError: string | null;
   errorMessage: string | undefined;
-  createCanvasAction: () => Promise<void>;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
 }) {
@@ -526,7 +529,6 @@ function FilesPage({
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-
           <div className="mono text-sm tracking-tight text-white">
             {firstName} {lastName}&apos;s Workspace
           </div>
@@ -541,21 +543,25 @@ function FilesPage({
 
         <CreditsBadge credits={credits} />
       </div>
-      <Tutorials />
-      <div className="mt-2 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-3">
-        <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
+      <div className="">
+        <Tutorials />
+      </div>
 
-        <div>
-          <input
-            type="text"
-            placeholder="Search files..."
-            value={localSearch}
-            onChange={(e) => {
-              setLocalSearch(e.target.value);
-              onSearchChange(e.target.value);
-            }}
-            className="w-full mono rounded border border-white/20 bg-white/20 px-4 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
-          />
+      <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-3">
+        <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
+        <div className="flex items-center gap-2">
+          <div>
+            <input
+              type="text"
+              placeholder="Search files..."
+              value={localSearch}
+              onChange={(e) => {
+                setLocalSearch(e.target.value);
+                onSearchChange(e.target.value);
+              }}
+              className="w-full mono rounded border border-white/20 bg-white/20 px-4 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
+            />
+          </div>
         </div>
       </div>
       {projectsError && (
@@ -718,19 +724,272 @@ function TutorialPage() {
     </div>
   );
 }
-function LibraryPage() {
+function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
+  const [files, setFiles] = useState<
+    Array<{
+      id: string;
+      type: "image" | "web" | "voice";
+      title: string;
+      thumbnail?: string;
+      canvasName: string;
+      canvasId: string;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    title: string;
+    canvasName: string;
+    canvasId: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchAllFiles = async () => {
+      try {
+        const allFiles: typeof files = [];
+
+        for (const canvas of canvases) {
+          try {
+            const res = await fetch(`/api/canvases/${canvas.id}`);
+            if (!res.ok) continue;
+
+            const data = await res.json();
+            const content = data.content;
+
+            if (content?.imageNodes) {
+              content.imageNodes.forEach(
+                (node: { id: string; fileName: string; url?: string }) => {
+                  allFiles.push({
+                    id: node.id,
+                    type: "image",
+                    title: node.fileName,
+                    thumbnail: node.url,
+                    canvasName: canvas.name,
+                    canvasId: canvas.id,
+                  });
+                },
+              );
+            }
+
+            if (content?.webNodes) {
+              content.webNodes.forEach(
+                (node: { id: string; title: string; url: string }) => {
+                  allFiles.push({
+                    id: node.id,
+                    type: "web",
+                    title: node.title || new URL(node.url).hostname,
+                    canvasName: canvas.name,
+                    canvasId: canvas.id,
+                  });
+                },
+              );
+            }
+
+            if (content?.voiceNodes) {
+              content.voiceNodes.forEach(
+                (node: { id: string; title: string }) => {
+                  allFiles.push({
+                    id: node.id,
+                    type: "voice",
+                    title: node.title,
+                    canvasName: canvas.name,
+                    canvasId: canvas.id,
+                  });
+                },
+              );
+            }
+          } catch {
+            // Continue if one canvas fails
+          }
+        }
+
+        if (mounted) setFiles(allFiles);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchAllFiles();
+    return () => {
+      mounted = false;
+    };
+  }, [canvases]);
+
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case "image":
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+          </svg>
+        );
+      case "web":
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+        );
+      case "voice":
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* header */}
       <div className="flex flex-col gap-2">
-        <h2 className="text-white text-sm tracking-tight mono">
-          My Library.
-        </h2>
+        <h2 className="text-white text-sm tracking-tight mono">My Library.</h2>
         <p className="text-white/50 text-xs mono">
           All files from all canvases will appear here.
         </p>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="animate-spin text-white" />
+        </div>
+      ) : files.length === 0 ? (
+        <div className="text-center p-8">
+          <p className="text-white/50 text-sm mono">
+            No files yet. Create some canvases and add content to see them here.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {Object.entries(
+            files.reduce(
+              (acc, file) => {
+                if (!acc[file.canvasId]) {
+                  acc[file.canvasId] = { name: file.canvasName, files: [] };
+                }
+                acc[file.canvasId].files.push(file);
+                return acc;
+              },
+              {} as Record<string, { name: string; files: typeof files }>,
+            ),
+          ).map(([canvasId, group]) => (
+            <div key={canvasId} className="flex flex-col gap-4">
+              {/* Canvas title divider */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-white text-sm mono font-medium">
+                  {group.name}
+                </h3>
+                <div className="flex-1  h-px bg-white/10"></div>
+              </div>
+
+              {/* Files grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-1">
+                {group.files.map((file) => (
+                  <a
+                    key={`${file.canvasId}-${file.id}`}
+                    href={`/canvas/${file.canvasId}`}
+                    onClick={(e) => {
+                      if (file.type === "image" && file.thumbnail) {
+                        e.preventDefault();
+                        setPreviewImage({
+                          src: file.thumbnail,
+                          title: file.title,
+                          canvasName: file.canvasName,
+                          canvasId: file.canvasId,
+                        });
+                      }
+                    }}
+                    className="group relative rounded-xs overflow-hidden bg-white/5 hover:bg-white/10 transition-colors h-28 flex flex-col items-center justify-center cursor-pointer border border-white/10 hover:border-white/20"
+                  >
+                    {file.thumbnail && file.type === "image" ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={file.thumbnail}
+                          alt={file.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:opacity-75  transition-opacity"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-white/60">
+                        {getFileIcon(file.type)}
+                      </div>
+                    )}
+
+                    {/* Overlay with title */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-end justify-end p-2">
+                      <div className="w-full">
+                        <p className="text-white text-xs mono font-medium truncate">
+                          {file.title}
+                        </p>
+                        <p className="text-white/60 text-[10px] mono truncate">
+                          {file.canvasName}
+                        </p>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-2xl max-h-[90vh] rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-2 right-2 z-10 p-2 bg-black/60 hover:bg-black/80 text-white rounded transition"
+              aria-label="Close preview"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            <Image
+              src={previewImage.src}
+              alt={previewImage.title}
+              width={800}
+              height={600}
+              className="w-full h-auto"
+              priority
+            />
+
+            {/* Image info footer */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <p className="text-white text-sm mono font-medium">
+                {previewImage.title}
+              </p>
+              <p className="text-white/60 text-xs mono">
+                {previewImage.canvasName}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

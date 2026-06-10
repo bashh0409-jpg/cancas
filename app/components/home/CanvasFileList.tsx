@@ -215,7 +215,6 @@ export function CanvasFileList({
             <div className="mb-3 flex aspect-square items-center justify-center rounded bg-white/10 text-white/30 transition">
               <CanvasPlaceholderIcon />
             </div>
-
             <h3 className="truncate text-sm text-white">{canvas.name}</h3>
             <p className="mt-1 text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
