@@ -6,6 +6,7 @@ import { ArrowLeft, Settings, User, Loader2 } from "lucide-react";
 import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
 import type { UserSettings } from "@/lib/user/settingsRepository";
 
+
 type AccountTab = "profile" | "settings";
 
 type Profile = {
@@ -31,6 +32,8 @@ const TABS: { id: AccountTab; label: string; icon: React.ReactNode }[] = [
 export function AccountPage({
   profile,
   updateNicknameAction,
+  updateSettingsAction,
+  userSettings,
   deleteAccountAction,
   signOut,
 }: {
