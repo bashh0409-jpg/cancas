@@ -549,7 +549,11 @@ function FilesPage({
             </span>
           </div>
         </div>
-
+        {errorMessage && (
+          <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
+            {errorMessage}
+          </div>
+        )}
         <CreditsBadge credits={credits} />
       </div>
       <div className="">
@@ -573,12 +577,22 @@ function FilesPage({
         </div>
       </div>{" "}
       {projectsError && (
-        <div className="rounded   w-fit border border-amber-500/30 bg-amber-500/10 p-1 text-xs mono tracking-tight text-amber-100">
-          {projectsError}
+        <div
+          onClick={() => window.location.reload()}
+          className="rounded-xs cursor-pointer   w-fit border border-amber-500/30 bg-amber-500/10 p-1 text-xs mono tracking-tight text-amber-100"
+        >
+          {projectsError} Something went wrong. Please refresh to try again.
+          <button
+            onClick={() => window.location.reload()} // forces full page refresh
+            type="button"
+            className="ml-4 cursor-pointer bg-white p-1 rounded-xs text-black"
+          >
+            Refresh
+          </button>
         </div>
       )}
       {errorMessage && (
-        <div className="rounded border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
+        <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
           {errorMessage}
         </div>
       )}
