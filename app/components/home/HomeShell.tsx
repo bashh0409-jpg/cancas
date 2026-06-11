@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { siDiscord, siYoutube } from "simple-icons";
 import {
+  AudioLines,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClockFading,
+  Globe,
   LogOut,
   Plus,
   Settings,
@@ -21,6 +23,7 @@ import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import { AccountPage } from "@/app/components/home/AccountPage";
 import Tutorials from "./Tutorials";
+import type { UserSettings } from "@/lib/user/settingsRepository";
 import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
@@ -50,6 +53,8 @@ interface HomeShellProps {
     nickname?: string | null;
   };
   updateNicknameAction: (formData: FormData) => Promise<void>;
+  updateSettingsAction: (formData: FormData) => Promise<void>;
+  userSettings: UserSettings;
 }
 
 // ── Account card popup ─────────────────────────────────────────────────────
@@ -214,6 +219,8 @@ export function HomeShell({
   deleteAccountAction,
   profile,
   updateNicknameAction,
+  updateSettingsAction,
+  userSettings,
 }: HomeShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [activePage, setActivePage] = useState<ActivePage>("files");
@@ -413,7 +420,7 @@ export function HomeShell({
             labelRef={addLabelRef}
             onClick={() => setActivePage("tutorials")}
           />
-          
+
           {/* Trash */}
           <NavItem
             icon={<TrashIcon className="w-4 h-4 text-white" />}
@@ -486,6 +493,8 @@ export function HomeShell({
           <AccountPage
             profile={profile}
             updateNicknameAction={updateNicknameAction}
+            updateSettingsAction={updateSettingsAction}
+            userSettings={userSettings}
             deleteAccountAction={deleteAccountAction}
             signOut={signOut}
           />
@@ -546,7 +555,6 @@ function FilesPage({
       <div className="">
         <Tutorials />
       </div>
-
       <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-3">
         <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
         <div className="flex items-center gap-2">
@@ -563,14 +571,14 @@ function FilesPage({
             />
           </div>
         </div>
-      </div>
+      </div>{" "}
       {projectsError && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+        <div className="rounded   w-fit border border-amber-500/30 bg-amber-500/10 p-1 text-xs mono tracking-tight text-amber-100">
           {projectsError}
         </div>
       )}
       {errorMessage && (
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100">
+        <div className="rounded border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
           {errorMessage}
         </div>
       )}
@@ -826,17 +834,9 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
           </svg>
         );
       case "web":
-        return (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-          </svg>
-        );
+        return <Globe className="h-4.5 w-4.5 shrink-0" />;
       case "voice":
-        return (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-          </svg>
-        );
+        return <AudioLines className="h-4.5 w-4.5 shrink-0" />;
       default:
         return null;
     }

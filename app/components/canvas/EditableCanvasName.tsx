@@ -73,7 +73,7 @@ export function EditableCanvasName({
     return (
       <input
         ref={inputRef}
-        className="pixel max-w-[min(40vw,280px)] rounded-md border border-white/20 bg-white/10 px-2 py-1 text-center text-sm tracking-tight text-white outline-none focus:border-white/40"
+        className="mono max-w-[min(40vw,280px)] rounded-md border border-white/20 bg-white/10 px-2 py-1 text-center text-sm tracking-tight text-white outline-none focus:border-white/40"
         value={name}
         onBlur={commitEdit}
         onChange={(event) => setName(event.currentTarget.value)}

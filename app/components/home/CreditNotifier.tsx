@@ -32,15 +32,12 @@ export function CreditNotifier({ message }: CreditNotifierProps) {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-2xl border border-rose-400/20 bg-black/90 p-4 shadow-2xl shadow-black/30 backdrop-blur-lg text-white">
+    <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-2xl border-none bg-transparent">
       <div className="flex items-start gap-3">
-        <div className="rounded-full bg-rose-500/20 p-2 text-rose-200">
-          <span aria-hidden="true">⚠️</span>
+        <div className="rounded border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
+          {message}
         </div>
-        <div className="min-w-0 text-sm leading-6">
-          <p className="font-semibold text-white">Not enough credits</p>
-          <p className="text-white/80">{message}</p>
-        </div>
+
         <button
           type="button"
           className="text-white/60 hover:text-white"

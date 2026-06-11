@@ -107,7 +107,7 @@ export function Pricing() {
         </div>
 
         {/* Trusted by */}
-        <div className="max-w-7xl mx-auto mt-20 mb-10 text-white/80 text-center px-4">
+        <div className="max-w-7xl tracking-tight mx-auto mt-20 mb-10 text-white/80 text-center px-4">
           <p>Empowering production grade creative work at:</p>
           <TrustedBy />
         </div>

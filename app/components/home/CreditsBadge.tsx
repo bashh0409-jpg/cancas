@@ -181,7 +181,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto mt-20 mb-40 text-white/80 text-center px-4">
+            <div className="max-w-7xl mx-auto tracking-tight mt-20 mb-40 text-white/80 text-center px-4">
               <p>Empowering production grade creative work at:</p>
               <div>
                 <TrustedBy />

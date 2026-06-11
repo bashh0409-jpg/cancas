@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2} from "lucide-react";
 
 type CanvasFileListProps = {
   canvases: CanvasListItem[];

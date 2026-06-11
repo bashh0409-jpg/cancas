@@ -3,6 +3,10 @@ import { CreditNotifier } from "@/app/components/home/CreditNotifier";
 import { createCanvasAction } from "@/app/home/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
 import { getUserCredits } from "@/lib/credits/repository";
+import {
+  getUserSettings,
+  type UserSettings,
+} from "@/lib/user/settingsRepository";
 import { createClient } from "@/lib/supabase/server";
 import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
@@ -10,7 +14,9 @@ import { Suspense } from "react";
 import MobileNotifier from "@/app/components/home/MobileNotifier";
 import { HomeShell } from "@/app/components/home/HomeShell";
 import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
+import { updateSettingsAction } from "@/app/actions/updateSettingsAction";
 import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
+import NewReleaseUpdate from "@/app/components/home/NewReleasUpdate";
 
 export default async function HomePage({
   searchParams,
@@ -56,13 +62,24 @@ export default async function HomePage({
   try {
     canvases = await listUserCanvases(supabase, user.id);
   } catch {
-    projectsError = "Could not load projects. Refresh this page.";
+    projectsError = "Something went wrong. Please refresh to try again.";
   }
 
   try {
     credits = await getUserCredits(supabase, user.id);
   } catch {
     // Silently fail
+  }
+
+  let settings: UserSettings = {
+    product_updates: true,
+    canvas_activity: true,
+  };
+
+  try {
+    settings = await getUserSettings(supabase, user.id);
+  } catch {
+    // Silently fail and fall back to defaults.
   }
 
   const { data: profile } = await supabase
@@ -85,6 +102,9 @@ export default async function HomePage({
         <Suspense fallback={null}>
           <ClearLocalDataOnQuery />
         </Suspense>
+        <div className="absolute z-50 w-full">
+          <NewReleaseUpdate userId={user.id} />
+        </div>
 
         <HomeShell
           firstName={firstName}
@@ -103,6 +123,8 @@ export default async function HomePage({
             nickname: profile?.nickname ?? "",
           }}
           updateNicknameAction={updateNicknameAction}
+          updateSettingsAction={updateSettingsAction}
+          userSettings={settings}
         />
       </div>
     </div>

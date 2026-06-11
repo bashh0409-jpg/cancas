@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Settings, User, Loader2 } from "lucide-react";
 import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
+import type { UserSettings } from "@/lib/user/settingsRepository";
 
 type AccountTab = "profile" | "settings";
 
@@ -35,6 +36,8 @@ export function AccountPage({
 }: {
   profile: Profile;
   updateNicknameAction: (formData: FormData) => Promise<void>;
+  updateSettingsAction: (formData: FormData) => Promise<void>;
+  userSettings: UserSettings;
   deleteAccountAction: () => Promise<void>;
   signOut: () => Promise<void>;
 }) {
@@ -104,6 +107,8 @@ export function AccountPage({
             <SettingsTab
               deleteAccountAction={deleteAccountAction}
               signOut={signOut}
+              userSettings={userSettings}
+              updateSettingsAction={updateSettingsAction}
             />
           )}
         </div>
@@ -239,17 +244,43 @@ function ProfileTab({
 function SettingsTab({
   deleteAccountAction,
   signOut,
+  userSettings,
+  updateSettingsAction,
 }: {
   deleteAccountAction: () => Promise<void>;
   signOut: () => Promise<void>;
+  userSettings: UserSettings;
+  updateSettingsAction: (formData: FormData) => Promise<void>;
 }) {
   const router = useRouter();
   const [openDelete, setOpenDelete] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [productUpdates, setProductUpdates] = useState(
+    userSettings.product_updates ?? true,
+  );
+  const [canvasActivity, setCanvasActivity] = useState(
+    userSettings.canvas_activity ?? true,
+  );
+  const [saved, setSaved] = useState(false);
+  const [saving, startTransition] = useTransition();
 
   const canDelete = confirmText.trim() === "Yes i want to delete my account";
+
+  async function handleSaveSettings() {
+    setSaved(false);
+
+    const formData = new FormData();
+    formData.append("product_updates", String(productUpdates));
+    formData.append("canvas_activity", String(canvasActivity));
+
+    startTransition(async () => {
+      await updateSettingsAction(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    });
+  }
 
   async function handleDeleteAccount(confirmText: string) {
     const canDelete = confirmText.trim() === "Yes i want to delete my account";
@@ -293,7 +324,7 @@ function SettingsTab({
         <div className="flex flex-col gap-4">
           <span className="text-xs text-white">Plan</span>
 
-          <div className="flex flex-col gap-4 rounded border border-white/10 bg-[#212529] p-4">
+          <div className="flex flex-col gap-4 rounded bg-white/10 p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-white">Free</span>
@@ -314,11 +345,12 @@ function SettingsTab({
         <div className="flex flex-col gap-4">
           <span className="text-xs text-white">Notifications</span>
 
-          <div className="flex flex-col rounded border border-white/10 bg-[#212529] p-3">
+          <div className="flex flex-col rounded bg-white/10 p-3">
             <Toggle
               label="Product updates"
               description="New features and announcements"
-              defaultChecked
+              checked={productUpdates}
+              onChange={() => setProductUpdates((current) => !current)}
             />
 
             <div className="h-px bg-white/5" />
@@ -326,15 +358,25 @@ function SettingsTab({
             <Toggle
               label="Canvas activity"
               description="Comments and edits on your canvases"
-              defaultChecked
+              checked={canvasActivity}
+              onChange={() => setCanvasActivity((current) => !current)}
             />
 
-            <div className="h-px bg-white/5" />
-
-            <Toggle
-              label="Marketing emails"
-              description="Tips, tutorials and offers"
-            />
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="flex h-9 min-w-[120px] items-center justify-center self-end rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : saved ? (
+                  "Saved"
+                ) : (
+                  "Save preferences"
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -342,7 +384,7 @@ function SettingsTab({
         <div className="flex flex-col gap-4">
           <span className="text-xs text-white">Danger zone</span>
 
-          <div className="flex items-center justify-between rounded border border-rose-500/20 bg-[#212529] p-4">
+          <div className="flex items-center justify-between rounded bg-white/10 p-4">
             <div className="flex flex-col">
               <span className="text-sm font-medium text-white">
                 Delete account
@@ -398,14 +440,14 @@ function SettingsTab({
 function Toggle({
   label,
   description,
-  defaultChecked = false,
+  checked,
+  onChange,
 }: {
   label: string;
   description: string;
-  defaultChecked?: boolean;
+  checked: boolean;
+  onChange: () => void;
 }) {
-  const [on, setOn] = useState(defaultChecked);
-
   return (
     <div className="flex items-center justify-between py-2">
       <div>
@@ -415,14 +457,14 @@ function Toggle({
       </div>
 
       <button
-        onClick={() => setOn((v) => !v)}
-        className={`relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0 ${
-          on ? "bg-white" : "bg-white/15"
+        onClick={onChange}
+        className={`relative w-11 h-5 rounded-full transition-colors duration-200 shrink-0 ${
+          checked ? "bg-green-500" : "bg-white/15"
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform duration-200 ${
-            on ? "translate-x-4 bg-black" : "bg-white/40"
+          className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+            checked ? "translate-x-4 bg-white" : "bg-white/40"
           }`}
         />
       </button>

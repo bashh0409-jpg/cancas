@@ -90,22 +90,24 @@ export default function CanvasPageClient({
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">
           {/* LEFT */}
           <div className="flex items-center gap-2 justify-start">
-            <Link
-              href="/home"
+            <button
+              onClick={() => window.history.back()}
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
+              aria-label="Go back"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                x="0px"
-                y="0px"
-                width="100"
-                height="100"
                 viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 className="w-5 h-5"
               >
-                <path d="M 12 2.0996094 L 1 12 L 4 12 L 4 21 L 11 21 L 11 15 L 13 15 L 13 21 L 20 21 L 20 12 L 23 12 L 12 2.0996094 z M 12 4.7910156 L 18 10.191406 L 18 11 L 18 19 L 15 19 L 15 13 L 9 13 L 9 19 L 6 19 L 6 10.191406 L 12 4.7910156 z"></path>
+                <path d="M15 18l-6-6 6-6" />
               </svg>
-            </Link>
+            </button>
 
             <div className="bg-white min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
               <CanvasSwitcher canvases={canvases} activeCanvasId={canvasId} />
