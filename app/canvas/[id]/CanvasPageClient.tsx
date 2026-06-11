@@ -90,8 +90,8 @@ export default function CanvasPageClient({
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">
           {/* LEFT */}
           <div className="flex items-center gap-2 justify-start">
-            <button
-              onClick={() => window.history.back()}
+            <a
+              href="/home"
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
               aria-label="Go back"
             >
@@ -107,7 +107,7 @@ export default function CanvasPageClient({
               >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
-            </button>
+            </a>
 
             <div className="bg-white min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
               <CanvasSwitcher canvases={canvases} activeCanvasId={canvasId} />
