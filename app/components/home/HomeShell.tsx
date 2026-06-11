@@ -549,12 +549,14 @@ function FilesPage({
             </span>
           </div>
         </div>
+        <div className="flex items-center gap-2">
         {errorMessage && (
           <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
             {errorMessage}
           </div>
         )}
         <CreditsBadge credits={credits} />
+      </div>
       </div>
       <div className="">
         <Tutorials />
@@ -589,11 +591,6 @@ function FilesPage({
           >
             Refresh
           </button>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
-          {errorMessage}
         </div>
       )}
       <CanvasFileList canvases={filteredCanvases} />

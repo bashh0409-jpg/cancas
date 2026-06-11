@@ -26,7 +26,7 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   const errorMessage =
     resolvedSearchParams.error === "no_credits"
-      ? "No credits available. Unable to create a new file."
+      ? "You’ve run out of credits."
       : undefined;
 
   async function signOut() {
