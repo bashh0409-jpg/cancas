@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
     return NextResponse.redirect(
@@ -21,5 +21,12 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  return NextResponse.redirect(`${origin}${redirectTo}`)
+  if (!data?.url) {
+    return NextResponse.json(
+      { error: "Missing callback redirect URL from Supabase" },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.redirect(data.url)
 }

@@ -37,11 +37,13 @@ export async function POST(req: Request) {
     }
 
     // Verify webhook signature
-    const event = stripeClient
-      .getStripeInstance()
-      .webhooks.constructEvent(body, signature, webhookSecret);
-
-    if (!event) {
+    let event;
+    try {
+      event = stripeClient
+        .getStripeInstance()
+        .webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (error) {
+      console.error("Stripe webhook signature verification failed:", error);
       return NextResponse.json(
         { error: "Invalid webhook signature" },
         { status: 401 },

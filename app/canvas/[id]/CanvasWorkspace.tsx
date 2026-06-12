@@ -497,6 +497,7 @@ export default function CanvasWorkspace({
   const imageDeleteRedoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
   const selectedImageIdsRef = useRef<string[]>([]);
   const supabaseClientRef = useRef(createClient());
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
   const [showGridControls, setShowGridControls] = useState(false);
   const [showContentsPanel, setShowContentsPanel] = useState(false);
@@ -1156,6 +1157,8 @@ useEffect(() => {
     writeLocalCanvasDraft(canvasId, content, serverUpdatedAtRef.current);
 
     try {
+      setSaveError(null); // Clear any prior save error before attempting a new save.
+
       const response = await fetch(`/api/canvases/${canvasId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1166,6 +1169,12 @@ useEffect(() => {
       });
 
       if (!response.ok) {
+        const text = await response.text();
+        setSaveError(
+          `Failed to save canvas: ${response.status} ${response.statusText}${
+            text ? ` — ${text}` : ""
+          }`,
+        );
         return;
       }
 
@@ -1176,7 +1185,12 @@ useEffect(() => {
         serverUpdatedAtRef.current = data.updated_at;
         markLocalCanvasDraftSynced(canvasId, content, data.updated_at);
       }
-    } catch {
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? `Failed to save canvas: ${error.message}`
+          : "Failed to save canvas due to an unknown error",
+      );
       // Keep the local draft dirty so the next page load can recover it.
     }
   }, [canvasId, canvasName, isClientReady]);
@@ -2614,6 +2628,12 @@ useEffect(() => {
           onArrange={applyImageLayout}
           onClearSelection={() => setSelectedImageIds([])}
         />
+      )}
+
+      {saveError && (
+        <div className="absolute left-4 top-4 z-50 rounded-sm bg-red-600/90 px-4 py-2 text-sm text-white shadow-lg">
+          {saveError}
+        </div>
       )}
 
       {activeWebNode && (
