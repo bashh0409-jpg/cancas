@@ -196,7 +196,7 @@ export function CanvasFileList({
 
                 <button
                   aria-label={`Permanently delete ${canvas.name}`}
-                  className="flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-600/20 hover:text-red-200 disabled:opacity-50"
+                  className="flex items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-red-600/20 hover:text-white disabled:opacity-50"
                   disabled={deletingId === canvas.id}
                   type="button"
                   onClick={() => handleDelete(canvas.id, canvas.name)}

@@ -251,6 +251,7 @@ const Footer = () => {
           draggable={false}
         />
       </div>
+      <p className="text-white justify-center items-center flex text-xs mb-2 -mt-10">CURRENTLY IN BETA</p>
     </footer>
   );
 };

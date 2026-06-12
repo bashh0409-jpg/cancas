@@ -236,7 +236,7 @@ function ProfileTab({
           <span className="text-xs text-white">Role</span>
 
           <div className="flex h-9 max-w-80 items-center rounded bg-[#212529] px-3 text-xs text-white/70 mono">
-            User
+            Admin
           </div>
         </div>
       </div>
@@ -369,14 +369,14 @@ function SettingsTab({
               <button
                 onClick={handleSaveSettings}
                 disabled={saving}
-                className="flex h-9 min-w-[120px] items-center justify-center self-end rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
+                className="flex h-8 min-w-[70px] items-center justify-center self-end rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : saved ? (
                   "Saved"
                 ) : (
-                  "Save preferences"
+                  "update"
                 )}
               </button>
             </div>
