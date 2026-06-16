@@ -12,6 +12,8 @@ export type CanvasImageNode = {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 export type CanvasWebNode = {
@@ -21,6 +23,8 @@ export type CanvasWebNode = {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 export type CanvasVoiceNode = {
@@ -31,6 +35,8 @@ export type CanvasVoiceNode = {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 export type CanvasContent = {

@@ -4,71 +4,64 @@ import { createClient as createServerSupabaseClient } from "@/lib/supabase/serve
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export async function deleteAccountAction() {
-  try {
-    const supabaseUrl =
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error(
-        "Missing Supabase service role configuration. Set SUPABASE_SERVICE_ROLE_KEY and SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.",
-      );
-    }
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Missing Supabase service role configuration. Set SUPABASE_SERVICE_ROLE_KEY and SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.",
+    );
+  }
 
-    const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      throw new Error("Unauthorized");
-    }
+  if (userError || !user) {
+    throw new Error("Unauthorized");
+  }
 
-    const userId = user.id;
+  const userId = user.id;
 
-    // Move all canvases to trash (soft-delete) instead of permanently deleting them
-    const deletedAt = new Date().toISOString();
-    const { error: canvasError } = await supabase
-      .from("canvases")
-      .update({ deleted_at: deletedAt })
-      .eq("user_id", userId)
-      .is("deleted_at", null);
+  // Move all canvases to trash (soft-delete) instead of permanently deleting them
+  const deletedAt = new Date().toISOString();
+  const { error: canvasError } = await supabase
+    .from("canvases")
+    .update({ deleted_at: deletedAt })
+    .eq("user_id", userId)
+    .is("deleted_at", null);
 
-    if (canvasError) {
-      throw canvasError;
-    }
+  if (canvasError) {
+    throw canvasError;
+  }
 
-    const { error: creditsError } = await supabase
-      .from("user_credits")
-      .delete()
-      .eq("user_id", userId);
+  const { error: creditsError } = await supabase
+    .from("user_credits")
+    .delete()
+    .eq("user_id", userId);
 
-    if (creditsError) {
-      throw creditsError;
-    }
+  if (creditsError) {
+    throw creditsError;
+  }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", userId);
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", userId);
 
-    if (profileError) {
-      throw profileError;
-    }
+  if (profileError) {
+    throw profileError;
+  }
 
-    const service = createSupabaseClient(supabaseUrl, serviceRoleKey);
+  const service = createSupabaseClient(supabaseUrl, serviceRoleKey);
 
-    const { error: authError } = await service.auth.admin.deleteUser(userId);
+  const { error: authError } = await service.auth.admin.deleteUser(userId);
 
-    if (authError) {
-      throw authError;
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Delete account failed: ${error.message}`);
-    }
-    throw new Error("Delete account failed due to an unknown error.");
+  if (authError) {
+    throw authError;
   }
 }

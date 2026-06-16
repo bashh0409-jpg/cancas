@@ -26,14 +26,7 @@ export async function POST(req: Request) {
     const payfast = initPayFastClient(process.env.NODE_ENV === "development");
 
     // Verify webhook signature
-    let validSignature = false;
-    try {
-      validSignature = payfast.verifyWebhookSignature(webhookData as any);
-    } catch (error) {
-      console.error("PayFast webhook signature verification failed:", error);
-    }
-
-    if (!validSignature) {
+    if (!payfast.verifyWebhookSignature(webhookData as any)) {
       console.error("Invalid PayFast webhook signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -54,25 +47,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error(
-        "Missing Supabase service role configuration for PayFast webhook",
-      );
-      return NextResponse.json(
-        {
-          error:
-            "Missing Supabase configuration for PayFast webhook. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
-        },
-        { status: 500 },
-      );
-    }
-
     const userId = userIdStr;
     // Use service role key for webhook updates to bypass RLS
-    const supabase = createSupabaseClient(supabaseUrl, serviceRoleKey);
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
 
     // Map PayFast payment status to subscription status
     let subscriptionStatus: "active" | "pending" | "canceled" | "past_due";
@@ -132,9 +112,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("PayFast webhook error:", error);
+    // Still return 200 to PayFast to prevent retries for server errors
+    // Log the error for investigation
     return NextResponse.json(
       { error: "Webhook processing error" },
-      { status: 500 },
+      { status: 200 },
     );
   }
 }

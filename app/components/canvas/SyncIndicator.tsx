@@ -59,7 +59,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
           description: `All ${stats.total} file${
             stats.total !== 1 ? "s" : ""
           } synced to cloud`,
-          classes: "border-black/10 bg-white/95 text-black/75",
+          classes: "border-black/10 hidden bg-white/95 text-black/75",
         };
     }
   }, [stats, status]);

@@ -14,6 +14,7 @@ import CanvasWorkspace from "./CanvasWorkspace";
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
 import { CanvasSwitcher } from "@/app/components/canvas/CanvasSwitcher"; // FIXED PATH
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
+import { Sidebar } from "@/app/components/canvas/Sidebar";
 
 type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 
@@ -84,15 +85,16 @@ export default function CanvasPageClient({
         }
         onRemoteNameChange={setCanvasTitle}
       />
+      <Sidebar />
 
       {/* TOP BAR */}
       <div className="absolute left-0 top-0 z-50 w-full p-4">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+        <div className="grid hidden grid-cols-[1fr_auto_1fr] items-center">
           {/* LEFT */}
-          <div className="flex items-center gap-2 justify-start">
+          <div className="flex items-center ml-20 gap-2 justify-start">
             <a
               href="/home"
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
+              className="flex h-8 w-8   items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
               aria-label="Go back"
             >
               <svg
@@ -109,7 +111,7 @@ export default function CanvasPageClient({
               </svg>
             </a>
 
-            <div className="bg-white min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
+            <div className="bg-white hidden min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
               <CanvasSwitcher canvases={canvases} activeCanvasId={canvasId} />
             </div>
           </div>

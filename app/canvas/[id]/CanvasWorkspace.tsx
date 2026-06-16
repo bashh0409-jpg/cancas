@@ -7,22 +7,20 @@ import type {
   WheelEvent,
 } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  CanvasContentsPanel,
-  type CanvasContentsItem,
-} from "@/app/components/canvas/CanvasContentsPanel";
+import type { CanvasContentsItem } from "@/app/components/canvas/CanvasContentsPanel";
 import { CanvasDropOverlay } from "@/app/components/canvas/CanvasDropOverlay";
-import { CanvasFitToViewButton } from "@/app/components/canvas/CanvasFitToViewButton";
-import { CanvasGridControls } from "@/app/components/canvas/CanvasGridControls";
 import { CanvasImageNode } from "@/app/components/canvas/CanvasImageNode";
+import { CanvasLeftSidebar } from "@/app/components/canvas/CanvasLeftSidebar";
 import { CanvasLoadingOverlay } from "@/app/components/canvas/CanvasLoadingOverlay";
 import { CanvasMarqueeSelection } from "@/app/components/canvas/CanvasMarqueeSelection";
 import { CanvasVoiceNode } from "@/app/components/canvas/CanvasVoiceNode";
 import { CanvasWebNode } from "@/app/components/canvas/CanvasWebNode";
-import { CanvasZoomControls } from "@/app/components/canvas/CanvasZoomControls";
 import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
 import type { VoiceNoteMenuAction } from "@/app/components/canvas/VoiceNoteOptionsMenu";
 import type { ResizeCorner } from "@/app/components/canvas/NodeResizeHandles";
+import { useGridStore } from "@/lib/canvas/gridStore";
+import { useLayersStore, type CanvasLayer } from "@/lib/canvas/layersStore";
+import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
 import {
   arrangeImagesFromRequest,
@@ -85,6 +83,8 @@ type ImageCanvasNode = {
     height: number;
   };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 type ImageSyncStats = {
@@ -134,6 +134,8 @@ type WebCanvasNode = {
     height: number;
   };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 type WebDragState = {
@@ -154,6 +156,8 @@ type VoiceCanvasNode = {
     height: number;
   };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
 };
 
 type VoiceDragState = {
@@ -241,7 +245,7 @@ const MIN_ZOOM = 0.001;
 const MAX_ZOOM = 100;
 const ZOOM_SCALE_FACTOR = 1.2;
 
-const DEFAULT_BACKGROUND = "#111111";
+const DEFAULT_BACKGROUND = "#a09d9d";
 const DEFAULT_GRID_COLOR = "#343434";
 const DEFAULT_GRID_SIZE = 32;
 const DEFAULT_SHOW_GRID = true;
@@ -328,6 +332,8 @@ function serializeImageNodeForSave(node: ImageCanvasNode) {
     position: node.position,
     size: node.size,
     zIndex: node.zIndex,
+    visible: node.visible,
+    locked: node.locked,
   };
 }
 
@@ -497,7 +503,6 @@ export default function CanvasWorkspace({
   const imageDeleteRedoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
   const selectedImageIdsRef = useRef<string[]>([]);
   const supabaseClientRef = useRef(createClient());
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
   const [showGridControls, setShowGridControls] = useState(false);
   const [showContentsPanel, setShowContentsPanel] = useState(false);
@@ -563,6 +568,8 @@ export default function CanvasWorkspace({
   const [settledInitialImageIds, setSettledInitialImageIds] = useState<
     Set<string>
   >(() => new Set());
+  const [isSavingCanvas, setIsSavingCanvas] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
   const initialImageCount = initialImageIdsRef.current.size;
   const activeWebNode =
@@ -577,6 +584,14 @@ export default function CanvasWorkspace({
     [imageNodes],
   );
   const totalImageCount = imageNodes.length;
+  const syncStats = useMemo(
+    () => ({
+      synced: cloudSyncedCount,
+      total: totalImageCount,
+      failed: 0,
+    }),
+    [cloudSyncedCount, totalImageCount],
+  );
   const marqueeRect = marquee
     ? normalizeRect(marquee.start, marquee.current)
     : null;
@@ -619,14 +634,73 @@ export default function CanvasWorkspace({
       }),
     [imageNodes, voiceNodes, webNodes],
   );
+  const canvasLayers = useMemo<CanvasLayer[]>(
+    () =>
+      [
+        ...imageNodes.map((node) => ({
+          id: node.id,
+          name: node.fileName,
+          type: "image" as const,
+          visible: node.visible ?? true,
+          locked: node.locked ?? false,
+          zIndex: node.zIndex,
+        })),
+        ...webNodes.map((node) => ({
+          id: node.id,
+          name: node.title,
+          type: "web" as const,
+          visible: node.visible ?? true,
+          locked: node.locked ?? false,
+          zIndex: node.zIndex,
+        })),
+        ...voiceNodes.map((node) => ({
+          id: node.id,
+          name: node.title,
+          type: "voice" as const,
+          visible: node.visible ?? true,
+          locked: node.locked ?? false,
+          zIndex: node.zIndex,
+        })),
+      ].sort((a, b) => a.zIndex - b.zIndex),
+    [imageNodes, voiceNodes, webNodes],
+  );
 
-useEffect(() => {
-  onImageSyncStatsChange?.({
-    synced: cloudSyncedCount,
-    total: totalImageCount,
-    failed: 0,
-  });
-}, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
+  useEffect(() => {
+    onImageSyncStatsChange?.({
+      synced: cloudSyncedCount,
+      total: totalImageCount,
+      failed: 0,
+    });
+  }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
+
+  // Sync grid settings from store to local state
+  const { settings: gridSettings } = useGridStore();
+  const updateLayers = useLayersStore((state) => state.updateLayers);
+  const registerLayerActions = useLayersStore(
+    (state) => state.registerLayerActions,
+  );
+  const clearLayerActions = useLayersStore((state) => state.clearLayerActions);
+  const syncSelectedLayer = useLayersStore((state) => state.syncSelectedLayer);
+  const registerViewControls = useViewControlsStore(
+    (state) => state.registerViewControls,
+  );
+  const clearViewControls = useViewControlsStore(
+    (state) => state.clearViewControls,
+  );
+  const updateViewControlState = useViewControlsStore(
+    (state) => state.updateViewControlState,
+  );
+  useEffect(() => {
+    setShowGrid(gridSettings.enabled);
+    setGridColor(gridSettings.color);
+    setGridSize(gridSettings.size);
+    setBackgroundColor(gridSettings.background);
+  }, [gridSettings]);
+
+  useEffect(() => {
+    updateLayers(canvasLayers);
+  }, [canvasLayers, updateLayers]);
+
   useEffect(() => {
     const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
 
@@ -947,6 +1021,10 @@ useEffect(() => {
   }, [selectedImageIds]);
 
   useEffect(() => {
+    syncSelectedLayer(selectedImageIds.length === 1 ? selectedImageIds[0] : activeWebNodeId);
+  }, [activeWebNodeId, selectedImageIds, syncSelectedLayer]);
+
+  useEffect(() => {
     imageNodesRef.current = imageNodes;
   }, [imageNodes]);
 
@@ -1090,7 +1168,7 @@ useEffect(() => {
       .filter(
         (node) =>
           initialImageIdsRef.current.has(node.id) &&
-          getImageNodeSrc(node) === null,
+          (getImageNodeSrc(node) === null || !(node.visible ?? true)),
       )
       .map((node) => node.id);
 
@@ -1157,8 +1235,6 @@ useEffect(() => {
     writeLocalCanvasDraft(canvasId, content, serverUpdatedAtRef.current);
 
     try {
-      setSaveError(null); // Clear any prior save error before attempting a new save.
-
       const response = await fetch(`/api/canvases/${canvasId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1169,12 +1245,6 @@ useEffect(() => {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        setSaveError(
-          `Failed to save canvas: ${response.status} ${response.statusText}${
-            text ? ` — ${text}` : ""
-          }`,
-        );
         return;
       }
 
@@ -1185,13 +1255,12 @@ useEffect(() => {
         serverUpdatedAtRef.current = data.updated_at;
         markLocalCanvasDraftSynced(canvasId, content, data.updated_at);
       }
-    } catch (error) {
-      setSaveError(
-        error instanceof Error
-          ? `Failed to save canvas: ${error.message}`
-          : "Failed to save canvas due to an unknown error",
-      );
+    } catch {
       // Keep the local draft dirty so the next page load can recover it.
+    } finally {
+      if (!saveTimerRef.current) {
+        setIsSavingCanvas(false);
+      }
     }
   }, [canvasId, canvasName, isClientReady]);
 
@@ -1216,7 +1285,9 @@ useEffect(() => {
       delay = Math.max(delay, 3500);
     }
 
+    setIsSavingCanvas(true);
     saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
       void persistCanvasToCloud();
     }, delay);
 
@@ -1371,7 +1442,12 @@ useEffect(() => {
 
       if (event.key === "Delete" || event.key === "Backspace") {
         const selectedIds = imageNodesRef.current
-          .filter((node) => selectedImageIdSet.has(node.id))
+          .filter(
+            (node) =>
+              selectedImageIdSet.has(node.id) &&
+              (node.visible ?? true) &&
+              !(node.locked ?? false),
+          )
           .map((node) => node.id);
 
         if (selectedIds.length > 0) {
@@ -1386,7 +1462,11 @@ useEffect(() => {
 
       if (selectAll) {
         event.preventDefault();
-        setSelectedImageIds(imageNodesRef.current.map((node) => node.id));
+        setSelectedImageIds(
+          imageNodesRef.current
+            .filter((node) => (node.visible ?? true) && !(node.locked ?? false))
+            .map((node) => node.id),
+        );
         return;
       }
 
@@ -1397,8 +1477,11 @@ useEffect(() => {
         event.preventDefault();
         event.stopPropagation();
 
-        const selectedNodes = imageNodesRef.current.filter((node) =>
-          selectedImageIdSet.has(node.id),
+        const selectedNodes = imageNodesRef.current.filter(
+          (node) =>
+            selectedImageIdSet.has(node.id) &&
+            (node.visible ?? true) &&
+            !(node.locked ?? false),
         );
 
         if (selectedNodes.length > 0) {
@@ -1519,13 +1602,34 @@ useEffect(() => {
       return { backgroundColor };
     }
 
+    // Get lineType from store
+    const lineType = gridSettings.lineType;
+
+    if (lineType === "dotted") {
+      // Dotted grid pattern using radial-gradient
+      return {
+        backgroundColor,
+        backgroundImage: `radial-gradient(circle, ${gridColorValue} 1px, transparent 1px)`,
+        backgroundPosition: `${viewport.x}px ${viewport.y}px`,
+        backgroundSize: `${scaledSize}px ${scaledSize}px`,
+      };
+    }
+
+    // Solid grid pattern (default)
     return {
       backgroundColor,
       backgroundImage: `linear-gradient(${gridColorValue} 1px, transparent 1px), linear-gradient(90deg, ${gridColorValue} 1px, transparent 1px)`,
       backgroundPosition: `${viewport.x}px ${viewport.y}px`,
       backgroundSize: `${scaledSize}px ${scaledSize}px`,
     };
-  }, [backgroundColor, gridColor, gridSize, showGrid, viewport]);
+  }, [
+    backgroundColor,
+    gridColor,
+    gridSize,
+    showGrid,
+    viewport,
+    gridSettings.lineType,
+  ]);
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -1567,10 +1671,10 @@ useEffect(() => {
     );
   }
 
-  function focusCanvasBounds(bounds: {
+  const focusCanvasBounds = useCallback((bounds: {
     position: Point;
     size: { width: number; height: number };
-  }) {
+  }) => {
     const rect = canvasRef.current?.getBoundingClientRect();
 
     if (!rect) {
@@ -1595,7 +1699,7 @@ useEffect(() => {
       y: rect.height / 2 - centerY * zoom,
       zoom,
     });
-  }
+  }, []);
 
   function focusCanvasItem(item: CanvasContentsItem) {
     const node =
@@ -1618,6 +1722,179 @@ useEffect(() => {
     setActiveWebNodeId(null);
     setShowContentsPanel(false);
   }
+
+  const selectCanvasLayer = useCallback(
+    (id: string | null) => {
+      if (!id) {
+        setSelectedImageIds([]);
+        setActiveWebNodeId(null);
+        return;
+      }
+
+      const imageNode = imageNodesRef.current.find((node) => node.id === id);
+
+      if (imageNode) {
+        focusCanvasBounds({
+          position: imageNode.position,
+          size: imageNode.size,
+        });
+        setSelectedImageIds([id]);
+        setActiveWebNodeId(null);
+        return;
+      }
+
+      const webNode = webNodesRef.current.find((node) => node.id === id);
+
+      if (webNode) {
+        focusCanvasBounds({
+          position: webNode.position,
+          size: webNode.size,
+        });
+        setSelectedImageIds([]);
+        setActiveWebNodeId(id);
+        return;
+      }
+
+      const voiceNode = voiceNodesRef.current.find((node) => node.id === id);
+
+      if (voiceNode) {
+        focusCanvasBounds({
+          position: voiceNode.position,
+          size: voiceNode.size,
+        });
+        setSelectedImageIds([]);
+        setActiveWebNodeId(null);
+      }
+    },
+    [focusCanvasBounds],
+  );
+
+  const toggleCanvasLayerVisibility = useCallback((id: string) => {
+    setImageNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+      ),
+    );
+    setWebNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+      ),
+    );
+    setVoiceNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+      ),
+    );
+    setSelectedImageIds((current) => current.filter((nodeId) => nodeId !== id));
+    setActiveWebNodeId((current) => (current === id ? null : current));
+    saveDelayMsRef.current = 0;
+  }, []);
+
+  const toggleCanvasLayerLocked = useCallback((id: string) => {
+    setImageNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+      ),
+    );
+    setWebNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+      ),
+    );
+    setVoiceNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+      ),
+    );
+    saveDelayMsRef.current = 0;
+  }, []);
+
+  const renameCanvasLayer = useCallback((id: string, name: string) => {
+    const nextName = name.trim();
+
+    if (!nextName) {
+      return;
+    }
+
+    setImageNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, fileName: nextName } : node,
+      ),
+    );
+    setWebNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, title: nextName } : node,
+      ),
+    );
+    setVoiceNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, title: nextName } : node,
+      ),
+    );
+    saveDelayMsRef.current = 0;
+  }, []);
+
+  const deleteCanvasLayer = useCallback(
+    (id: string) => {
+      const imageNode = imageNodesRef.current.find((node) => node.id === id);
+
+      if (imageNode) {
+        if (imageNode.locked ?? false) {
+          return;
+        }
+
+        removeImageNodes([id]);
+        return;
+      }
+
+      const webNode = webNodesRef.current.find((node) => node.id === id);
+
+      if (webNode) {
+        if (webNode.locked ?? false) {
+          return;
+        }
+
+        setWebNodes((current) => current.filter((node) => node.id !== id));
+        setActiveWebNodeId((current) => (current === id ? null : current));
+        saveDelayMsRef.current = 0;
+        return;
+      }
+
+      const voiceNode = voiceNodesRef.current.find((node) => node.id === id);
+
+      if (!voiceNode || (voiceNode.locked ?? false)) {
+        return;
+      }
+
+      removeNodePlayback(id);
+      setVoiceNodes((current) => current.filter((node) => node.id !== id));
+      setOpenVoiceMenuNodeId((current) => (current === id ? null : current));
+      saveDelayMsRef.current = 0;
+    },
+    [removeImageNodes, removeNodePlayback],
+  );
+
+  useEffect(() => {
+    registerLayerActions({
+      onSelectLayer: selectCanvasLayer,
+      onToggleLayerVisibility: toggleCanvasLayerVisibility,
+      onToggleLayerLocked: toggleCanvasLayerLocked,
+      onRenameLayer: renameCanvasLayer,
+      onDeleteLayer: deleteCanvasLayer,
+    });
+
+    return () => {
+      clearLayerActions();
+    };
+  }, [
+    clearLayerActions,
+    deleteCanvasLayer,
+    registerLayerActions,
+    renameCanvasLayer,
+    selectCanvasLayer,
+    toggleCanvasLayerLocked,
+    toggleCanvasLayerVisibility,
+  ]);
 
   function fitContentToView() {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -1732,6 +2009,26 @@ useEffect(() => {
   function resetZoom() {
     updateZoomKeepingCenter(() => 1);
   }
+
+  useEffect(() => {
+    registerViewControls({
+      onFitToScreen: fitContentToView,
+      onZoomIn: zoomIn,
+      onZoomOut: zoomOut,
+    });
+
+    return () => {
+      clearViewControls();
+    };
+  }, [clearViewControls, registerViewControls]);
+
+  useEffect(() => {
+    updateViewControlState({
+      canZoomIn: viewport.zoom < MAX_ZOOM,
+      canZoomOut: viewport.zoom > MIN_ZOOM,
+      zoomPercent,
+    });
+  }, [updateViewControlState, viewport.zoom, zoomPercent]);
 
   function handleInitialImageSettled(nodeId: string) {
     if (!initialImageIdsRef.current.has(nodeId)) {
@@ -1933,8 +2230,11 @@ useEffect(() => {
   }
 
   function applyImageLayout(request: LayoutArrangeRequest) {
-    const selected = imageNodes.filter((node) =>
-      selectedImageIdSet.has(node.id),
+    const selected = imageNodes.filter(
+      (node) =>
+        selectedImageIdSet.has(node.id) &&
+        (node.visible ?? true) &&
+        !(node.locked ?? false),
     );
 
     if (selected.length < 2) {
@@ -2020,7 +2320,12 @@ useEffect(() => {
 
     const rect = normalizeRect(marquee.start, marquee.current);
     const hitIds = imageNodesRef.current
-      .filter((node) => imageIntersectsRect(node, rect))
+      .filter(
+        (node) =>
+          (node.visible ?? true) &&
+          !(node.locked ?? false) &&
+          imageIntersectsRect(node, rect),
+      )
       .map((node) => node.id);
 
     if (rect.width > 4 || rect.height > 4) {
@@ -2040,7 +2345,7 @@ useEffect(() => {
     event: ReactPointerEvent<HTMLDivElement>,
     node: ImageCanvasNode,
   ) {
-    if (imageResizeRef.current) {
+    if (imageResizeRef.current || (node.locked ?? false)) {
       return;
     }
 
@@ -2219,7 +2524,7 @@ useEffect(() => {
     event: ReactPointerEvent<HTMLDivElement>,
     node: WebCanvasNode,
   ) {
-    if (webResizeRef.current) {
+    if (webResizeRef.current || (node.locked ?? false)) {
       return;
     }
 
@@ -2322,6 +2627,10 @@ useEffect(() => {
     node: ImageCanvasNode,
     corner: ResizeCorner,
   ) {
+    if (node.locked ?? false) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -2355,6 +2664,10 @@ useEffect(() => {
     node: WebCanvasNode,
     corner: ResizeCorner,
   ) {
+    if (node.locked ?? false) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -2388,6 +2701,10 @@ useEffect(() => {
     event: ReactPointerEvent<HTMLDivElement>,
     node: VoiceCanvasNode,
   ) {
+    if (node.locked ?? false) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -2450,6 +2767,12 @@ useEffect(() => {
   }
 
   function handleDeleteVoiceNode(nodeId: string) {
+    const node = voiceNodesRef.current.find((entry) => entry.id === nodeId);
+
+    if (node?.locked) {
+      return;
+    }
+
     removeNodePlayback(nodeId);
     setVoiceNodes((current) => current.filter((node) => node.id !== nodeId));
     saveDelayMsRef.current = 0;
@@ -2501,9 +2824,12 @@ useEffect(() => {
           />
         )}
 
-        {imageNodes.map((node) => {
+        {imageNodes.filter((node) => node.visible ?? true).map((node) => {
           const isSelected = selectedImageIdSet.has(node.id);
-          const showResizeHandles = isSelected && selectedImageIds.length === 1;
+          const showResizeHandles =
+            isSelected &&
+            selectedImageIds.length === 1 &&
+            !(node.locked ?? false);
           const imageSrc = getImageNodeSrc(node);
 
           return (
@@ -2530,7 +2856,7 @@ useEffect(() => {
           );
         })}
 
-        {webNodes.map((node) => (
+        {webNodes.filter((node) => node.visible ?? true).map((node) => (
           <CanvasWebNode
             key={node.id}
             isDragging={draggingWebNodeId === node.id}
@@ -2555,7 +2881,7 @@ useEffect(() => {
           />
         ))}
 
-        {voiceNodes.map((node) => (
+        {voiceNodes.filter((node) => node.visible ?? true).map((node) => (
           <CanvasVoiceNode
             key={node.id}
             isDragging={draggingVoiceNodeId === node.id}
@@ -2589,38 +2915,33 @@ useEffect(() => {
 
       <CanvasDropOverlay isVisible={isFileDragging} />
 
-      <CanvasGridControls
-        backgroundColor={backgroundColor}
-        gridColor={gridColor}
-        gridSize={gridSize}
-        gridSizePercent={gridSizePercent}
-        isOpen={showGridControls}
-        showGrid={showGrid}
-        onBackgroundColorChange={setBackgroundColor}
-        onGridColorChange={setGridColor}
-        onGridSizeChange={setGridSize}
-        onToggleOpen={() => setShowGridControls((c) => !c)}
-        onToggleShowGrid={() => setShowGrid((c) => !c)}
-        onReset={handleResetGrid}
-      />
-
-      <CanvasFitToViewButton onClick={fitContentToView} />
-
-      <CanvasZoomControls
-        canZoomIn={viewport.zoom < MAX_ZOOM}
-        canZoomOut={viewport.zoom > MIN_ZOOM}
-        zoomPercent={zoomPercent}
-        onResetZoom={resetZoom}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
-      />
-
-      <CanvasContentsPanel
-        isOpen={showContentsPanel}
-        items={canvasContentsItems}
-        onFocusItem={focusCanvasItem}
-        onToggleOpen={() => setShowContentsPanel((current) => !current)}
-      />
+      {false && (
+        <CanvasLeftSidebar
+          activeCanvasId={canvasId}
+          backgroundColor={backgroundColor}
+          canZoomIn={viewport.zoom < MAX_ZOOM}
+          canZoomOut={viewport.zoom > MIN_ZOOM}
+          canvases={[]}
+          gridColor={gridColor}
+          gridSize={gridSize}
+          isSavingCanvas={isSavingCanvas}
+          layers={canvasContentsItems}
+          saveError={saveError}
+          showGrid={showGrid}
+          syncStats={syncStats}
+          zoomPercent={zoomPercent}
+          onBackgroundColorChange={setBackgroundColor}
+          onFitToView={fitContentToView}
+          onFocusLayer={focusCanvasItem}
+          onGridColorChange={setGridColor}
+          onGridSizeChange={setGridSize}
+          onResetGrid={handleResetGrid}
+          onResetZoom={resetZoom}
+          onToggleShowGrid={() => setShowGrid((current) => !current)}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+        />
+      )}
 
       {selectedImageIds.length >= 2 && (
         <ImageSelectionArrangeBar

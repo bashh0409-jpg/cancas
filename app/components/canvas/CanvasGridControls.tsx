@@ -8,6 +8,7 @@ import {
   Ruler,
   Settings2,
   RotateCcw,
+  Sidebar,
 } from "lucide-react";
 
 type CanvasGridControlsProps = {
@@ -24,6 +25,8 @@ type CanvasGridControlsProps = {
   onGridSizeChange: (size: number) => void;
   onReset: () => void; // FIX: parent must fully restore defaults; local reset logic cannot guess state
 };
+
+<Sidebar />
 
 export function CanvasGridControls({
   isOpen,
