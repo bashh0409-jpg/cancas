@@ -43,40 +43,15 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Get the current session
   const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabaseClient.auth.getUser();
 
-  // If no session, redirect to signin
-  if (!session) {
+  if (userError || !user) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  // Verify the user's account still exists by trying to fetch their canvases
-  // If the account was deleted, the RLS policy will prevent access
-  const { data: userCanvases, error } = await supabaseClient
-    .from("canvases")
-    .select("id")
-    .limit(1);
-
-  // If there's an error (likely due to deleted account or auth issues), clear session and redirect
-  if (error) {
-    // Sign out the user
-    await supabaseClient.auth.signOut();
-
-    // Redirect to signin
-    const response = NextResponse.redirect(new URL("/signin", request.url));
-
-    // Clear auth cookies
-    const cookieStore = await cookies();
-    cookieStore.delete("sb-access-token");
-    cookieStore.delete("sb-refresh-token");
-
-    return response;
-  }
-
-  // Session is valid, continue
   return NextResponse.next({
     request: {
       headers: request.headers,

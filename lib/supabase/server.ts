@@ -16,7 +16,7 @@ export async function createClient() {
               ...options,
               maxAge: options?.maxAge ?? 60 * 60 * 24 * 365,
               sameSite: options?.sameSite ?? "lax",
-              secure: options?.secure ?? true,
+              secure: process.env.NODE_ENV === "production",
               path: options?.path ?? "/",
             }),
           );

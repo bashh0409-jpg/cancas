@@ -50,14 +50,18 @@ create policy "Users can delete their own subscription"
 
 -- Function: Auto-create free subscription for new users
 create or replace function public.handle_new_user_subscription()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   insert into public.user_subscriptions (user_id, provider, plan, status, billing_cycle)
   values (new.id, 'local', 'free', 'active', 'monthly')
   on conflict (user_id) do nothing;
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 -- Trigger: Create subscription row on new auth user
 drop trigger if exists on_auth_user_created_subscription on auth.users;

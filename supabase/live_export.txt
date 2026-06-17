@@ -1,0 +1,80 @@
+| proname                                  | pg_get_functiondef                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| handle_new_user                          | CREATE OR REPLACE FUNCTION public.handle_new_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+  insert into public.profiles (id, nickname)
+  values (new.id, null);
+  return new;
+end;
+$function$
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| handle_new_user_credits                  | CREATE OR REPLACE FUNCTION public.handle_new_user_credits()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  -- Ensure a credits row exists for the new auth user.
+  -- Use email to decide whether to issue free credits again.
+  insert into public.user_credits (user_id, balance, lifetime_earned)
+  values (new.id,
+          case when exists (select 1 from public.user_free_credit_claims u where lower(u.email) = lower(new.email) and u.free_credits_issued)
+               then 0 else 100 end,
+          case when exists (select 1 from public.user_free_credit_claims u where lower(u.email) = lower(new.email) and u.free_credits_issued)
+               then 0 else 100 end)
+  on conflict (user_id) do update
+  set balance = excluded.balance,
+      lifetime_earned = excluded.lifetime_earned;
+
+  if not exists (
+    select 1
+    from public.user_free_credit_claims u
+    where lower(u.email) = lower(new.email)
+  ) then
+    insert into public.user_free_credit_claims (email, free_credits_issued)
+    values (new.email, false);
+  end if;
+
+  if not exists (
+    select 1
+    from public.user_free_credit_claims u
+    where lower(u.email) = lower(new.email)
+      and u.free_credits_issued = true
+  ) then
+    update public.user_free_credit_claims
+    set free_credits_issued = true
+    where lower(email) = lower(new.email);
+  end if;
+
+  return new;
+end;
+$function$
+ |
+| handle_new_user_subscription             | CREATE OR REPLACE FUNCTION public.handle_new_user_subscription()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+  insert into public.user_subscriptions (user_id, provider, plan, status, billing_cycle)
+  values (new.id, 'local', 'free', 'active', 'monthly')
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$function$
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| touch_user_free_credit_claims_updated_at | CREATE OR REPLACE FUNCTION public.touch_user_free_credit_claims_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$function$
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |

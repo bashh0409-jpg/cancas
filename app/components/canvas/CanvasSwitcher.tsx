@@ -10,14 +10,19 @@ type Canvas = {
   slug: string;
 };
 
+type CanvasSwitcherVariant = "light" | "dark";
+
 export function CanvasSwitcher({
   canvases = [],
   activeCanvasId,
+  variant = "light",
 }: {
   canvases?: Canvas[];
   activeCanvasId: string;
+  variant?: CanvasSwitcherVariant;
 }) {
   const [open, setOpen] = useState(false);
+  const isDark = variant === "dark";
 
   const activeCanvas = useMemo(
     () => canvases.find((c) => c.id === activeCanvasId),
@@ -30,8 +35,13 @@ export function CanvasSwitcher({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="h-8 w-8 flex items-center justify-center rounded-md bg-white text-black hover:bg-white/90 transition"
-        aria-label="Switch canvas"
+        className={[
+          "flex h-8 w-8 items-center justify-center rounded-md transition",
+          isDark
+            ? "bg-white/[0.08] text-white/80 hover:bg-white/[0.14] hover:text-white"
+            : "bg-white text-black hover:bg-white/90",
+        ].join(" ")}
+        aria-label={`Switch canvas${activeCanvas ? ` from ${activeCanvas.name}` : ""}`}
       >
         <Layers className="h-4 w-4" />
       </button>
@@ -46,12 +56,24 @@ export function CanvasSwitcher({
           />
 
           {/* dropdown */}
-          <div className="absolute left-0 top-full mt-2 z-[1000] w-64 rounded bg-white shadow-lg overflow-hidden">
+          <div
+            className={[
+              "absolute left-0 top-full z-[1000] mt-2 w-64 overflow-hidden rounded shadow-lg",
+              isDark
+                ? "border border-white/10 bg-[#1f1f1f] shadow-black/40"
+                : "bg-white",
+            ].join(" ")}
+          >
 
             {/* list */}
             <div className="max-h-64 overflow-auto p-1 scrollbar-hidden">
               {canvases.length === 0 ? (
-                <div className="px-2 py-3 text-sm text-black/60">
+                <div
+                  className={[
+                    "px-2 py-3 text-sm",
+                    isDark ? "text-white/50" : "text-black/60",
+                  ].join(" ")}
+                >
                   No canvases found
                 </div>
               ) : (
@@ -60,10 +82,14 @@ export function CanvasSwitcher({
                     key={canvas.id}
                     href={`/canvas/${canvas.slug}`}
                     onClick={() => setOpen(false)}
-                    className={`block rounded px-2 py-1 text-[13px] tracking-tight transition hover:bg-black/5 ${
+                    className={`block rounded px-2 py-1 text-[13px] tracking-tight transition ${
                       canvas.id === activeCanvasId
-                        ? "lime border-black/20 border border-2 text-black"
-                        : "text-black/80"
+                        ? isDark
+                          ? "border border-white/20 bg-white/[0.08] text-white"
+                          : "lime border-2 border-black/20 text-black"
+                        : isDark
+                          ? "text-white/70 hover:bg-white/[0.08] hover:text-white"
+                          : "text-black/80 hover:bg-black/5"
                     }`}
                   >
                     {canvas.name}

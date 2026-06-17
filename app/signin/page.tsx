@@ -29,6 +29,17 @@ export default function Page() {
     setLoginImage(LOGIN_IMAGES[index]);
   }, []);
 
+  useEffect(() => {
+    const authError = new URLSearchParams(window.location.search).get("error");
+    if (authError) {
+      setFormError(
+        authError === "missing_code"
+          ? "Sign-in was interrupted. Please try again."
+          : authError,
+      );
+    }
+  }, []);
+
   function handleAuth(provider: "google" | "azure") {
     setLoadingProvider(provider);
     setFormError(null);
@@ -143,6 +154,11 @@ export default function Page() {
             </div>
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-2">
+              {formError && (
+                <p className="w-full text-center text-xs text-red-600">
+                  {formError}
+                </p>
+              )}
               <button
                 type="button"
                 disabled={isLoading}

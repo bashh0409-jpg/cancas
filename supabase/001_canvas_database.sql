@@ -125,13 +125,18 @@ create table public.profiles (
 );
 
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   insert into public.profiles (id, nickname)
-  values (new.id, null);
+  values (new.id, null)
+  on conflict (id) do nothing;
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 create trigger on_auth_user_created
 after insert on auth.users
@@ -187,6 +192,24 @@ create policy "Users can delete their own subscription"
   on public.user_subscriptions for delete
   using (auth.uid() = user_id);
 
+create table if not exists public.user_credits (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  balance integer not null default 0 check (balance >= 0),
+  lifetime_earned integer not null default 0 check (lifetime_earned >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_credits enable row level security;
+
+create policy "Users can read their own credits"
+  on public.user_credits for select
+  using (auth.uid() = user_id);
+
+create policy "Users can update their own credits"
+  on public.user_credits for update
+  using (auth.uid() = user_id);
+
 create or replace function public.handle_new_user_credits()
 returns trigger
 language plpgsql
@@ -195,7 +218,7 @@ set search_path = public
 as $$
 begin
   insert into public.user_credits (user_id, balance, lifetime_earned)
-  values (new.id, 0, 0)
+  values (new.id, 100, 100)
   on conflict (user_id) do nothing;
 
   return new;
