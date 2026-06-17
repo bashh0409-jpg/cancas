@@ -4,6 +4,7 @@ type ViewControlActions = {
   onFitToScreen?: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  onResetZoom?: () => void;
 };
 
 type ViewControlsStore = {
@@ -20,7 +21,7 @@ type ViewControlsStore = {
   }) => void;
   fitToScreen: () => void;
   zoomIn: () => void;
-  setZoomPercent: (value: number) => void;
+  resetZoom: () => void;
   zoomOut: () => void;
 };
 
@@ -29,11 +30,11 @@ export const useViewControlsStore = create<ViewControlsStore>((set, get) => ({
   canZoomIn: true,
   canZoomOut: true,
   zoomPercent: "100%",
-  setZoomPercent: (value: number) => set({ zoomPercent: `${value}%` }),
   registerViewControls: (actions) => set({ actions }),
   clearViewControls: () => set({ actions: {} }),
   updateViewControlState: (state) => set(state),
   fitToScreen: () => get().actions.onFitToScreen?.(),
   zoomIn: () => get().actions.onZoomIn?.(),
+  resetZoom: () => get().actions.onResetZoom?.(),
   zoomOut: () => get().actions.onZoomOut?.(),
 }));

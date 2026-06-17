@@ -536,7 +536,7 @@ const ViewSection = () => {
     zoomIn,
     zoomOut,
     zoomPercent,
-    setZoomPercent,
+    resetZoom,
   } = useViewControlsStore();
 
   return (
@@ -554,7 +554,8 @@ const ViewSection = () => {
       />
       <div
         className="text-white mono text-xs cursor-pointer"
-        onClick={() => setZoomPercent(100)} // assumes setter exists in scope
+        title="Reset zoom to 100%"
+        onClick={resetZoom}
       >
         {zoomPercent}
       </div>

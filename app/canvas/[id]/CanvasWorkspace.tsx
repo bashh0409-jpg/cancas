@@ -2015,6 +2015,7 @@ export default function CanvasWorkspace({
       onFitToScreen: fitContentToView,
       onZoomIn: zoomIn,
       onZoomOut: zoomOut,
+      onResetZoom: resetZoom,
     });
 
     return () => {
