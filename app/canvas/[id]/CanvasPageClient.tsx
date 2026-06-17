@@ -14,7 +14,6 @@ import CanvasWorkspace from "./CanvasWorkspace";
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
 import { CanvasSwitcher } from "@/app/components/canvas/CanvasSwitcher"; // FIXED PATH
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
-import { Sidebar } from "@/app/components/canvas/Sidebar";
 
 type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
 
@@ -85,7 +84,6 @@ export default function CanvasPageClient({
         }
         onRemoteNameChange={setCanvasTitle}
       />
-      <Sidebar />
 
       {/* TOP BAR */}
       <div className="absolute left-0 top-0 z-50 w-full p-4">

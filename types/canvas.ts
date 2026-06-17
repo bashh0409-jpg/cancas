@@ -4,6 +4,8 @@ export type CanvasViewport = {
   zoom: number;
 };
 
+export type CanvasGridLineType = "solid" | "dotted";
+
 export type CanvasImageNode = {
   id: string;
   fileName: string;
@@ -49,6 +51,7 @@ export type CanvasContent = {
   backgroundColor: string;
   gridColor: string;
   gridSize: number;
+  gridLineType: CanvasGridLineType;
 };
 
 export type CanvasRecord = {
@@ -79,6 +82,7 @@ export const EMPTY_CANVAS_CONTENT: CanvasContent = {
   backgroundColor: "#111111",
   gridColor: "#343434",
   gridSize: 32,
+  gridLineType: "solid",
 };
 
 export function parseCanvasContent(value: unknown): CanvasContent | null {
@@ -136,5 +140,9 @@ export function parseCanvasContent(value: unknown): CanvasContent | null {
     gridColor:
       typeof record.gridColor === "string" ? record.gridColor : "#343434",
     gridSize: typeof record.gridSize === "number" ? record.gridSize : 32,
+    gridLineType:
+      record.gridLineType === "dotted" || record.gridLineType === "solid"
+        ? record.gridLineType
+        : "solid",
   };
 }

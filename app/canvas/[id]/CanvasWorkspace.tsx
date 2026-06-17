@@ -13,12 +13,12 @@ import { CanvasImageNode } from "@/app/components/canvas/CanvasImageNode";
 import { CanvasLeftSidebar } from "@/app/components/canvas/CanvasLeftSidebar";
 import { CanvasLoadingOverlay } from "@/app/components/canvas/CanvasLoadingOverlay";
 import { CanvasMarqueeSelection } from "@/app/components/canvas/CanvasMarqueeSelection";
+import { Sidebar } from "@/app/components/canvas/Sidebar";
 import { CanvasVoiceNode } from "@/app/components/canvas/CanvasVoiceNode";
 import { CanvasWebNode } from "@/app/components/canvas/CanvasWebNode";
 import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
 import type { VoiceNoteMenuAction } from "@/app/components/canvas/VoiceNoteOptionsMenu";
 import type { ResizeCorner } from "@/app/components/canvas/NodeResizeHandles";
-import { useGridStore } from "@/lib/canvas/gridStore";
 import { useLayersStore, type CanvasLayer } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
@@ -59,7 +59,10 @@ import {
   blobToDataUrl,
   formatVoiceNoteTitle,
 } from "@/lib/canvas/voiceNoteUtils";
-import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
+import {
+  parseCanvasContent,
+  type CanvasContent,
+} from "@/types/canvas";
 
 type Viewport = {
   x: number;
@@ -244,11 +247,6 @@ function isLightColor(value: string) {
 const MIN_ZOOM = 0.001;
 const MAX_ZOOM = 100;
 const ZOOM_SCALE_FACTOR = 1.2;
-
-const DEFAULT_BACKGROUND = "#a09d9d";
-const DEFAULT_GRID_COLOR = "#343434";
-const DEFAULT_GRID_SIZE = 32;
-const DEFAULT_SHOW_GRID = true;
 
 function getNaturalImageSize(url: string) {
   return new Promise<{ width: number; height: number }>((resolve) => {
@@ -512,11 +510,15 @@ export default function CanvasWorkspace({
   );
   const [gridColor, setGridColor] = useState(initialContent.gridColor);
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
+  const [gridLineType, setGridLineType] = useState(
+    initialContent.gridLineType,
+  );
   const handleResetGrid = () => {
-    setBackgroundColor(DEFAULT_BACKGROUND);
-    setGridColor(DEFAULT_GRID_COLOR);
-    setGridSize(DEFAULT_GRID_SIZE);
-    setShowGrid(DEFAULT_SHOW_GRID);
+    setBackgroundColor(initialContent.backgroundColor);
+    setGridColor(initialContent.gridColor);
+    setGridSize(initialContent.gridSize);
+    setShowGrid(initialContent.showGrid);
+    setGridLineType(initialContent.gridLineType);
     setShowGridControls(false); // optional UX: close panel after reset
   };
   const [isFileDragging, setIsFileDragging] = useState(false);
@@ -673,8 +675,6 @@ export default function CanvasWorkspace({
     });
   }, [cloudSyncedCount, totalImageCount, onImageSyncStatsChange]);
 
-  // Sync grid settings from store to local state
-  const { settings: gridSettings } = useGridStore();
   const updateLayers = useLayersStore((state) => state.updateLayers);
   const registerLayerActions = useLayersStore(
     (state) => state.registerLayerActions,
@@ -691,13 +691,6 @@ export default function CanvasWorkspace({
     (state) => state.updateViewControlState,
   );
   useEffect(() => {
-    setShowGrid(gridSettings.enabled);
-    setGridColor(gridSettings.color);
-    setGridSize(gridSettings.size);
-    setBackgroundColor(gridSettings.background);
-  }, [gridSettings]);
-
-  useEffect(() => {
     updateLayers(canvasLayers);
   }, [canvasLayers, updateLayers]);
 
@@ -708,10 +701,6 @@ export default function CanvasWorkspace({
       const content = localDraft.content;
 
       setViewport(content.viewport);
-      setShowGrid(content.showGrid);
-      setBackgroundColor(content.backgroundColor);
-      setGridColor(content.gridColor);
-      setGridSize(content.gridSize);
       setImageNodes(content.imageNodes);
       setWebNodes(content.webNodes);
       setVoiceNodes(content.voiceNodes);
@@ -992,6 +981,7 @@ export default function CanvasWorkspace({
       setBackgroundColor(content.backgroundColor);
       setGridColor(content.gridColor);
       setGridSize(content.gridSize);
+      setGridLineType(content.gridLineType);
       setImageNodes(mergedImageNodes);
       setWebNodes(content.webNodes);
       setVoiceNodes(content.voiceNodes);
@@ -1202,10 +1192,12 @@ export default function CanvasWorkspace({
       backgroundColor,
       gridColor,
       gridSize,
+      gridLineType,
     };
   }, [
     backgroundColor,
     gridColor,
+    gridLineType,
     gridSize,
     imageNodes,
     showGrid,
@@ -1602,10 +1594,7 @@ export default function CanvasWorkspace({
       return { backgroundColor };
     }
 
-    // Get lineType from store
-    const lineType = gridSettings.lineType;
-
-    if (lineType === "dotted") {
+    if (gridLineType === "dotted") {
       // Dotted grid pattern using radial-gradient
       return {
         backgroundColor,
@@ -1625,10 +1614,10 @@ export default function CanvasWorkspace({
   }, [
     backgroundColor,
     gridColor,
+    gridLineType,
     gridSize,
     showGrid,
     viewport,
-    gridSettings.lineType,
   ]);
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
@@ -2941,6 +2930,39 @@ export default function CanvasWorkspace({
           onToggleShowGrid={() => setShowGrid((current) => !current)}
           onZoomIn={zoomIn}
           onZoomOut={zoomOut}
+        />
+      )}
+
+      {isClientReady && (
+        <Sidebar
+          gridSettings={{
+            enabled: showGrid,
+            color: gridColor,
+            background: backgroundColor,
+            lineType: gridLineType,
+            size: gridSize,
+          }}
+          onGridSettingsChange={(updates) => {
+            if (updates.enabled !== undefined) {
+              setShowGrid(updates.enabled);
+            }
+
+            if (updates.color !== undefined) {
+              setGridColor(updates.color);
+            }
+
+            if (updates.background !== undefined) {
+              setBackgroundColor(updates.background);
+            }
+
+            if (updates.lineType !== undefined) {
+              setGridLineType(updates.lineType);
+            }
+
+            if (updates.size !== undefined) {
+              setGridSize(updates.size);
+            }
+          }}
         />
       )}
 

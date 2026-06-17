@@ -11,32 +11,49 @@ import {
   Edit2,
   Trash2,
   Maximize2,
+  Grid2x2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import React, { useState } from "react";
-import { Toolbox } from "@/public/icons/custom/Toolbox";
-import { useGridStore } from "@/lib/canvas/gridStore";
+import React, { useEffect, useState } from "react";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
+import type { CanvasGridLineType } from "@/types/canvas";
 
 type PanelType = "search" | "tools" | "export" | "layers" | null;
 
+type GridControlsValue = {
+  enabled: boolean;
+  color: string;
+  background: string;
+  lineType: CanvasGridLineType;
+  size: number;
+};
+
+type SidebarProps = {
+  gridSettings: GridControlsValue;
+  onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
+};
+
 // Logo Component
 const Logo = () => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 35 30"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="white"
-  >
-    <title>Logo</title>
-    <path
-      d="M34.6895 0H25.8153V19.4784H21.7818V0H12.9077V19.4784H8.87414V0H0V19.6353H6.45383V30H15.328V19.6353H19.3615V30H28.2356V19.6353H34.6895V0Z"
+  <a
+    href="/home"
+  className="cursor-pointer hover:bg-white/20 rounded p-1">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 35 30"
+      xmlns="http://www.w3.org/2000/svg"
       fill="white"
-    ></path>
-  </svg>
+    >
+      <title>Logo</title>
+      <path
+        d="M34.6895 0H25.8153V19.4784H21.7818V0H12.9077V19.4784H8.87414V0H0V19.6353H6.45383V30H15.328V19.6353H19.3615V30H28.2356V19.6353H34.6895V0Z"
+        fill="white"
+      ></path>
+    </svg>
+  </a>
 );
 
 // Tooltip Component
@@ -99,22 +116,22 @@ const IconButton = ({
 // Search Panel Component
 const SearchPanel = ({ onClose }: { onClose: () => void }) => (
   <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
-    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+    <div className="flex items-center justify-between  pb-2">
       <h3 className="text-white text-xs mono uppercase tracking-tight ">
         Search
       </h3>
       <button
         onClick={onClose}
-        className="text-white/60 hover:text-white transition"
+        className="text-white/60 cursor-pointer hover:text-white transition"
       >
-        <X className="w-4 h-4" strokeWidth={1.25} />
+        <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
       </button>
     </div>
 
     <input
       type="text"
       placeholder="Search files, layers..."
-      className="bg-white/10 my-1 border border-white/20 rounded-xs px-3 py-1 text-sm text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20"
+      className="bg-white/10 my-1 w-full border border-white/20 rounded-xs px-1 py-1 text-sm text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20"
     />
 
     <div className="space-y-2">
@@ -128,18 +145,24 @@ const SearchPanel = ({ onClose }: { onClose: () => void }) => (
 );
 
 // Tools Panel Component
-const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
-  const { settings, updateSettings } = useGridStore();
-
+const ToolsPanel = ({
+  gridSettings,
+  onClose,
+  onGridSettingsChange,
+}: {
+  gridSettings: GridControlsValue;
+  onClose: () => void;
+  onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
+}) => {
   return (
     <div className="w-60 h-screen bg-[#212126]  p-4 flex flex-col gap-4 max-h-screen overflow-y-auto">
-      <div className="flex items-center justify-between border-b border-white/10 pb-2     ">
+      <div className="flex items-center justify-between  pb-2     ">
         <h3 className="text-white text-xs  mono uppercase tracking-tight">
-          Tools & Assets
+          Canvas Settings
         </h3>
         <button
           onClick={onClose}
-          className="text-white/60 hover:text-white transition"
+          className="text-white/60 cursor-pointer hover:text-white transition"
         >
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
@@ -147,33 +170,35 @@ const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
 
       <div className="space-y-4">
         {/* Grid Control Section */}
-        <div className="rounded p-3 space-y-3">
+        <div className="rounded mt-4 space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-white/60 text-xs  mono uppercase">
               Grid
             </label>
             <input
               type="checkbox"
-              checked={settings.enabled}
-              onChange={(e) => updateSettings({ enabled: e.target.checked })}
+              checked={gridSettings.enabled}
+              onChange={(e) =>
+                onGridSettingsChange({ enabled: e.target.checked })
+              }
               className="w-4 h-4 cursor-pointer"
             />
           </div>
 
-          {settings.enabled && (
+          {gridSettings.enabled && (
             <>
               {/* Grid Size */}
               <div className="space-y-1">
                 <label className="text-white/50 mono text-xs uppercase">
-                  Size: {settings.size}px
+                  Size: {gridSettings.size}px
                 </label>
                 <input
                   type="range"
                   min="5"
                   max="100"
-                  value={settings.size}
+                  value={gridSettings.size}
                   onChange={(e) =>
-                    updateSettings({
+                    onGridSettingsChange({
                       size: parseInt(e.target.value),
                     })
                   }
@@ -181,55 +206,17 @@ const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
                 />
               </div>
 
-              {/* Grid Color */}
-              <div className="space-y-1">
-                <label className="text-white/50 mono text-xs uppercase">
-                  line Color
-                </label>
-                <div className="flex mono gap-2">
-                  <input
-                    type="color"
-                    value={settings.color}
-                    onChange={(e) => updateSettings({ color: e.target.value })}
-                    className="w-10 h-8 rounded cursor-pointer border border-white/20"
-                  />
-                  <input
-                    type="text"
-                    value={settings.color}
-                    onChange={(e) => updateSettings({ color: e.target.value })}
-                    className="flex-1 bg-[#1a1a1e] border border-white/20 rounded px-2 py-1 text-xs text-white/80 font-mono focus:outline-none focus:border-white/40"
-                  />
-                </div>
-              </div>
+              <ColorField
+                label="Line Color"
+                value={gridSettings.color}
+                onChange={(color) => onGridSettingsChange({ color })}
+              />
 
-              {/* Background Color */}
-              <div className="space-y-1">
-                <label className=" mono text-white/50 text-xs uppercase">
-                  canvas Background
-                </label>
-                <div className="flex mono gap-2">
-                  <input
-                    type="color"
-                    value={settings.background}
-                    onChange={(e) =>
-                      updateSettings({
-                        background: e.target.value,
-                      })
-                    }
-                    className="w-10 h-8 rounded cursor-pointer border border-white/20"
-                  />
-                  <input
-                    type="text"
-                    value={settings.background}
-                    onChange={(e) =>
-                      updateSettings({
-                        background: e.target.value,
-                      })
-                    }
-                    className="flex-1 bg-[#1a1a1e] border border-white/20 rounded px-2 py-1 text-xs text-white/80 font-mono focus:outline-none focus:border-white/40"
-                  />
-                </div>
-              </div>
+              <ColorField
+                label="Canvas Background"
+                value={gridSettings.background}
+                onChange={(background) => onGridSettingsChange({ background })}
+              />
 
               {/* Line Type */}
               <div className="space-y-1">
@@ -238,9 +225,9 @@ const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
                 </label>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => updateSettings({ lineType: "solid" })}
+                    onClick={() => onGridSettingsChange({ lineType: "solid" })}
                     className={`flex-1 px-2  tracking-tight py-1 rounded-xs text-xs  transition ${
-                      settings.lineType === "solid"
+                      gridSettings.lineType === "solid"
                         ? "lime text-black"
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
@@ -249,9 +236,9 @@ const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
                   </button>
 
                   <button
-                    onClick={() => updateSettings({ lineType: "dotted" })}
+                    onClick={() => onGridSettingsChange({ lineType: "dotted" })}
                     className={`flex-1 px-2 py-1 w-fit tracking-tight rounded-xs text-xs  transition ${
-                      settings.lineType === "dotted"
+                      gridSettings.lineType === "dotted"
                         ? "lime text-black"
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
@@ -268,19 +255,84 @@ const ToolsPanel = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+type ColorFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function toColorInputValue(value: string) {
+  return /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000";
+}
+
+function normalizeHexInput(value: string) {
+  return value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+}
+
+const ColorField = ({ label, value, onChange }: ColorFieldProps) => {
+  const [draftHex, setDraftHex] = useState(() =>
+    value.replace("#", "").toUpperCase(),
+  );
+
+  useEffect(() => {
+    setDraftHex(value.replace("#", "").toUpperCase());
+  }, [value]);
+
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-white/50 mono text-xs uppercase">{label}</span>
+      <div className="group flex h-8 items-center gap-2 rounded-xs border border-white/10 bg-[#17171b] py-1.5 px-1 transition focus-within:border-white/30 focus-within:bg-[#1b1b20]">
+        <span className="relative h-6 w-7 shrink-0 overflow-hidden rounded-xs border border-white/15 bg-black/20 shadow-inner">
+          <span
+            className="absolute inset-0"
+            style={{ backgroundColor: toColorInputValue(value) }}
+          />
+          <input
+            aria-label={label}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            type="color"
+            value={toColorInputValue(value)}
+            onChange={(event) => onChange(event.currentTarget.value)}
+          />
+        </span>
+
+        <span className="font-mono text-xs text-white/30">#</span>
+        <input
+          aria-label={`${label} hex`}
+          className="min-w-0 flex-1 bg-transparent p-0 font-mono text-xs uppercase tracking-normal text-white/85 outline-none placeholder:text-white/25"
+          maxLength={6}
+          spellCheck={false}
+          type="text"
+          value={draftHex}
+          onBlur={() => setDraftHex(value.replace("#", "").toUpperCase())}
+          onChange={(event) => {
+            const nextHex = normalizeHexInput(event.currentTarget.value);
+
+            setDraftHex(nextHex.toUpperCase());
+
+            if (nextHex.length === 6) {
+              onChange(`#${nextHex}`);
+            }
+          }}
+        />
+      </div>
+    </label>
+  );
+};
+
 // Export Panel Component
 const ExportPanel = ({ onClose }: { onClose: () => void }) => {
   const [exportFormat, setExportFormat] = React.useState("PNG");
 
   return (
     <div className="w-60 h-screen bg-[#212126]  border-white/10 p-4 flex flex-col gap-4">
-      <div className="flex items-center border-b border-white/10 pb-2 justify-between mb-2">
+      <div className="flex items-center  pb-2 justify-between mb-2">
         <h3 className="text-white text-xs uppercase tracking-tight mono">
           Export & Share
         </h3>
         <button
           onClick={onClose}
-          className="text-white/60 hover:text-white transition"
+          className="text-white/60 cursor-pointer  hover:text-white transition"
         >
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
@@ -351,20 +403,20 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="w-60 mb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
-      <div className="flex items-center scrollbar-hidden  border-b border-white/10 pb-2 justify-between mb-2">
+      <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
         <h3 className="text-white text-xs  mono  uppercase tracking-tight">
           Layers
         </h3>
         <button
           onClick={onClose}
-          className="text-white/60 hover:text-white transition"
+          className="text-white/60 cursor-pointer  hover:text-white transition"
         >
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
       </div>
 
       {layers.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="">
           <p className="text-white/60 tracking-tight mono text-sm">
             No layers yet
           </p>
@@ -501,8 +553,8 @@ const ToolsSection = ({
       onClick={() => onPanelChange(activePanel === "search" ? null : "search")}
     />
     <IconButton
-      icon={Toolbox}
-      tooltip="Tools & Assets"
+      icon={Grid2x2}
+      tooltip="Canvas Settings"
       isActive={activePanel === "tools"}
       onClick={() => onPanelChange(activePanel === "tools" ? null : "tools")}
     />
@@ -553,7 +605,7 @@ const ViewSection = () => {
         onClick={zoomIn}
       />
       <div
-        className="text-white mono text-xs cursor-pointer"
+        className="text-white mono text-[11px] hover:bg-white/20 w-full h-8 flex items-center rounded justify-center cursor-pointer"
         title="Reset zoom to 100%"
         onClick={resetZoom}
       >
@@ -590,7 +642,10 @@ const ExportSection = ({
   </div>
 );
 
-export const Sidebar = () => {
+export const Sidebar = ({
+  gridSettings,
+  onGridSettingsChange,
+}: SidebarProps) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
   const renderPanel = () => {
@@ -598,7 +653,13 @@ export const Sidebar = () => {
       case "search":
         return <SearchPanel onClose={() => setActivePanel(null)} />;
       case "tools":
-        return <ToolsPanel onClose={() => setActivePanel(null)} />;
+        return (
+          <ToolsPanel
+            gridSettings={gridSettings}
+            onClose={() => setActivePanel(null)}
+            onGridSettingsChange={onGridSettingsChange}
+          />
+        );
       case "export":
         return <ExportPanel onClose={() => setActivePanel(null)} />;
       case "layers":
@@ -615,18 +676,18 @@ export const Sidebar = () => {
         {/* Logo */}
         <Logo />
         {/* Tools Section */}
-        <div className="mt-10">
+        <div className="mt-5">
           <ToolsSection
             activePanel={activePanel}
             onPanelChange={setActivePanel}
           />
         </div>
         {/* Edit Section */}
-        {/* <EditSection /> */} <div className="w-6 h-px bg-white/10" />
+        {/* <EditSection /> */} 
         {/* View Section */}
         <ViewSection />
         {/* Divider */}
-        <div className="w-6 h-px bg-white/10" />
+       
         {/* Layers Section */}
         <LayersSection
           activePanel={activePanel}
