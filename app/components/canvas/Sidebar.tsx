@@ -23,7 +23,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
@@ -1159,11 +1161,12 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => (
     </div>
   </div>
 );
-// Settings Panel Component
+
+// Help Panel Component
 const HelpPanel = ({ onClose }: { onClose: () => void }) => (
-  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
-    <div className="flex items-center justify-between  pb-2">
-      <h3 className="text-white text-xs mono uppercase tracking-tight ">
+  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 overflow-y-auto">
+    <div className="flex items-center justify-between pb-2">
+      <h3 className="text-white text-xs mono uppercase tracking-tight">
         Help & docs
       </h3>
       <button
@@ -1172,6 +1175,43 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
       >
         <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
       </button>
+    </div>
+
+    <div className="space-y-4">
+      <div>
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          Canvas Controls
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p><span className="text-white/70">Pan</span> — Middle mouse drag or Space + left drag</p>
+          <p><span className="text-white/70">Zoom</span> — Scroll wheel or two-finger pinch</p>
+          <p><span className="text-white/70">Select</span> — Click a node, or drag to marquee select</p>
+          <p><span className="text-white/70">Multi-select</span> — Shift/Cmd + click</p>
+          <p><span className="text-white/70">Delete</span> — Backspace or Delete key</p>
+          <p><span className="text-white/70">Duplicate</span> — Cmd/Ctrl + D</p>
+          <p><span className="text-white/70">Deselect</span> — Escape</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          File Actions
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p><span className="text-white/70">Drop files</span> — Drag images from your OS onto the canvas</p>
+          <p><span className="text-white/70">Right-click</span> — Context menu with AI actions per file type</p>
+          <p><span className="text-white/70">Resize</span> — Drag corner handles on selected nodes</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          Cloud Storage
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p>Connect Google Drive or Dropbox from the <span className="text-white/70">External storage</span> panel to browse and import images directly.</p>
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -1225,6 +1265,8 @@ export const Sidebar = ({
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const prevPanelRef = useRef<PanelType>(null);
 
   useEffect(() => {
     if (!activePanel) return;
@@ -1235,7 +1277,6 @@ export const Sidebar = ({
       }
     }
 
-    // Close the panel when clicking anywhere outside the sidebar
     window.addEventListener("pointerdown", handleCanvasPointerDown);
 
     return () => {
@@ -1243,28 +1284,70 @@ export const Sidebar = ({
     };
   }, [activePanel]);
 
+  // GSAP animation: simple left-to-right slide when panel opens/closes
+  useGSAP(() => {
+    // Animate out the previous panel
+    if (prevPanelRef.current && !activePanel) {
+      gsap.to(panelRef.current, {
+        x: -16,
+        duration: 0.15,
+        ease: "power2.in",
+        onComplete: () => {
+          prevPanelRef.current = null;
+        },
+      });
+    }
+
+    // Animate in the new panel
+    if (activePanel) {
+      gsap.fromTo(
+        panelRef.current,
+        { x: -200 },
+        { x: 0, duration: 0.3, ease: "power2.out" },
+      );
+    }
+
+    // Track previous panel state
+    prevPanelRef.current = activePanel;
+  }, [activePanel]);
+
+  const handleClose = useCallback(() => {
+    if (panelRef.current) {
+      gsap.to(panelRef.current, {
+        x: -16,
+        duration: 0.12,
+        ease: "power2.in",
+        onComplete: () => {
+          setActivePanel(null);
+        },
+      });
+    } else {
+      setActivePanel(null);
+    }
+  }, []);
+
   const renderPanel = () => {
     switch (activePanel) {
       case "search":
-        return <SearchPanel onClose={() => setActivePanel(null)} />;
+        return <SearchPanel onClose={handleClose} />;
       case "tools":
         return (
           <ToolsPanel
             gridSettings={gridSettings}
-            onClose={() => setActivePanel(null)}
+            onClose={handleClose}
             onGridSettingsChange={onGridSettingsChange}
           />
         );
       case "export":
-        return <ExportPanel onClose={() => setActivePanel(null)} />;
+        return <ExportPanel onClose={handleClose} />;
       case "layers":
-        return <LayersPanel onClose={() => setActivePanel(null)} />;
+        return <LayersPanel onClose={handleClose} />;
       case "connect":
-        return <ConnectPanel onClose={() => setActivePanel(null)} onImportCloudFile={onImportCloudFile} />;
+        return <ConnectPanel onClose={handleClose} onImportCloudFile={onImportCloudFile} />;
       case "help":
-        return <HelpPanel onClose={() => setActivePanel(null)} />;
+        return <HelpPanel onClose={handleClose} />;
       case "settings":
-        return <SettingsPanel onClose={() => setActivePanel(null)} />;
+        return <SettingsPanel onClose={handleClose} />;
       default:
         return null;
     }
@@ -1312,7 +1395,8 @@ export const Sidebar = ({
       {/* Right Panel */}
       {activePanel && (
         <div
-          className="animate-in fade-in slide-in-from-left-80 duration-300 h-screen overflow-y-auto"
+          ref={panelRef}
+          className="h-screen -z-1 overflow-y-auto"
           onWheel={(e) => e.stopPropagation()}
         >
           {renderPanel()}
