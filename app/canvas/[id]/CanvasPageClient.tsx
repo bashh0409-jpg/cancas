@@ -85,51 +85,6 @@ export default function CanvasPageClient({
         onRemoteNameChange={setCanvasTitle}
       />
 
-      {/* TOP BAR */}
-      <div className="absolute left-0 top-0 z-50 w-full p-4">
-        <div className="grid hidden grid-cols-[1fr_auto_1fr] items-center">
-          {/* LEFT */}
-          <div className="flex items-center ml-20 gap-2 justify-start">
-            <a
-              href="/home"
-              className="flex h-8 w-8   items-center justify-center rounded-xl border border-white/10 bg-white text-black/70 transition hover:bg-white/90"
-              aria-label="Go back"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </a>
-
-            <div className="bg-white hidden min-w-10 gap-1 h-8 rounded-lg text-sm p-1 flex items-center">
-              <CanvasSwitcher canvases={canvases} activeCanvasId={canvasId} />
-            </div>
-          </div>
-
-          {/* CENTER */}
-          <div className="justify-self-center">
-            <EditableCanvasName
-              canvasId={canvasId}
-              initialName={canvasTitle}
-              onNameChange={setCanvasTitle}
-            />
-          </div>
-
-          {/* RIGHT */}
-          <div className="justify-self-end  text-sm tracking-tight text-white">
-            <CreditsBadge credits={credits} />
-          </div>
-        </div>
-      </div>
-
       {/* DEBUG 
       {showUploadDebug && (
         <div className="absolute right-4 top-16 z-[60] max-w-md rounded-lg border border-red-500/40 bg-black/90 p-3 text-xs text-white shadow-lg">

@@ -15,7 +15,6 @@ import {
   ZoomIn,
   ZoomOut,
   Cable,
-  Check,
   Loader2,
   ExternalLink,
   Folder,
@@ -24,7 +23,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
@@ -52,6 +51,7 @@ type SidebarProps = {
   gridSettings: GridControlsValue;
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
   onImportCloudFile: (file: File) => Promise<void>;
+  onClosePanel?: () => void;
 };
 
 // Logo Component
@@ -924,7 +924,7 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="w-60 mb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
-      <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
+      <div className="flex items-center scrollbar-hidden  justify-between ">
         <h3 className="text-white text-xs  mono  uppercase tracking-tight">
           Layers
         </h3>
@@ -943,7 +943,7 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 scrollbar-hidden overflow-y-auto">
           {[...layers].reverse().map((layer) => (
             <div
               key={layer.id}
@@ -1220,8 +1220,28 @@ export const Sidebar = ({
   gridSettings,
   onGridSettingsChange,
   onImportCloudFile,
+  onClosePanel,
 }: SidebarProps) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activePanel) return;
+
+    function handleCanvasPointerDown(event: PointerEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setActivePanel(null);
+      }
+    }
+
+    // Close the panel when clicking anywhere outside the sidebar
+    window.addEventListener("pointerdown", handleCanvasPointerDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleCanvasPointerDown);
+    };
+  }, [activePanel]);
 
   const renderPanel = () => {
     switch (activePanel) {
@@ -1251,7 +1271,11 @@ export const Sidebar = ({
   };
 
   return (
-    <div className="absolute left-0 top-0 h-screen flex z-50">
+    <div
+      ref={sidebarRef}
+      className="absolute left-0 top-0 h-screen flex z-50"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
       {/* Left Sidebar */}
       <div className="w-fit p-2 bg-[#212126] flex flex-col items-center py-4 gap-6 border-r border-white/10">
         {/* Logo */}
@@ -1287,7 +1311,10 @@ export const Sidebar = ({
 
       {/* Right Panel */}
       {activePanel && (
-        <div className="animate-in fade-in slide-in-from-left-80 duration-300 h-screen overflow-y-auto">
+        <div
+          className="animate-in fade-in slide-in-from-left-80 duration-300 h-screen overflow-y-auto"
+          onWheel={(e) => e.stopPropagation()}
+        >
           {renderPanel()}
         </div>
       )}
