@@ -90,7 +90,13 @@ export default async function HomePage({
 
   return (
     <div className="min-h-screen bg-black/70">
-
+      <MobileNotifier
+        fullName={user?.user_metadata?.full_name}
+        email={user?.email}
+        credits={credits}
+        signOut={signOut}
+        setActivePage={setActivePage}
+      />
       <div className="hidden md:block">
         <CreditNotifier message={errorMessage} />
         <Suspense fallback={null}>
