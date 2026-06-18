@@ -14,15 +14,27 @@ import {
   Grid2x2,
   ZoomIn,
   ZoomOut,
+  Cable,
+  Check,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 
-import { siNike } from "simple-icons";
 import React, { useEffect, useState } from "react";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
+import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 
-type PanelType = "search" | "tools" | "export" | "layers" | null;
+type PanelType =
+  | "search"
+  | "tools"
+  | "export"
+  | "layers"
+  | "connect"
+  | "settings"
+  | "help"
+  | null;
 
 type GridControlsValue = {
   enabled: boolean;
@@ -39,9 +51,7 @@ type SidebarProps = {
 
 // Logo Component
 const Logo = () => (
-  <a
-    href="/home"
-  className="cursor-pointer hover:bg-white/20 rounded p-1">
+  <a href="/home" className="cursor-pointer hover:bg-white/20 rounded p-1">
     <svg
       width="24"
       height="24"
@@ -377,6 +387,166 @@ const ExportPanel = ({ onClose }: { onClose: () => void }) => {
     </div>
   );
 };
+type Provider = {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  connected?: boolean;
+  loading?: boolean;
+};
+
+const initialProviders: Provider[] = [
+  {
+    id: "google-drive",
+    name: "Google Drive",
+    description: "Import and sync canvas files",
+    icon: SiGoogledrive,
+    connected: false,
+  },
+  {
+    id: "dropbox",
+    name: "Dropbox",
+    description: "Access cloud storage files",
+    icon: SiDropbox,
+    connected: false,
+  },
+];
+
+export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
+  const [providers, setProviders] = useState<Provider[]>(initialProviders);
+
+  const handleConnect = async (providerId: string) => {
+    try {
+      window.location.href = `/api/integrations/${providerId}/connect`;
+    } catch (error) {
+      console.error("Failed to connect provider:", error);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch(`/api/integrations/status`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const connected = json.connected || {};
+
+        if (!mounted) return;
+
+        setProviders((prev) =>
+          prev.map((p) => {
+            const key = p.id.replace(/-/g, "_");
+            return { ...p, connected: Boolean(connected[key]) };
+          }),
+        );
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    fetchStatus();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="w-60 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col">
+      <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
+        <h3 className="text-white text-xs  mono  uppercase tracking-tight">
+          External storage
+        </h3>
+        <button
+          onClick={onClose}
+          className="text-white/60 cursor-pointer  hover:text-white transition"
+        >
+          <X className="w-4 h-4" strokeWidth={1.25} />
+        </button>
+      </div>
+
+      {/* Providers */}
+      <div className="flex flex-col gap-6 mt-4">
+        {providers.map((provider) => {
+          const Icon = provider.icon;
+
+          return (
+            <div
+              key={provider.id}
+              className="group  rounded  hover:border-white/20 transition"
+            >
+              <div className=" flex items-start gap-2">
+                {/* Icon */}
+                <div className="flex items-center justify-center w-8 h-8 rounded border-white/10 shrink-0">
+                  <Icon className="w-5 h-5 text-white/80" />
+                </div>
+
+                {/* Content */}
+                <div className=" min-w-0 ">
+                  <div className="flex items-center justify-between ">
+                    <div className="text-sm gap-3 flex-col flex text-white mono uppercase tracking-tight truncate">
+                      <p>{provider.name} </p>
+                      <p>
+                        {provider.connected && (
+                          <span className="uppercase flex items-center gap-2 mono  text-lime-300 text-xs uppercase tracking-wide">
+                            <Cable className="w-3.5 h-3.5" />
+                            Connected
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => handleConnect(provider.id)}
+                      disabled={provider.loading}
+                      className={`
+                        h-8 px-3 rounded text-xs font-medium transition cursor-pointer
+                        flex items-center gap-2
+                        ${
+                          provider.connected
+                            ? "bg-white/10 text-white hover:bg-white/15"
+                            : "lime text-black hover:opacity-90"
+                        }
+                      `}
+                    >
+                      {provider.loading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : provider.connected ? (
+                        <>
+                          Manage
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </>
+                      ) : (
+                        <>
+                          <Cable className="w-3.5 h-3.5" />
+                          Connect
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-auto pt-4 ">
+        <p className="text-[10px] uppercase tracking-tight mono text-white">
+          Secure OAuth connections. Files remain in your cloud storage unless
+          explicitly imported.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 // Layers Panel Component
 const LayersPanel = ({ onClose }: { onClose: () => void }) => {
@@ -624,6 +794,39 @@ const ViewSection = () => {
   );
 };
 
+// Settings Panel Component
+const SettingsPanel = ({ onClose }: { onClose: () => void }) => (
+  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
+    <div className="flex items-center justify-between  pb-2">
+      <h3 className="text-white text-xs mono uppercase tracking-tight ">
+        Settings
+      </h3>
+      <button
+        onClick={onClose}
+        className="text-white/60 cursor-pointer hover:text-white transition"
+      >
+        <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
+      </button>
+    </div>
+  </div>
+);
+// Settings Panel Component
+const HelpPanel = ({ onClose }: { onClose: () => void }) => (
+  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
+    <div className="flex items-center justify-between  pb-2">
+      <h3 className="text-white text-xs mono uppercase tracking-tight ">
+        Help & docs
+      </h3>
+      <button
+        onClick={onClose}
+        className="text-white/60 cursor-pointer hover:text-white transition"
+      >
+        <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
+      </button>
+    </div>
+  </div>
+);
+
 // Export & Settings Section Component
 const ExportSection = ({
   activePanel,
@@ -634,13 +837,33 @@ const ExportSection = ({
 }) => (
   <div className="flex flex-col items-center gap-4">
     <IconButton
+      icon={Cable}
+      tooltip="Connect external storage"
+      isActive={activePanel === "connect"}
+      onClick={() =>
+        onPanelChange(activePanel === "connect" ? null : "connect")
+      }
+    />
+    <IconButton
       icon={Download}
       tooltip="Export Canvas"
       isActive={activePanel === "export"}
       onClick={() => onPanelChange(activePanel === "export" ? null : "export")}
     />
-    <IconButton icon={HelpCircle} tooltip="Help & Docs" />
-    <IconButton icon={Settings} tooltip="Settings" />
+    <IconButton
+      icon={HelpCircle}
+      tooltip="help & docs"
+      isActive={activePanel === "help"}
+      onClick={() => onPanelChange(activePanel === "help" ? null : "help")}
+    />
+    <IconButton
+      icon={Settings}
+      tooltip="Settings"
+      isActive={activePanel === "settings"}
+      onClick={() =>
+        onPanelChange(activePanel === "settings" ? null : "settings")
+      }
+    />
   </div>
 );
 
@@ -666,6 +889,12 @@ export const Sidebar = ({
         return <ExportPanel onClose={() => setActivePanel(null)} />;
       case "layers":
         return <LayersPanel onClose={() => setActivePanel(null)} />;
+      case "connect":
+        return <ConnectPanel onClose={() => setActivePanel(null)} />;
+      case "help":
+        return <HelpPanel onClose={() => setActivePanel(null)} />;
+      case "settings":
+        return <SettingsPanel onClose={() => setActivePanel(null)} />;
       default:
         return null;
     }
@@ -685,11 +914,11 @@ export const Sidebar = ({
           />
         </div>
         {/* Edit Section */}
-        {/* <EditSection /> */} 
+        {/* <EditSection /> */}
         {/* View Section */}
         <ViewSection />
         {/* Divider */}
-       
+
         {/* Layers Section */}
         <LayersSection
           activePanel={activePanel}

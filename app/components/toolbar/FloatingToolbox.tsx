@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, Mic, Square, StickyNote } from "lucide-react";
+import { AudioLines, Import, Mic, Square, StickyNote, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
 import {
@@ -113,6 +113,9 @@ export function FloatingToolbox() {
     >
       <ToolboxButton label="Add sticky note" onClick={activateCanvasTextTool}>
         <StickyNote className="h-5 w-5 rotate-90" strokeWidth={1.5} />
+      </ToolboxButton>
+      <ToolboxButton label="Upload file" onClick={() => { console.log("Upload file") }}>
+        <Import className="h-5 w-5 " strokeWidth={1.5} />
       </ToolboxButton>
 
       <ToolboxButton

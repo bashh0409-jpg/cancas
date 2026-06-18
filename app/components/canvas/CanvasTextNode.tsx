@@ -153,7 +153,7 @@ export function CanvasTextNode({
           />
         ) : (
           <div className="h-fit tracking-tight overflow-y-auto text-sm w-full whitespace-pre-wrap break-words">
-            <div className="flex w-full items-center hidden justify-between">
+            <div className="flex w-full items-center justify-between">
               <p className="mb-2 text-xs uppercase tracking-tight mono">
                 Untitled note
               </p>
