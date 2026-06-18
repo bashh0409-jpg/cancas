@@ -47,12 +47,15 @@
   background-color: #0671FF;
 }
 
-.gray {
-  background-color: #EEF1F6;
-}
 
 .lime {
   background-color: #f8ff9a;
+}
+.lime-one {
+  background-color: #f5fd83;
+}
+.gray {
+  background-color: #fcfcfc;
 }
 
 @media (prefers-color-scheme: dark) {

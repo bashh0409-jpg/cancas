@@ -17,7 +17,7 @@ export function VoiceNoteOptionsMenu({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label="Voice note options"
-        className="pixel rounded  px-1.5 py-0.5 text-[10px] tracking-tight text-white opacity-100 transition group-hover:opacity-100 hover:bg-white/20"
+        className="rounded px-1.5 py-0.5 text-[10px] tracking-tight text-black/70 opacity-100 transition group-hover:opacity-100 hover:bg-white/20"
         type="button"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
@@ -30,12 +30,12 @@ export function VoiceNoteOptionsMenu({
 
       {isOpen ? (
         <div
-          className="absolute right-3 top-9 z-20 w-32 rounded-md border border-white/20 bg-zinc-950/95 p-1 shadow-lg"
+          className="absolute right-3 top-9 z-20 w-32 rounded border-2 border-white/10 bg-[#212126] p-1 shadow-lg"
           role="menu"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button
-            className="pixel block w-full rounded px-2 py-1 text-left text-[11px] tracking-tight text-white transition hover:bg-white/10"
+            className="mono block uppercase tracking-tight w-full rounded px-2 py-1 text-left text-xs tracking-tight text-white transition hover:bg-white/10"
             role="menuitem"
             type="button"
             onClick={() => onAction("delete")}
@@ -43,7 +43,7 @@ export function VoiceNoteOptionsMenu({
             Delete
           </button>
           <button
-            className="pixel mt-0.5 block w-full rounded px-2 py-1 text-left text-[11px] tracking-tight text-white transition hover:bg-white/10"
+            className="mono mt-0.5 block w-full uppercase tracking-tight rounded px-2 py-1 text-left text-xs tracking-tight text-white   transition hover:bg-white/10"
             role="menuitem"
             type="button"
             onClick={() => onAction("transcribe")}
@@ -51,7 +51,7 @@ export function VoiceNoteOptionsMenu({
             Transcribe
           </button>
           <button
-            className="pixel mt-0.5 block w-full rounded px-2 py-1 text-left text-[11px] tracking-tight text-white transition hover:bg-white/10"
+            className="mono mt-0.5 block w-full uppercase tracking-tight rounded px-2 py-1 text-left text-xs tracking-tight text-white   transition hover:bg-white/10"
             role="menuitem"
             type="button"
             onClick={() => onAction("ask-ai")}

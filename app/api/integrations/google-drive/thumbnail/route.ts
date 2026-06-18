@@ -1,0 +1,77 @@
+import { NextRequest, NextResponse } from "next/server";
+import { google } from "googleapis";
+import { getIntegrationToken } from "@/lib/integrations/store/store";
+
+export async function GET(req: NextRequest) {
+  try {
+    const token = await getIntegrationToken("google_drive");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Not connected to Google Drive" },
+        { status: 401 },
+      );
+    }
+
+    const fileId = new URL(req.url).searchParams.get("fileId");
+
+    if (!fileId) {
+      return NextResponse.json({ error: "Missing fileId" }, { status: 400 });
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json(
+        { error: "Missing Google Drive OAuth environment variables" },
+        { status: 500 },
+      );
+    }
+
+    const redirectUri =
+      process.env.GOOGLE_REDIRECT_URI ??
+      process.env.GOOGLE_DRIVE_REDIRECT_URI ??
+      `${req.nextUrl.origin}/api/integrations/google-drive/callback`;
+
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri,
+    );
+
+    oauth2Client.setCredentials({
+      access_token: token.accessToken,
+      refresh_token: token.refreshToken,
+      expiry_date: token.expiresAt,
+    });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const response = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "arraybuffer" },
+    );
+
+    if (!response.data) {
+      return NextResponse.json(
+        { error: "Unable to download Google Drive thumbnail" },
+        { status: 500 },
+      );
+    }
+
+    return new NextResponse(response.data as BodyInit, {
+      headers: new Headers({
+        "Content-Type":
+          response.headers["content-type"] ?? "application/octet-stream",
+      }),
+    });
+  } catch (err) {
+    console.error("Google Drive thumbnail error:", err);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Unable to load Google Drive thumbnail.",
+      },
+      { status: 500 },
+    );
+  }
+}

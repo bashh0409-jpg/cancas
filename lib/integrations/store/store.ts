@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export type IntegrationProvider = "google_drive" | "dropbox";
 
+export type IntegrationToken = {
+  provider: IntegrationProvider;
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: number;
+};
+
 export interface IntegrationTokenParams {
   userId: string;
   provider: IntegrationProvider;

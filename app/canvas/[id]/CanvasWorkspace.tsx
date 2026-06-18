@@ -64,10 +64,7 @@ import {
   blobToDataUrl,
   formatVoiceNoteTitle,
 } from "@/lib/canvas/voiceNoteUtils";
-import {
-  parseCanvasContent,
-  type CanvasContent,
-} from "@/types/canvas";
+import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 
 type Viewport = {
   x: number;
@@ -522,9 +519,7 @@ export default function CanvasWorkspace({
   );
   const [gridColor, setGridColor] = useState(initialContent.gridColor);
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
-  const [gridLineType, setGridLineType] = useState(
-    initialContent.gridLineType,
-  );
+  const [gridLineType, setGridLineType] = useState(initialContent.gridLineType);
   const handleResetGrid = () => {
     setBackgroundColor(initialContent.backgroundColor);
     setGridColor(initialContent.gridColor);
@@ -1061,9 +1056,14 @@ export default function CanvasWorkspace({
     syncSelectedLayer(
       selectedImageIds.length === 1
         ? selectedImageIds[0]
-        : selectedTextNodeId ?? activeWebNodeId,
+        : (selectedTextNodeId ?? activeWebNodeId),
     );
-  }, [activeWebNodeId, selectedImageIds, selectedTextNodeId, syncSelectedLayer]);
+  }, [
+    activeWebNodeId,
+    selectedImageIds,
+    selectedTextNodeId,
+    syncSelectedLayer,
+  ]);
 
   useEffect(() => {
     imageNodesRef.current = imageNodes;
@@ -1153,7 +1153,67 @@ export default function CanvasWorkspace({
     window.addEventListener(CANVAS_TEXT_TOOL_EVENT, handleTextToolActivated);
 
     return () => {
-      window.removeEventListener(CANVAS_TEXT_TOOL_EVENT, handleTextToolActivated);
+      window.removeEventListener(
+        CANVAS_TEXT_TOOL_EVENT,
+        handleTextToolActivated,
+      );
+    };
+  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
+
+  useEffect(() => {
+    function handleFileImport(event: Event) {
+      const customEvent = event as CustomEvent<{ files: File[] }>;
+      const files = Array.from(customEvent.detail?.files ?? []).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+
+      if (!files.length || !isClientReady) {
+        return;
+      }
+
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect) {
+        return;
+      }
+
+      const dropPosition = {
+        x: (rect.width / 2 - viewport.x) / viewport.zoom,
+        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+      };
+
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+      );
+
+      const addedIds: string[] = [];
+
+      for (let index = 0; index < files.length; index += 1) {
+        const nodeId = addDroppedImageFile(
+          files[index],
+          index,
+          dropPosition,
+          topZIndex,
+        );
+
+        addedIds.push(nodeId);
+      }
+
+      if (addedIds.length >= 2) {
+        setSelectedImageIds(addedIds);
+      }
+
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener("canvasai:file-import", handleFileImport);
+
+    return () => {
+      window.removeEventListener("canvasai:file-import", handleFileImport);
     };
   }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
 
@@ -1746,14 +1806,7 @@ export default function CanvasWorkspace({
       backgroundPosition: `${viewport.x}px ${viewport.y}px`,
       backgroundSize: `${scaledSize}px ${scaledSize}px`,
     };
-  }, [
-    backgroundColor,
-    gridColor,
-    gridLineType,
-    gridSize,
-    showGrid,
-    viewport,
-  ]);
+  }, [backgroundColor, gridColor, gridLineType, gridSize, showGrid, viewport]);
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -1795,35 +1848,35 @@ export default function CanvasWorkspace({
     );
   }
 
-  const focusCanvasBounds = useCallback((bounds: {
-    position: Point;
-    size: { width: number; height: number };
-  }) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
+  const focusCanvasBounds = useCallback(
+    (bounds: { position: Point; size: { width: number; height: number } }) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
 
-    if (!rect) {
-      return;
-    }
+      if (!rect) {
+        return;
+      }
 
-    const padding = 160;
-    const zoom = clamp(
-      Math.min(
-        (rect.width - padding) / Math.max(bounds.size.width, 1),
-        (rect.height - padding) / Math.max(bounds.size.height, 1),
-        2,
-      ),
-      MIN_ZOOM,
-      MAX_ZOOM,
-    );
-    const centerX = bounds.position.x + bounds.size.width / 2;
-    const centerY = bounds.position.y + bounds.size.height / 2;
+      const padding = 160;
+      const zoom = clamp(
+        Math.min(
+          (rect.width - padding) / Math.max(bounds.size.width, 1),
+          (rect.height - padding) / Math.max(bounds.size.height, 1),
+          2,
+        ),
+        MIN_ZOOM,
+        MAX_ZOOM,
+      );
+      const centerX = bounds.position.x + bounds.size.width / 2;
+      const centerY = bounds.position.y + bounds.size.height / 2;
 
-    setViewport({
-      x: rect.width / 2 - centerX * zoom,
-      y: rect.height / 2 - centerY * zoom,
-      zoom,
-    });
-  }, []);
+      setViewport({
+        x: rect.width / 2 - centerX * zoom,
+        y: rect.height / 2 - centerY * zoom,
+        zoom,
+      });
+    },
+    [],
+  );
 
   function focusCanvasItem(item: CanvasContentsItem) {
     const node =
@@ -3088,126 +3141,134 @@ export default function CanvasWorkspace({
           />
         )}
 
-        {imageNodes.filter((node) => node.visible ?? true).map((node) => {
-          const isSelected = selectedImageIdSet.has(node.id);
-          const showResizeHandles =
-            isSelected &&
-            selectedImageIds.length === 1 &&
-            !(node.locked ?? false);
-          const imageSrc = getImageNodeSrc(node);
+        {imageNodes
+          .filter((node) => node.visible ?? true)
+          .map((node) => {
+            const isSelected = selectedImageIdSet.has(node.id);
+            const showResizeHandles =
+              isSelected &&
+              selectedImageIds.length === 1 &&
+              !(node.locked ?? false);
+            const imageSrc = getImageNodeSrc(node);
 
-          return (
-            <CanvasImageNode
+            return (
+              <CanvasImageNode
+                key={node.id}
+                imageSrc={imageSrc}
+                isDragging={draggingImageNodeId === node.id}
+                isResizing={resizingImageNodeId === node.id}
+                isSelected={isSelected}
+                node={node}
+                showResizeHandles={showResizeHandles}
+                onImageSettled={() => handleInitialImageSettled(node.id)}
+                onPointerCancel={handleImagePointerUp}
+                onPointerDown={(event) => handleImagePointerDown(event, node)}
+                onPointerMove={handleImagePointerMove}
+                onPointerUp={handleImagePointerUp}
+                onResizePointerCancel={handleImagePointerUp}
+                onResizePointerDown={(corner, event) =>
+                  handleImageResizePointerDown(event, node, corner)
+                }
+                onResizePointerMove={handleImagePointerMove}
+                onResizePointerUp={handleImagePointerUp}
+              />
+            );
+          })}
+
+        {webNodes
+          .filter((node) => node.visible ?? true)
+          .map((node) => (
+            <CanvasWebNode
               key={node.id}
-              imageSrc={imageSrc}
-              isDragging={draggingImageNodeId === node.id}
-              isResizing={resizingImageNodeId === node.id}
-              isSelected={isSelected}
+              isDragging={draggingWebNodeId === node.id}
+              isResizing={resizingWebNodeId === node.id}
               node={node}
-              showResizeHandles={showResizeHandles}
-              onImageSettled={() => handleInitialImageSettled(node.id)}
-              onPointerCancel={handleImagePointerUp}
-              onPointerDown={(event) => handleImagePointerDown(event, node)}
-              onPointerMove={handleImagePointerMove}
-              onPointerUp={handleImagePointerUp}
-              onResizePointerCancel={handleImagePointerUp}
+              onPointerCancel={handleWebPointerUp}
+              onPointerDown={(event) => handleWebPointerDown(event, node)}
+              onPointerMove={handleWebPointerMove}
+              onPointerUp={(event) => {
+                const { didDrag, didResize } = handleWebPointerUp(event);
+
+                if (!didDrag && !didResize) {
+                  setActiveWebNodeId(node.id);
+                }
+              }}
+              onResizePointerCancel={handleWebPointerUp}
               onResizePointerDown={(corner, event) =>
-                handleImageResizePointerDown(event, node, corner)
+                handleWebResizePointerDown(event, node, corner)
               }
-              onResizePointerMove={handleImagePointerMove}
-              onResizePointerUp={handleImagePointerUp}
+              onResizePointerMove={handleWebPointerMove}
+              onResizePointerUp={handleWebPointerUp}
             />
-          );
-        })}
+          ))}
 
-        {webNodes.filter((node) => node.visible ?? true).map((node) => (
-          <CanvasWebNode
-            key={node.id}
-            isDragging={draggingWebNodeId === node.id}
-            isResizing={resizingWebNodeId === node.id}
-            node={node}
-            onPointerCancel={handleWebPointerUp}
-            onPointerDown={(event) => handleWebPointerDown(event, node)}
-            onPointerMove={handleWebPointerMove}
-            onPointerUp={(event) => {
-              const { didDrag, didResize } = handleWebPointerUp(event);
-
-              if (!didDrag && !didResize) {
-                setActiveWebNodeId(node.id);
+        {textNodes
+          .filter((node) => node.visible ?? true)
+          .map((node) => (
+            <CanvasTextNode
+              key={node.id}
+              isDragging={draggingTextNodeId === node.id}
+              isEditing={editingTextNodeId === node.id}
+              isSelected={selectedTextNodeId === node.id}
+              node={node}
+              onBlur={() => setEditingTextNodeId(null)}
+              onInput={(text) =>
+                setTextNodes((current) =>
+                  current.map((entry) =>
+                    entry.id === node.id ? { ...entry, text } : entry,
+                  ),
+                )
               }
-            }}
-            onResizePointerCancel={handleWebPointerUp}
-            onResizePointerDown={(corner, event) =>
-              handleWebResizePointerDown(event, node, corner)
-            }
-            onResizePointerMove={handleWebPointerMove}
-            onResizePointerUp={handleWebPointerUp}
-          />
-        ))}
+              onPointerCancel={handleTextPointerUp}
+              onPointerDown={(event) => handleTextPointerDown(event, node)}
+              onPointerMove={handleTextPointerMove}
+              onPointerUp={handleTextPointerUp}
+              onSizeChange={(size) =>
+                setTextNodes((current) =>
+                  current.map((entry) =>
+                    entry.id === node.id ? { ...entry, size } : entry,
+                  ),
+                )
+              }
+              onStartEditing={() => {
+                setSelectedTextNodeId(node.id);
+                setEditingTextNodeId(node.id);
+              }}
+            />
+          ))}
 
-        {textNodes.filter((node) => node.visible ?? true).map((node) => (
-          <CanvasTextNode
-            key={node.id}
-            isDragging={draggingTextNodeId === node.id}
-            isEditing={editingTextNodeId === node.id}
-            isSelected={selectedTextNodeId === node.id}
-            node={node}
-            onBlur={() => setEditingTextNodeId(null)}
-            onInput={(text) =>
-              setTextNodes((current) =>
-                current.map((entry) =>
-                  entry.id === node.id ? { ...entry, text } : entry,
-                ),
-              )
-            }
-            onPointerCancel={handleTextPointerUp}
-            onPointerDown={(event) => handleTextPointerDown(event, node)}
-            onPointerMove={handleTextPointerMove}
-            onPointerUp={handleTextPointerUp}
-            onSizeChange={(size) =>
-              setTextNodes((current) =>
-                current.map((entry) =>
-                  entry.id === node.id ? { ...entry, size } : entry,
-                ),
-              )
-            }
-            onStartEditing={() => {
-              setSelectedTextNodeId(node.id);
-              setEditingTextNodeId(node.id);
-            }}
-          />
-        ))}
-
-        {voiceNodes.filter((node) => node.visible ?? true).map((node) => (
-          <CanvasVoiceNode
-            key={node.id}
-            isDragging={draggingVoiceNodeId === node.id}
-            isMenuOpen={openVoiceMenuNodeId === node.id}
-            isPlaying={playingVoiceNodeId === node.id}
-            node={node}
-            playbackMs={voicePlaybackMsByNodeId[node.id] ?? 0}
-            onAudioEnded={() => handleAudioEnded(node.id)}
-            onAudioPaused={() => handleAudioPaused(node.id)}
-            onAudioPlaying={() => handleAudioPlaying(node.id)}
-            onAudioRef={(element) => registerAudioElement(node.id, element)}
-            onAudioTimeUpdate={(playbackMs) =>
-              handleAudioTimeUpdate(node.id, playbackMs)
-            }
-            onMenuAction={(action) =>
-              handleVoiceNodeMenuAction(node.id, action)
-            }
-            onPointerCancel={handleVoicePointerUp}
-            onPointerDown={(event) => handleVoicePointerDown(event, node)}
-            onPointerMove={handleVoicePointerMove}
-            onPointerUp={handleVoicePointerUp}
-            onToggleMenu={() =>
-              setOpenVoiceMenuNodeId((current) =>
-                current === node.id ? null : node.id,
-              )
-            }
-            onTogglePlayback={() => toggleVoicePlayback(node.id)}
-          />
-        ))}
+        {voiceNodes
+          .filter((node) => node.visible ?? true)
+          .map((node) => (
+            <CanvasVoiceNode
+              key={node.id}
+              isDragging={draggingVoiceNodeId === node.id}
+              isMenuOpen={openVoiceMenuNodeId === node.id}
+              isPlaying={playingVoiceNodeId === node.id}
+              node={node}
+              playbackMs={voicePlaybackMsByNodeId[node.id] ?? 0}
+              onAudioEnded={() => handleAudioEnded(node.id)}
+              onAudioPaused={() => handleAudioPaused(node.id)}
+              onAudioPlaying={() => handleAudioPlaying(node.id)}
+              onAudioRef={(element) => registerAudioElement(node.id, element)}
+              onAudioTimeUpdate={(playbackMs) =>
+                handleAudioTimeUpdate(node.id, playbackMs)
+              }
+              onMenuAction={(action) =>
+                handleVoiceNodeMenuAction(node.id, action)
+              }
+              onPointerCancel={handleVoicePointerUp}
+              onPointerDown={(event) => handleVoicePointerDown(event, node)}
+              onPointerMove={handleVoicePointerMove}
+              onPointerUp={handleVoicePointerUp}
+              onToggleMenu={() =>
+                setOpenVoiceMenuNodeId((current) =>
+                  current === node.id ? null : node.id,
+                )
+              }
+              onTogglePlayback={() => toggleVoicePlayback(node.id)}
+            />
+          ))}
       </div>
 
       <CanvasDropOverlay isVisible={isFileDragging} />

@@ -29,8 +29,8 @@ export function VoiceNoteWaveform({
           <span
             key={i}
             className={[
-              "w-[2px] rounded-full transition-all",
-              active ? "bg-white/80" : "bg-white/20",
+              "w-[2px] rounded transition-all",
+              active ? "bg-black" : "bg-black/20",
             ].join(" ")}
             style={{
               height: `${Math.max(20, h)}%`,

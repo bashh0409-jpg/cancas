@@ -181,11 +181,11 @@ export function VoiceNoteCard({
 
   return (
     <div
-      className="relative h-fit w-full rounded-xl border border-white/10 bg-white/10 px-3  shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur"
+      className="relative h-fit w-full rounded border border-white/10 bg-white px-3  shadow-[0_10px_24px_rgba(0,0,0,0.35)] "
       style={{ mixBlendMode: "multiply" }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="pixel truncate text-xs tracking-tight text-white">
+        <span className="mono truncate text-xs tracking-tight text-black/" title={title}>
           {title}
         </span>
         <VoiceNoteOptionsMenu
@@ -212,10 +212,10 @@ export function VoiceNoteCard({
       </div>
 
       <div className=" flex items-center justify-between">
-        <span className="pixel text-[10px] tracking-tight text-white/70">
+        <span className="text-[10px] tracking-tight text-black mono">
           {formatVoiceDuration(playbackMs)}
         </span>
-        <span className="pixel text-[10px] tracking-tight text-white/70">
+        <span className="mono text-[10px] tracking-tight text-black mono">
           {formatVoiceDuration(durationMs)}
         </span>
       </div>

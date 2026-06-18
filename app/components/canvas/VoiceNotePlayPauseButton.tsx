@@ -10,7 +10,7 @@ export function VoiceNotePlayPauseButton({
   return (
     <button
       aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
-      className="pixel inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+      className="mono inline-flex h-8 w-8 items-center justify-center rounded border border-black/20 bg-black/10 text-black transition hover:bg-white/20"
       type="button"
       onClick={onClick}
     >

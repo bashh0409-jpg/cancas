@@ -18,6 +18,10 @@ import {
   Check,
   Loader2,
   ExternalLink,
+  Folder,
+  FileText,
+  ImageIcon,
+  ArrowLeft,
 } from "lucide-react";
 
 import React, { useEffect, useState } from "react";
@@ -47,6 +51,7 @@ type GridControlsValue = {
 type SidebarProps = {
   gridSettings: GridControlsValue;
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
+  onImportCloudFile: (file: File) => Promise<void>;
 };
 
 // Logo Component
@@ -396,6 +401,343 @@ type Provider = {
   loading?: boolean;
 };
 
+type CloudFileType = "folder" | "image" | "other";
+
+type CloudFileItem = {
+  id: string;
+  name: string;
+  mimeType: string;
+  isFolder: boolean;
+  fileType: CloudFileType;
+  size?: number;
+  path?: string;
+};
+
+type CloudFolder = {
+  id: string;
+  name: string;
+};
+
+type CloudBrowserProps = {
+  providerId: string;
+  providerName: string;
+  connected: boolean;
+  onConnect: () => void;
+  onImportCloudFile?: (file: File) => Promise<void>;
+};
+
+function formatFileSize(size?: number) {
+  if (!size || size <= 0) {
+    return "";
+  }
+
+  const units = ["B", "KB", "MB", "GB"];
+  let index = 0;
+  let current = size;
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024;
+    index += 1;
+  }
+
+  return `${current.toFixed(1)} ${units[index]}`;
+}
+
+function getItemIcon(fileType: CloudFileType, isFolder: boolean) {
+  if (isFolder) {
+    return <Folder className="h-4 w-4" />;
+  }
+
+  if (fileType === "image") {
+    return <ImageIcon className="h-4 w-4" />;
+  }
+
+  return <FileText className="h-4 w-4" />;
+}
+
+function isImageFile(file: CloudFileItem) {
+  return file.fileType === "image";
+}
+
+function getProviderRootFolder(providerId: string): CloudFolder {
+  return providerId === "dropbox"
+    ? { id: "", name: "Dropbox" }
+    : { id: "root", name: "My Drive" };
+}
+
+function CloudBrowser({
+  providerId,
+  providerName,
+  connected,
+  onConnect,
+  onImportCloudFile,
+}: CloudBrowserProps) {
+  const [folderStack, setFolderStack] = useState<CloudFolder[]>([]);
+  const [currentFolder, setCurrentFolder] = useState<CloudFolder>(
+    getProviderRootFolder(providerId),
+  );
+  const [items, setItems] = useState<CloudFileItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [importingId, setImportingId] = useState<string | null>(null);
+
+  const rootFolder = getProviderRootFolder(providerId);
+
+  useEffect(() => {
+    setFolderStack([]);
+    setCurrentFolder(rootFolder);
+    setItems([]);
+    setError(null);
+
+    if (connected) {
+      void loadFolder(rootFolder);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId, connected]);
+
+  async function loadFolder(folder: CloudFolder) {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const queryParam =
+        providerId === "dropbox"
+          ? `path=${encodeURIComponent(folder.id)}`
+          : `folderId=${encodeURIComponent(folder.id)}`;
+      const res = await fetch(
+        `/api/integrations/${providerId}/list?${queryParam}`,
+      );
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(
+          payload?.error || "Unable to load cloud storage contents.",
+        );
+      }
+
+      const data = await res.json();
+
+      setCurrentFolder({
+        id: data.folder.id,
+        name: data.folder.name,
+      });
+      setItems(data.items ?? []);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load cloud storage contents.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSelectFolder(item: CloudFileItem) {
+    if (!item.isFolder) {
+      return;
+    }
+
+    setFolderStack((current) => [...current, currentFolder]);
+    void loadFolder({ id: item.id, name: item.name });
+  }
+
+  function handleGoBack() {
+    const previous = folderStack[folderStack.length - 1];
+
+    if (!previous) {
+      return;
+    }
+
+    setFolderStack((current) => current.slice(0, -1));
+    void loadFolder(previous);
+  }
+
+  async function handleImport(item: CloudFileItem) {
+    if (!onImportCloudFile || !isImageFile(item)) {
+      return;
+    }
+
+    setImportingId(item.id);
+
+    try {
+      const queryParam =
+        providerId === "dropbox"
+          ? `path=${encodeURIComponent(item.path ?? item.id)}`
+          : `fileId=${encodeURIComponent(item.id)}`;
+      const response = await fetch(
+        `/api/integrations/${providerId}/download?${queryParam}`,
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || "Unable to download cloud file.");
+      }
+
+      const blob = await response.blob();
+      const fileName =
+        response.headers.get("x-file-name") ?? item.name ?? "cloud-file";
+      const file = new File([blob], fileName, {
+        type: blob.type || item.mimeType || "application/octet-stream",
+      });
+
+      await onImportCloudFile(file);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to import cloud file.",
+      );
+    } finally {
+      setImportingId(null);
+    }
+  }
+
+  if (!connected) {
+    return (
+      <div className="rounded border border-white/10 bg-[#17171b] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs mono uppercase tracking-wide text-white/50">
+              {providerName}
+            </p>
+            <h3 className="mt-1 text-sm font-semibold text-white">
+              Connect to browse files
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onConnect}
+            className="rounded bg-lime-400 px-3 py-2 text-xs font-semibold text-black transition hover:bg-lime-300"
+          >
+            Connect
+          </button>
+        </div>
+
+        <p className="mt-4 text-[11px] leading-5 text-white/50">
+          Link your cloud storage account to browse files and import images
+          directly into the canvas.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded border border-white/10 bg-[#17171b] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs mono uppercase tracking-wide text-white/50">
+            {providerName}
+          </p>
+          <h3 className="mt-1 text-sm font-semibold text-white">
+            {currentFolder.name}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {folderStack.length > 0 ? (
+            <button
+              type="button"
+              onClick={handleGoBack}
+              className="flex items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => void loadFolder(currentFolder)}
+            className="rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
+          >
+            Reload
+          </button>
+        </div>
+      </div>
+
+      <p className="mt-3 text-[11px] text-white/50">
+        Only image files can be imported to the canvas from cloud storage.
+      </p>
+
+      {error ? (
+        <div className="mt-4 rounded border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-200">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="mt-4">
+        {loading ? (
+          <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
+            Loading files…
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
+            No files found in this folder.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[1fr_auto] gap-3 rounded border border-white/10 bg-white/5 p-3"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSelectFolder(item)}
+                  disabled={!item.isFolder}
+                  className="flex items-start gap-3 text-left"
+                >
+                  <div className="grid h-9 w-9 place-items-center rounded bg-black/20 text-white/70">
+                    {getItemIcon(item.fileType, item.isFolder)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">
+                      {item.name}
+                    </p>
+                    <p className="text-[11px] text-white/50">
+                      {item.isFolder
+                        ? "Folder"
+                        : `${item.mimeType} ${formatFileSize(item.size)}`}
+                    </p>
+                  </div>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {item.isFolder ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFolder(item)}
+                      className="rounded border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
+                    >
+                      Open
+                    </button>
+                  ) : isImageFile(item) ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleImport(item)}
+                      disabled={Boolean(importingId)}
+                      className="rounded bg-lime-400 px-3 py-2 text-[11px] font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {importingId === item.id ? "Importing…" : "Import"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="rounded border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/40"
+                    >
+                      Unsupported
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const initialProviders: Provider[] = [
   {
     id: "google-drive",
@@ -413,8 +755,15 @@ const initialProviders: Provider[] = [
   },
 ];
 
-export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
+export const ConnectPanel = ({
+  onClose,
+  onImportCloudFile,
+}: {
+  onClose: () => void;
+  onImportCloudFile: (file: File) => Promise<void>;
+}) => {
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
+  const [activeProviderId, setActiveProviderId] = useState<string | null>(null);
 
   const handleConnect = async (providerId: string) => {
     try {
@@ -455,7 +804,7 @@ export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
   }, []);
 
   return (
-    <div className="w-60 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col">
+    <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col">
       <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
         <h3 className="text-white text-xs  mono  uppercase tracking-tight">
           External storage
@@ -476,7 +825,7 @@ export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
           return (
             <div
               key={provider.id}
-              className="group  rounded  hover:border-white/20 transition"
+              className="group  rounded w-full  hover:border-white/20 transition"
             >
               <div className=" flex items-start gap-2">
                 {/* Icon */}
@@ -485,15 +834,15 @@ export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
                 </div>
 
                 {/* Content */}
-                <div className=" min-w-0 ">
-                  <div className="flex items-center justify-between ">
-                    <div className="text-sm gap-3 flex-col flex text-white mono uppercase tracking-tight truncate">
-                      <p>{provider.name} </p>
+                <div className=" w-full min-w-0 ">
+                  <div className="flex items-center w-full justify-between ">
+                    <div className="text-sm gap-3 w-full items-center justify-between flex text-white mono uppercase tracking-tight truncate">
+                      <p className="text-xs">{provider.name} </p>
                       <p>
                         {provider.connected && (
-                          <span className="uppercase flex items-center gap-2 mono  text-lime-300 text-xs uppercase tracking-wide">
-                            <Cable className="w-3.5 h-3.5" />
-                            Connected
+                          <span className="uppercase w-full justify-between flex items-center gap-2 mono  text-lime-300 text-xs uppercase tracking-wide">
+                          connected
+                             <Cable className="w-3.5 h-3.5" />
                           </span>
                         )}
                       </p>
@@ -501,16 +850,16 @@ export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <button
+                  <div className="flex justify-between items-center gap-2 mt-3">
+                    <p></p><button
                       onClick={() => handleConnect(provider.id)}
                       disabled={provider.loading}
                       className={`
-                        h-8 px-3 rounded text-xs font-medium transition cursor-pointer
+                        h-8 px-3 rounded mono tracking-tight text-xs font-medium transition cursor-pointer
                         flex items-center gap-2
                         ${
                           provider.connected
-                            ? "bg-white/10 text-white hover:bg-white/15"
+                            ? "bg-white/20 text-white hover:bg-white/15"
                             : "lime text-black hover:opacity-90"
                         }
                       `}
@@ -519,7 +868,7 @@ export const ConnectPanel = ({ onClose }: { onClose: () => void }) => {
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : provider.connected ? (
                         <>
-                          Manage
+                          Manage 
                           <ExternalLink className="w-3.5 h-3.5" />
                         </>
                       ) : (
