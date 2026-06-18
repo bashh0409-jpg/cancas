@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { PHProvider } from "./providers";
 import { PostHogPageView } from "./PostHogPageView";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const cmGeom = localFont({
   src: [
@@ -57,6 +59,8 @@ export default function RootLayout({
       className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${GeistPixelSquare.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <SpeedInsights />
+        <Analytics />
         <PHProvider>
           <Suspense fallback={null}>
             <PostHogPageView />
