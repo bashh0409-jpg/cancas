@@ -16,10 +16,10 @@ function normalizeProvider(provider: string) {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { provider: string } },
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   try {
-    const providerId = params.provider;
+    const { provider: providerId } = await params;
     const providerKey = normalizeProvider(providerId);
 
     if (!providerKey) {
@@ -75,12 +75,23 @@ export async function GET(
         );
       }
 
-      const stream = response.data as unknown;
+      const nodeStream = response.data as import("stream").Readable;
+      const webStream = new ReadableStream({
+        start(controller) {
+          nodeStream.on("data", (chunk: Buffer | string) => {
+            controller.enqueue(
+              typeof chunk === "string" ? Buffer.from(chunk) : chunk,
+            );
+          });
+          nodeStream.on("end", () => controller.close());
+          nodeStream.on("error", (err: Error) => controller.error(err));
+        },
+      });
       const headers = new Headers();
       headers.set("Content-Type", "application/octet-stream");
       headers.set("Content-Disposition", `attachment; filename="${fileId}"`);
 
-      return new NextResponse(stream as BodyInit, { headers });
+      return new NextResponse(webStream, { headers });
     }
 
     if (providerKey === "dropbox") {

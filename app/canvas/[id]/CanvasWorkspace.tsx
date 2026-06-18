@@ -3331,6 +3331,23 @@ export default function CanvasWorkspace({
               setGridSize(updates.size);
             }
           }}
+          onImportCloudFile={async (file: File) => {
+            const rect = canvasRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            const dropPosition = {
+              x: (rect.width / 2 - viewport.x) / viewport.zoom,
+              y: (rect.height / 2 - viewport.y) / viewport.zoom,
+            };
+            const topZIndex = imageNodesRef.current.reduce(
+              (max, node) => Math.max(max, node.zIndex),
+              Math.max(
+                0,
+                ...webNodesRef.current.map((node) => node.zIndex),
+                ...voiceNodesRef.current.map((node) => node.zIndex),
+              ),
+            );
+            addDroppedImageFile(file, 0, dropPosition, topZIndex);
+          }}
         />
       )}
 

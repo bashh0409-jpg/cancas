@@ -20,10 +20,10 @@ function isImageName(name: string) {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { provider: string } },
+  { params }: { params: Promise<{ provider: string }> },
 ) {
   try {
-    const providerId = params.provider;
+    const { provider: providerId } = await params;
     const providerKey = normalizeProvider(providerId);
 
     if (!providerKey) {
@@ -87,9 +87,9 @@ export async function GET(
         size: Number(file.size ?? 0),
         isFolder: file.mimeType === "application/vnd.google-apps.folder",
         fileType:
-          file.mimeType === "application/vnd.google-apps.folder"
+          (file.mimeType ?? "") === "application/vnd.google-apps.folder"
             ? "folder"
-            : file.mimeType.startsWith("image/") || isImageName(file.name ?? "")
+            : (file.mimeType ?? "").startsWith("image/") || isImageName(file.name ?? "")
               ? "image"
               : "file",
       }));

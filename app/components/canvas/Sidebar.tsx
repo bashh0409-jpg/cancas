@@ -1219,6 +1219,7 @@ const ExportSection = ({
 export const Sidebar = ({
   gridSettings,
   onGridSettingsChange,
+  onImportCloudFile,
 }: SidebarProps) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
@@ -1239,7 +1240,7 @@ export const Sidebar = ({
       case "layers":
         return <LayersPanel onClose={() => setActivePanel(null)} />;
       case "connect":
-        return <ConnectPanel onClose={() => setActivePanel(null)} />;
+        return <ConnectPanel onClose={() => setActivePanel(null)} onImportCloudFile={onImportCloudFile} />;
       case "help":
         return <HelpPanel onClose={() => setActivePanel(null)} />;
       case "settings":

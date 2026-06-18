@@ -36,8 +36,8 @@ export async function upsertIntegrationToken({
       updated_at: new Date().toISOString(),
     },
     {
-      onConflict: ["user_id", "provider"],
-      returning: "minimal",
+      onConflict: "user_id, provider",
+      ignoreDuplicates: false,
     },
   );
 
@@ -66,7 +66,7 @@ export async function getIntegrationToken(provider: IntegrationProvider) {
   }
 
   const { data, error } = await supabase
-    .from<IntegrationTokenRecord>("integration_tokens")
+    .from("integration_tokens")
     .select("provider, access_token, refresh_token, expires_at")
     .eq("user_id", user.id)
     .eq("provider", provider)

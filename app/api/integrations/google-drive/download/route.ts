@@ -49,7 +49,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return new NextResponse(response.data as BodyInit, {
+    const nodeStream = response.data as import("stream").Readable;
+    const webStream = new ReadableStream({
+      start(controller) {
+        nodeStream.on("data", (chunk: Buffer | string) => {
+          controller.enqueue(
+            typeof chunk === "string" ? Buffer.from(chunk) : chunk,
+          );
+        });
+        nodeStream.on("end", () => controller.close());
+        nodeStream.on("error", (err: Error) => controller.error(err));
+      },
+    });
+
+    return new NextResponse(webStream, {
       headers: new Headers({
         "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="${fileId}"`,
