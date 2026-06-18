@@ -1,1 +1,1 @@
-export { default } from "./toolbar/FloatingToolbar";
+export { FloatingToolbox as default } from "./toolbar/FloatingToolbox";

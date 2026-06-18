@@ -15,6 +15,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+
+import { siNike } from "simple-icons";
 import React, { useEffect, useState } from "react";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";

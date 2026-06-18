@@ -1,5 +1,6 @@
 "use client";
 
+import { Ellipse, Ellipsis } from "lucide-react";
 import type {
   ChangeEvent,
   FocusEvent,
@@ -13,6 +14,8 @@ export type CanvasTextNodeData = {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
   style: {
     backgroundColor: string;
     color: string;
@@ -120,7 +123,7 @@ export function CanvasTextNode({
     >
       <div
         className={[
-          "h-full w-full rounded-md border px-3 py-2 leading-tight transition",
+          "h-full min-h-50 min-w-50 w-full max-w-70 overflow-y-auto rounded border px-3 py-2 leading-tight transition",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
@@ -135,7 +138,7 @@ export function CanvasTextNode({
         {isEditing ? (
           <textarea
             ref={textareaRef}
-            className="h-full w-full resize-none overflow-hidden bg-transparent outline-none"
+            className="h-full text-sm  w-full tracking-tight resize-none overflow-hidden bg-transparent outline-none"
             spellCheck
             style={{
               backgroundColor: "transparent",
@@ -149,8 +152,16 @@ export function CanvasTextNode({
             onPointerDown={(event) => event.stopPropagation()}
           />
         ) : (
-          <div className="h-full w-full whitespace-pre-wrap break-words">
-            {node.text || "Text"}
+          <div className="h-fit tracking-tight overflow-y-auto text-sm w-full whitespace-pre-wrap break-words">
+            <div className="flex w-full items-center hidden justify-between">
+              <p className="mb-2 text-xs uppercase tracking-tight mono">
+                Untitled note
+              </p>
+              <button className="cursor-pointer">
+                <Ellipsis className="w-4 h-4" />
+              </button>
+            </div>
+            {node.text || "Type here..."}
           </div>
         )}
       </div>
@@ -158,7 +169,7 @@ export function CanvasTextNode({
       <div
         ref={measureRef}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 -z-10 whitespace-pre-wrap break-words px-3 py-2 opacity-0"
+        className="pointer-events-none fixed left-0 top-0 -z-10  px-2 py-2 opacity-0"
         style={{
           minWidth: 60,
           backgroundColor: node.style.backgroundColor,

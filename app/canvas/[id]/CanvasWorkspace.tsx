@@ -14,6 +14,10 @@ import { CanvasLeftSidebar } from "@/app/components/canvas/CanvasLeftSidebar";
 import { CanvasLoadingOverlay } from "@/app/components/canvas/CanvasLoadingOverlay";
 import { CanvasMarqueeSelection } from "@/app/components/canvas/CanvasMarqueeSelection";
 import { Sidebar } from "@/app/components/canvas/Sidebar";
+import {
+  CanvasTextNode,
+  type CanvasTextNodeData,
+} from "@/app/components/canvas/CanvasTextNode";
 import { CanvasVoiceNode } from "@/app/components/canvas/CanvasVoiceNode";
 import { CanvasWebNode } from "@/app/components/canvas/CanvasWebNode";
 import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
@@ -35,6 +39,7 @@ import {
   VOICE_NOTE_RECORDED_EVENT,
   type VoiceNoteRecordedDetail,
 } from "@/lib/canvas/voiceNotes";
+import { CANVAS_TEXT_TOOL_EVENT } from "@/lib/canvas/textToolEvents";
 import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
 import {
   IMAGE_DELETE_UNDO_LIMIT,
@@ -164,6 +169,11 @@ type VoiceCanvasNode = {
 };
 
 type VoiceDragState = {
+  nodeId: string;
+  offset: Point;
+};
+
+type TextDragState = {
   nodeId: string;
   offset: Point;
 };
@@ -482,10 +492,12 @@ export default function CanvasWorkspace({
   const imageNodesRef = useRef<ImageCanvasNode[]>(initialContent.imageNodes);
   const webNodesRef = useRef<WebCanvasNode[]>([]);
   const voiceNodesRef = useRef<VoiceCanvasNode[]>(initialContent.voiceNodes);
+  const textNodesRef = useRef<CanvasTextNodeData[]>(initialContent.textNodes);
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
   const voiceDragRef = useRef<VoiceDragState | null>(null);
+  const textDragRef = useRef<TextDragState | null>(null);
   const webResizeRef = useRef<NodeResizeState | null>(null);
   const skipSaveRef = useRef(true);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -537,6 +549,15 @@ export default function CanvasWorkspace({
   const [draggingVoiceNodeId, setDraggingVoiceNodeId] = useState<string | null>(
     null,
   );
+  const [draggingTextNodeId, setDraggingTextNodeId] = useState<string | null>(
+    null,
+  );
+  const [selectedTextNodeId, setSelectedTextNodeId] = useState<string | null>(
+    null,
+  );
+  const [editingTextNodeId, setEditingTextNodeId] = useState<string | null>(
+    null,
+  );
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
     initialContent.imageNodes,
   );
@@ -545,6 +566,9 @@ export default function CanvasWorkspace({
   );
   const [voiceNodes, setVoiceNodes] = useState<VoiceCanvasNode[]>(
     initialContent.voiceNodes,
+  );
+  const [textNodes, setTextNodes] = useState<CanvasTextNodeData[]>(
+    initialContent.textNodes,
   );
   const [pendingVoiceRecording, setPendingVoiceRecording] =
     useState<VoiceNoteRecordedDetail | null>(null);
@@ -619,6 +643,11 @@ export default function CanvasWorkspace({
           kind: "voice" as const,
           label: node.title,
         })),
+        ...textNodes.map((node) => ({
+          id: node.id,
+          kind: "text" as const,
+          label: node.text.trim() || "Sticky note",
+        })),
       ].sort((a, b) => {
         const getZIndex = (item: CanvasContentsItem) => {
           if (item.kind === "image") {
@@ -629,12 +658,16 @@ export default function CanvasWorkspace({
             return webNodes.find((node) => node.id === item.id)?.zIndex ?? 0;
           }
 
-          return voiceNodes.find((node) => node.id === item.id)?.zIndex ?? 0;
+          if (item.kind === "voice") {
+            return voiceNodes.find((node) => node.id === item.id)?.zIndex ?? 0;
+          }
+
+          return textNodes.find((node) => node.id === item.id)?.zIndex ?? 0;
         };
 
         return getZIndex(b) - getZIndex(a);
       }),
-    [imageNodes, voiceNodes, webNodes],
+    [imageNodes, textNodes, voiceNodes, webNodes],
   );
   const canvasLayers = useMemo<CanvasLayer[]>(
     () =>
@@ -663,8 +696,16 @@ export default function CanvasWorkspace({
           locked: node.locked ?? false,
           zIndex: node.zIndex,
         })),
+        ...textNodes.map((node) => ({
+          id: node.id,
+          name: node.text.trim() || "Sticky note",
+          type: "text" as const,
+          visible: node.visible ?? true,
+          locked: node.locked ?? false,
+          zIndex: node.zIndex,
+        })),
       ].sort((a, b) => a.zIndex - b.zIndex),
-    [imageNodes, voiceNodes, webNodes],
+    [imageNodes, textNodes, voiceNodes, webNodes],
   );
 
   useEffect(() => {
@@ -704,9 +745,11 @@ export default function CanvasWorkspace({
       setImageNodes(content.imageNodes);
       setWebNodes(content.webNodes);
       setVoiceNodes(content.voiceNodes);
+      setTextNodes(content.textNodes);
       imageNodesRef.current = content.imageNodes;
       webNodesRef.current = content.webNodes;
       voiceNodesRef.current = content.voiceNodes;
+      textNodesRef.current = content.textNodes;
       initialImageIdsRef.current = new Set(
         content.imageNodes.map((node) => node.id),
       );
@@ -985,10 +1028,14 @@ export default function CanvasWorkspace({
       setImageNodes(mergedImageNodes);
       setWebNodes(content.webNodes);
       setVoiceNodes(content.voiceNodes);
+      setTextNodes(content.textNodes);
       imageNodesRef.current = mergedImageNodes;
       webNodesRef.current = content.webNodes;
       voiceNodesRef.current = content.voiceNodes;
+      textNodesRef.current = content.textNodes;
       setSelectedImageIds([]);
+      setSelectedTextNodeId(null);
+      setEditingTextNodeId(null);
       lastServerUpdatedAtRef.current = updatedAt;
       serverUpdatedAtRef.current = updatedAt;
       skipSaveRef.current = true;
@@ -1011,8 +1058,12 @@ export default function CanvasWorkspace({
   }, [selectedImageIds]);
 
   useEffect(() => {
-    syncSelectedLayer(selectedImageIds.length === 1 ? selectedImageIds[0] : activeWebNodeId);
-  }, [activeWebNodeId, selectedImageIds, syncSelectedLayer]);
+    syncSelectedLayer(
+      selectedImageIds.length === 1
+        ? selectedImageIds[0]
+        : selectedTextNodeId ?? activeWebNodeId,
+    );
+  }, [activeWebNodeId, selectedImageIds, selectedTextNodeId, syncSelectedLayer]);
 
   useEffect(() => {
     imageNodesRef.current = imageNodes;
@@ -1025,6 +1076,10 @@ export default function CanvasWorkspace({
   useEffect(() => {
     voiceNodesRef.current = voiceNodes;
   }, [voiceNodes]);
+
+  useEffect(() => {
+    textNodesRef.current = textNodes;
+  }, [textNodes]);
 
   useEffect(() => {
     function handleVoiceNoteRecorded(event: Event) {
@@ -1046,6 +1101,61 @@ export default function CanvasWorkspace({
       );
     };
   }, []);
+
+  useEffect(() => {
+    function handleTextToolActivated() {
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect || !isClientReady) {
+        return;
+      }
+
+      const center = {
+        x: (rect.width / 2 - viewport.x) / viewport.zoom,
+        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+      };
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+      );
+      const id = crypto.randomUUID();
+      const note: CanvasTextNodeData = {
+        id,
+        text: "",
+        position: {
+          x: center.x - 90,
+          y: center.y - 60,
+        },
+        size: {
+          width: 180,
+          height: 120,
+        },
+        zIndex: topZIndex + 1,
+        style: {
+          backgroundColor: "#f8e36b",
+          color: "#171717",
+          fontFamily: "var(--font-helvetica-neue), Arial, sans-serif",
+          fontSize: 16,
+        },
+      };
+
+      setTextNodes((current) => [...current, note]);
+      setSelectedImageIds([]);
+      setSelectedTextNodeId(id);
+      setEditingTextNodeId(id);
+      setActiveWebNodeId(null);
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener(CANVAS_TEXT_TOOL_EVENT, handleTextToolActivated);
+
+    return () => {
+      window.removeEventListener(CANVAS_TEXT_TOOL_EVENT, handleTextToolActivated);
+    };
+  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
 
   useEffect(() => {
     if (!pendingVoiceRecording || !isClientReady) {
@@ -1076,6 +1186,7 @@ export default function CanvasWorkspace({
         ...imageNodesRef.current.map((node) => node.zIndex),
         ...webNodesRef.current.map((node) => node.zIndex),
         ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
       );
 
       setVoiceNodes((current) => [
@@ -1188,6 +1299,7 @@ export default function CanvasWorkspace({
       imageNodes: imageNodes.map(serializeImageNodeForSave),
       webNodes,
       voiceNodes,
+      textNodes,
       showGrid,
       backgroundColor,
       gridColor,
@@ -1201,6 +1313,7 @@ export default function CanvasWorkspace({
     gridSize,
     imageNodes,
     showGrid,
+    textNodes,
     viewport,
     webNodes,
     voiceNodes,
@@ -1410,6 +1523,8 @@ export default function CanvasWorkspace({
 
       if (event.key === "Escape") {
         setSelectedImageIds([]);
+        setSelectedTextNodeId(null);
+        setEditingTextNodeId(null);
         setMarquee(null);
         return;
       }
@@ -1445,6 +1560,25 @@ export default function CanvasWorkspace({
         if (selectedIds.length > 0) {
           event.preventDefault();
           removeImageNodes(selectedIds);
+        }
+
+        if (selectedTextNodeId) {
+          const selectedTextNode = textNodesRef.current.find(
+            (node) =>
+              node.id === selectedTextNodeId &&
+              (node.visible ?? true) &&
+              !(node.locked ?? false),
+          );
+
+          if (selectedTextNode) {
+            event.preventDefault();
+            setTextNodes((current) =>
+              current.filter((node) => node.id !== selectedTextNodeId),
+            );
+            setSelectedTextNodeId(null);
+            setEditingTextNodeId(null);
+            saveDelayMsRef.current = 0;
+          }
         }
 
         return;
@@ -1504,6 +1638,7 @@ export default function CanvasWorkspace({
     redoImageDelete,
     removeImageNodes,
     selectedImageIdSet,
+    selectedTextNodeId,
     undoImageDelete,
     setImageNodes,
   ]);
@@ -1696,7 +1831,9 @@ export default function CanvasWorkspace({
         ? imageNodesRef.current.find((entry) => entry.id === item.id)
         : item.kind === "website"
           ? webNodesRef.current.find((entry) => entry.id === item.id)
-          : voiceNodesRef.current.find((entry) => entry.id === item.id);
+          : item.kind === "voice"
+            ? voiceNodesRef.current.find((entry) => entry.id === item.id)
+            : textNodesRef.current.find((entry) => entry.id === item.id);
 
     if (!node) {
       return;
@@ -1708,6 +1845,7 @@ export default function CanvasWorkspace({
     });
 
     setSelectedImageIds(item.kind === "image" ? [item.id] : []);
+    setSelectedTextNodeId(item.kind === "text" ? item.id : null);
     setActiveWebNodeId(null);
     setShowContentsPanel(false);
   }
@@ -1752,6 +1890,20 @@ export default function CanvasWorkspace({
           size: voiceNode.size,
         });
         setSelectedImageIds([]);
+        setSelectedTextNodeId(null);
+        setActiveWebNodeId(null);
+        return;
+      }
+
+      const textNode = textNodesRef.current.find((node) => node.id === id);
+
+      if (textNode) {
+        focusCanvasBounds({
+          position: textNode.position,
+          size: textNode.size,
+        });
+        setSelectedImageIds([]);
+        setSelectedTextNodeId(id);
         setActiveWebNodeId(null);
       }
     },
@@ -1774,7 +1926,13 @@ export default function CanvasWorkspace({
         node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
       ),
     );
+    setTextNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+      ),
+    );
     setSelectedImageIds((current) => current.filter((nodeId) => nodeId !== id));
+    setSelectedTextNodeId((current) => (current === id ? null : current));
     setActiveWebNodeId((current) => (current === id ? null : current));
     saveDelayMsRef.current = 0;
   }, []);
@@ -1791,6 +1949,11 @@ export default function CanvasWorkspace({
       ),
     );
     setVoiceNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+      ),
+    );
+    setTextNodes((current) =>
       current.map((node) =>
         node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
       ),
@@ -1818,6 +1981,11 @@ export default function CanvasWorkspace({
     setVoiceNodes((current) =>
       current.map((node) =>
         node.id === id ? { ...node, title: nextName } : node,
+      ),
+    );
+    setTextNodes((current) =>
+      current.map((node) =>
+        node.id === id ? { ...node, text: nextName } : node,
       ),
     );
     saveDelayMsRef.current = 0;
@@ -1851,13 +2019,27 @@ export default function CanvasWorkspace({
 
       const voiceNode = voiceNodesRef.current.find((node) => node.id === id);
 
-      if (!voiceNode || (voiceNode.locked ?? false)) {
+      if (voiceNode) {
+        if (voiceNode.locked ?? false) {
+          return;
+        }
+
+        removeNodePlayback(id);
+        setVoiceNodes((current) => current.filter((node) => node.id !== id));
+        setOpenVoiceMenuNodeId((current) => (current === id ? null : current));
+        saveDelayMsRef.current = 0;
         return;
       }
 
-      removeNodePlayback(id);
-      setVoiceNodes((current) => current.filter((node) => node.id !== id));
-      setOpenVoiceMenuNodeId((current) => (current === id ? null : current));
+      const textNode = textNodesRef.current.find((node) => node.id === id);
+
+      if (!textNode || (textNode.locked ?? false)) {
+        return;
+      }
+
+      setTextNodes((current) => current.filter((node) => node.id !== id));
+      setSelectedTextNodeId((current) => (current === id ? null : current));
+      setEditingTextNodeId((current) => (current === id ? null : current));
       saveDelayMsRef.current = 0;
     },
     [removeImageNodes, removeNodePlayback],
@@ -1906,6 +2088,12 @@ export default function CanvasWorkspace({
         height: node.size.height,
       })),
       ...voiceNodesRef.current.map((node) => ({
+        x: node.position.x,
+        y: node.position.y,
+        width: node.size.width,
+        height: node.size.height,
+      })),
+      ...textNodesRef.current.map((node) => ({
         x: node.position.x,
         y: node.position.y,
         width: node.size.width,
@@ -2283,6 +2471,8 @@ export default function CanvasWorkspace({
 
     if (!additive) {
       setSelectedImageIds([]);
+      setSelectedTextNodeId(null);
+      setEditingTextNodeId(null);
     }
 
     setActiveWebNodeId(null);
@@ -2331,6 +2521,79 @@ export default function CanvasWorkspace({
     }
   }
 
+  function handleTextPointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+    node: CanvasTextNodeData,
+  ) {
+    if (node.locked ?? false) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+    textDragRef.current = {
+      nodeId: node.id,
+      offset: {
+        x: point.x - node.position.x,
+        y: point.y - node.position.y,
+      },
+    };
+    setDraggingTextNodeId(node.id);
+    setSelectedImageIds([]);
+    setSelectedTextNodeId(node.id);
+    setActiveWebNodeId(null);
+
+    setTextNodes((current) => {
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((entry) => entry.zIndex),
+        ...webNodesRef.current.map((entry) => entry.zIndex),
+        ...voiceNodesRef.current.map((entry) => entry.zIndex),
+        ...current.map((entry) => entry.zIndex),
+      );
+
+      return current.map((entry) =>
+        entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
+      );
+    });
+  }
+
+  function handleTextPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const dragState = textDragRef.current;
+
+    if (!dragState) {
+      return;
+    }
+
+    const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+
+    setTextNodes((current) =>
+      current.map((node) =>
+        node.id === dragState.nodeId
+          ? {
+              ...node,
+              position: {
+                x: point.x - dragState.offset.x,
+                y: point.y - dragState.offset.y,
+              },
+            }
+          : node,
+      ),
+    );
+  }
+
+  function handleTextPointerUp(event: ReactPointerEvent<HTMLElement>) {
+    textDragRef.current = null;
+    setDraggingTextNodeId(null);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
   function handleImagePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
     node: ImageCanvasNode,
@@ -2363,6 +2626,10 @@ export default function CanvasWorkspace({
     } else {
       idsToDrag = [node.id];
     }
+
+    setSelectedTextNodeId(null);
+    setEditingTextNodeId(null);
+    setActiveWebNodeId(null);
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     const startPositions = Object.fromEntries(
       imageNodesRef.current
@@ -2533,6 +2800,9 @@ export default function CanvasWorkspace({
       hasMoved: false,
     };
     setDraggingWebNodeId(node.id);
+    setSelectedImageIds([]);
+    setSelectedTextNodeId(null);
+    setEditingTextNodeId(null);
 
     setWebNodes((current) => {
       const topZIndex = Math.max(
@@ -2708,6 +2978,10 @@ export default function CanvasWorkspace({
       },
     };
     setDraggingVoiceNodeId(node.id);
+    setSelectedImageIds([]);
+    setSelectedTextNodeId(null);
+    setEditingTextNodeId(null);
+    setActiveWebNodeId(null);
 
     setVoiceNodes((current) => {
       const topZIndex = Math.max(
@@ -2868,6 +3142,39 @@ export default function CanvasWorkspace({
             }
             onResizePointerMove={handleWebPointerMove}
             onResizePointerUp={handleWebPointerUp}
+          />
+        ))}
+
+        {textNodes.filter((node) => node.visible ?? true).map((node) => (
+          <CanvasTextNode
+            key={node.id}
+            isDragging={draggingTextNodeId === node.id}
+            isEditing={editingTextNodeId === node.id}
+            isSelected={selectedTextNodeId === node.id}
+            node={node}
+            onBlur={() => setEditingTextNodeId(null)}
+            onInput={(text) =>
+              setTextNodes((current) =>
+                current.map((entry) =>
+                  entry.id === node.id ? { ...entry, text } : entry,
+                ),
+              )
+            }
+            onPointerCancel={handleTextPointerUp}
+            onPointerDown={(event) => handleTextPointerDown(event, node)}
+            onPointerMove={handleTextPointerMove}
+            onPointerUp={handleTextPointerUp}
+            onSizeChange={(size) =>
+              setTextNodes((current) =>
+                current.map((entry) =>
+                  entry.id === node.id ? { ...entry, size } : entry,
+                ),
+              )
+            }
+            onStartEditing={() => {
+              setSelectedTextNodeId(node.id);
+              setEditingTextNodeId(node.id);
+            }}
           />
         ))}
 

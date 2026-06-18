@@ -1,8 +1,8 @@
 "use client";
 
-import { Globe, ImageIcon, Layers3,Cloud, AudioLines } from "lucide-react";
+import { Globe, ImageIcon, Layers3, Cloud, AudioLines, StickyNote } from "lucide-react";
 
-type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
+type CanvasObjectKind = "image" | "website" | "voice" | "text" | "cloud";
 
 export type CanvasContentsItem = {
   id: string;
@@ -35,6 +35,10 @@ const KIND_CONFIG: Record<
   voice: {
     label: "Voice",
     icon: <AudioLines className="h-3.5 w-3.5" />,
+  },
+  text: {
+    label: "Note",
+    icon: <StickyNote className="h-3.5 w-3.5" />,
   },
   cloud: {
     label: "Cloud",

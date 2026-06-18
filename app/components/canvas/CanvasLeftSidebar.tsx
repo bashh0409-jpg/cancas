@@ -20,6 +20,7 @@ import {
   Plus,
   RotateCcw,
   Ruler,
+  StickyNote,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -60,6 +61,7 @@ const LAYER_ICONS = {
   image: ImageIcon,
   website: Globe,
   voice: AudioLines,
+  text: StickyNote,
   cloud: Cloud,
 } as const;
 
@@ -67,6 +69,7 @@ const LAYER_LABELS = {
   image: "Image",
   website: "Web",
   voice: "Voice",
+  text: "Note",
   cloud: "Cloud",
 } as const;
 

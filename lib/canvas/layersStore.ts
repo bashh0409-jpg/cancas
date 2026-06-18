@@ -3,7 +3,7 @@ import { create } from "zustand";
 export type CanvasLayer = {
   id: string;
   name: string;
-  type: "image" | "web" | "voice";
+  type: "image" | "web" | "voice" | "text";
   visible: boolean;
   locked: boolean;
   zIndex: number;
