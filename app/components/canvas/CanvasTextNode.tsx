@@ -254,6 +254,25 @@ export function CanvasTextNode({
 
       setIsLoading(true);
 
+      // Consume 3 credits first
+      try {
+        const creditRes = await fetch("/api/credits/consume", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ amount: 3 }),
+        });
+
+        if (creditRes.status === 402) {
+          cleanupPlayback();
+          return;
+        }
+
+        if (!creditRes.ok) throw new Error("Credit check failed");
+      } catch {
+        cleanupPlayback();
+        return;
+      }
+
       try {
         const response = await fetch("/api/ai/run", {
           method: "POST",
@@ -351,7 +370,7 @@ export function CanvasTextNode({
     >
       <div
         className={[
-          "min-h-20 max-h-100 overflow-auto w-full rounded border px-3 py-2 transition overflow-hidden",
+          "min-h-20 max-h-150 overflow-y-auto w-full rounded border px-3 py-2 transition overflow-hidden",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
@@ -362,6 +381,7 @@ export function CanvasTextNode({
           fontFamily: node.style.fontFamily,
           fontSize: node.style.fontSize,
         }}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         {isEditing ? (
           <textarea
@@ -385,9 +405,7 @@ export function CanvasTextNode({
                   let wordIdx = 0;
                   return segments.map((seg, i) => {
                     if (seg.isSpace) {
-                      return (
-                        <span key={i}>{seg.text}</span>
-                      );
+                      return <span key={i}>{seg.text}</span>;
                     }
                     const idx = wordIdx;
                     wordIdx += 1;
@@ -395,7 +413,9 @@ export function CanvasTextNode({
                       <span
                         key={i}
                         className={
-                          idx === activeWordIndex ? " transition-colors duration-75" : ""
+                          idx === activeWordIndex
+                            ? " transition-colors duration-75"
+                            : ""
                         }
                         style={
                           idx === activeWordIndex
