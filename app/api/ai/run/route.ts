@@ -7,12 +7,21 @@ const PROVIDERS = new Set<AiProvider>([
   "claude",
   "openai",
   "openai-images",
-  "gemini",
   "nano-banana",
   "stability",
-  "replicate",
-  "seedance",
   "topaz-gigapixel",
+  "fal-ai",
+  "fal-ai-inpainting",
+  "fal-ai-upscale",
+  "openai-vision",
+  "claude-vision",
+  "openai-embeddings",
+  "runway",
+  "kling",
+  "amazon-tts",
+  "elevenlabs",
+  "openai-stt",
+  "deepgram",
 ]);
 
 const TASKS = new Set<AiTask>([
@@ -21,6 +30,10 @@ const TASKS = new Set<AiTask>([
   "image-edit",
   "video-generate",
   "upscale",
+  "vision",
+  "embeddings",
+  "text-to-speech",
+  "speech-to-text",
 ]);
 
 export async function POST(request: NextRequest) {
@@ -38,8 +51,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const message =
+      error instanceof Error ? error.message : "Unable to run AI provider";
+
     return NextResponse.json(
-      { error: "Unable to run AI provider" },
+      { error: message },
       { status: 500 }
     );
   }

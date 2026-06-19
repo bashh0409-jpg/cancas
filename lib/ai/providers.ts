@@ -9,17 +9,25 @@ import {
   readJson,
 } from "./json";
 import type { AiRunRequest, AiRunResponse } from "./types";
+import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
+import { Readable } from "node:stream";
 
 const DEFAULTS = {
   claude: "claude-sonnet-4-20250514",
-  openai: "gpt-5.2",
-  openaiImages: "gpt-image-1.5",
-  gemini: "gemini-2.5-flash",
+  openai: "gpt-4o",
+  openaiImages: "dall-e-3",
   nanoBanana: "gemini-2.5-flash-image-preview",
   stability: "stable-image-core",
-  replicate: "black-forest-labs/flux-schnell",
-  seedance: "bytedance/seedance-2.0",
   topazGigapixel: "Low Resolution V2",
+  falFlux: "fal-ai/flux-pro/v1.1",
+  falInpainting: "fal-ai/flux/dev/inpainting",
+  falUpscale: "fal-ai/real-esrgan",
+  openaiEmbeddings: "text-embedding-3-large",
+  runway: "runway/gen-4",
+  kling: "kling/v2",
+  elevenlabs: "eleven_multilingual_v2",
+  deepgram: "nova-2",
+  openaiTTS: "tts-1",
 } as const;
 
 export async function runAiProvider(
@@ -32,18 +40,36 @@ export async function runAiProvider(
       return runOpenAIText(request);
     case "openai-images":
       return runOpenAIImage(request);
-    case "gemini":
-      return runGemini(request, false);
     case "nano-banana":
-      return runGemini(request, true);
+      return runNanoBanana(request);
     case "stability":
       return runStability(request);
-    case "replicate":
-      return runReplicate(request, DEFAULTS.replicate);
-    case "seedance":
-      return runReplicate(request, DEFAULTS.seedance);
     case "topaz-gigapixel":
       return runTopazGigapixel(request);
+    case "fal-ai":
+      return runFalAI(request, DEFAULTS.falFlux, "image-generate");
+    case "fal-ai-inpainting":
+      return runFalAI(request, DEFAULTS.falInpainting, "image-edit");
+    case "fal-ai-upscale":
+      return runFalAI(request, DEFAULTS.falUpscale, "upscale");
+    case "openai-vision":
+      return runOpenAIVision(request);
+    case "claude-vision":
+      return runClaudeVision(request);
+    case "openai-embeddings":
+      return runOpenAIEmbeddings(request);
+    case "runway":
+      return runRunway(request);
+    case "kling":
+      return runKling(request);
+    case "amazon-tts":
+      return runAmazonTTS(request);
+    case "elevenlabs":
+      return runElevenLabs(request);
+    case "openai-stt":
+      return runOpenAIStt(request);
+    case "deepgram":
+      return runDeepgram(request);
   }
 }
 
@@ -143,40 +169,37 @@ async function runOpenAIImage(request: AiRunRequest): Promise<AiRunResponse> {
   };
 }
 
-async function runGemini(
-  request: AiRunRequest,
-  imageMode: boolean
-): Promise<AiRunResponse> {
-  const apiKey = requireEnv("GEMINI_API_KEY");
-  const defaultModel = imageMode ? DEFAULTS.nanoBanana : DEFAULTS.gemini;
-  const envModel = imageMode
-    ? process.env.GEMINI_IMAGE_MODEL
-    : process.env.GEMINI_TEXT_MODEL;
-  const model = request.options?.model ?? envModel ?? defaultModel;
+/**
+ * Nano Banana — uses GPT-4o Image Generation endpoint.
+ * This is the provider for GPT-4o Image Generation / GPT-4o Vision.
+ */
+async function runNanoBanana(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("OPENAI_API_KEY");
+  const model =
+    request.options?.model ?? process.env.OPENAI_IMAGE_MODEL ?? "gpt-4o-image";
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: request.prompt }] }],
-        generationConfig: imageMode
-          ? { responseModalities: ["TEXT", "IMAGE"] }
-          : undefined,
-      }),
-    }
-  );
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt: request.prompt,
+      n: 1,
+      size: request.options?.size ?? "1024x1024",
+    }),
+  });
 
-  await assertOk(response, imageMode ? "Nano Banana/Gemini Image" : "Gemini");
+  await assertOk(response, "Nano Banana / GPT-4o Image");
   const payload = await readJson(response);
 
   return {
     provider: request.provider,
     task: request.task,
     model,
-    text: extractGeminiText(payload),
-    images: extractGeminiImages(payload),
+    images: extractImageOutputs(payload),
     raw: asJsonValue(payload),
   };
 }
@@ -215,43 +238,6 @@ async function runStability(request: AiRunRequest): Promise<AiRunResponse> {
     task: request.task,
     model,
     images: [`data:image/${outputFormat};base64,${buffer.toString("base64")}`],
-  };
-}
-
-async function runReplicate(
-  request: AiRunRequest,
-  defaultModel: string
-): Promise<AiRunResponse> {
-  const apiKey = requireEnv("REPLICATE_API_TOKEN");
-  const model = request.options?.model ?? defaultModel;
-  const endpoint = request.options?.replicateVersion
-    ? "https://api.replicate.com/v1/predictions"
-    : `https://api.replicate.com/v1/models/${model}/predictions`;
-  const body = request.options?.replicateVersion
-    ? { version: request.options.replicateVersion, input: buildReplicateInput(request) }
-    : { input: buildReplicateInput(request) };
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-      prefer: "wait=10",
-    },
-    body: JSON.stringify(body),
-  });
-
-  await assertOk(response, "Replicate");
-  const payload = await readJson(response);
-
-  return {
-    provider: request.provider,
-    task: request.task,
-    model,
-    images: extractReplicateUrls(payload, "image"),
-    videos: extractReplicateUrls(payload, "video"),
-    jobId: isRecord(payload) ? getString(payload, "id") : undefined,
-    raw: asJsonValue(payload),
   };
 }
 
@@ -307,21 +293,547 @@ async function runTopazGigapixel(
   };
 }
 
-function buildReplicateInput(request: AiRunRequest) {
-  if (request.provider === "seedance") {
+/**
+ * fal.ai provider — supports image generation (Flux 1.1 Pro),
+ * inpainting (Flux Inpainting), and upscaling (Real-ESRGAN).
+ */
+async function runFalAI(
+  request: AiRunRequest,
+  defaultModel: string,
+  expectedTask: string
+): Promise<AiRunResponse> {
+  const apiKey = requireEnv("FAL_API_KEY");
+  const model = request.options?.model ?? defaultModel;
+
+  const endpoint =
+    request.options?.falEndpoint ??
+    `https://fal.run/${model}`;
+
+  const body: Record<string, unknown> = {
+    prompt: request.prompt,
+  };
+
+  if (request.options?.imageUrl) {
+    body.image_url = request.options.imageUrl;
+  }
+
+  if (request.options?.imageBase64) {
+    body.image = request.options.imageBase64;
+  }
+
+  if (request.options?.size) {
+    body.image_size = request.options.size;
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      authorization: `Key ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  await assertOk(response, "fal.ai");
+  const payload = await readJson(response);
+
+  const images: string[] = [];
+  const outputImages = isRecord(payload) ? payload.images ?? payload.image : null;
+
+  if (Array.isArray(outputImages)) {
+    for (const img of outputImages) {
+      if (typeof img === "string") {
+        images.push(img);
+      } else if (isRecord(img) && typeof img.url === "string") {
+        images.push(img.url);
+      }
+    }
+  } else if (typeof outputImages === "string") {
+    images.push(outputImages);
+  }
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    images: images.length > 0 ? images : undefined,
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * GPT-4o Vision — send an image URL and get a text description.
+ * Uses the OpenAI chat completions endpoint with image input.
+ */
+async function runOpenAIVision(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("OPENAI_API_KEY");
+  const model = request.options?.model ?? "gpt-4o";
+
+  const content: unknown[] = [{ type: "text", text: request.prompt }];
+
+  if (request.options?.imageUrl) {
+    content.push({
+      type: "image_url",
+      image_url: { url: request.options.imageUrl },
+    });
+  }
+
+  if (request.options?.imageBase64) {
+    const mimeType = request.options.imageBase64.includes("image/")
+      ? request.options.imageBase64.split(";")[0].replace("data:", "")
+      : "image/png";
+
+    content.push({
+      type: "image_url",
+      image_url: { url: `data:${mimeType};base64,${request.options.imageBase64}` },
+    });
+  }
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: request.system ?? "You are a helpful assistant." },
+        { role: "user", content },
+      ],
+      max_tokens: 1600,
+    }),
+  });
+
+  await assertOk(response, "OpenAI Vision");
+  const payload = await readJson(response);
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    text: extractChatCompletionText(payload),
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * Claude Vision — send an image URL and get a text description.
+ * Uses the Anthropic messages endpoint with image content.
+ */
+async function runClaudeVision(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("ANTHROPIC_API_KEY");
+  const model = request.options?.model ?? "claude-sonnet-4-20250514";
+
+  const content: unknown[] = [{ type: "text", text: request.prompt }];
+
+  if (request.options?.imageUrl) {
+    // Fetch the image and convert to base64
+    const imageResponse = await fetch(request.options.imageUrl);
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    const mimeType = imageResponse.headers.get("content-type") ?? "image/png";
+    const base64 = imageBuffer.toString("base64");
+
+    content.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: mimeType,
+        data: base64,
+      },
+    });
+  }
+
+  if (request.options?.imageBase64) {
+    const mimeType = request.options.imageBase64.includes("image/")
+      ? request.options.imageBase64.split(";")[0].replace("data:", "")
+      : "image/png";
+
+    const base64Data = request.options.imageBase64.includes(",")
+      ? request.options.imageBase64.split(",")[1]
+      : request.options.imageBase64;
+
+    content.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: mimeType,
+        data: base64Data,
+      },
+    });
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1600,
+      system: request.system,
+      messages: [{ role: "user", content }],
+    }),
+  });
+
+  await assertOk(response, "Claude Vision");
+  const payload = await readJson(response);
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    text: extractClaudeText(payload),
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * OpenAI Embeddings — generates vector embeddings for text.
+ * Uses text-embedding-3-large by default.
+ */
+async function runOpenAIEmbeddings(
+  request: AiRunRequest
+): Promise<AiRunResponse> {
+  const apiKey = requireEnv("OPENAI_API_KEY");
+  const model =
+    request.options?.model ??
+    process.env.OPENAI_EMBEDDINGS_MODEL ??
+    DEFAULTS.openaiEmbeddings;
+
+  const response = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      input: request.prompt,
+      dimensions: request.options?.dimensions,
+    }),
+  });
+
+  await assertOk(response, "OpenAI Embeddings");
+  const payload = await readJson(response);
+
+  if (!isRecord(payload)) {
     return {
+      provider: request.provider,
+      task: request.task,
+      model,
+      raw: asJsonValue(payload),
+    };
+  }
+
+  const data = getArray(payload, "data");
+  const firstEmbedding = isRecord(data?.[0])
+    ? (data[0] as Record<string, unknown>).embedding
+    : undefined;
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    embeddings: Array.isArray(firstEmbedding)
+      ? (firstEmbedding as number[])
+      : undefined,
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * Runway Gen-4 — video generation.
+ */
+async function runRunway(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("RUNWAY_API_KEY");
+  const model = request.options?.model ?? DEFAULTS.runway;
+
+  const response = await fetch("https://api.runwayml.com/v1/video/generate", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
       prompt: request.prompt,
-      image: request.options?.imageUrl,
-      aspect_ratio: request.options?.aspectRatio,
+      image_url: request.options?.imageUrl,
+      duration: request.options?.duration ?? 5,
+    }),
+  });
+
+  await assertOk(response, "Runway");
+  const payload = await readJson(response);
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    videos: isRecord(payload) ? extractUrls(payload, "url") : undefined,
+    jobId: isRecord(payload) ? getString(payload, "id") : undefined,
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * Kling — video generation.
+ */
+async function runKling(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("KLING_API_KEY");
+  const model = request.options?.model ?? DEFAULTS.kling;
+
+  const response = await fetch("https://api.klingai.com/v1/videos/generate", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt: request.prompt,
+      image_url: request.options?.imageUrl,
+      duration: request.options?.duration ?? 5,
+    }),
+  });
+
+  await assertOk(response, "Kling");
+  const payload = await readJson(response);
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    videos: isRecord(payload) ? extractUrls(payload, "url") : undefined,
+    jobId: isRecord(payload) ? getString(payload, "request_id") : undefined,
+    raw: asJsonValue(payload),
+  };
+}
+
+/**
+ * Amazon Polly — free tier text-to-speech.
+ * Uses the AWS SDK v3 with proper Signature V4 signing.
+ */
+async function runAmazonTTS(request: AiRunRequest): Promise<AiRunResponse> {
+  requireEnv("AWS_ACCESS_KEY_ID");
+  requireEnv("AWS_SECRET_ACCESS_KEY");
+  requireEnv("AWS_REGION");
+
+  const engine = request.options?.model ?? "standard";
+  const voiceId = request.options?.voice ?? "Joanna";
+  const language = request.options?.language ?? "en-US";
+
+  const client = new PollyClient({
+    region: process.env.AWS_REGION!,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  const command = new SynthesizeSpeechCommand({
+    Engine: engine as "standard" | "neural" | "long-form",
+    OutputFormat: "mp3",
+    Text: request.prompt,
+    VoiceId: voiceId as any,
+    LanguageCode: language as any,
+  });
+
+  const response = await client.send(command);
+
+  if (!response.AudioStream) {
+    throw new AiProviderError("Amazon Polly returned no audio stream", 502);
+  }
+
+  // Convert the AudioStream to a Buffer
+  const { pipeline } = await import("node:stream/promises");
+  const { Readable: NodeReadable } = await import("node:stream");
+  const stream = response.AudioStream as unknown;
+
+  let buffer: Buffer;
+
+  if (stream instanceof NodeReadable) {
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    buffer = Buffer.concat(chunks);
+  } else if (typeof (stream as any).transformToByteArray === "function") {
+    // Web ReadableStream API
+    const bytes = await (stream as any).transformToByteArray();
+    buffer = Buffer.from(bytes);
+  } else {
+    throw new AiProviderError(
+      "Amazon Polly returned unsupported stream type",
+      502
+    );
+  }
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model: `${engine}/${voiceId}`,
+    audio: `data:audio/mpeg;base64,${buffer.toString("base64")}`,
+  };
+}
+
+/**
+ * Eleven Labs — premium text-to-speech.
+ */
+async function runElevenLabs(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("ELEVENLABS_API_KEY");
+  const voice = request.options?.voice ?? "JBFqnCBsd6RMkjVDRZzb"; // Rachel (default)
+  const model = request.options?.model ?? DEFAULTS.elevenlabs;
+
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${voice}`,
+    {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        text: request.prompt,
+        model_id: model,
+        output_format: "mp3_44100_128",
+      }),
+    }
+  );
+
+  await assertOk(response, "Eleven Labs");
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model: `${model}/${voice}`,
+    audio: `data:audio/mpeg;base64,${buffer.toString("base64")}`,
+  };
+}
+
+/**
+ * OpenAI Whisper — speech-to-text via the transcription API.
+ */
+async function runOpenAIStt(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("OPENAI_API_KEY");
+  const model = request.options?.model ?? DEFAULTS.openaiTTS;
+  const language = request.options?.language;
+
+  if (!request.options?.imageBase64) {
+    throw new AiProviderError(
+      "OpenAI STT requires options.imageBase64 (base64 audio)",
+      400
+    );
+  }
+
+  // Decode base64 audio and create a FormData with the audio file
+  const audioBuffer = Buffer.from(request.options.imageBase64, "base64");
+  const blob = new Blob([audioBuffer], { type: "audio/webm" });
+  const formData = new FormData();
+  formData.set("file", blob, "audio.webm");
+  formData.set("model", model);
+
+  if (language) {
+    formData.set("language", language);
+  }
+
+  const response = await fetch(
+    "https://api.openai.com/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: formData,
+    }
+  );
+
+  await assertOk(response, "OpenAI STT");
+  const payload = await readJson(response);
+
+  if (!isRecord(payload)) {
+    return {
+      provider: request.provider,
+      task: request.task,
+      model,
+      raw: asJsonValue(payload),
     };
   }
 
   return {
-    prompt: request.prompt,
-    image: request.options?.imageUrl,
-    aspect_ratio: request.options?.aspectRatio,
+    provider: request.provider,
+    task: request.task,
+    model,
+    text: getString(payload, "text"),
+    raw: asJsonValue(payload),
   };
 }
+
+/**
+ * Deepgram — speech-to-text.
+ */
+async function runDeepgram(request: AiRunRequest): Promise<AiRunResponse> {
+  const apiKey = requireEnv("DEEPGRAM_API_KEY");
+  const model = request.options?.model ?? DEFAULTS.deepgram;
+  const language = request.options?.language ?? "en";
+
+  if (!request.options?.imageBase64) {
+    throw new AiProviderError(
+      "Deepgram requires options.imageBase64 (base64 audio)",
+      400
+    );
+  }
+
+  // Decode base64 audio
+  const audioBuffer = Buffer.from(request.options.imageBase64, "base64");
+
+  const response = await fetch(
+    `https://api.deepgram.com/v1/listen?model=${model}&language=${language}&smart_format=true`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Token ${apiKey}`,
+        "content-type": "audio/webm",
+      },
+      body: audioBuffer,
+    }
+  );
+
+  await assertOk(response, "Deepgram");
+  const payload = await readJson(response);
+
+  // Navigate the Deepgram response structure
+  let text: string | undefined;
+
+  if (isRecord(payload)) {
+    const results = payload.results;
+    const channels = isRecord(results)
+      ? getArray(results as Record<string, unknown>, "channels")
+      : undefined;
+    const alternatives = isRecord(channels?.[0])
+      ? getArray(channels[0] as Record<string, unknown>, "alternatives")
+      : undefined;
+
+    if (alternatives?.[0] && isRecord(alternatives[0])) {
+      text = getString(alternatives[0] as Record<string, unknown>, "transcript");
+    }
+  }
+
+  return {
+    provider: request.provider,
+    task: request.task,
+    model,
+    text,
+    raw: asJsonValue(payload),
+  };
+}
+
+// ─── Utility Helpers ────────────────────────────────────────────────────────
 
 function extractClaudeText(payload: unknown) {
   if (!isRecord(payload)) {
@@ -356,45 +868,24 @@ function extractOpenAIText(payload: unknown) {
     .join("\n");
 }
 
-function extractGeminiText(payload: unknown) {
-  return extractGeminiParts(payload, "text").join("\n") || undefined;
-}
-
-function extractGeminiImages(payload: unknown) {
-  return extractGeminiParts(payload, "inlineData")
-    .map((part) => {
-      if (!isRecord(part)) {
-        return undefined;
-      }
-
-      const mimeType = getString(part, "mimeType") ?? "image/png";
-      const data = getString(part, "data");
-
-      return data ? `data:${mimeType};base64,${data}` : undefined;
-    })
-    .filter((entry): entry is string => Boolean(entry));
-}
-
-function extractGeminiParts(payload: unknown, key: "text" | "inlineData") {
+function extractChatCompletionText(payload: unknown) {
   if (!isRecord(payload)) {
-    return [];
+    return undefined;
   }
 
-  const candidates = getArray(payload, "candidates") ?? [];
+  const choices = getArray(payload, "choices");
+  const firstChoice = isRecord(choices?.[0]) ? choices[0] : undefined;
+  const message = firstChoice
+    ? isRecord(firstChoice as Record<string, unknown>)
+      ? (firstChoice as Record<string, unknown>).message
+      : undefined
+    : undefined;
 
-  return candidates.flatMap((candidate) => {
-    if (!isRecord(candidate) || !isRecord(candidate.content)) {
-      return [];
-    }
+  if (isRecord(message as Record<string, unknown>)) {
+    return getString(message as Record<string, unknown>, "content");
+  }
 
-    const parts = getArray(candidate.content, "parts") ?? [];
-
-    return parts
-      .map((part) => (isRecord(part) ? part[key] : undefined))
-      .filter((entry): entry is string | Record<string, unknown> =>
-        Boolean(entry)
-      );
-  });
+  return undefined;
 }
 
 function extractImageOutputs(payload: unknown) {
@@ -417,21 +908,16 @@ function extractImageOutputs(payload: unknown) {
     .filter((entry): entry is string => Boolean(entry));
 }
 
-function extractReplicateUrls(payload: unknown, kind: "image" | "video") {
-  if (!isRecord(payload)) {
-    return [];
+function extractUrls(payload: Record<string, unknown>, key: string) {
+  const value = payload[key];
+
+  if (typeof value === "string") {
+    return [value];
   }
 
-  const output = payload.output;
-  const values = Array.isArray(output) ? output : output ? [output] : [];
-  const extensions =
-    kind === "image"
-      ? [".png", ".jpg", ".jpeg", ".webp"]
-      : [".mp4", ".mov", ".webm"];
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string");
+  }
 
-  return values
-    .filter((entry): entry is string => typeof entry === "string")
-    .filter((entry) =>
-      extensions.some((extension) => entry.toLowerCase().includes(extension))
-    );
+  return undefined;
 }
