@@ -112,7 +112,7 @@ export default function CanvasPageClient({
       )}*/}
 
       {/* BOTTOM BAR */}
-      <div className="absolute bottom-0 left-0 z-50 flex w-fit items-center p-4">
+      <div className="absolute bottom-0 right-0 z-50 flex w-fit items-center p-4">
         <SyncIndicator stats={syncStats} />
       </div>
 

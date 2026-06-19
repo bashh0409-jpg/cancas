@@ -36,7 +36,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
     switch (status) {
       case "syncing":
         return {
-          icon: <Loader2 className="h-3.5 w-3.5 animate-spin text-black/60" />,
+          icon: <Loader2 className="h-3.5 hidden w-3.5 animate-spin text-black/60" />,
           label: `${stats.synced}/${stats.total}`,
           description: `Uploading ${stats.total - stats.synced} remaining file${
             stats.total - stats.synced !== 1 ? "s" : ""
@@ -54,12 +54,12 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
 
       default:
         return {
-          icon: <CheckCircle2 className="h-3.5 w-3.5 text-black/60" />,
+          icon: <CheckCircle2 className="h-3.5 hidden w-3.5 text-black/60" />,
           label: "Saved",
           description: `All ${stats.total} file${
             stats.total !== 1 ? "s" : ""
           } synced to cloud`,
-          classes: "border-black/10 hidden bg-white/95 text-black/75",
+          classes: "border-black/10   bg-white/95 text-black/75",
         };
     }
   }, [stats, status]);
@@ -73,7 +73,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
       <button
         aria-label={config.description}
         className={[
-          "group flex h-9 items-center gap-2 rounded-xl border px-3",
+          "group flex h-9 items-center gap-2 rounded border px-1",
           "backdrop-blur-xl transition-all duration-200",
           "shadow-[0_10px_28px_rgba(0,0,0,0.10)]",
           config.classes,
@@ -82,13 +82,10 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
       >
         <div className="flex items-center justify-center">{config.icon}</div>
 
-        <span className="text-[11px]  tracking-tight">{config.label}</span>
+        <span className="text-xs mono uppercase  tracking-tight">{config.label}</span>
 
         {status === "syncing" ? (
           <div className="flex items-center gap-[2px]">
-            <span className="h-1 w-1 rounded-full bg-current animate-pulse" />
-            <span className="h-1 w-1 rounded-full bg-current animate-pulse [animation-delay:120ms]" />
-            <span className="h-1 w-1 rounded-full bg-current animate-pulse [animation-delay:240ms]" />
           </div>
         ) : null}
       </button>
