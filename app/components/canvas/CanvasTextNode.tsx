@@ -10,6 +10,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -45,6 +46,76 @@ type CanvasTextNodeProps = {
   onStartEditing: () => void;
 };
 
+type WordSegment = {
+  text: string;
+  isSpace: boolean;
+};
+
+/** Split text into word and whitespace segments preserving original layout. */
+function toWordSegments(text: string): WordSegment[] {
+  if (!text) return [];
+  const segments: WordSegment[] = [];
+  let buffer = "";
+  let inSpace = false;
+
+  for (const ch of text) {
+    const isSpace = /\s/.test(ch);
+    if (buffer.length === 0) {
+      buffer = ch;
+      inSpace = isSpace;
+      continue;
+    }
+    if (isSpace === inSpace) {
+      buffer += ch;
+    } else {
+      segments.push({ text: buffer, isSpace: inSpace });
+      buffer = ch;
+      inSpace = isSpace;
+    }
+  }
+  if (buffer) segments.push({ text: buffer, isSpace: inSpace });
+
+  return segments;
+}
+
+/** Character-length‑based word timing: assume each char takes equal time. */
+function buildWordTimings(
+  text: string,
+  duration: number,
+): { charIndex: number; wordIndex: number; startTime: number; endTime: number }[] {
+  const segments = toWordSegments(text);
+  const totalChars = text.length;
+  if (totalChars === 0 || duration <= 0) return [];
+
+  let charOffset = 0;
+  let wordIndex = 0;
+  const timings: {
+    charIndex: number;
+    wordIndex: number;
+    startTime: number;
+    endTime: number;
+  }[] = [];
+
+  for (const seg of segments) {
+    if (!seg.isSpace) {
+      const startTime =
+        (charOffset / totalChars) * duration;
+      const endTime =
+        ((charOffset + seg.text.length) / totalChars) * duration;
+      timings.push({
+        charIndex: charOffset,
+        wordIndex,
+        startTime,
+        endTime,
+      });
+      wordIndex += 1;
+    }
+    charOffset += seg.text.length;
+  }
+
+  return timings;
+}
+
 export function CanvasTextNode({
   node,
   isDragging,
@@ -64,7 +135,14 @@ export function CanvasTextNode({
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const wordTimingsRef = useRef<
+    { charIndex: number; wordIndex: number; startTime: number; endTime: number }[]
+  >([]);
+
+  const segments = useMemo(() => toWordSegments(node.text), [node.text]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -82,7 +160,7 @@ export function CanvasTextNode({
 
     const rect = el.getBoundingClientRect();
 
-    const MAX_WIDTH = 420; // increased cap (bigger node)
+    const MAX_WIDTH = 420;
     const MIN_SIZE = 120;
 
     const nextWidth = Math.min(
@@ -91,7 +169,7 @@ export function CanvasTextNode({
     );
 
     const nextHeight = Math.max(
-      nextWidth, // square constraint
+      nextWidth,
       Math.ceil(rect.height),
       node.style.fontSize * 1.8 + 20,
     );
@@ -108,75 +186,128 @@ export function CanvasTextNode({
     onInput(e.currentTarget.value);
   }
 
-  useEffect(() => {
-    if (isEditing || !isSelected) {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        audioRef.current = null;
-      }
-      queueMicrotask(() => {
-        setIsSpeaking(false);
-        setIsLoading(false);
-      });
+  // ── Word-highlight animation loop ──────────────────────────────────
+  const tickRef = useRef<() => void>(() => {});
+
+  const cleanupPlayback = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
-  }, [isEditing, isSelected]);
-
-  const speakText = useCallback(async (text: string) => {
-    if (!text.trim()) return;
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/ai/run", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          provider: "elevenlabs",
-          task: "text-to-speech",
-          prompt: text,
-        }),
-      });
-
-      if (!response.ok) throw new Error("TTS request failed");
-
-      const data = (await response.json()) as { audio?: string };
-
-      if (!data.audio) throw new Error("No audio returned");
-
-      const audio = new Audio(data.audio);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        setIsLoading(false);
-        audioRef.current = null;
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        setIsLoading(false);
-        audioRef.current = null;
-      };
-
-      await audio.play();
-      setIsSpeaking(true);
-      setIsLoading(false);
-    } catch {
-      setIsSpeaking(false);
-      setIsLoading(false);
-      audioRef.current = null;
-    }
-  }, []);
-
-  const stopSpeaking = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    setIsSpeaking(false);
-    setIsLoading(false);
+    wordTimingsRef.current = [];
+    queueMicrotask(() => {
+      setActiveWordIndex(null);
+      setIsSpeaking(false);
+      setIsLoading(false);
+    });
   }, []);
+
+  useEffect(() => {
+    if (isEditing || !isSelected) {
+      cleanupPlayback();
+    }
+  }, [isEditing, isSelected, cleanupPlayback]);
+
+  // Tick uses a ref internally so it can schedule itself without a
+  // temporal-dead-zone issue. This also avoids referencing tick before init.
+  useEffect(() => {
+    const fn = () => {
+      const audio = audioRef.current;
+      const timings = wordTimingsRef.current;
+      if (!audio || timings.length === 0) {
+        setActiveWordIndex(null);
+        return;
+      }
+
+      const t = audio.currentTime;
+      let found = false;
+
+      for (let i = 0; i < timings.length; i++) {
+        if (t >= timings[i].startTime && t < timings[i].endTime) {
+          setActiveWordIndex(timings[i].wordIndex);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        setActiveWordIndex(
+          t >= timings[timings.length - 1].endTime
+            ? timings[timings.length - 1].wordIndex
+            : -1,
+        );
+      }
+
+      rafRef.current = requestAnimationFrame(tickRef.current);
+    };
+
+    tickRef.current = fn;
+  }, []);
+
+  const speakText = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/ai/run", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            provider: "elevenlabs",
+            task: "text-to-speech",
+            prompt: text,
+          }),
+        });
+
+        if (!response.ok) throw new Error("TTS request failed");
+
+        const data = (await response.json()) as { audio?: string };
+
+        if (!data.audio) throw new Error("No audio returned");
+
+        const audio = new Audio(data.audio);
+        audioRef.current = audio;
+
+        // Build word timings once we know the total duration.
+        const setupTimings = () => {
+          const dur = audio.duration;
+          if (isFinite(dur) && dur > 0) {
+            wordTimingsRef.current = buildWordTimings(text, dur);
+          }
+        };
+
+        // duration may not be available immediately
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          setupTimings();
+        } else {
+          audio.addEventListener("loadedmetadata", setupTimings, { once: true });
+        }
+
+        audio.onended = cleanupPlayback;
+        audio.onerror = cleanupPlayback;
+
+        await audio.play();
+        setIsSpeaking(true);
+        setIsLoading(false);
+
+        // Start the word-highlight loop
+        rafRef.current = requestAnimationFrame(tickRef.current);
+      } catch {
+        cleanupPlayback();
+      }
+    },
+    [cleanupPlayback],
+  );
+
+  const stopSpeaking = useCallback(() => {
+    cleanupPlayback();
+  }, [cleanupPlayback]);
 
   const handleReadAloud = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -187,6 +318,13 @@ export function CanvasTextNode({
     },
     [isSpeaking, node.text, speakText, stopSpeaking],
   );
+
+  // ── Render active word background ──────────────────────────────────
+  const highlightColor =
+    node.style.backgroundColor &&
+    !node.style.backgroundColor.match(/^#(ffffff|fff|f8f9fa|f0f0f0)/i)
+      ? "rgba(125, 160, 255, 0.49)"
+      : "rgba(34,68,236,0.15)";
 
   return (
     <div
@@ -213,7 +351,7 @@ export function CanvasTextNode({
     >
       <div
         className={[
-          "min-h-20 w-full rounded border px-3 py-2 transition overflow-hidden",
+          "min-h-20 max-h-100 overflow-auto w-full rounded border px-3 py-2 transition overflow-hidden",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
@@ -241,8 +379,39 @@ export function CanvasTextNode({
             }}
           />
         ) : (
-          <div className="w-full text-sm whitespace-pre-wrap break-words tracking-tight overflow-hidden">
-            {node.text.length > 0 ? node.text : "Type here..."}
+          <div className="w-full text-sm whitespace-pre-wrap break-words tracking-tight leading-relaxed overflow-hidden">
+            {node.text.length > 0
+              ? (() => {
+                  let wordIdx = 0;
+                  return segments.map((seg, i) => {
+                    if (seg.isSpace) {
+                      return (
+                        <span key={i}>{seg.text}</span>
+                      );
+                    }
+                    const idx = wordIdx;
+                    wordIdx += 1;
+                    return (
+                      <span
+                        key={i}
+                        className={
+                          idx === activeWordIndex ? " transition-colors duration-75" : ""
+                        }
+                        style={
+                          idx === activeWordIndex
+                            ? {
+                                backgroundColor: highlightColor,
+                                boxShadow: `0 0 0 1px ${highlightColor}`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {seg.text}
+                      </span>
+                    );
+                  });
+                })()
+              : "Type here..."}
           </div>
         )}
       </div>
@@ -261,7 +430,7 @@ export function CanvasTextNode({
         <button
           type="button"
           className={[
-            "flex items-center gap-1 rounded px-2 py-1 text-xs shadow-sm",
+            "flex items-center cursor-pointer gap-1 rounded px-2 py-1 text-xs shadow-sm",
             isSpeaking
               ? "bg-red-500 text-white"
               : isLoading
