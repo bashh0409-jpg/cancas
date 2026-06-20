@@ -18,6 +18,10 @@ import {
   CanvasTextNode,
   type CanvasTextNodeData,
 } from "@/app/components/canvas/CanvasTextNode";
+import {
+  CanvasAiChatNode,
+  type CanvasAiChatNodeData,
+} from "@/app/components/canvas/CanvasAiChatNode";
 import { CanvasVoiceNode } from "@/app/components/canvas/CanvasVoiceNode";
 import { CanvasWebNode } from "@/app/components/canvas/CanvasWebNode";
 import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelectionArrangeBar";
@@ -40,6 +44,7 @@ import {
   type VoiceNoteRecordedDetail,
 } from "@/lib/canvas/voiceNotes";
 import { CANVAS_TEXT_TOOL_EVENT } from "@/lib/canvas/textToolEvents";
+import { CANVAS_AI_CHAT_TOOL_EVENT } from "@/lib/canvas/aiChatToolEvents";
 import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
 import {
   IMAGE_DELETE_UNDO_LIMIT,
@@ -490,6 +495,7 @@ export default function CanvasWorkspace({
   const webNodesRef = useRef<WebCanvasNode[]>([]);
   const voiceNodesRef = useRef<VoiceCanvasNode[]>(initialContent.voiceNodes);
   const textNodesRef = useRef<CanvasTextNodeData[]>(initialContent.textNodes);
+  const aiChatNodesRef = useRef<CanvasAiChatNodeData[]>(initialContent.aiChatNodes);
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
@@ -564,6 +570,9 @@ export default function CanvasWorkspace({
   );
   const [textNodes, setTextNodes] = useState<CanvasTextNodeData[]>(
     initialContent.textNodes,
+  );
+  const [aiChatNodes, setAiChatNodes] = useState<CanvasAiChatNodeData[]>(
+    initialContent.aiChatNodes,
   );
   const [pendingVoiceRecording, setPendingVoiceRecording] =
     useState<VoiceNoteRecordedDetail | null>(null);
@@ -642,6 +651,11 @@ export default function CanvasWorkspace({
           id: node.id,
           kind: "text" as const,
           label: node.text.trim() || "Sticky note",
+        })),
+        ...aiChatNodes.map((node) => ({
+          id: node.id,
+          kind: "text" as const,
+          label: "AI Chat",
         })),
       ].sort((a, b) => {
         const getZIndex = (item: CanvasContentsItem) => {
@@ -741,10 +755,12 @@ export default function CanvasWorkspace({
       setWebNodes(content.webNodes);
       setVoiceNodes(content.voiceNodes);
       setTextNodes(content.textNodes);
+      setAiChatNodes(content.aiChatNodes);
       imageNodesRef.current = content.imageNodes;
       webNodesRef.current = content.webNodes;
       voiceNodesRef.current = content.voiceNodes;
       textNodesRef.current = content.textNodes;
+      aiChatNodesRef.current = content.aiChatNodes;
       initialImageIdsRef.current = new Set(
         content.imageNodes.map((node) => node.id),
       );
@@ -1161,6 +1177,65 @@ export default function CanvasWorkspace({
   }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
 
   useEffect(() => {
+    function handleAiChatToolActivated() {
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect || !isClientReady) {
+        return;
+      }
+
+      const center = {
+        x: (rect.width / 2 - viewport.x) / viewport.zoom,
+        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+      };
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+        ...aiChatNodesRef.current.map((node) => node.zIndex),
+      );
+      const id = crypto.randomUUID();
+      const chatNode: CanvasAiChatNodeData = {
+        id,
+        position: {
+          x: center.x - 190,
+          y: center.y - 160,
+        },
+        size: {
+          width: 380,
+          height: 320,
+        },
+        zIndex: topZIndex + 1,
+        style: {
+          backgroundColor: "#ffffff",
+          color: "#171717",
+          fontFamily: "var(--font-helvetica-neue), Arial, sans-serif",
+          fontSize: 13,
+        },
+        messages: [],
+      };
+
+      setAiChatNodes((current) => [...current, chatNode]);
+      setSelectedImageIds([]);
+      setSelectedTextNodeId(null);
+      setEditingTextNodeId(null);
+      setActiveWebNodeId(null);
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener(CANVAS_AI_CHAT_TOOL_EVENT, handleAiChatToolActivated);
+
+    return () => {
+      window.removeEventListener(
+        CANVAS_AI_CHAT_TOOL_EVENT,
+        handleAiChatToolActivated,
+      );
+    };
+  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
+
+  useEffect(() => {
     function handleFileImport(event: Event) {
       const customEvent = event as CustomEvent<{ files: File[] }>;
       const files = Array.from(customEvent.detail?.files ?? []).filter((file) =>
@@ -1360,6 +1435,7 @@ export default function CanvasWorkspace({
       webNodes,
       voiceNodes,
       textNodes,
+      aiChatNodes,
       showGrid,
       backgroundColor,
       gridColor,
@@ -1367,6 +1443,7 @@ export default function CanvasWorkspace({
       gridLineType,
     };
   }, [
+    aiChatNodes,
     backgroundColor,
     gridColor,
     gridLineType,
@@ -1702,6 +1779,22 @@ export default function CanvasWorkspace({
     undoImageDelete,
     setImageNodes,
   ]);
+
+  useEffect(() => {
+    function preventBrowserZoom(event: globalThis.WheelEvent) {
+      // Prevent browser zoom via Ctrl/Cmd + scroll
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+      }
+    }
+
+    // Use capture phase to intercept before the browser's default zoom
+    document.addEventListener("wheel", preventBrowserZoom, { passive: false, capture: true });
+
+    return () => {
+      document.removeEventListener("wheel", preventBrowserZoom, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     function preventFileNavigation(event: DragEvent) {
@@ -2623,7 +2716,9 @@ export default function CanvasWorkspace({
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
 
-    setTextNodes((current) =>
+    const updatePosition = <T extends { id: string; position: Point }>(
+      current: T[],
+    ) =>
       current.map((node) =>
         node.id === dragState.nodeId
           ? {
@@ -2634,8 +2729,10 @@ export default function CanvasWorkspace({
               },
             }
           : node,
-      ),
-    );
+      );
+
+    setTextNodes(updatePosition);
+    setAiChatNodes(updatePosition);
   }
 
   function handleTextPointerUp(event: ReactPointerEvent<HTMLElement>) {
@@ -3234,6 +3331,65 @@ export default function CanvasWorkspace({
                 setSelectedTextNodeId(node.id);
                 setEditingTextNodeId(node.id);
               }}
+            />
+          ))}
+
+        {aiChatNodes
+          .filter((node) => node.visible ?? true)
+          .map((node) => (
+            <CanvasAiChatNode
+              key={node.id}
+              isDragging={draggingTextNodeId === node.id}
+              isSelected={selectedTextNodeId === node.id}
+              node={node}
+              onPointerCancel={handleTextPointerUp}
+              onPointerDown={(event) => {
+                if (node.locked ?? false) return;
+                event.preventDefault();
+                event.stopPropagation();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+                textDragRef.current = {
+                  nodeId: node.id,
+                  offset: {
+                    x: point.x - node.position.x,
+                    y: point.y - node.position.y,
+                  },
+                };
+                setDraggingTextNodeId(node.id);
+                setSelectedImageIds([]);
+                setSelectedTextNodeId(node.id);
+                setActiveWebNodeId(null);
+                setAiChatNodes((current) => {
+                  const topZIndex = Math.max(
+                    0,
+                    ...imageNodesRef.current.map((entry) => entry.zIndex),
+                    ...webNodesRef.current.map((entry) => entry.zIndex),
+                    ...voiceNodesRef.current.map((entry) => entry.zIndex),
+                    ...textNodesRef.current.map((entry) => entry.zIndex),
+                    ...current.map((entry) => entry.zIndex),
+                  );
+                  return current.map((entry) =>
+                    entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
+                  );
+                });
+              }}
+              onPointerMove={handleTextPointerMove}
+              onPointerUp={handleTextPointerUp}
+              onMessagesChange={(messages) =>
+                setAiChatNodes((current) =>
+                  current.map((entry) =>
+                    entry.id === node.id ? { ...entry, messages } : entry,
+                  ),
+                )
+              }
+              onSizeChange={(size) =>
+                setAiChatNodes((current) =>
+                  current.map((entry) =>
+                    entry.id === node.id ? { ...entry, size } : entry,
+                  ),
+                )
+              }
             />
           ))}
 

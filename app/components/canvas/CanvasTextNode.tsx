@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useAiSettingsStore } from "@/lib/canvas/aiSettingsStore";
 
 export type CanvasTextNodeData = {
   id: string;
@@ -51,7 +52,11 @@ type WordSegment = {
   isSpace: boolean;
 };
 
-/** Split text into word and whitespace segments preserving original layout. */
+const FIXED_WIDTH = 350;
+const MIN_HEIGHT = 80;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
 function toWordSegments(text: string): WordSegment[] {
   if (!text) return [];
   const segments: WordSegment[] = [];
@@ -74,15 +79,18 @@ function toWordSegments(text: string): WordSegment[] {
     }
   }
   if (buffer) segments.push({ text: buffer, isSpace: inSpace });
-
   return segments;
 }
 
-/** Character-length‑based word timing: assume each char takes equal time. */
 function buildWordTimings(
   text: string,
   duration: number,
-): { charIndex: number; wordIndex: number; startTime: number; endTime: number }[] {
+): {
+  charIndex: number;
+  wordIndex: number;
+  startTime: number;
+  endTime: number;
+}[] {
   const segments = toWordSegments(text);
   const totalChars = text.length;
   if (totalChars === 0 || duration <= 0) return [];
@@ -98,23 +106,20 @@ function buildWordTimings(
 
   for (const seg of segments) {
     if (!seg.isSpace) {
-      const startTime =
-        (charOffset / totalChars) * duration;
-      const endTime =
-        ((charOffset + seg.text.length) / totalChars) * duration;
       timings.push({
         charIndex: charOffset,
         wordIndex,
-        startTime,
-        endTime,
+        startTime: (charOffset / totalChars) * duration,
+        endTime: ((charOffset + seg.text.length) / totalChars) * duration,
       });
       wordIndex += 1;
     }
     charOffset += seg.text.length;
   }
-
   return timings;
 }
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export function CanvasTextNode({
   node,
@@ -132,63 +137,76 @@ export function CanvasTextNode({
 }: CanvasTextNodeProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const wordTimingsRef = useRef<
-    { charIndex: number; wordIndex: number; startTime: number; endTime: number }[]
+    {
+      charIndex: number;
+      wordIndex: number;
+      startTime: number;
+      endTime: number;
+    }[]
   >([]);
 
   const segments = useMemo(() => toWordSegments(node.text), [node.text]);
 
+  // ── Focus textarea on edit start ────────────────────────────────────────
   useEffect(() => {
     if (!isEditing) return;
-
     const el = textareaRef.current;
     if (!el) return;
-
     el.focus();
     el.setSelectionRange(el.value.length, el.value.length);
   }, [isEditing]);
 
+  // ── Auto-resize textarea while editing ─────────────────────────────────
+  useEffect(() => {
+    if (!isEditing) return;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [node.text, node.style.fontSize, node.style.fontFamily, isEditing]);
+
+  // ── Height measurement — grows freely, no max cap ──────────────────────
   useLayoutEffect(() => {
     const el = measureRef.current;
     if (!el) return;
 
-    const rect = el.getBoundingClientRect();
-
-    const MAX_WIDTH = 420;
-    const MIN_SIZE = 120;
-
-    const nextWidth = Math.min(
-      MAX_WIDTH,
-      Math.max(MIN_SIZE, Math.ceil(rect.width)),
-    );
-
-    const nextHeight = Math.max(
-      nextWidth,
-      Math.ceil(rect.height),
-      node.style.fontSize * 1.8 + 20,
-    );
+    const contentHeight = Math.ceil(el.getBoundingClientRect().height);
+    const nextHeight = Math.max(MIN_HEIGHT, contentHeight);
 
     if (
-      Math.abs(nextWidth - node.size.width) > 1 ||
+      Math.abs(FIXED_WIDTH - node.size.width) > 1 ||
       Math.abs(nextHeight - node.size.height) > 1
     ) {
-      onSizeChange({ width: nextWidth, height: nextHeight });
+      onSizeChange({ width: FIXED_WIDTH, height: nextHeight });
     }
+    // Intentionally omitting node.size.* to avoid infinite update loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.text, node.style.fontSize, node.style.fontFamily]);
+
+  const handleBlur = useCallback(
+    (e: FocusEvent<HTMLTextAreaElement>) => {
+      onBlur(e);
+    },
+    [onBlur],
+  );
 
   function handleTextChange(e: ChangeEvent<HTMLTextAreaElement>) {
     onInput(e.currentTarget.value);
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   }
 
-  // ── Word-highlight animation loop ──────────────────────────────────
-  const tickRef = useRef<() => void>(() => {});
-
+  // ── Playback cleanup ───────────────────────────────────────────────────
   const cleanupPlayback = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -207,15 +225,20 @@ export function CanvasTextNode({
   }, []);
 
   useEffect(() => {
-    if (isEditing || !isSelected) {
-      cleanupPlayback();
-    }
+    if (isEditing || !isSelected) cleanupPlayback();
   }, [isEditing, isSelected, cleanupPlayback]);
 
-  // Tick uses a ref internally so it can schedule itself without a
-  // temporal-dead-zone issue. This also avoids referencing tick before init.
-  useEffect(() => {
-    const fn = () => {
+  // ── RAF word-highlight loop (throttled ~60fps) ─────────────────────────
+  const lastRafTimeRef = useRef(0);
+
+  const scheduleHighlightTick = useCallback(() => {
+    const tick = (now: number) => {
+      if (now - lastRafTimeRef.current < 14) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      lastRafTimeRef.current = now;
+
       const audio = audioRef.current;
       const timings = wordTimingsRef.current;
       if (!audio || timings.length === 0) {
@@ -225,7 +248,6 @@ export function CanvasTextNode({
 
       const t = audio.currentTime;
       let found = false;
-
       for (let i = 0; i < timings.length; i++) {
         if (t >= timings[i].startTime && t < timings[i].endTime) {
           setActiveWordIndex(timings[i].wordIndex);
@@ -233,7 +255,6 @@ export function CanvasTextNode({
           break;
         }
       }
-
       if (!found) {
         setActiveWordIndex(
           t >= timings[timings.length - 1].endTime
@@ -242,31 +263,27 @@ export function CanvasTextNode({
         );
       }
 
-      rafRef.current = requestAnimationFrame(tickRef.current);
+      rafRef.current = requestAnimationFrame(tick);
     };
-
-    tickRef.current = fn;
+    rafRef.current = requestAnimationFrame(tick);
   }, []);
 
+  // ── TTS ───────────────────────────────────────────────────────────────
   const speakText = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
-
       setIsLoading(true);
 
-      // Consume 3 credits first
       try {
         const creditRes = await fetch("/api/credits/consume", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ amount: 3 }),
         });
-
         if (creditRes.status === 402) {
           cleanupPlayback();
           return;
         }
-
         if (!creditRes.ok) throw new Error("Credit check failed");
       } catch {
         cleanupPlayback();
@@ -274,26 +291,27 @@ export function CanvasTextNode({
       }
 
       try {
+        const { ttsProvider, ttsVoice } = useAiSettingsStore.getState();
+
         const response = await fetch("/api/ai/run", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            provider: "elevenlabs",
+            provider: ttsProvider,
             task: "text-to-speech",
             prompt: text,
+            options:
+              ttsProvider === "elevenlabs" ? { voice: ttsVoice } : undefined,
           }),
         });
-
         if (!response.ok) throw new Error("TTS request failed");
 
         const data = (await response.json()) as { audio?: string };
-
         if (!data.audio) throw new Error("No audio returned");
 
         const audio = new Audio(data.audio);
         audioRef.current = audio;
 
-        // Build word timings once we know the total duration.
         const setupTimings = () => {
           const dur = audio.duration;
           if (isFinite(dur) && dur > 0) {
@@ -301,11 +319,12 @@ export function CanvasTextNode({
           }
         };
 
-        // duration may not be available immediately
         if (isFinite(audio.duration) && audio.duration > 0) {
           setupTimings();
         } else {
-          audio.addEventListener("loadedmetadata", setupTimings, { once: true });
+          audio.addEventListener("loadedmetadata", setupTimings, {
+            once: true,
+          });
         }
 
         audio.onended = cleanupPlayback;
@@ -314,31 +333,30 @@ export function CanvasTextNode({
         await audio.play();
         setIsSpeaking(true);
         setIsLoading(false);
-
-        // Start the word-highlight loop
-        rafRef.current = requestAnimationFrame(tickRef.current);
+        scheduleHighlightTick();
       } catch {
         cleanupPlayback();
       }
     },
-    [cleanupPlayback],
+    [cleanupPlayback, scheduleHighlightTick],
   );
-
-  const stopSpeaking = useCallback(() => {
-    cleanupPlayback();
-  }, [cleanupPlayback]);
 
   const handleReadAloud = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-
-      if (isSpeaking) stopSpeaking();
+      if (isSpeaking) cleanupPlayback();
       else void speakText(node.text);
     },
-    [isSpeaking, node.text, speakText, stopSpeaking],
+    [isSpeaking, node.text, speakText, cleanupPlayback],
   );
 
-  // ── Render active word background ──────────────────────────────────
+  const textStyle = {
+    color: node.style.color,
+    fontFamily: node.style.fontFamily,
+    fontSize: node.style.fontSize,
+    lineHeight: 1.5,
+  } as const;
+
   const highlightColor =
     node.style.backgroundColor &&
     !node.style.backgroundColor.match(/^#(ffffff|fff|f8f9fa|f0f0f0)/i)
@@ -363,87 +381,85 @@ export function CanvasTextNode({
         cursor: isEditing ? "text" : isDragging ? "grabbing" : "grab",
         left: node.position.x,
         top: node.position.y,
-        width: node.size.width,
+        width: FIXED_WIDTH,
+        minWidth: FIXED_WIDTH,
         height: node.size.height,
         zIndex: node.zIndex,
       }}
     >
+      {/* Content container — no overflow clipping, grows with content */}
       <div
+        ref={scrollContainerRef}
         className={[
-          "min-h-20 max-h-150 overflow-y-auto w-full rounded border px-3 py-2 transition overflow-hidden",
+          "w-full h-full rounded border px-3 py-2 transition",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
         ].join(" ")}
-        style={{
-          backgroundColor: node.style.backgroundColor,
-          color: node.style.color,
-          fontFamily: node.style.fontFamily,
-          fontSize: node.style.fontSize,
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
+        style={{ backgroundColor: node.style.backgroundColor }}
       >
         {isEditing ? (
           <textarea
             ref={textareaRef}
-            className="w-full resize-none bg-transparent outline-none text-sm tracking-tight overflow-hidden"
+            className="w-full resize-none bg-transparent outline-none tracking-tight overflow-hidden"
             value={node.text}
             spellCheck
-            onBlur={onBlur}
+            onBlur={handleBlur}
             onChange={handleTextChange}
             onPointerDown={(e) => e.stopPropagation()}
             style={{
-              color: node.style.color,
-              fontFamily: node.style.fontFamily,
-              fontSize: node.style.fontSize,
+              ...textStyle,
+              minHeight: MIN_HEIGHT - 16,
             }}
           />
         ) : (
-          <div className="w-full text-sm whitespace-pre-wrap break-words tracking-tight leading-relaxed overflow-hidden">
-            {node.text.length > 0
-              ? (() => {
-                  let wordIdx = 0;
-                  return segments.map((seg, i) => {
-                    if (seg.isSpace) {
-                      return <span key={i}>{seg.text}</span>;
-                    }
-                    const idx = wordIdx;
-                    wordIdx += 1;
-                    return (
-                      <span
-                        key={i}
-                        className={
-                          idx === activeWordIndex
-                            ? " transition-colors duration-75"
-                            : ""
-                        }
-                        style={
-                          idx === activeWordIndex
-                            ? {
-                                backgroundColor: highlightColor,
-                                boxShadow: `0 0 0 1px ${highlightColor}`,
-                              }
-                            : undefined
-                        }
-                      >
-                        {seg.text}
-                      </span>
-                    );
-                  });
-                })()
-              : "Type here..."}
+          <div
+            className="w-full whitespace-pre-wrap break-words tracking-tight"
+            style={textStyle}
+          >
+            {node.text.length > 0 ? (
+              (() => {
+                let wordIdx = 0;
+                return segments.map((seg, i) => {
+                  if (seg.isSpace) return <span key={i}>{seg.text}</span>;
+                  const idx = wordIdx++;
+                  return (
+                    <span
+                      key={i}
+                      className={
+                        idx === activeWordIndex
+                          ? "transition-colors duration-75"
+                          : ""
+                      }
+                      style={
+                        idx === activeWordIndex
+                          ? {
+                              backgroundColor: highlightColor,
+                              boxShadow: `0 0 0 1px ${highlightColor}`,
+                            }
+                          : undefined
+                      }
+                    >
+                      {seg.text}
+                    </span>
+                  );
+                });
+              })()
+            ) : (
+              <span className="opacity-40">Type here...</span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Read Aloud */}
+      {/* Read Aloud button */}
       <div
         className={[
           "absolute -top-8 right-0 flex items-center gap-1 transition-opacity",
           isSelected && !isEditing
             ? "opacity-100"
             : "opacity-0 group-hover:opacity-100",
-          isEditing && "pointer-events-none",
+          isEditing ? "pointer-events-none" : "",
         ].join(" ")}
         onPointerDown={(e) => e.stopPropagation()}
       >
@@ -457,7 +473,7 @@ export function CanvasTextNode({
                 ? "bg-gray-300 text-gray-500 cursor-wait"
                 : "bg-white text-gray-700 hover:bg-gray-100",
           ].join(" ")}
-          onClick={handleReadAloud}
+          onPointerDown={handleReadAloud}
           disabled={isLoading}
         >
           {isLoading ? (
@@ -476,16 +492,14 @@ export function CanvasTextNode({
         </button>
       </div>
 
-      {/* measurement */}
+      {/* Invisible measurement div — matches view mode font metrics exactly */}
       <div
         ref={measureRef}
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 -z-10 px-3 py-2 whitespace-pre-wrap break-words"
+        className="pointer-events-none absolute left-0 top-0 -z-10 px-3 py-2 whitespace-pre-wrap break-words tracking-tight"
         style={{
-          width: 420,
-          fontFamily: node.style.fontFamily,
-          fontSize: node.style.fontSize,
-          lineHeight: 1.4,
+          width: FIXED_WIDTH,
+          ...textStyle,
           visibility: "hidden",
         }}
       >

@@ -28,6 +28,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
+import { useAiSettingsStore, ELEVENLABS_VOICES } from "@/lib/canvas/aiSettingsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 
@@ -925,7 +926,7 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <div className="w-60 mb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
+    <div className="w-60 pb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
       <div className="flex items-center scrollbar-hidden  justify-between ">
         <h3 className="text-white text-xs  mono  uppercase tracking-tight">
           Layers
@@ -1145,26 +1146,130 @@ const ViewSection = () => {
   );
 };
 
-// Settings Panel Component
-const SettingsPanel = ({ onClose }: { onClose: () => void }) => (
-  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
-    <div className="flex items-center justify-between  pb-2">
-      <h3 className="text-white text-xs mono uppercase tracking-tight ">
-        Settings
-      </h3>
-      <button
-        onClick={onClose}
-        className="text-white/60 cursor-pointer hover:text-white transition"
-      >
-        <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
-      </button>
+// Settings Panel Component — focused on AI settings
+const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
+  const {
+    ttsProvider,
+    ttsVoice,
+    speechRate,
+    autoSummarize,
+    defaultAction,
+    setTtsProvider,
+    setTtsVoice,
+    setSpeechRate,
+    setAutoSummarize,
+    setDefaultAction,
+  } = useAiSettingsStore();
+
+  const voiceName =
+    Object.entries(ELEVENLABS_VOICES).find(([, id]) => id === ttsVoice)?.[0] ??
+    "Rachel";
+
+  return (
+    <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-2 overflow-y-auto">
+      <div className="flex items-center justify-between pb-2">
+        <h3 className="text-white text-xs mono uppercase tracking-tight">
+          AI Settings
+        </h3>
+        <button
+          onClick={onClose}
+          className="text-white/60 cursor-pointer hover:text-white transition"
+        >
+          <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
+        </button>
+      </div>
+
+      <div className="space-y-5">
+        {/* ── TTS Provider ── */}
+        <div className="space-y-2">
+          <label className="text-white/50 mono text-xs uppercase tracking-tight">
+            Text-to-speech Provider
+          </label>
+          <select
+            value={ttsProvider}
+            onChange={(e) => setTtsProvider(e.target.value as "elevenlabs" | "amazon-tts")}
+            className="w-full bg-[#17171b] border border-white/10 rounded px-2 py-1.5 mono text-xs text-white focus:outline-none focus:border-white/30 cursor-pointer"
+          >
+            <option value="elevenlabs">ElevenLabs</option>
+            <option value="amazon-tts">Amazon Polly</option>
+          </select>
+        </div>
+
+        {/* ── TTS Voice ── */}
+        <div className="space-y-2">
+          <label className="text-white/50 mono text-xs uppercase tracking-tight">
+            Voice
+          </label>
+          <select
+            value={voiceName}
+            onChange={(e) => {
+              const voiceId = ELEVENLABS_VOICES[e.target.value];
+              if (voiceId) setTtsVoice(voiceId);
+            }}
+            className="w-full bg-[#17171b] border border-white/10 rounded px-2 py-1.5 mono text-xs text-white focus:outline-none focus:border-white/30 cursor-pointer"
+          >
+            {Object.keys(ELEVENLABS_VOICES).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* ── Speech Rate ── */}
+        <div className="space-y-2">
+          <label className="text-white/50 mono text-xs uppercase tracking-wide">
+            Speed: {Math.round(speechRate * 100)}%
+          </label>
+          <input
+            type="range"
+            min={0.5}
+            max={1.5}
+            step={0.1}
+            value={speechRate}
+            onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+            className="w-full  cursor-pointer"
+          />
+        </div>
+
+        <div className="border-t border-white/10" />
+
+        {/* ── Default AI Action ── */}
+        <div className="space-y-2">
+          <label className="text-white/50 mono text-xs uppercase tracking-tight">
+            Default Action
+          </label>
+          <select
+            value={defaultAction}
+            onChange={(e) => setDefaultAction(e.target.value as "ask" | "summarize" | "describe")}
+            className="w-full bg-[#17171b] border border-white/10 rounded px-2 py-1.5 mono text-xs text-white focus:outline-none focus:border-white/30 cursor-pointer"
+          >
+            <option value="ask">Ask AI</option>
+            <option value="summarize">Summarize</option>
+            <option value="describe">Describe</option>
+          </select>
+        </div>
+
+        {/* ── Auto Summarize on Drop ── */}
+        <div className="flex items-center justify-between">
+          <label className="text-white/50 mono text-xs uppercase tracking-wide">
+            Auto-summarize documents
+          </label>
+          <input
+            type="checkbox"
+            checked={autoSummarize}
+            onChange={(e) => setAutoSummarize(e.target.checked)}
+            className="w-4 h-4 cursor-pointer"
+          />
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Help Panel Component
 const HelpPanel = ({ onClose }: { onClose: () => void }) => (
-  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 overflow-y-auto">
+  <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 scrollbar-hidden overflow-y-auto">
     <div className="flex items-center justify-between pb-2">
       <h3 className="text-white text-xs mono uppercase tracking-tight">
         Help & docs
@@ -1180,6 +1285,29 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
     <div className="space-y-4">
       <div>
         <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          AI Read Aloud
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p>Select any <span className="text-white/70">sticky note</span> and click the <span className="text-white/70">Read</span> button above it to hear the text spoken aloud using ElevenLabs AI voices.</p>
+          <p>Each read-aloud costs <span className="text-white/70">3 credits</span>. Words are highlighted in real-time as they&rsquo;re spoken.</p>
+          <p>Configure your preferred voice and speech speed in <span className="text-white/70">AI Settings</span>.</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          AI Actions
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p><span className="text-white/70">Ask AI</span> — Open a floating chat window to ask questions about a file</p>
+          <p><span className="text-white/70">Summarize</span> — AI-generated summary of documents & spreadsheets</p>
+          <p><span className="text-white/70">Describe</span> — AI describes the contents of an image</p>
+          <p><span className="text-white/70">Edit with AI</span> — Edit documents or images via natural language prompts</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
           Canvas Controls
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
@@ -1190,6 +1318,15 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           <p><span className="text-white/70">Delete</span> — Backspace or Delete key</p>
           <p><span className="text-white/70">Duplicate</span> — Cmd/Ctrl + D</p>
           <p><span className="text-white/70">Deselect</span> — Escape</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          Sticky Notes
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p>Use the <span className="text-white/70">Text tool</span> to create sticky notes on the canvas. Double-click to edit, click outside to save. Drag to reposition. Right-click for more options.</p>
         </div>
       </div>
 
@@ -1210,6 +1347,18 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
           <p>Connect Google Drive or Dropbox from the <span className="text-white/70">External storage</span> panel to browse and import images directly.</p>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <h4 className="text-white/70 text-[11px] mono uppercase tracking-wide mb-2">
+          Shortcuts
+        </h4>
+        <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
+          <p><span className="text-white/70">L</span> — Open layers panel</p>
+          <p><span className="text-white/70">Cmd+F</span> — Search</p>
+          <p><span className="text-white/70">Cmd+D</span> — Duplicate selected</p>
+          <p><span className="text-white/70">Esc</span> — Deselect / close panels</p>
         </div>
       </div>
     </div>

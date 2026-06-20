@@ -10,7 +10,6 @@ import {
 } from "./json";
 import type { AiRunRequest, AiRunResponse } from "./types";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
-import { Readable } from "node:stream";
 
 const DEFAULTS = {
   claude: "claude-sonnet-4-20250514",
@@ -614,16 +613,15 @@ async function runKling(request: AiRunRequest): Promise<AiRunResponse> {
 
 /**
  * Amazon Polly — free tier text-to-speech.
- * Uses the AWS SDK v3 with proper Signature V4 signing.
+ * Uses the AWS SDK v3.
  */
 async function runAmazonTTS(request: AiRunRequest): Promise<AiRunResponse> {
   requireEnv("AWS_ACCESS_KEY_ID");
   requireEnv("AWS_SECRET_ACCESS_KEY");
   requireEnv("AWS_REGION");
 
-  const engine = request.options?.model ?? "standard";
+  const engine = request.options?.model ?? "neural";
   const voiceId = request.options?.voice ?? "Joanna";
-  const language = request.options?.language ?? "en-US";
 
   const client = new PollyClient({
     region: process.env.AWS_REGION!,
@@ -638,7 +636,6 @@ async function runAmazonTTS(request: AiRunRequest): Promise<AiRunResponse> {
     OutputFormat: "mp3",
     Text: request.prompt,
     VoiceId: voiceId as any,
-    LanguageCode: language as any,
   });
 
   const response = await client.send(command);
@@ -647,31 +644,14 @@ async function runAmazonTTS(request: AiRunRequest): Promise<AiRunResponse> {
     throw new AiProviderError("Amazon Polly returned no audio stream", 502);
   }
 
-  // Convert the AudioStream to a Buffer
-  const { pipeline } = await import("node:stream/promises");
-  const { Readable: NodeReadable } = await import("node:stream");
-  const stream = response.AudioStream as unknown;
+  // Collect chunks from the streaming response
+  const chunks: Uint8Array[] = [];
 
-  let buffer: Buffer;
-
-  if (stream instanceof NodeReadable) {
-    const chunks: Buffer[] = [];
-
-    for await (const chunk of stream) {
-      chunks.push(Buffer.from(chunk));
-    }
-
-    buffer = Buffer.concat(chunks);
-  } else if (typeof (stream as any).transformToByteArray === "function") {
-    // Web ReadableStream API
-    const bytes = await (stream as any).transformToByteArray();
-    buffer = Buffer.from(bytes);
-  } else {
-    throw new AiProviderError(
-      "Amazon Polly returned unsupported stream type",
-      502
-    );
+  for await (const chunk of response.AudioStream as any) {
+    chunks.push(chunk as Uint8Array);
   }
+
+  const buffer = Buffer.concat(chunks.map((c) => Buffer.from(c)));
 
   return {
     provider: request.provider,

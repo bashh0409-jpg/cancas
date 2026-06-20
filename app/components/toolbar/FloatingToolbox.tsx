@@ -1,8 +1,9 @@
 "use client";
 
-import { AudioLines, Import, Server, Square, StickyNote } from "lucide-react";
+import { AudioLines, Bot, Import, Server, Square, StickyNote } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
+import { activateCanvasAiChatTool } from "@/lib/canvas/aiChatToolEvents";
 import {
   VOICE_NOTE_RECORDED_EVENT,
   type VoiceNoteRecordedDetail,
@@ -225,6 +226,10 @@ export function FloatingToolbox() {
           ) : (
             <AudioLines className="h-5 w-5" strokeWidth={1.5} />
           )}
+        </ToolboxButton>
+
+        <ToolboxButton label="AI Chat" onClick={activateCanvasAiChatTool}>
+          <Bot className="h-5 w-5" strokeWidth={1.5} />
         </ToolboxButton>
       </div>
 

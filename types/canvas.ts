@@ -57,6 +57,29 @@ export type CanvasTextNode = {
   };
 };
 
+export type CanvasAiChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  streaming?: boolean;
+};
+
+export type CanvasAiChatNode = {
+  id: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
+  style: {
+    backgroundColor: string;
+    color: string;
+    fontFamily: string;
+    fontSize: number;
+  };
+  messages: CanvasAiChatMessage[];
+};
+
 export type CanvasContent = {
   version: 1;
   viewport: CanvasViewport;
@@ -64,6 +87,7 @@ export type CanvasContent = {
   webNodes: CanvasWebNode[];
   voiceNodes: CanvasVoiceNode[];
   textNodes: CanvasTextNode[];
+  aiChatNodes: CanvasAiChatNode[];
   showGrid: boolean;
   backgroundColor: string;
   gridColor: string;
@@ -96,6 +120,7 @@ export const EMPTY_CANVAS_CONTENT: CanvasContent = {
   webNodes: [],
   voiceNodes: [],
   textNodes: [],
+  aiChatNodes: [],
   showGrid: true,
   backgroundColor: "#111111",
   gridColor: "#343434",
@@ -152,6 +177,9 @@ export function parseCanvasContent(value: unknown): CanvasContent | null {
       : [],
     textNodes: Array.isArray(record.textNodes)
       ? (record.textNodes as CanvasTextNode[])
+      : [],
+    aiChatNodes: Array.isArray(record.aiChatNodes)
+      ? (record.aiChatNodes as CanvasAiChatNode[])
       : [],
     showGrid: typeof record.showGrid === "boolean" ? record.showGrid : true,
     backgroundColor:
