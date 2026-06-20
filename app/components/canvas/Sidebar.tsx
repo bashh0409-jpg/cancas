@@ -59,23 +59,18 @@ type SidebarProps = {
 
 // Logo Component
 const Logo = () => (
-  <a href="/home" className="cursor-pointer hover:bg-white/20 rounded p-1">
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 35 30"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="white"
-    >
-      <title>Logo</title>
-      <path
-        d="M34.6895 0H25.8153V19.4784H21.7818V0H12.9077V19.4784H8.87414V0H0V19.6353H6.45383V30H15.328V19.6353H19.3615V30H28.2356V19.6353H34.6895V0Z"
-        fill="white"
-      ></path>
-    </svg>
+  <a href="/home" className="cursor-pointer  hover:bg-white/20 rounded p-1 py-2">
+    <img
+      src="/images/SW.svg"
+      alt="Logo"
+      width={24}
+      height={24}
+      className="object-contain"
+    />
   </a>
 );
 
+export default Logo;
 // Tooltip Component
 const Tooltip = ({
   text,
