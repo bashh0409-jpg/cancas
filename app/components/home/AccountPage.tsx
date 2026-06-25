@@ -20,17 +20,18 @@ const TABS: { id: AccountTab; label: string; icon: React.ReactNode }[] = [
   {
     id: "profile",
     label: "Profile",
-    icon: <User className="w-5 h-5" />,
+    icon: <User className="w-3 h-3 hidden" />,
   },
   {
     id: "settings",
     label: "Settings",
-    icon: <Settings className="w-5 h-5" />,
+    icon: <Settings className="w-5 hidden h-5" />,
   },
 ];
 
 export function AccountPage({
   profile,
+  photoUrl,
   updateNicknameAction,
   updateSettingsAction,
   userSettings,
@@ -38,6 +39,7 @@ export function AccountPage({
   signOut,
 }: {
   profile: Profile;
+  photoUrl?: string;
   updateNicknameAction: (formData: FormData) => Promise<void>;
   updateSettingsAction: (formData: FormData) => Promise<void>;
   userSettings: UserSettings;
@@ -60,13 +62,7 @@ export function AccountPage({
   return (
     <div className="flex items-start justify-center min-h-full pt-16 pb-16">
       <div className="flex gap-12">
-        {/* back */}
-        <a
-          href="/home"
-          className="text-black items-center flex justify-center rounded h-7 w-7 bg-white shrink-0"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </a>
+
 
         {/* nav */}
         <nav className="flex flex-col gap-0.5 w-50 shrink-0 pt-1">
@@ -75,16 +71,16 @@ export function AccountPage({
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                flex items-center gap-2.5 px-2 py-1.5 h-10 rounded-md tracking-tight text-left transition-colors
+                flex items-center gap-2.5 px-2 py-1.5 h-8 rounded tracking-tight text-left transition-colors
                 ${
                   activeTab === tab.id
-                    ? "bg-white/10 text-white"
+                    ? "bg-white/20 text-white"
                     : "text-white/40 hover:text-white hover:bg-white/5"
                 }
               `}
             >
               {tab.icon}
-              <span className="text-sm">{tab.label}</span>
+              <span className="text-sm mono tracking-tight uppercase">{tab.label}</span>
             </button>
           ))}
         </nav>
@@ -94,14 +90,12 @@ export function AccountPage({
 
         {/* content */}
         <div className="w-[700px]">
-          <h1 className="text-white text-base font-medium mb-6">
-            {TABS.find((t) => t.id === activeTab)?.label}
-          </h1>
 
           {activeTab === "profile" && (
             <ProfileTab
               profile={safeProfile}
               fullName={fullName}
+              photoUrl={photoUrl}
               updateNicknameAction={updateNicknameAction}
             />
           )}
@@ -123,10 +117,12 @@ export function AccountPage({
 function ProfileTab({
   profile,
   fullName,
+  photoUrl,
   updateNicknameAction,
 }: {
   profile: Profile;
   fullName: string;
+  photoUrl?: string;
   updateNicknameAction: (formData: FormData) => Promise<void>;
 }) {
   const initialName = profile?.nickname?.trim() || fullName;
@@ -165,16 +161,29 @@ function ProfileTab({
     <div className="flex max-w-lg flex-col gap-8">
       {/* avatar */}
       <div className="flex items-center gap-5">
-        <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md border border-white/10">
-          <span className="text-2xl font-medium text-black">
-            {displayName.charAt(0).toUpperCase()}
-          </span>
+        <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md  overflow-hidden">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={displayName}
+              className="h-full w-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="text-2xl font-medium text-black">
+              {displayName.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col">
-          <h2 className="text-lg tracking-tight text-white">{displayName}</h2>
+          <h2 className="text-lg mono uppercase tracking-tight text-white">
+            {displayName}
+          </h2>
 
-          <p className="text-sm text-white/40">Personal account settings</p>
+          <p className="text-sm mono tracking-tight text-white/40">
+            Personal account settings
+          </p>
         </div>
       </div>
 
@@ -182,7 +191,9 @@ function ProfileTab({
       <div className="flex flex-col gap-4">
         {/* nickname */}
         <div className="flex flex-col gap-2 text-white">
-          <span className="text-xs text-white">Display Name</span>
+          <span className="text-xs mono uppercase tracking-tight text-white">
+            Display Name
+          </span>
 
           <div className="flex items-center gap-2">
             <input
@@ -192,7 +203,7 @@ function ProfileTab({
               className="
                 h-9 w-full max-w-80
                 rounded border border-transparent
-                bg-[#212529]
+                bg-white/10
                 px-3
                 text-xs text-white mono
                 outline-none
@@ -200,45 +211,49 @@ function ProfileTab({
               "
             />
 
-            <button
-              onClick={handleSave}
-              disabled={pending}
-              className="
-                flex h-9 min-w-[72px] items-center justify-center
-                rounded bg-white px-3
-                text-xs font-medium text-black
-                transition hover:bg-white/90
-                disabled:opacity-50
-              "
-            >
-              {pending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : saved ? (
-                "Saved"
-              ) : (
-                "Save"
-              )}
-            </button>
           </div>
         </div>
 
         {/* email */}
         <div className="flex flex-col gap-2 text-white">
-          <span className="text-xs text-white">Email</span>
+          <span className="text-xs mono tracking-tight  uppercase text-white">
+            Email
+          </span>
 
-          <div className="flex h-9 max-w-80 items-center rounded bg-[#212529] px-3 text-xs text-white/70 mono">
+          <div className="flex h-9 max-w-80 items-center rounded bg-white/10 px-3 text-xs text-white/70 mono">
             {profile?.email ?? "No email"}
           </div>
         </div>
 
         {/* role */}
         <div className="flex flex-col gap-2 text-white">
-          <span className="text-xs text-white">Role</span>
+          <span className="text-xs mono tracking-tight uppercase text-white">
+            Role
+          </span>
 
-          <div className="flex h-9 max-w-80 items-center rounded bg-[#212529] px-3 text-xs text-white/70 mono">
+          <div className="flex h-9 max-w-80 items-center rounded bg-white/10 px-3 text-xs text-white/70 mono">
             Admin
           </div>
         </div>
+        <button
+          onClick={handleSave}
+          disabled={pending}
+          className="
+                flex h-9 w-fit items-center justify-center
+                rounded bg-white px-3
+                text-xs font-medium text-black
+                transition hover:bg-white/90
+                disabled:opacity-50
+              "
+        >
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : saved ? (
+            "Saved"
+          ) : (
+            "Save"
+          )}
+        </button>
       </div>
     </div>
   );
@@ -314,25 +329,29 @@ function SettingsTab({
       <div className="flex max-w-xl flex-col gap-8">
         {/* header */}
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg tracking-tight text-white">
+          <h2 className="text-sm mono uppercase tracking-tight text-white">
             Workspace Settings
           </h2>
 
-          <p className="text-sm text-white/40">
+          <p className="text-sm font-normal mono tracking-tight text-white/60">
             Manage your plan, notifications, and account preferences.
           </p>
         </div>
 
         {/* plan */}
         <div className="flex flex-col gap-4">
-          <span className="text-xs text-white">Plan</span>
+          <span className="text-xs text-white tracking-tight uppercase mono">
+            Plan
+          </span>
 
           <div className="flex flex-col gap-4 rounded bg-white/10 p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-white">Free</span>
+                <span className="text-sm  mono tracking-tight font-medium text-white">
+                  Free
+                </span>
 
-                <span className="text-xs text-white/40">
+                <span className="text-xs mono tracking-tight text-white/40">
                   Limited canvas creation · 50 credits / month
                 </span>
               </div>
@@ -346,9 +365,11 @@ function SettingsTab({
 
         {/* notifications */}
         <div className="flex flex-col gap-4">
-          <span className="text-xs text-white">Notifications</span>
+          <span className="text-xs  uppercase mono tracking-tight text-white">
+            Notifications
+          </span>
 
-          <div className="flex flex-col rounded bg-white/10 p-3">
+          <div className="flex flex-col mono tracking-tight rounded bg-white/10 p-3">
             <Toggle
               label="Product updates"
               description="New features and announcements"
@@ -385,15 +406,17 @@ function SettingsTab({
 
         {/* danger zone */}
         <div className="flex flex-col gap-4">
-          <span className="text-xs text-white">Danger zone</span>
+          <span className="text-xs uppercase mono tracking-tight text-white">
+            Danger zone
+          </span>
 
           <div className="flex items-center justify-between rounded bg-white/10 p-4">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm mono tracking-tight text-white">
                 Delete account
               </span>
 
-              <span className="text-xs text-white/40">
+              <span className="text-xs mono tracking-tight text-white/40">
                 Permanently removes all your files and account data.
               </span>
             </div>

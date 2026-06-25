@@ -91,35 +91,45 @@ export default async function HomePage({
 
   return (
     <div className="min-h-screen bg-black/70">
-      <CreditNotifier message={errorMessage} />
-      <Suspense fallback={null}>
-        <ClearLocalDataOnQuery />
-      </Suspense>
-      <div className="absolute z-50 w-full">
-        <NewReleaseUpdate userId={user.id} />
-      </div>
-
-      <HomeShell
-        firstName={firstName}
-        lastName={lastName}
+      <MobileNotifier
+        fullName={user?.user_metadata?.full_name}
+        email={user?.email}
         photoUrl={photoUrl}
-        canvases={canvases}
         credits={credits}
-        projectsError={projectsError}
-        errorMessage={errorMessage}
-        createCanvasAction={createCanvasAction}
         signOut={signOut}
-        deleteAccountAction={deleteAccountAction}
-        profile={{
-          firstName,
-          lastName,
-          email: user.email ?? "",
-          nickname: profile?.nickname ?? "",
-        }}
-        updateNicknameAction={updateNicknameAction}
-        updateSettingsAction={updateSettingsAction}
-        userSettings={settings}
+        setActivePage={setActivePage}
       />
+      <div className="hidden md:block">
+        <CreditNotifier message={errorMessage} />
+        <Suspense fallback={null}>
+          <ClearLocalDataOnQuery />
+        </Suspense>
+        <div className="absolute z-50 w-full">
+          <NewReleaseUpdate userId={user.id} />
+        </div>
+
+        <HomeShell
+          firstName={firstName}
+          lastName={lastName}
+          photoUrl={photoUrl}
+          canvases={canvases}
+          credits={credits}
+          projectsError={projectsError}
+          errorMessage={errorMessage}
+          createCanvasAction={createCanvasAction}
+          signOut={signOut}
+          deleteAccountAction={deleteAccountAction}
+          profile={{
+            firstName,
+            lastName,
+            email: user.email ?? "",
+            nickname: profile?.nickname ?? "",
+          }}
+          updateNicknameAction={updateNicknameAction}
+          updateSettingsAction={updateSettingsAction}
+          userSettings={settings}
+        />
+      </div>
     </div>
   );
 }

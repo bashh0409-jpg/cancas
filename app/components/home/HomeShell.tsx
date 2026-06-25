@@ -547,6 +547,7 @@ export function HomeShell({
         {activePage === "account" && (
           <AccountPage
             profile={profile}
+            photoUrl={photoUrl}
             updateNicknameAction={updateNicknameAction}
             updateSettingsAction={updateSettingsAction}
             userSettings={userSettings}
@@ -554,7 +555,6 @@ export function HomeShell({
             signOut={signOut}
           />
         )}
-        {activePage === "tutorials" && <TutorialPage />}
         {activePage === "library" && <LibraryPage canvases={canvases} />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
       </main>
