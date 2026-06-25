@@ -57,7 +57,7 @@ export function initializePaymentProvider(
 ): PayFastClient | StripeClient {
   switch (provider) {
     case "payfast":
-      return initPayFastClient(process.env.NODE_ENV === "development");
+      return initPayFastClient(process.env.PAYFAST_SANDBOX === "true");
     case "stripe":
       return initStripeClient();
     default:

@@ -16,6 +16,7 @@ export interface StripePlanConfig {
 export interface StripeCheckoutSessionOptions {
   userId: string;
   userEmail: string;
+  customerId?: string;
   plan: StripeProductId;
   billingCycle: "monthly" | "annual";
   successUrl: string;
@@ -81,7 +82,9 @@ export class StripeClient {
 
     const session = await this.stripe.checkout.sessions.create(
       {
-        customer_email: options.userEmail,
+        ...(options.customerId
+          ? { customer: options.customerId }
+          : { customer_email: options.userEmail }),
         client_reference_id: options.userId,
         payment_method_types: ["card"],
         line_items: [
@@ -97,6 +100,12 @@ export class StripeClient {
           userId: options.userId,
           plan: options.plan,
           idempotencyKey: options.idempotencyKey ?? "",
+        },
+        subscription_data: {
+          metadata: {
+            userId: options.userId,
+            plan: options.plan,
+          },
         },
       },
       options.idempotencyKey

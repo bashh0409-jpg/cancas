@@ -8,6 +8,7 @@ import crypto from "crypto";
 export interface PayFastConfig {
   merchantId: string;
   merchantKey: string;
+  passphrase: string;
   returnUrl: string;
   cancelUrl: string;
   notifyUrl: string;
@@ -48,6 +49,7 @@ export interface PayFastWebhookData {
   amount_net: string;
   custom_int1?: string;
   custom_str1?: string;
+  billing_frequency?: string;
   status: string;
   signature: string;
   [key: string]: unknown;
@@ -83,7 +85,7 @@ export class PayFastClient {
       .join("&");
 
     const signatureString = `${dataString}&passphrase=${encodeURIComponent(
-      this.config.merchantKey,
+      this.config.passphrase,
     )}`;
 
     return crypto.createHash("md5").update(signatureString).digest("hex");
@@ -193,6 +195,7 @@ export class PayFastClient {
 export function initPayFastClient(sandbox = false): PayFastClient {
   const merchantId = process.env.PAYFAST_MERCHANT_ID;
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
+  const passphrase = process.env.PAYFAST_PASSPHRASE ?? merchantKey;
   const returnUrl = process.env.PAYFAST_RETURN_URL;
   const cancelUrl = process.env.PAYFAST_CANCEL_URL;
   const notifyUrl = process.env.PAYFAST_NOTIFY_URL;
@@ -201,12 +204,16 @@ export function initPayFastClient(sandbox = false): PayFastClient {
     throw new Error("Missing PayFast environment variables");
   }
 
+  const useSandbox =
+    sandbox || process.env.PAYFAST_SANDBOX === "true";
+
   return new PayFastClient({
     merchantId,
     merchantKey,
+    passphrase: passphrase ?? merchantKey,
     returnUrl,
     cancelUrl,
     notifyUrl,
-    sandbox,
+    sandbox: useSandbox,
   });
 }

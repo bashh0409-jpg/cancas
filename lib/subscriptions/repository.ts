@@ -35,6 +35,7 @@ export interface CreateSubscriptionInput {
   provider: SubscriptionProvider;
   plan: SubscriptionPlan;
   billing_cycle?: BillingCycle;
+  status?: SubscriptionStatus;
   provider_customer_id?: string;
   provider_subscription_id?: string;
   current_period_start?: string;
@@ -46,7 +47,9 @@ export interface CreateSubscriptionInput {
 export interface UpdateSubscriptionInput {
   status?: SubscriptionStatus;
   plan?: SubscriptionPlan;
+  billing_cycle?: BillingCycle;
   provider_subscription_id?: string;
+  provider_customer_id?: string;
   current_period_start?: string;
   current_period_end?: string;
   trial_end?: string;
@@ -70,12 +73,29 @@ export async function getUserSubscription(
 
   if (error) {
     if (error.code === "PGRST116") {
-      return null; // Row not found
+      return null;
     }
     throw error;
   }
 
   return data as UserSubscription;
+}
+
+export async function getSubscriptionByProviderSubscriptionId(
+  supabase: SupabaseClient,
+  providerSubscriptionId: string,
+): Promise<UserSubscription | null> {
+  const { data, error } = await supabase
+    .from("user_subscriptions")
+    .select("*")
+    .eq("provider_subscription_id", providerSubscriptionId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as UserSubscription | null) ?? null;
 }
 
 /**
@@ -93,6 +113,7 @@ export async function createSubscription(
           user_id: input.user_id,
           provider: input.provider,
           plan: input.plan,
+          status: input.status ?? "unpaid",
           billing_cycle: input.billing_cycle || "monthly",
           provider_customer_id: input.provider_customer_id,
           provider_subscription_id: input.provider_subscription_id,
@@ -121,10 +142,23 @@ export async function updateSubscription(
   userId: string,
   input: UpdateSubscriptionInput,
 ): Promise<UserSubscription> {
+  const { metadata, ...rest } = input;
+
+  let mergedMetadata = metadata;
+
+  if (metadata) {
+    const existing = await getUserSubscription(supabase, userId);
+    mergedMetadata = {
+      ...(existing?.metadata as Record<string, unknown> | undefined),
+      ...metadata,
+    };
+  }
+
   const { data, error } = await supabase
     .from("user_subscriptions")
     .update({
-      ...input,
+      ...rest,
+      ...(mergedMetadata ? { metadata: mergedMetadata } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)

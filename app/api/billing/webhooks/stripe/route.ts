@@ -1,27 +1,15 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { initStripeClient } from "@/lib/billing/stripe";
-import { addUserCredits } from "@/lib/credits/repository";
 import {
-  updateSubscription,
-  getPlanDetails,
-} from "@/lib/subscriptions/repository";
+  handleStripeCheckoutCompleted,
+  handleStripeInvoicePaymentFailed,
+  handleStripeInvoicePaymentSucceeded,
+  handleStripeSubscriptionDeleted,
+  handleStripeSubscriptionUpdated,
+} from "@/lib/billing/stripe-handlers";
+import { claimWebhookEvent } from "@/lib/billing/webhook-events";
+import { initStripeClient } from "@/lib/billing/stripe";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 
-type StripeInvoiceWithSubscription = Stripe.Invoice & {
-  subscription?: string | null | Stripe.Subscription;
-  parent?: {
-    subscription_details?: {
-      subscription?: string | null;
-    } | null;
-  } | null;
-};
-
-/**
- * Stripe Webhook Handler
- * Processes subscription events from Stripe
- * POST /api/billing/webhooks/stripe
- */
 export async function POST(req: Request) {
   try {
     const body = await req.text();
@@ -34,7 +22,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const stripeClient = initStripeClient();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
@@ -45,192 +32,67 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify webhook signature
+    const stripeClient = initStripeClient();
     const event = stripeClient
       .getStripeInstance()
       .webhooks.constructEvent(body, signature, webhookSecret);
 
-    if (!event) {
-      return NextResponse.json(
-        { error: "Invalid webhook signature" },
-        { status: 401 },
-      );
-    }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.error("NEXT_PUBLIC_SUPABASE_URL is not configured");
-      return NextResponse.json(
-        { error: "Supabase URL not configured" },
-        { status: 500 },
-      );
-    }
-
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("SUPABASE_SERVICE_ROLE_KEY is not configured");
-      return NextResponse.json(
-        { error: "Supabase service role key not configured" },
-        { status: 500 },
-      );
-    }
-
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    const supabase = createServiceRoleClient();
+    const shouldProcess = await claimWebhookEvent(
+      supabase,
+      "stripe",
+      event.id,
     );
 
-    // Handle different Stripe events
+    if (!shouldProcess) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     switch (event.type) {
-      case "customer.subscription.updated": {
-        type StripeSubscriptionEventObject = Stripe.Subscription & {
-          current_period_start?: number | null;
-          current_period_end?: number | null;
-        };
-
-        const subscription = event.data.object as StripeSubscriptionEventObject;
-        const userId = subscription.metadata?.userId;
-
-        if (!userId) {
-          console.warn("Subscription update missing userId metadata");
-          break;
-        }
-
-        const currentPeriodStart = subscription.current_period_start
-          ? new Date(subscription.current_period_start * 1000).toISOString()
-          : undefined;
-        const currentPeriodEnd = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : undefined;
-
-        const updatePayload: Parameters<typeof updateSubscription>[2] = {
-          provider_subscription_id: subscription.id,
-          cancel_at_period_end: subscription.cancel_at_period_end,
-          metadata: {
-            lastWebhookAt: new Date().toISOString(),
-          },
-        };
-
-        if (currentPeriodStart) {
-          updatePayload.current_period_start = currentPeriodStart;
-        }
-        if (currentPeriodEnd) {
-          updatePayload.current_period_end = currentPeriodEnd;
-        }
-
-        await updateSubscription(supabase, userId, updatePayload);
-
-        console.log(`Stripe subscription updated: ${subscription.id}`);
+      case "checkout.session.completed":
+        await handleStripeCheckoutCompleted(
+          supabase,
+          event.data.object as Parameters<
+            typeof handleStripeCheckoutCompleted
+          >[1],
+        );
         break;
-      }
 
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
-
-        if (!userId) {
-          console.warn("Subscription deletion missing userId metadata");
-          break;
-        }
-
-        await updateSubscription(supabase, userId, {
-          status: "canceled",
-          canceled_at: new Date().toISOString(),
-          metadata: {
-            canceledViaWebhook: true,
-            lastWebhookAt: new Date().toISOString(),
-          },
-        });
-
-        console.log(`Stripe subscription canceled: ${subscription.id}`);
+      case "customer.subscription.updated":
+        await handleStripeSubscriptionUpdated(
+          supabase,
+          event.data.object as Parameters<
+            typeof handleStripeSubscriptionUpdated
+          >[1],
+        );
         break;
-      }
 
-      case "invoice.payment_succeeded": {
-        const invoice = event.data.object as StripeInvoiceWithSubscription;
-        const subscriptionId =
-          typeof invoice.subscription === "string"
-            ? invoice.subscription
-            : (invoice.parent?.subscription_details?.subscription ?? null);
-
-        if (subscriptionId) {
-          const { data: subs, error: subsError } = await supabase
-            .from("user_subscriptions")
-            .select("user_id, plan, billing_cycle")
-            .eq("provider_subscription_id", subscriptionId)
-            .single();
-
-          if (subsError) {
-            console.error(
-              "Failed to lookup subscription for Stripe invoice:",
-              subsError,
-            );
-            break;
-          }
-
-          if (subs) {
-            await updateSubscription(supabase, subs.user_id, {
-              status: "active",
-              metadata: {
-                lastPaymentSucceeded: new Date().toISOString(),
-              },
-            });
-
-            try {
-              const cycleMultiplier =
-                subs.billing_cycle === "annual" ? 12 : 1;
-              const creditsToGrant =
-                getPlanDetails(subs.plan).monthlyCredits * cycleMultiplier;
-
-              if (creditsToGrant > 0) {
-                await addUserCredits(
-                  supabase,
-                  subs.user_id,
-                  creditsToGrant,
-                  invoice.id,
-                  "stripe.invoice.credit",
-                );
-                console.log(
-                  `Granted ${creditsToGrant} credits to user ${subs.user_id}`,
-                );
-              }
-            } catch (err) {
-              console.error(
-                "Failed to grant credits for Stripe invoice payment:",
-                err,
-              );
-            }
-          }
-        }
-
-        console.log(`Stripe invoice paid: ${invoice.id}`);
+      case "customer.subscription.deleted":
+        await handleStripeSubscriptionDeleted(
+          supabase,
+          event.data.object as Parameters<
+            typeof handleStripeSubscriptionDeleted
+          >[1],
+        );
         break;
-      }
 
-      case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscription =
-          invoice.parent?.subscription_details?.subscription as string | null;
-
-        if (subscription) {
-          const { data: subs } = await supabase
-            .from("user_subscriptions")
-            .select("user_id")
-            .eq("provider_subscription_id", subscription)
-            .single();
-
-          if (subs) {
-            await updateSubscription(supabase, subs.user_id, {
-              status: "past_due",
-              metadata: {
-                lastPaymentFailed: new Date().toISOString(),
-                failedInvoiceId: invoice.id,
-              },
-            });
-          }
-        }
-
-        console.log(`Stripe invoice payment failed: ${invoice.id}`);
+      case "invoice.payment_succeeded":
+        await handleStripeInvoicePaymentSucceeded(
+          supabase,
+          event.data.object as Parameters<
+            typeof handleStripeInvoicePaymentSucceeded
+          >[1],
+        );
         break;
-      }
+
+      case "invoice.payment_failed":
+        await handleStripeInvoicePaymentFailed(
+          supabase,
+          event.data.object as Parameters<
+            typeof handleStripeInvoicePaymentFailed
+          >[1],
+        );
+        break;
 
       default:
         console.log(`Unhandled Stripe event type: ${event.type}`);
@@ -246,9 +108,6 @@ export async function POST(req: Request) {
   }
 }
 
-/**
- * GET endpoint for Stripe webhook verification (optional, for testing)
- */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const testMode = url.searchParams.get("test");
