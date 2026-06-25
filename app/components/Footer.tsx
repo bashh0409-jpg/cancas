@@ -125,7 +125,7 @@ const Footer = () => {
               href="https://discord.gg/xexnRhqBP"
               target="_blank"
               rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
+              className="tracking-tight  transition hover:text-white/70"
             >
               Discord
             </a>

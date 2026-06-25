@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { siDiscord, siYoutube } from "simple-icons";
+import { siDiscord, siInsta360, siInstagram, siYoutube } from "simple-icons";
 import {
   AudioLines,
   ChevronDown,
@@ -39,11 +39,12 @@ type ActivePage =
 interface HomeShellProps {
   firstName: string;
   lastName: string;
+  photoUrl?: string;
   canvases: CanvasListItem[];
   credits: number;
   projectsError: string | null;
   errorMessage: string | undefined;
-  createCanvasAction: (idempotencyKey: string) => Promise<void>;
+  createCanvasAction: () => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccountAction: () => Promise<void>;
   profile: {
@@ -57,11 +58,11 @@ interface HomeShellProps {
   userSettings: UserSettings;
 }
 
-// ── Account card popup ─────────────────────────────────────────────────────
 export function AccountCard({
   firstName,
   lastName,
   credits,
+  photoUrl,
   onSignOut,
   onSettings,
   onClose,
@@ -69,6 +70,7 @@ export function AccountCard({
   firstName: string;
   lastName: string;
   credits: number;
+  photoUrl?: string;
   onSignOut: () => void;
   onSettings: () => void;
   onClose: () => void;
@@ -80,10 +82,17 @@ export function AccountCard({
   // Mount animation
   useEffect(() => {
     if (!cardRef.current) return;
+
     gsap.fromTo(
       cardRef.current,
       { opacity: 0, y: -6, scale: 0.97 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.18, ease: "power2.out" },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.18,
+        ease: "power2.out",
+      },
     );
   }, []);
 
@@ -94,13 +103,13 @@ export function AccountCard({
         onClose();
       }
     };
-    // Defer so the opening click doesn't immediately close
-    const t = setTimeout(
-      () => document.addEventListener("mousedown", handler),
-      0,
-    );
+
+    const timeout = setTimeout(() => {
+      document.addEventListener("mousedown", handler);
+    }, 0);
+
     return () => {
-      clearTimeout(t);
+      clearTimeout(timeout);
       document.removeEventListener("mousedown", handler);
     };
   }, [onClose]);
@@ -108,19 +117,28 @@ export function AccountCard({
   return (
     <div
       ref={cardRef}
-      className="absolute left-2 top-[80px] z-50 w-[250px] rounded-md border border-white/10 bg-[#212126] shadow-2xl overflow-hidden"
+      className="absolute left-2 top-[70px] z-50 w-[250px] overflow-hidden rounded border border-white/10 bg-[#212126] shadow-2xl"
     >
       {/* User info header */}
       <div className="px-3 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 shrink-0 rounded lime flex items-center justify-center">
-            <p className="text-black/60 text-sm font-medium">
-              {firstName.charAt(0)}
-            </p>
+          <div className=" flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={firstName}
+                className="h-full w-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <p className="text-sm font-medium text-black/60">
+                {firstName.charAt(0).toUpperCase()}
+              </p>
+            )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-white leading-tight">
+            <p className="truncate text-xs font-medium leading-tight text-white">
               {firstName} {lastName}&apos;s Workspace
             </p>
           </div>
@@ -128,7 +146,7 @@ export function AccountCard({
           <div className="flex items-center gap-1">
             <button
               onClick={onSettings}
-              className="flex h-7 w-7 items-center justify-center rounded-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Settings"
             >
               <Settings className="h-4 w-4" />
@@ -136,7 +154,7 @@ export function AccountCard({
 
             <button
               onClick={onSignOut}
-              className="flex h-7 w-7 items-center justify-center rounded-xs text-white/70 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              className="flex h-7 w-7 items-center justify-center rounded text-white/70 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -146,61 +164,63 @@ export function AccountCard({
       </div>
 
       {/* Credits row */}
-      <div className="px-3 py-2.5 mb-1 mt-2 flex items-center justify-between">
-        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+      <div className="mb-1 mt-2 flex items-center justify-between px-3 py-2.5">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Credits</span>
-          <div className="flex gap-1 ">
-            <Icon /> <span>{credits}</span>
+          <div className="flex items-center gap-1">
+            <Icon />
+            <span>{credits}</span>
           </div>
         </div>
-        <button className="text-xs text-white bg-transparent hover:bg-white/10 underligned">
-          <span className="underline cursor-pointer">Upgrade for more</span>
+
+        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
+          <span className="cursor-pointer underline">Upgrade for more</span>
         </button>
       </div>
+
       {/* Plan row */}
-      <div className="px-3 py-2.5 flex items-center justify-between">
-        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+      <div className="flex items-center justify-between px-3 py-2.5">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Plan</span>
-          <div className="flex gap-1 ">
-            <span>{plan}</span>
-          </div>
+          <span>{plan}</span>
         </div>
-        <button className="text-xs text-white bg-transparent hover:bg-white/10 underligned">
-          <span className="underline cursor-pointer">Upgrade</span>
+
+        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
+          <span className="cursor-pointer underline">Upgrade</span>
         </button>
       </div>
+
       {/* Feedback */}
-      <div className="px-3 py-2.5 flex flex-col border-y border-white/20  justify-between">
-        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+      <div className="flex flex-col border-y border-white/20 px-3 py-2.5">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Feedback</span>
-          <div className=" ">
-            <span>Let us know what you think about the app.</span>
-          </div>
+          <span>Let us know what you think about the app.</span>
         </div>
+
         <a
           href="https://form.typeform.com/to/zVygaA73"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs mt-1 w-fit text-white py-1 px-0.5 bg-transparent hover:bg-white/10 underligned"
+          className="mt-1 w-fit px-0.5 py-1 text-xs text-white transition hover:bg-white/10"
         >
-          <span className="underline cursor-pointer">Submit feedback</span>
+          <span className="cursor-pointer underline">Submit feedback</span>
         </a>
       </div>
-      {/* bug report */}
-      <div className="px-3 py-2.5 flex flex-col  justify-between">
-        <div className="flex flex-col gap-1 text-white mono tracking-tight text-xs">
+
+      {/* Bug report */}
+      <div className="flex flex-col px-3 py-2.5">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Bug report</span>
-          <div className=" ">
-            <span>Report any issues you encounter in the app.</span>
-          </div>
+          <span>Report any issues you encounter in the app.</span>
         </div>
+
         <a
           href="https://form.typeform.com/to/kgiR8pAb"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs mt-1 w-fit py-1 px-0.5 text-white bg-transparent hover:bg-white/10 underligned"
+          className="mt-1 w-fit px-0.5 py-1 text-xs text-white transition hover:bg-white/10"
         >
-          <span className="underline cursor-pointer">Submit bug report</span>
+          <span className="cursor-pointer underline">Submit bug report</span>
         </a>
       </div>
     </div>
@@ -210,6 +230,7 @@ export function AccountCard({
 export function HomeShell({
   firstName,
   lastName,
+  photoUrl,
   canvases,
   credits,
   projectsError,
@@ -277,7 +298,7 @@ export function HomeShell({
       {/* ── Sidebar ─────────────────────────────────────────────── */}
       <aside
         className={`
-          hidden md:flex shrink-0 flex-col py-4 px-2 bg-black/40 backdrop-blur-md
+          flex shrink-0 flex-col py-4 px-2 bg-black/40 backdrop-blur-md
           border-r border-white/10 transition-[width] duration-300 ease-in-out overflow-hidden
           relative
           ${collapsed ? "w-[52px]" : "w-[270px]"}
@@ -285,51 +306,49 @@ export function HomeShell({
       >
         {/* ── Logo + collapse toggle ── */}
         <div className="flex items-center justify-between px-1">
-          <div className="flex hidden items-center gap-2 min-w-0">
+          <div className="flex tracking-tight mb-8 items-center gap-2 min-w-0">
             <div className="shrink-0"></div>
             <div
               ref={wordmarkRef}
               className={`flex items-center gap-1.5 overflow-hidden whitespace-nowrap ${collapsed ? "pointer-events-none" : ""}`}
             >
-              <span className="text-white text-base font-semibold uppercase tracking-widest leading-none">
-                Reflow
-              </span>
-              <span className="uppercase bg-white/10 text-[9px] text-white/50 px-1.5 py-0.5 rounded font-semibold tracking-wide leading-none">
-                BETA
-              </span>
+              <img
+                onClick={() => setAccountOpen((o) => !o)}
+                src="/images/RE.svg"
+                alt="Logo"
+                width={34}
+                height={24}
+                className="object-contain hover:bg-white/30 cursor-pointer rounded"
+              />
             </div>
           </div>
-
-          <button
-            onClick={() => setCollapsed((c) => !c)}
-            className="shrink-0 flex hidden items-center justify-center w-6 h-6 rounded-md
-              text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <ChevronRight className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronLeft className="w-3.5 h-3.5" />
-            )}
-          </button>
         </div>
 
         {/* ── Account button ── */}
-        <div className="px-1 mb-4">
+        <div className="mb-2">
           <button
             onClick={() => setAccountOpen((o) => !o)}
             title={collapsed ? fullName : undefined}
             className={`
-              w-[70%] rounded-md flex items-center text-sm py-1
+              cursor-pointer rounded-md flex items-center text-sm py-1
               text-white/70 hover:bg-white/10 transition-colors
-              ${collapsed ? "justify-center px-0" : "justify-between px-2"}
+              ${collapsed ? "justify-center px-0" : "justify-between px-1"}
             `}
           >
             <div
               className={`flex items-center ${collapsed ? "gap-0" : "gap-2.5"}`}
             >
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <User className="w-3.5 h-3.5 text-white" />
+              <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={firstName}
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-white" />
+                )}
               </div>
               <span
                 ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
@@ -342,9 +361,7 @@ export function HomeShell({
               ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
               className={`${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
             >
-              <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${accountOpen ? "rotate-180" : ""}`}
-              />
+             
             </span>
           </button>
         </div>
@@ -355,6 +372,7 @@ export function HomeShell({
             firstName={firstName}
             lastName={lastName}
             credits={credits}
+            photoUrl={photoUrl}
             onClose={() => setAccountOpen(false)}
             onSettings={() => {
               setActivePage("account");
@@ -439,7 +457,24 @@ export function HomeShell({
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-col gap-0.5 px-1">
           <SidebarLink
-            href="https://youtube.com/@swiped-h2u?si=lfJd-iQSIMv0an7X"
+            href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
+            icon={
+              <svg
+                role="img"
+                viewBox="0 0 24 24"
+                aria-label="Youtube"
+                className="w-4 h-4 shrink-0 fill-current"
+                dangerouslySetInnerHTML={{
+                  __html: `<path d="${siInstagram.path}" />`,
+                }}
+              />
+            }
+            label="INSTAGRAM"
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+          />
+          <SidebarLink
+            href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
             icon={
               <svg
                 role="img"
@@ -451,7 +486,7 @@ export function HomeShell({
                 }}
               />
             }
-            label="Youtube"
+            label="YOUTUBE"
             collapsed={collapsed}
             labelRef={addLabelRef}
           />
@@ -468,7 +503,7 @@ export function HomeShell({
                 }}
               />
             }
-            label="Discord"
+            label="DISCORD"
             collapsed={collapsed}
             labelRef={addLabelRef}
           />
@@ -476,7 +511,7 @@ export function HomeShell({
       </aside>
 
       {/* ── Main content ────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 overflow-y-auto p-8 flex flex-col gap-4">
+      <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 flex flex-col gap-4">
         {activePage === "files" && (
           <FilesPage
             firstName={firstName}
@@ -1071,7 +1106,7 @@ function SidebarLink({
       rel="noopener noreferrer"
       title={collapsed ? label : undefined}
       className={`
-        flex items-center h-8 rounded tracking-tight text-sm
+        flex items-center h-8 rounded tracking-tight text-xs
         text-white mono hover:bg-white/10 transition-colors
         ${collapsed ? "justify-center px-0 gap-0" : "gap-2.5 px-2"}
       `}
