@@ -329,7 +329,7 @@ export function HomeShell({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <img
+              <Image
                 onClick={() => setAccountOpen((o) => !o)}
                 src="/images/RE.svg"
                 alt="Logo"
@@ -357,7 +357,7 @@ export function HomeShell({
             >
               <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
                 {photoUrl ? (
-                  <img
+                  <Image
                     src={photoUrl}
                     alt={firstName}
                     className="h-full w-full object-cover"
