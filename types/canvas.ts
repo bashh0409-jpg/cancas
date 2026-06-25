@@ -80,6 +80,23 @@ export type CanvasAiChatNode = {
   messages: CanvasAiChatMessage[];
 };
 
+export type CanvasTranscriptionNode = {
+  id: string;
+  sourceNodeId: string; // ID of the voice node this transcription came from
+  text: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  zIndex: number;
+  visible?: boolean;
+  locked?: boolean;
+  style: {
+    backgroundColor: string;
+    color: string;
+    fontFamily: string;
+    fontSize: number;
+  };
+};
+
 export type CanvasContent = {
   version: 1;
   viewport: CanvasViewport;
@@ -88,6 +105,7 @@ export type CanvasContent = {
   voiceNodes: CanvasVoiceNode[];
   textNodes: CanvasTextNode[];
   aiChatNodes: CanvasAiChatNode[];
+  transcriptionNodes: CanvasTranscriptionNode[];
   showGrid: boolean;
   backgroundColor: string;
   gridColor: string;
@@ -121,6 +139,7 @@ export const EMPTY_CANVAS_CONTENT: CanvasContent = {
   voiceNodes: [],
   textNodes: [],
   aiChatNodes: [],
+  transcriptionNodes: [],
   showGrid: true,
   backgroundColor: "#111111",
   gridColor: "#343434",
@@ -175,13 +194,16 @@ export function parseCanvasContent(value: unknown): CanvasContent | null {
     voiceNodes: Array.isArray(record.voiceNodes)
       ? (record.voiceNodes as CanvasVoiceNode[])
       : [],
-    textNodes: Array.isArray(record.textNodes)
-      ? (record.textNodes as CanvasTextNode[])
-      : [],
-    aiChatNodes: Array.isArray(record.aiChatNodes)
-      ? (record.aiChatNodes as CanvasAiChatNode[])
-      : [],
-    showGrid: typeof record.showGrid === "boolean" ? record.showGrid : true,
+      textNodes: Array.isArray(record.textNodes)
+        ? (record.textNodes as CanvasTextNode[])
+        : [],
+      aiChatNodes: Array.isArray(record.aiChatNodes)
+        ? (record.aiChatNodes as CanvasAiChatNode[])
+        : [],
+      transcriptionNodes: Array.isArray(record.transcriptionNodes)
+        ? (record.transcriptionNodes as CanvasTranscriptionNode[])
+        : [],
+      showGrid: typeof record.showGrid === "boolean" ? record.showGrid : true,
     backgroundColor:
       typeof record.backgroundColor === "string"
         ? record.backgroundColor

@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error("[AI Route Error]", error instanceof Error ? error.message : error, error instanceof Error ? error.stack : "");
+
     if (error instanceof AiProviderError) {
       return NextResponse.json(
         { error: error.message },

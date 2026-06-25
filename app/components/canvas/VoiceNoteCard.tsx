@@ -195,10 +195,7 @@ export function VoiceNoteCard({
         />
       </div>
 
-      <div
-        className="flex items-center gap-2"
-        onPointerDown={(event) => event.stopPropagation()}
-      >
+      <div className="flex items-center gap-2">
         <VoiceNotePlayPauseButton
           isPlaying={isPlaying}
           onClick={onTogglePlayback}

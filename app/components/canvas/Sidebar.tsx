@@ -61,7 +61,7 @@ type SidebarProps = {
 const Logo = () => (
   <a href="/home" className="cursor-pointer  hover:bg-white/20 rounded p-1 py-2">
     <img
-      src="/images/SW.svg"
+      src="/images/RE.svg"
       alt="Logo"
       width={24}
       height={24}

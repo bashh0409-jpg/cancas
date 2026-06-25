@@ -761,6 +761,8 @@ async function runDeepgram(request: AiRunRequest): Promise<AiRunResponse> {
   const apiKey = requireEnv("DEEPGRAM_API_KEY");
   const model = request.options?.model ?? DEFAULTS.deepgram;
   const language = request.options?.language ?? "en";
+  // Use the provided mime type or default to audio/webm
+  const mimeType = request.options?.falEndpoint ?? "audio/webm";
 
   if (!request.options?.imageBase64) {
     throw new AiProviderError(
@@ -778,7 +780,7 @@ async function runDeepgram(request: AiRunRequest): Promise<AiRunResponse> {
       method: "POST",
       headers: {
         authorization: `Token ${apiKey}`,
-        "content-type": "audio/webm",
+        "content-type": mimeType,
       },
       body: audioBuffer,
     }
