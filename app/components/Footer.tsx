@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import React, { useState } from "react";
 
@@ -189,10 +189,10 @@ const Footer = () => {
 
           <div className="mt-2 flex flex-col gap-1 text-sm uppercase">
             <a
-              href="mailto:hello@swiped.com"
+              href="mailto:hello@swipes.com"
               className="tracking-tight transition hover:text-white/70"
             >
-              hello@swiped.com
+              hello@swipes.com
             </a>
 
             <a
@@ -207,14 +207,14 @@ const Footer = () => {
         {/* Description */}
         <div className="col-span-12 lg:col-span-4">
           <p className="mono text-xs uppercase tracking-wide text-white/80">
-            Swiped transforms ideas into visuals at the speed of thought. Built
+            Reflow transforms ideas into visuals at the speed of thought. Built
             for creators, designers, and storytellers, it blends AI generation
             with human direction to make creative work feel fluid, expressive,
             and alive.
           </p>
 
           <div className="mt-4 flex flex-col uppercase">
-            <p className="mono text-xs text-white/40">Swiped Inc</p>
+            <p className="mono text-xs text-white/40">Reflow Inc</p>
             <p className="mono text-xs text-white/40">
               ©2026 All Rights Reserved
             </p>
@@ -246,12 +246,14 @@ const Footer = () => {
       <div className="-mt-16 w-full lg:-mt-18">
         <img
           src="/images/footer.png"
-          alt="Swiped footer graphic"
+          alt="Reflow footer graphic"
           className="pointer-events-none w-full select-none object-contain"
           draggable={false}
         />
       </div>
-      <p className="text-white justify-center items-center flex text-xs mb-2 -mt-10">CURRENTLY IN BETA</p>
+      <p className="text-white justify-center items-center flex text-xs mb-2 -mt-10">
+        CURRENTLY IN BETA
+      </p>
     </footer>
   );
 };

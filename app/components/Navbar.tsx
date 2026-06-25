@@ -109,7 +109,7 @@ const Navbar = () => {
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
         <Image
           src="/images/footer.png"
-          alt="Swiped logo"
+          alt="Reflow logo"
           width={180}
           height={48}
           priority
