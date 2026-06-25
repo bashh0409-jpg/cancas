@@ -2,12 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { siDiscord, siInsta360, siInstagram, siYoutube } from "simple-icons";
+import { siDiscord,siInstagram, siYoutube } from "simple-icons";
 import {
   AudioLines,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ClockFading,
   Globe,
   LogOut,
