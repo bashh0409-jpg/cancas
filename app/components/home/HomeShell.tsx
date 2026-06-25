@@ -292,7 +292,7 @@ export function HomeShell({
               className={`flex items-center gap-1.5 overflow-hidden whitespace-nowrap ${collapsed ? "pointer-events-none" : ""}`}
             >
               <span className="text-white text-base font-semibold uppercase tracking-widest leading-none">
-                SWIPED
+                Reflow
               </span>
               <span className="uppercase bg-white/10 text-[9px] text-white/50 px-1.5 py-0.5 rounded font-semibold tracking-wide leading-none">
                 BETA

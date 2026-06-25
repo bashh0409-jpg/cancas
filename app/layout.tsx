@@ -43,9 +43,9 @@ const rinter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SWIPED.AI",
+  title: "ReFlow",
   description:
-    "discover the power of collaborative creativity with Slate, the ultimate canvas for your ideas.",
+    "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
 };
 
 export default function RootLayout({

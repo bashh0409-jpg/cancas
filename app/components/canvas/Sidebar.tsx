@@ -21,6 +21,7 @@ import {
   FileText,
   ImageIcon,
   ArrowLeft,
+  Home,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -59,15 +60,17 @@ type SidebarProps = {
 
 // Logo Component
 const Logo = () => (
-  <a href="/home" className="cursor-pointer  hover:bg-white/20 rounded p-1 py-2">
-    <img
-      src="/images/RE.svg"
-      alt="Logo"
-      width={24}
-      height={24}
-      className="object-contain"
-    />
-  </a>
+  
+    <a href="/home" className="cursor-pointer hover:bg-white/20 rounded p-1 py-1.5">
+      <Tooltip text="Reflow"><img
+        src="/images/RE.svg"
+        alt="Logo"
+        width={24}
+        height={24}
+        className="object-contain"
+      /></Tooltip>
+    </a>
+
 );
 
 export default Logo;
