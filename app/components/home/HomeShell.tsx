@@ -44,7 +44,7 @@ interface HomeShellProps {
   credits: number;
   projectsError: string | null;
   errorMessage: string | undefined;
-  createCanvasAction: () => Promise<void>;
+  createCanvasAction: (idempotencyKey: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccountAction: () => Promise<void>;
   profile: {
