@@ -56,24 +56,181 @@ type SidebarProps = {
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
   onImportCloudFile: (file: File) => Promise<void>;
   onClosePanel?: () => void;
+  canvasName?: string;
+  activeCanvasId?: string;
+  canvases?: { id: string; name: string; slug: string }[];
+  onRename?: (name: string) => void | Promise<void>;
+  onSwitchCanvas?: (slug: string) => void;
 };
 
-// Logo Component
-const Logo = () => (
-  
-    <a href="/home" className="cursor-pointer hover:bg-white/20 rounded p-1 py-1.5">
-      <Tooltip text="Reflow"><Image
-        src="/images/RE.svg"
-        alt="Logo"
-        width={24}
-        height={24}
-        className="object-contain"
-      /></Tooltip>
-    </a>
+// Canvas switcher popup — styled like the home account card
+const CanvasSwitcherOverlay = ({
+  canvasName,
+  activeCanvasId,
+  canvases,
+  onRename,
+  onSwitchCanvas,
+}: {
+  canvasName?: string;
+  activeCanvasId?: string;
+  canvases?: { id: string; name: string; slug: string }[];
+  onRename?: (name: string) => void | Promise<void>;
+  onSwitchCanvas?: (slug: string) => void;
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(canvasName ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-);
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
 
-export default Logo;
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    gsap.fromTo(
+      cardRef.current,
+      { opacity: 0, y: -6, scale: 0.97 },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.18,
+        ease: "power2.out",
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    setDraftName(canvasName ?? "");
+  }, [canvasName]);
+
+  const handleSaveName = async () => {
+    const trimmed = draftName.trim() || "Untitled";
+
+    if (!onRename) {
+      setEditing(false);
+      return;
+    }
+
+    if (trimmed === canvasName) {
+      setEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    setEditing(false);
+
+    try {
+      await onRename(trimmed);
+      setDraftName(trimmed);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      className="absolute left-12 top-0 z-[60] w-[240px] overflow-hidden rounded border border-white/5 bg-[#212126] shadow-2xl"
+    >
+      {/* Current canvas */}
+      <div className=" px-3 py-1">
+        <div className="flex mono tracking-tight  items-center gap-2.5">
+
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <input
+                ref={inputRef}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onBlur={() => void handleSaveName()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleSaveName();
+                  }
+                  if (e.key === "Escape") {
+                    setEditing(false);
+                    setDraftName(canvasName ?? "");
+                  }
+                }}
+                className="w-full cursor-pointer  mono tracking-tight rounded border border-white/20 bg-[#17171b] px-2 py-1 text-xs text-white mono outline-none focus:border-white/40"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="w-full truncate cursor-pointer text-left text-xs font-medium leading-tight text-white transition hover:text-white/80"
+                title="Click to rename"
+              >
+                {isSaving ? "Saving…" : canvasName}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Switch canvas */}
+      {canvases && canvases.length > 0 ? (
+        <div className="max-h-52 hidden overflow-y-auto px-3 py-2.5">
+          <p className="mb-2 text-[10px] mono uppercase tracking-wider text-white/40">
+            Switch canvas
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {canvases.map((canvas) => {
+              const isActive = canvas.id === activeCanvasId;
+
+              return (
+                <a
+                  key={canvas.id}
+                  href={`/canvas/${canvas.slug}`}
+                  onClick={(e) => {
+                    if (onSwitchCanvas) {
+                      e.preventDefault();
+                      onSwitchCanvas(canvas.slug);
+                    }
+                  }}
+                  className={`flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs mono transition ${
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <span className="truncate">{canvas.name}</span>
+                  {isActive ? (
+                    <span className="shrink-0 text-[9px] uppercase tracking-wide text-lime-300">
+                      Current
+                    </span>
+                  ) : null}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="px-3 py-3 text-xs mono text-white/50">
+          No other canvases yet
+        </div>
+      )}
+
+      {/* Back to workspace */}
+      <div className="border-t border-white/10 px-3 py-1">
+        <a
+          href="/home"
+          className="text-xs mono tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+        >
+          Back to files
+        </a>
+      </div>
+    </div>
+  );
+};
 // Tooltip Component
 const Tooltip = ({
   text,
@@ -1408,12 +1565,49 @@ export const Sidebar = ({
   onGridSettingsChange,
   onImportCloudFile,
   onClosePanel,
+  canvasName,
+  activeCanvasId,
+  canvases,
+  onRename,
+  onSwitchCanvas,
 }: SidebarProps) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
+  const [showCanvasOverlay, setShowCanvasOverlay] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevPanelRef = useRef<PanelType>(null);
+  const canvasSwitcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCanvasOverlay) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        canvasSwitcherRef.current &&
+        !canvasSwitcherRef.current.contains(event.target as Node)
+      ) {
+        setShowCanvasOverlay(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowCanvasOverlay(false);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      document.addEventListener("mousedown", handlePointerDown);
+    }, 0);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showCanvasOverlay]);
 
   useEffect(() => {
     if (!activePanel) return;
@@ -1508,8 +1702,36 @@ export const Sidebar = ({
     >
       {/* Left Sidebar */}
       <div className="w-fit p-2 bg-[#212126] flex flex-col items-center py-4 gap-6 border-r border-white/10">
-        {/* Logo */}
-        <Logo />
+        {/* Logo — click to open canvas switcher */}
+        <div ref={canvasSwitcherRef} className="relative">
+          <button
+            type="button"
+            aria-expanded={showCanvasOverlay}
+            aria-label="Canvas menu"
+            onClick={() => setShowCanvasOverlay((open) => !open)}
+            className="cursor-pointer rounded p-1 py-1.5 hover:bg-white/20"
+          >
+            <Image
+              src="/images/RE.svg"
+              alt="Reflow"
+              width={24}
+              height={24}
+              className="object-contain"
+            />
+          </button>
+          {showCanvasOverlay ? (
+            <CanvasSwitcherOverlay
+              activeCanvasId={activeCanvasId}
+              canvasName={canvasName}
+              canvases={canvases}
+              onRename={onRename}
+              onSwitchCanvas={(slug) => {
+                setShowCanvasOverlay(false);
+                onSwitchCanvas?.(slug);
+              }}
+            />
+          ) : null}
+        </div>
         {/* Tools Section */}
         <div className="mt-5">
           <ToolsSection

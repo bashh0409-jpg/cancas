@@ -115,6 +115,7 @@ type CanvasWorkspaceProps = {
   canvasId: string;
   userId: string;
   canvasName: string;
+  canvases: { id: string; name: string; slug: string }[];
   initialContent: CanvasContent;
   serverUpdatedAt: string;
   onImageSyncStatsChange?: (stats: ImageSyncStats) => void;
@@ -489,6 +490,7 @@ export default function CanvasWorkspace({
   canvasId,
   userId,
   canvasName,
+  canvases,
   initialContent,
   serverUpdatedAt,
   onImageSyncStatsChange,
@@ -1532,6 +1534,39 @@ export default function CanvasWorkspace({
       }
     }
   }, [canvasId, canvasName, isClientReady]);
+
+  const renameCanvas = useCallback(
+    async (name: string) => {
+      const trimmedName = name.trim() || "Untitled";
+      onRemoteNameChange?.(trimmedName);
+
+      try {
+        const response = await fetch(`/api/canvases/${canvasId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { slug?: string };
+
+        if (data.slug) {
+          const currentPath = window.location.pathname;
+          const currentSlug = currentPath.split("/").pop();
+
+          if (currentSlug && data.slug !== currentSlug) {
+            window.location.replace(`/canvas/${data.slug}`);
+          }
+        }
+      } catch {
+        // Keep the optimistic local title; the next save can retry.
+      }
+    },
+    [canvasId, onRemoteNameChange],
+  );
 
   useEffect(() => {
     if (!isClientReady) {
@@ -3719,6 +3754,13 @@ export default function CanvasWorkspace({
 
       {isClientReady && (
         <Sidebar
+          activeCanvasId={canvasId}
+          canvasName={canvasName}
+          canvases={canvases}
+          onRename={renameCanvas}
+          onSwitchCanvas={(slug) => {
+            window.location.href = `/canvas/${slug}`;
+          }}
           gridSettings={{
             enabled: showGrid,
             color: gridColor,

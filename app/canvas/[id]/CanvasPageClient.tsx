@@ -23,7 +23,7 @@ type CanvasPageClientProps = {
   canvasId: string;
   canvasName: string;
   initialContent: CanvasContent;
-  canvases: { id: string; name: string; slug: string }[]; // 👈 add this
+  canvases: { id: string; name: string; slug: string }[];
   serverUpdatedAt: string;
   userId: string;
   firstName: string;
@@ -35,6 +35,7 @@ type CanvasPageClientProps = {
 export default function CanvasPageClient({
   canvasId,
   canvasName,
+  canvases,
   initialContent,
   serverUpdatedAt,
   userId,
@@ -50,14 +51,7 @@ export default function CanvasPageClient({
     failed: 0,
   }));
 
-  const [, setUploadDebugEntries] = useState<
-    UploadDebugEntry[]
-  >([]);
-  // const [showUploadDebug, setShowUploadDebug] = useState(false);
-
-  // useEffect(() => {
-  //   setShowUploadDebug(isUploadDebugEnabled());
-  // }, []);
+  const [, setUploadDebugEntries] = useState<UploadDebugEntry[]>([]);
 
   useEffect(() => {
     const handleCreditsUpdated = (event: Event) => {
@@ -91,6 +85,7 @@ export default function CanvasPageClient({
       <CanvasWorkspace
         canvasId={canvasId}
         canvasName={canvasTitle}
+        canvases={canvases ?? []}
         initialContent={initialContent}
         serverUpdatedAt={serverUpdatedAt}
         userId={userId}
@@ -101,33 +96,6 @@ export default function CanvasPageClient({
         onRemoteNameChange={setCanvasTitle}
       />
 
-      {/* DEBUG 
-      {showUploadDebug && (
-        <div className="absolute right-4 top-16 z-[60] max-w-md rounded-lg border border-red-500/40 bg-black/90 p-3 text-xs text-white shadow-lg">
-          <p className="mb-2 font-medium text-red-300">Upload debug (dev)</p>
-          {uploadDebugEntries.length === 0 ? (
-            <p className="text-white/60">
-              Drop images. Failed uploads will appear here.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {uploadDebugEntries.map((entry) => (
-                <li
-                  key={`${entry.nodeId}-${entry.attempt}-${entry.at}`}
-                  className="rounded bg-white/5 p-2"
-                >
-                  <p className="font-medium">{entry.fileName}</p>
-                  <p className="text-white/70">
-                    attempt {entry.attempt} · {entry.message}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}*/}
-
-      {/* BOTTOM BAR */}
       <div className="absolute bottom-0 right-0 z-50 flex w-fit items-center p-4">
         <SyncIndicator stats={syncStats} />
       </div>

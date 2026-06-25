@@ -247,12 +247,10 @@ export function HomeShell({
     return false;
   });
 
-  // Keep collapsed in sync with window resize
+  // Auto-collapse on mobile, auto-expand on desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setCollapsed(true);
-      }
+      setCollapsed(window.innerWidth < 768);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -357,9 +355,11 @@ export function HomeShell({
             >
               <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
                 {photoUrl ? (
-                  <img
+                  <Image
                     src={photoUrl}
                     alt={firstName}
+                    width={32}
+                    height={32}
                     className="h-full w-full object-cover"
                     referrerPolicy="no-referrer"
                   />
