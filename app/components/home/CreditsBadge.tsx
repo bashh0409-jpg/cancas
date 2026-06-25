@@ -55,6 +55,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
   async function initiateCheckout(planId: string) {
     try {
       const countryCode = currencyData.currency === "ZAR" ? "ZA" : "US";
+      const idempotencyKey = crypto.randomUUID();
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,6 +65,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
           countryCode,
           returnUrl: `${window.location.origin}/billing/success`,
           cancelUrl: `${window.location.origin}/billing/cancel`,
+          idempotencyKey,
         }),
       });
 
@@ -73,7 +75,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
       }
 
       const { checkoutUrl } = await res.json();
-      if (checkoutUrl) window.location.href = checkoutUrl;
+      if (checkoutUrl) window.location.assign(checkoutUrl);
     } catch (err) {
       console.error("Checkout initiation failed:", err);
       alert(err instanceof Error ? err.message : "Checkout failed");
@@ -88,8 +90,8 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          "flex items-center gap-1 cursor-pointer bg-white/20 border-2 border-white/5 h-6.5 px-1 rounded-xs text-white uppercase text-xs tracking-tight",
-          "hover:bg-white/40 transition",
+          "flex items-center mono cursor-pointer bg-white/20 border border-white/5 h-6 px-1 rounded text-white uppercase text-xs tracking-tight",
+          "hover:bg-white/30 transition",
           className ?? "",
         ].join(" ")}
       >
@@ -312,14 +314,14 @@ function Icon() {
   return (
     <svg
       width="16"
-      height="16"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M12 3.75V20.25" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 3.75V20.25" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }

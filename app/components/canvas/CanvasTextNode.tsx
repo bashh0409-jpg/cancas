@@ -15,6 +15,7 @@ import {
   useState,
 } from "react";
 import { useAiSettingsStore } from "@/lib/canvas/aiSettingsStore";
+import { dispatchUserCreditsUpdated } from "@/lib/credits/events";
 
 export type CanvasTextNodeData = {
   id: string;
@@ -275,16 +276,26 @@ export function CanvasTextNode({
       setIsLoading(true);
 
       try {
+        const idempotencyKey = crypto.randomUUID();
         const creditRes = await fetch("/api/credits/consume", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ amount: 3 }),
+          body: JSON.stringify({
+            amount: 3,
+            idempotencyKey,
+            scope: "tts.speak",
+          }),
         });
         if (creditRes.status === 402) {
           cleanupPlayback();
           return;
         }
         if (!creditRes.ok) throw new Error("Credit check failed");
+
+        const creditData = (await creditRes.json()) as { balance?: number };
+        if (typeof creditData.balance === "number") {
+          dispatchUserCreditsUpdated(creditData.balance);
+        }
       } catch {
         cleanupPlayback();
         return;

@@ -67,11 +67,49 @@ function findCreditField(record: Record<string, unknown>) {
   return null;
 }
 
+function readBoolean(record: Record<string, unknown>, key: string) {
+  return record[key] === true;
+}
+
+function isMissingRpcError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code = "code" in error ? error.code : undefined;
+  const message = "message" in error ? error.message : undefined;
+
+  return (
+    code === "42883" ||
+    (typeof message === "string" &&
+      /function .* does not exist|schema cache/i.test(message))
+  );
+}
+
 export async function consumeUserCredits(
   supabase: SupabaseClient,
   userId: string,
   amount = 2,
+  idempotencyKey?: string,
+  scope = "credits.consume",
 ) {
+  if (idempotencyKey) {
+    const { data, error } = await supabase.rpc("consume_user_credits_once", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_idempotency_key: idempotencyKey,
+      p_scope: scope,
+    });
+
+    if (error && !isMissingRpcError(error)) {
+      throw error;
+    }
+
+    if (!error && data && typeof data === "object" && !Array.isArray(data)) {
+      return readBoolean(data as Record<string, unknown>, "success");
+    }
+  }
+
   const record = await selectUserCreditsRow(supabase, userId);
 
   if (!record) {
@@ -119,9 +157,28 @@ export async function addUserCredits(
   supabase: SupabaseClient,
   userId: string,
   amount: number,
+  idempotencyKey?: string,
+  scope = "credits.grant",
 ) {
   if (amount <= 0) {
     return true;
+  }
+
+  if (idempotencyKey) {
+    const { data, error } = await supabase.rpc("grant_user_credits_once", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_idempotency_key: idempotencyKey,
+      p_scope: scope,
+    });
+
+    if (error && !isMissingRpcError(error)) {
+      throw error;
+    }
+
+    if (!error && data && typeof data === "object" && !Array.isArray(data)) {
+      return readBoolean(data as Record<string, unknown>, "success");
+    }
   }
 
   const record = await selectUserCreditsRow(supabase, userId);

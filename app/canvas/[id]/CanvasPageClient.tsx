@@ -1,21 +1,17 @@
 "use client";
 
 import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
-import { EditableCanvasName } from "@/app/components/canvas/EditableCanvasName";
 import FloatingToolbar from "@/app/components/FloatingToolbar";
 import type { CanvasContent } from "@/types/canvas";
-import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import {
-  isUploadDebugEnabled,
-  type UploadDebugEntry,
-} from "@/lib/canvas/uploadDebug";
+import type { UploadDebugEntry } from "@/lib/canvas/uploadDebug";
 import CanvasWorkspace from "./CanvasWorkspace";
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
-import { CanvasSwitcher } from "@/app/components/canvas/CanvasSwitcher"; // FIXED PATH
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
-
-type CanvasObjectKind = "image" | "website" | "voice" | "cloud";
+import {
+  USER_CREDITS_UPDATED_EVENT,
+  type UserCreditsUpdatedDetail,
+} from "@/lib/credits/events";
 
 type ImageSyncStats = {
   synced: number;
@@ -40,15 +36,12 @@ export default function CanvasPageClient({
   canvasId,
   canvasName,
   initialContent,
-  canvases,
   serverUpdatedAt,
   userId,
-  firstName,
-  lastName,
   credits,
-  signOutAction,
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
+  const [currentCredits, setCurrentCredits] = useState(credits);
 
   const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
     synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
@@ -57,7 +50,7 @@ export default function CanvasPageClient({
     failed: 0,
   }));
 
-  const [uploadDebugEntries, setUploadDebugEntries] = useState<
+  const [, setUploadDebugEntries] = useState<
     UploadDebugEntry[]
   >([]);
   // const [showUploadDebug, setShowUploadDebug] = useState(false);
@@ -65,6 +58,29 @@ export default function CanvasPageClient({
   // useEffect(() => {
   //   setShowUploadDebug(isUploadDebugEnabled());
   // }, []);
+
+  useEffect(() => {
+    const handleCreditsUpdated = (event: Event) => {
+      const creditsDetail = (event as CustomEvent<UserCreditsUpdatedDetail>)
+        .detail;
+
+      if (typeof creditsDetail?.credits === "number") {
+        setCurrentCredits(creditsDetail.credits);
+      }
+    };
+
+    window.addEventListener(
+      USER_CREDITS_UPDATED_EVENT,
+      handleCreditsUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        USER_CREDITS_UPDATED_EVENT,
+        handleCreditsUpdated,
+      );
+    };
+  }, []);
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#111111]">
@@ -114,6 +130,13 @@ export default function CanvasPageClient({
       {/* BOTTOM BAR */}
       <div className="absolute bottom-0 right-0 z-50 flex w-fit items-center p-4">
         <SyncIndicator stats={syncStats} />
+      </div>
+
+      <div className="absolute right-4 top-4 z-50 flex items-center">
+        <CreditsBadge
+          credits={currentCredits}
+          className=" rounded border-white/10 bg-black/75 px-1  shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl hover:bg-black/90"
+        />
       </div>
 
       <FloatingToolbar />

@@ -1,6 +1,16 @@
 "use client";
 
-import { AudioLines, Bot, Import, Server, Square, StickyNote } from "lucide-react";
+import {
+  AudioLines,
+  Bot,
+  FileText,
+  Folder,
+  ImageIcon,
+  Import,
+  Server,
+  Square,
+  StickyNote,
+} from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
 import { activateCanvasAiChatTool } from "@/lib/canvas/aiChatToolEvents";
@@ -377,18 +387,40 @@ export function FloatingToolbox() {
 
                           setSelectedCloudIndex(index);
                         }}
-                        className={`flex h-30 cursor-pointer aspect-square flex-col items-center justify-center rounded border px-2 py-2 text-left transition ${
+                        className={`flex h-32 cursor-pointer aspect-square flex-col items-center justify-center rounded border px-2 py-2 text-left transition ${
                           selectedCloudIndex === index
                             ? "border-blue-500 bg-blue-50 text-slate-900"
                             : "border-dashed border-slate-300 bg-white text-slate-600"
                         }`}
                       >
-                        <span className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                          {item.fileType === "folder"
-                            ? "Folder"
-                            : item.fileType}
-                        </span>
-                        <span className="truncate text-[11px] font-semibold leading-5">
+                        {item.fileType === "image" ? (
+                          <span className="mb-2 flex h-20 w-full items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100">
+                            {item.thumbnailUrl ? (
+                              <span
+                                aria-label={`${item.name} thumbnail`}
+                                className="block h-full w-full bg-cover bg-center bg-no-repeat"
+                                role="img"
+                                style={{
+                                  backgroundImage: `url("${item.thumbnailUrl}")`,
+                                }}
+                              />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 text-slate-400" />
+                            )}
+                          </span>
+                        ) : (
+                          <span className="mb-2 flex h-20 w-full flex-col items-center justify-center gap-2 rounded border border-slate-200 bg-slate-50 text-slate-400">
+                            {item.fileType === "folder" ? (
+                              <Folder className="h-7 w-7" strokeWidth={1.5} />
+                            ) : (
+                              <FileText className="h-7 w-7" strokeWidth={1.5} />
+                            )}
+                            <span className="text-[10px] uppercase tracking-[0.18em]">
+                              {item.fileType === "folder" ? "Folder" : "File"}
+                            </span>
+                          </span>
+                        )}
+                        <span className="w-full truncate text-center text-[11px] font-semibold leading-5">
                           {item.name}
                         </span>
                       </button>

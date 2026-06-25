@@ -43,7 +43,7 @@ const rinter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "ReFlow",
+  title: "REFLOW",
   description:
     "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
 };

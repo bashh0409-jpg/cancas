@@ -30,7 +30,12 @@ export async function POST(req: Request) {
       countryCode,
       returnUrl,
       cancelUrl,
+      idempotencyKey,
     } = body;
+    const normalizedIdempotencyKey =
+      typeof idempotencyKey === "string" && idempotencyKey.trim().length > 0
+        ? idempotencyKey.trim()
+        : crypto.randomUUID();
 
     const normalizedBillingCycle =
       billingCycle === "annually" ? "annual" : billingCycle;
@@ -79,6 +84,7 @@ export async function POST(req: Request) {
         description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
         frequency:
           normalizedBillingCycle === "annual" ? "annual" : "monthly",
+        idempotencyKey: normalizedIdempotencyKey,
       });
 
       checkoutUrl = payfastClient.createCheckoutUrl({
@@ -107,6 +113,7 @@ export async function POST(req: Request) {
           returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/success`,
         cancelUrl:
           cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
+        idempotencyKey: normalizedIdempotencyKey,
       });
     } else {
       return NextResponse.json(
@@ -125,6 +132,7 @@ export async function POST(req: Request) {
       metadata: {
         countryCode,
         checkoutUrl,
+        idempotencyKey: normalizedIdempotencyKey,
         initiatedAt: new Date().toISOString(),
       },
     });

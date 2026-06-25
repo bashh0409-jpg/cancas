@@ -3,9 +3,19 @@ import { initPayFastClient } from "@/lib/billing/payfast";
 import {
   updateSubscription,
   getPlanDetails,
+  type SubscriptionPlan,
+  type SubscriptionStatus,
 } from "@/lib/subscriptions/repository";
 import { addUserCredits } from "@/lib/credits/repository";
 import { NextResponse } from "next/server";
+import type { PayFastWebhookData } from "@/lib/billing/payfast";
+
+const BILLING_PLANS = new Set<SubscriptionPlan>([
+  "free",
+  "starter",
+  "pro",
+  "ultra",
+]);
 
 /**
  * PayFast Webhook Handler
@@ -26,7 +36,7 @@ export async function POST(req: Request) {
     const payfast = initPayFastClient(process.env.NODE_ENV === "development");
 
     // Verify webhook signature
-    if (!payfast.verifyWebhookSignature(webhookData as any)) {
+    if (!payfast.verifyWebhookSignature(webhookData as PayFastWebhookData)) {
       console.error("Invalid PayFast webhook signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -55,26 +65,26 @@ export async function POST(req: Request) {
     );
 
     // Map PayFast payment status to subscription status
-    let subscriptionStatus: "active" | "pending" | "canceled" | "past_due";
+    let subscriptionStatus: SubscriptionStatus;
 
     switch (payment_status) {
       case "COMPLETE":
         subscriptionStatus = "active";
         break;
       case "PENDING":
-        subscriptionStatus = "pending";
+        subscriptionStatus = "unpaid";
         break;
       case "FAILED":
       case "CANCELLED":
         subscriptionStatus = "canceled";
         break;
       default:
-        subscriptionStatus = "pending";
+        subscriptionStatus = "unpaid";
     }
 
     // Update subscription in database
-    const updated = await updateSubscription(supabase, userId, {
-      status: subscriptionStatus as any,
+    await updateSubscription(supabase, userId, {
+      status: subscriptionStatus,
       provider_subscription_id: pf_payment_id,
       metadata: {
         paymentId: m_payment_id,
@@ -85,14 +95,24 @@ export async function POST(req: Request) {
     // If subscription is now active, grant credits based on plan and billing frequency
     if (subscriptionStatus === "active") {
       try {
-        const planKey = (plan as string).toLowerCase() as any;
+        const planKey = plan.toLowerCase() as SubscriptionPlan;
+        if (!BILLING_PLANS.has(planKey)) {
+          throw new Error(`Unsupported PayFast plan: ${plan}`);
+        }
+
         const details = getPlanDetails(planKey);
         const frequency = webhookData.billing_frequency;
         const isAnnual = frequency === "6" || frequency === "annual";
         const creditsToGrant = details.monthlyCredits * (isAnnual ? 12 : 1);
 
         if (creditsToGrant > 0) {
-          await addUserCredits(supabase, userId, creditsToGrant);
+          await addUserCredits(
+            supabase,
+            userId,
+            creditsToGrant,
+            pf_payment_id || m_payment_id,
+            "payfast.payment.credit",
+          );
           console.log(`Granted ${creditsToGrant} credits to user ${userId}`);
         }
       } catch (err) {

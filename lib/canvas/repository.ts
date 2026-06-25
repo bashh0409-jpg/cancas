@@ -99,6 +99,63 @@ export async function createUserCanvas(
   return data.slug;
 }
 
+function isMissingRpcError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code = "code" in error ? error.code : undefined;
+  const message = "message" in error ? error.message : undefined;
+
+  return (
+    code === "42883" ||
+    (typeof message === "string" &&
+      /function .* does not exist|schema cache/i.test(message))
+  );
+}
+
+export async function createUserCanvasWithCreditOnce(
+  supabase: SupabaseClient,
+  userId: string,
+  idempotencyKey: string,
+  name = "Untitled",
+  creditAmount = 2,
+): Promise<{ slug?: string; insufficientCredits: boolean }> {
+  const { data, error } = await supabase.rpc(
+    "create_user_canvas_with_credit_once",
+    {
+      p_user_id: userId,
+      p_name: name,
+      p_credit_amount: creditAmount,
+      p_idempotency_key: idempotencyKey,
+    },
+  );
+
+  if (error) {
+    if (isMissingRpcError(error)) {
+      return { insufficientCredits: false };
+    }
+
+    throw error;
+  }
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Unable to create canvas");
+  }
+
+  const response = data as Record<string, unknown>;
+
+  if (response.success !== true) {
+    return { insufficientCredits: true };
+  }
+
+  if (typeof response.slug !== "string" || response.slug.length === 0) {
+    throw new Error("Canvas creation did not return a slug");
+  }
+
+  return { slug: response.slug, insufficientCredits: false };
+}
+
 export async function getUserCanvas(
   supabase: SupabaseClient,
   userId: string,

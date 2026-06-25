@@ -8,6 +8,15 @@ import {
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+type StripeInvoiceWithSubscription = Stripe.Invoice & {
+  subscription?: string | null | Stripe.Subscription;
+  parent?: {
+    subscription_details?: {
+      subscription?: string | null;
+    } | null;
+  } | null;
+};
+
 /**
  * Stripe Webhook Handler
  * Processes subscription events from Stripe
@@ -136,13 +145,11 @@ export async function POST(req: Request) {
       }
 
       case "invoice.payment_succeeded": {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object as StripeInvoiceWithSubscription;
         const subscriptionId =
-          typeof (invoice as any).subscription === "string"
-            ? (invoice as any).subscription
-            : ((invoice as any).parent?.subscription_details?.subscription as
-                | string
-                | null);
+          typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : (invoice.parent?.subscription_details?.subscription ?? null);
 
         if (subscriptionId) {
           const { data: subs, error: subsError } = await supabase
@@ -174,7 +181,13 @@ export async function POST(req: Request) {
                 getPlanDetails(subs.plan).monthlyCredits * cycleMultiplier;
 
               if (creditsToGrant > 0) {
-                await addUserCredits(supabase, subs.user_id, creditsToGrant);
+                await addUserCredits(
+                  supabase,
+                  subs.user_id,
+                  creditsToGrant,
+                  invoice.id,
+                  "stripe.invoice.credit",
+                );
                 console.log(
                   `Granted ${creditsToGrant} credits to user ${subs.user_id}`,
                 );

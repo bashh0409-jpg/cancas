@@ -20,6 +20,7 @@ export interface StripeCheckoutSessionOptions {
   billingCycle: "monthly" | "annual";
   successUrl: string;
   cancelUrl: string;
+  idempotencyKey?: string;
 }
 
 export interface StripeSubscriptionDetails {
@@ -78,24 +79,30 @@ export class StripeClient {
         ? planConfig.annualPriceId
         : planConfig.monthlyPriceId;
 
-    const session = await this.stripe.checkout.sessions.create({
-      customer_email: options.userEmail,
-      client_reference_id: options.userId,
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+    const session = await this.stripe.checkout.sessions.create(
+      {
+        customer_email: options.userEmail,
+        client_reference_id: options.userId,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: options.successUrl,
+        cancel_url: options.cancelUrl,
+        metadata: {
+          userId: options.userId,
+          plan: options.plan,
+          idempotencyKey: options.idempotencyKey ?? "",
         },
-      ],
-      mode: "subscription",
-      success_url: options.successUrl,
-      cancel_url: options.cancelUrl,
-      metadata: {
-        userId: options.userId,
-        plan: options.plan,
       },
-    });
+      options.idempotencyKey
+        ? { idempotencyKey: `checkout:${options.idempotencyKey}` }
+        : undefined,
+    );
 
     if (!session.url) {
       throw new Error("Failed to create Stripe checkout session");

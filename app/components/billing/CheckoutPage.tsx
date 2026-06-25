@@ -77,6 +77,7 @@ export function CheckoutPage({ userCountry, userEmail }: CheckoutPageProps) {
     setError(null);
 
     try {
+      const idempotencyKey = crypto.randomUUID();
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,6 +87,7 @@ export function CheckoutPage({ userCountry, userEmail }: CheckoutPageProps) {
           countryCode: userCountry,
           returnUrl: `${window.location.origin}/billing/success`,
           cancelUrl: `${window.location.origin}/billing/cancel`,
+          idempotencyKey,
         }),
       });
 

@@ -8,7 +8,7 @@ export function CreateCanvasButton({
   collapsed,
   labelRef,
 }: {
-  createCanvasAction: () => Promise<void>;
+  createCanvasAction: (idempotencyKey: string) => Promise<void>;
   collapsed: boolean;
   labelRef: (el: HTMLElement | null) => void;
 }) {
@@ -17,7 +17,7 @@ export function CreateCanvasButton({
   const handleClick = async () => {
     try {
       setLoading(true);
-      await createCanvasAction();
+      await createCanvasAction(crypto.randomUUID());
     } finally {
       setLoading(false);
     }

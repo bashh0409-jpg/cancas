@@ -26,6 +26,7 @@ export interface PayFastCheckoutData {
   item_name: string;
   item_description: string;
   amount: string;
+  m_payment_id?: string;
   item_id: string;
   custom_int1?: string; // user_id or subscription_id
   custom_str1?: string; // plan name
@@ -144,6 +145,7 @@ export class PayFastClient {
       | "semi-annual"
       | "annual";
     cycles?: number;
+    idempotencyKey?: string;
   }): Omit<PayFastCheckoutData, "signature"> {
     const frequencyMap = {
       daily: "1",
@@ -166,6 +168,7 @@ export class PayFastClient {
       item_name: options.plan,
       item_description: options.description,
       amount: options.amount,
+      ...(options.idempotencyKey ? { m_payment_id: options.idempotencyKey } : {}),
       item_id: options.userId,
       custom_int1: options.userId,
       custom_str1: options.plan,
