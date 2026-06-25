@@ -243,9 +243,9 @@ const Footer = () => {
       </div>
 
       {/* Footer graphic */}
-      <div className="-mt-16 w-full lg:-mt-18">
+      <div className="-mt-16 w-full lg:-mt-1">
         <img
-          src="/images/footer.png"
+          src="/images/Reflow.svg"
           alt="Reflow footer graphic"
           className="pointer-events-none w-full select-none object-contain"
           draggable={false}

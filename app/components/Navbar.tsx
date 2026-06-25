@@ -107,14 +107,15 @@ const Navbar = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
-        <Image
-          src="/images/footer.png"
+      <div className="flex items-baseline "> <Image
+          src="/images/Re.svg"
           alt="Reflow logo"
           width={180}
           height={48}
           priority
           className="h-8 w-auto mix-blend-difference"
         />
+        <span className="text-xs uppercase -mt-1 tracking-tight mono ml-2">beta</span></div> 
 
         {/* Desktop */}
         <div className="hidden bg-black p-2 rounded items-center gap-1 lg:flex">
@@ -122,7 +123,7 @@ const Navbar = () => {
             <Link
               key={item.label}
               href={item.href}
-              className="flex items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
+              className="flex mono items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
             >
               {item.label}
             </Link>
