@@ -243,7 +243,23 @@ export function HomeShell({
   updateSettingsAction,
   userSettings,
 }: HomeShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  // Keep collapsed in sync with window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [activePage, setActivePage] = useState<ActivePage>("files");
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -259,7 +275,6 @@ export function HomeShell({
     const createBtn = createBtnRef.current;
     const targets = [
       ...labels,
-      ...(wordmark ? [wordmark] : []),
       ...(createBtn ? [createBtn] : []),
     ];
 
@@ -307,18 +322,23 @@ export function HomeShell({
         {/* ── Logo + collapse toggle ── */}
         <div className="flex items-center justify-between px-1">
           <div className="flex tracking-tight mb-8 items-center gap-2 min-w-0">
-            <div className="shrink-0"></div>
-            <div
-              ref={wordmarkRef}
-              className={`flex items-center gap-1.5 overflow-hidden whitespace-nowrap ${collapsed ? "pointer-events-none" : ""}`}
-            >
+            <div className="shrink-0 flex items-center gap-1.5">
+              <button
+                onClick={() => setCollapsed((c) => !c)}
+                className="md:hidden flex items-center justify-center w-[34px] h-[24px] rounded hover:bg-white/10 transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <img
                 onClick={() => setAccountOpen((o) => !o)}
                 src="/images/RE.svg"
                 alt="Logo"
                 width={34}
                 height={24}
-                className="object-contain hover:bg-white/30 cursor-pointer rounded"
+                className="object-contain hover:bg-white/30 cursor-pointer rounded shrink-0"
               />
             </div>
           </div>
@@ -390,14 +410,14 @@ export function HomeShell({
 
         {/* ── Nav items ── */}
         <nav className="flex flex-col gap-2 px-1">
-          {/* Search */}
-          <div className="mb-6">
+          {/* Search - hidden on mobile when collapsed */}
+          <div className={`mb-6 ${collapsed ? "hidden" : ""}`}>
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded h-8 mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 "
+              className={`w-full rounded h-8 mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 ${collapsed ? "hidden" : ""}`}
             />
           </div>
 
