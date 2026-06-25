@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import type { UserSubscription } from "@/lib/subscriptions/repository";
 
@@ -16,11 +16,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadSubscription();
-  }, []);
-
-  const loadSubscription = async () => {
+  const loadSubscription = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/billing/subscription/${userId}`);
@@ -34,7 +30,11 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadSubscription();
+  }, [loadSubscription]);
 
   const handleCancel = async (immediate = false) => {
     try {
@@ -89,7 +89,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
     );
   }
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     active: "text-green-400",
     trialing: "text-blue-400",
     canceled: "text-red-400",
@@ -99,23 +99,13 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
     paused: "text-yellow-400",
   };
 
-  const statusBgColors = {
-    active: "bg-green-900/30",
-    trialing: "bg-blue-900/30",
-    canceled: "bg-red-900/30",
-    past_due: "bg-yellow-900/30",
-    unpaid: "bg-red-900/30",
-    expired: "bg-gray-900/30",
-    paused: "bg-yellow-900/30",
-  };
-
   const currentPeriodEnd = subscription.current_period_end
     ? new Date(subscription.current_period_end)
     : null;
 
-  const isExpiringSoon =
-    currentPeriodEnd &&
-    currentPeriodEnd.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  const showExpiringWarning =
+    subscription.status === "active" &&
+    subscription.cancel_at_period_end;
 
   return (
     <div className="space-y-6">
@@ -139,7 +129,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
           <div>
             <div className="text-sm text-gray-400 mb-1">Status</div>
             <div
-              className={`font-medium ${statusColors[subscription.status as keyof typeof statusColors]}`}
+              className={`font-medium ${statusColors[subscription.status] || ""}`}
             >
               {subscription.status}
             </div>
@@ -156,22 +146,22 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
       {currentPeriodEnd && (
         <div
           className={`rounded-lg p-4 border ${
-            isExpiringSoon
+            showExpiringWarning
               ? "bg-yellow-900/30 border-yellow-600"
               : "bg-gray-800 border-gray-700"
           }`}
         >
           <div className="flex items-start gap-3">
-            {isExpiringSoon ? (
+            {showExpiringWarning ? (
               <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
             ) : (
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
             )}
             <div>
               <div className="font-medium mb-1">
-                {subscription.cancel_at_period_end
+                {showExpiringWarning
                   ? "Scheduled for cancellation"
-                  : "Renews on"}
+                  : "Active"}
               </div>
               <div className="text-gray-300">
                 {currentPeriodEnd.toLocaleDateString("en-US", {
@@ -189,7 +179,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
       {/* Actions */}
       <div className="flex gap-3">
         <a
-          href="/billing/upgrade"
+          href="/billing/checkout"
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium"
         >
           Change Plan

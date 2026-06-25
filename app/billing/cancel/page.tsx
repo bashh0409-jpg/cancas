@@ -16,7 +16,7 @@ export default function BillingCancel() {
         </p>
 
         <div className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
-          <p className="text-sm text-gray-400 mb-3">What's next?</p>
+          <p className="text-sm text-gray-400 mb-3">{`What's next?`}</p>
           <ul className="text-left space-y-2 text-sm">
             <li className="flex items-center gap-2">
               <span>•</span>

@@ -31,7 +31,7 @@ export async function GET() {
       dropbox: false,
     } as Record<string, boolean>;
 
-    (data || []).forEach((row: any) => {
+    (data || []).forEach((row: { provider: string }) => {
       if (row.provider) connected[row.provider] = true;
     });
 

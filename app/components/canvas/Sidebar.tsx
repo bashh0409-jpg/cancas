@@ -21,12 +21,12 @@ import {
   FileText,
   ImageIcon,
   ArrowLeft,
-  Home,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import Image from "next/image";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import { useAiSettingsStore, ELEVENLABS_VOICES } from "@/lib/canvas/aiSettingsStore";
@@ -62,7 +62,7 @@ type SidebarProps = {
 const Logo = () => (
   
     <a href="/home" className="cursor-pointer hover:bg-white/20 rounded p-1 py-1.5">
-      <Tooltip text="Reflow"><img
+      <Tooltip text="Reflow"><Image
         src="/images/RE.svg"
         alt="Logo"
         width={24}

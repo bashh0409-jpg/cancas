@@ -357,7 +357,7 @@ export function HomeShell({
             >
               <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
                 {photoUrl ? (
-                  <Image
+                  <img
                     src={photoUrl}
                     alt={firstName}
                     className="h-full w-full object-cover"
