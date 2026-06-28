@@ -43,7 +43,7 @@ const MobileNotifier: React.FC<Props> = ({
       <div className="flex items-center justify-between px-4 py-4">
         {/* Logo */}
         <img
-          src="/images/RE.svg"
+          src="/images/Re.svg"
           alt="Logo"
           width={34}
           height={24}

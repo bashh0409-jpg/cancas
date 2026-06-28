@@ -1712,7 +1712,7 @@ export const Sidebar = ({
             className="cursor-pointer rounded p-1 py-1.5 hover:bg-white/20"
           >
             <Image
-              src="/images/RE.svg"
+              src="/images/Re.svg"
               alt="Reflow"
               width={24}
               height={24}

@@ -329,7 +329,7 @@ export function HomeShell({
               </button>
               <Image
                 onClick={() => setAccountOpen((o) => !o)}
-                src="/images/RE.svg"
+                src="/images/Re.svg"
                 alt="Logo"
                 width={34}
                 height={24}
