@@ -123,7 +123,7 @@ const MobileNotifier: React.FC<Props> = ({
           >
             <path d={siInstagram.path} />
           </svg>
-          Visit our instagram page for more updates
+          Visit our instagram page
         </a>{" "}
         <a
           href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
@@ -140,7 +140,7 @@ const MobileNotifier: React.FC<Props> = ({
           >
             <path d={siYoutube.path} />
           </svg>
-          Visit our Youtube page for more tutorials
+          Watch tutorials on Youtube
         </a>{" "}
 
           <a
