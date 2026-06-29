@@ -40,15 +40,15 @@ const MobileNotifier: React.FC<Props> = ({
   return (
     <div className="relative w-full h-screen md:hidden bg-black text-white flex flex-col">
       {/* Top bar with logo and account */}
-      <div className="flex items-center justify-between px-4 py-4">
-        {/* Logo */}
+      <div className="flex  items-center justify-between px-4 py-4">
+        {/* Logo */}<div className="flex ">
         <img
-          src="/images/Re.svg"
+          src="/images/Reflow.svg"
           alt="Logo"
-          width={34}
+          width={64}
           height={24}
           className="object-contain shrink-0"
-        />
+        /><span className="mono text-xs text-white/60 ml-2">BETA</span></div>
 
         {/* Account button */}
         <button
@@ -94,7 +94,7 @@ const MobileNotifier: React.FC<Props> = ({
 
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-6">
-        <p className="text-xs font-normal mono max-w-sm text-white/60">
+        <p className="text-xs font-normal mono uppercase max-w-80 text-white/90">
           This page is best viewed on a larger screen. Please visit on a desktop
           or tablet to access all features.
         </p>

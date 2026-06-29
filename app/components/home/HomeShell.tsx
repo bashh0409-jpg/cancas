@@ -441,13 +441,13 @@ export function HomeShell({
         {/* ── Nav items ── */}
         <nav className="flex flex-col gap-2 px-1">
           {/* Search - hidden on mobile when collapsed */}
-          <div className={`mb-6 ${collapsed ? "hidden" : ""}`}>
+          <div className={`mb-2 ${collapsed ? "hidden" : ""}`}>
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded h-8 mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 ${collapsed ? "hidden" : ""}`}
+              className={`w-full rounded h-7  mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 ${collapsed ? "hidden" : ""}`}
             />
           </div>
 
@@ -658,7 +658,7 @@ function FilesPage({
                 setLocalSearch(e.target.value);
                 onSearchChange(e.target.value);
               }}
-              className="w-full mono rounded border border-white/20 bg-white/20 px-4 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
+              className="w-full mono rounded border border-white/20 bg-white/20 px-2 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
             />
           </div>
         </div>
