@@ -107,13 +107,13 @@ const MobileNotifier: React.FC<Props> = ({
         </p>
       </div>
 
-      <div className="w-full flex flex-col mb-2 justify-center items-center gap-2">
+      <div className="w-full flex flex-col mb-8 justify-center items-center gap-2">
         <a
           href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Visit Instagram"
-          className="lime h-8 cursor-pointer w-full max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
+          className="lime h-8 hidden cursor-pointer w-full max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
         >
           <svg
             role="img"
