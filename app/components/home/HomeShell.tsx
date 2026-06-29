@@ -362,12 +362,12 @@ export function HomeShell({
               </button>
               <Image
                 onClick={() => setAccountOpen((o) => !o)}
-                src="/images/Re.svg"
+                src="/images/Reflow.svg"
                 alt="Logo"
-                width={34}
+                width={84}
                 height={24}
                 className="object-contain hover:bg-white/30 cursor-pointer rounded shrink-0"
-              />
+              /> <span className="mono text-white/60  tracking-tight text-xs ml-2">BETA</span>
             </div>
           </div>
         </div>

@@ -90,13 +90,8 @@ export default function Page() {
         <div className="flex w-full max-w-[380px] flex-col items-center gap-12 rounded-lg  p-4">
           <div className="flex w-full flex-col gap-2">
             <div className="text-2xl font-medium tracking-tight text-black">
-              Design, create, and ship ideas faster — powered by multiple AI
-              tools in one place.
+              Sign in to your workspace
             </div>
-
-            <p className="hidden text-sm tracking-tight text-zinc-500">
-              Sign in to your account
-            </p>
           </div>
 
           {showEmailForm ? (
@@ -187,8 +182,8 @@ export default function Page() {
                   setFormError(null);
                   setShowEmailForm(true);
                 }}
-                >
-                  <Mail className="w-5 h-5 text-black/50 mr-2"/>
+              >
+                <Mail className="w-5 h-5 text-black/50 mr-2" />
                 Sign in with email
               </button>
             </div>
