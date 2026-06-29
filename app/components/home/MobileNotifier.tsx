@@ -105,7 +105,10 @@ const MobileNotifier: React.FC<Props> = ({
         <p className="text-xs tracking-tight font-normal mono uppercase max-w-90 mt-1 text-white/60">
           Please use a desktop or tablet to access all features.
         </p>
-             <div className="w-full mt-40 flex flex-col mb-8 justify-center items-center gap-2">
+        
+      </div>
+
+      <div className="w-full flex flex-col mb-8 justify-center items-center gap-2">
         <span className="text-white mono uppercase  tracking-tight text-[10px] text-center">For now...</span>
         <a
           href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
@@ -161,8 +164,6 @@ const MobileNotifier: React.FC<Props> = ({
           </a>{" "}
 
       </div>
-      </div>
-
 
       {/* Bottom social links */}
       <div className="flex hidden items-center justify-center gap-6 px-4 py-6">
