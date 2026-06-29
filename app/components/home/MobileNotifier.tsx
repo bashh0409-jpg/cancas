@@ -113,7 +113,7 @@ const MobileNotifier: React.FC<Props> = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Visit Instagram"
-          className="lime h-8 cursor-pointer w-full max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
+          className="lime h-8 cursor-pointer w-full max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
         >
           <svg
             role="img"
@@ -130,7 +130,7 @@ const MobileNotifier: React.FC<Props> = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Visit Youtube"
-          className="flex lime cursor-pointer h-8 w-full max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded items-center gap-2"
+          className="flex lime cursor-pointer h-8 w-full max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded items-center gap-2"
         >
           <svg
             role="img"
@@ -148,7 +148,7 @@ const MobileNotifier: React.FC<Props> = ({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Join Discord"
-            className="lime h-8 w-full cursor-pointer max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded  flex items-center gap-2"
+            className="lime h-8 w-full cursor-pointer max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded  flex items-center gap-2"
           >
             <svg
               role="img"
