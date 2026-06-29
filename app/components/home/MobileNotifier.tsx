@@ -41,19 +41,22 @@ const MobileNotifier: React.FC<Props> = ({
     <div className="relative w-full h-screen md:hidden bg-black text-white flex flex-col">
       {/* Top bar with logo and account */}
       <div className="flex  items-center justify-between px-4 py-4">
-        {/* Logo */}<div className="flex ">
-        <img
-          src="/images/Reflow.svg"
-          alt="Logo"
-          width={64}
-          height={24}
-          className="object-contain shrink-0"
-        /><span className="mono text-xs text-white/60 ml-2">BETA</span></div>
+        {/* Logo */}
+        <div className="flex ">
+          <img
+            src="/images/Reflow.svg"
+            alt="Logo"
+            width={64}
+            height={24}
+            className="object-contain shrink-0"
+          />
+          <span className="mono text-xs text-white/60 ml-2">BETA</span>
+        </div>
 
         {/* Account button */}
         <button
           onClick={() => setAccountOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          className="flex items-center gap-2 rounded-md px-2 py-1 text-sm cursor-pointer text-white/70  hover:text-white transition-colors"
         >
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
@@ -69,7 +72,9 @@ const MobileNotifier: React.FC<Props> = ({
               )}
             </div>
 
-            <span className="whitespace-nowrap hidden text-sm">{displayName}</span>
+            <span className="whitespace-nowrap hidden text-sm">
+              {displayName}
+            </span>
           </div>
         </button>
       </div>
@@ -93,30 +98,73 @@ const MobileNotifier: React.FC<Props> = ({
       )}
 
       {/* Center content */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-6">
-        <p className="text-xs font-normal mono uppercase max-w-80 text-white/90">
-          This page is best viewed on a larger screen. Please visit on a desktop
-          or tablet to access all features.
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-">
+        <p className="text-sm font-normal tracking-tight mono uppercase max-w-90 text-white/90">
+          This page is best viewed on a larger screen.
+        </p>
+        <p className="text-xs tracking-tight font-normal mono uppercase max-w-90 mt-1 text-white/60">
+          Please use a desktop or tablet to access all features.
         </p>
       </div>
 
-      {/* Bottom social links */}
-      <div className="flex items-center justify-center gap-6 px-4 py-6">
+      <div className="w-full flex flex-col mb-2 justify-center items-center gap-2">
         <a
           href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white/50 hover:text-white/80 transition-colors"
-          aria-label="Instagram"
+          aria-label="Visit Instagram"
+          className="lime h-8 cursor-pointer w-full max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
         >
           <svg
             role="img"
             viewBox="0 0 24 24"
-            className="w-5 h-5 fill-current"
+            className="w-4 h-4 fill-current"
+            strokeWidth={0.4}
           >
             <path d={siInstagram.path} />
           </svg>
-        </a>
+          Visit our instagram page for more updates
+        </a>{" "}
+        <a
+          href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visit Youtube"
+          className="flex lime cursor-pointer h-8 w-full max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded items-center gap-2"
+        >
+          <svg
+            role="img"
+            viewBox="0 0 24 24"
+            className="w-4 h-4 fill-current"
+            strokeWidth={0.4}
+          >
+            <path d={siYoutube.path} />
+          </svg>
+          Visit our Youtube page for more tutorials
+        </a>{" "}
+
+          <a
+            href="https://discord.gg/xexnRhqBP"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Join Discord"
+            className="lime h-8 w-full cursor-pointer max-w-90 text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded  flex items-center gap-2"
+          >
+            <svg
+              role="img"
+              viewBox="0 0 24 24"
+              className="w-4 h-4 fill-current"
+              strokeWidth={0.4}
+            >
+              <path d={siDiscord.path} />
+            </svg>
+            Join our Discord community
+          </a>{" "}
+
+      </div>
+
+      {/* Bottom social links */}
+      <div className="flex hidden items-center justify-center gap-6 px-4 py-6">
         <a
           href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
           target="_blank"
@@ -124,11 +172,7 @@ const MobileNotifier: React.FC<Props> = ({
           className="text-white/50 hover:text-white/80 transition-colors"
           aria-label="YouTube"
         >
-          <svg
-            role="img"
-            viewBox="0 0 24 24"
-            className="w-5 h-5 fill-current"
-          >
+          <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current">
             <path d={siYoutube.path} />
           </svg>
         </a>
@@ -139,11 +183,7 @@ const MobileNotifier: React.FC<Props> = ({
           className="text-white/50 hover:text-white/80 transition-colors"
           aria-label="Discord"
         >
-          <svg
-            role="img"
-            viewBox="0 0 24 24"
-            className="w-5 h-5 fill-current"
-          >
+          <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current">
             <path d={siDiscord.path} />
           </svg>
         </a>
