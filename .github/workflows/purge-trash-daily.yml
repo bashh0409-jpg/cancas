@@ -3,7 +3,7 @@ name: Daily Purge Trashed Canvases
 on:
   schedule:
     # Run daily at 1:00 AM UTC
-    - cron: "* * * * *"
+    - cron: "0 1 * * *"
   workflow_dispatch:
 
 permissions:
@@ -24,13 +24,26 @@ jobs:
           fi
 
       - name: Trigger purge endpoint
+        id: purge
         env:
           APP_URL: ${{ secrets.APP_URL }}
         run: |
           echo "Calling ${APP_URL}/api/admin/purge-trash"
-          curl --fail --silent --show-error \
+          RESPONSE=$(curl --fail --silent --show-error \
             -X POST "${APP_URL}/api/admin/purge-trash" \
             -H "Content-Type: application/json" \
             -d '{}' \
             --max-time 60 \
-            -w "\nHTTP Status: %{http_code}\n"
+            -w "\nHTTP Status: %{http_code}\n")
+          echo "$RESPONSE"
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESPONSE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::Purge trash cron job FAILED"
+          echo "::error::Check the workflow run logs for details:"
+          echo "::error::$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          exit 1
