@@ -1,323 +1,235 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 
-type Cell = {
-  x: number;
-  y: number;
-  active: boolean;
+type NavLink = {
+  label: string;
+  href: string;
 };
 
-const COLS = 12;
-const ROWS = 6;
-const RADIUS = 1;
+type NavGroup = {
+  title: string;
+  links: NavLink[];
+};
+
+// NOTE: these three groups link out to Notion pages that mix "Swiped" and
+// "Reflow" naming in their URLs/slugs. Left untouched since they're live
+// links — worth auditing against whichever brand name is actually current.
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: "Explore",
+    links: [
+      { label: "Knowledge center", href: "#" },
+      { label: "Enterprise", href: "#" },
+      { label: "Pricing", href: "#" },
+      { label: "Help", href: "#" },
+      { label: "FAQ", href: "#" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      {
+        label: "About",
+        href: "https://maize-vault-44c.notion.site/About-Swiped-37be79c73b2580749f62d30aa1955d84?source=copy_link",
+      },
+      {
+        label: "Trust center",
+        href: "https://maize-vault-44c.notion.site/Swiped-Trust-Center-1620bb4e3ce549ddba8330935878d23d?source=copy_link",
+      },
+      {
+        label: "Terms of service",
+        href: "https://maize-vault-44c.notion.site/Swiped-Terms-of-Service-fce1fe0dccfc4fe0a05ad64f7363266e?source=copy_link",
+      },
+      {
+        label: "Privacy policy",
+        href: "https://maize-vault-44c.notion.site/Swiped-Privacy-Policy-5a5e723ba16e4f44af9c888898f7746e?source=copy_link",
+      },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      {
+        label: "Cookie policy",
+        href: "https://app.notion.com/p/Reflow-Cookie-Policy-390e79c73b25803093a5c64819f5698b?source=copy_link",
+      },
+      {
+        label: "Beta agreement",
+        href: "https://app.notion.com/p/Reflow-Beta-Testing-Agreement-390e79c73b2580ca9ee8fd76f8274d24?source=copy_link",
+      },
+      {
+        label: "Acceptable use",
+        href: "https://app.notion.com/p/Reflow-Acceptable-Use-Policy-390e79c73b25804cae66dbb15c9dd216?source=copy_link",
+      },
+      {
+        label: "AI usage policy",
+        href: "https://app.notion.com/p/Reflow-AI-Usage-Policy-390e79c73b2580668ae4daab0c271fc2?source=copy_link",
+      },
+      {
+        label: "IP notice",
+        href: "https://app.notion.com/p/Reflow-Copyright-Intellectual-Property-Policy-390e79c73b25806cbc96f3313f7e90b6?source=copy_link",
+      },
+      {
+        label: "Account deletion",
+        href: "https://app.notion.com/p/Reflow-Account-Deletion-Data-Retention-Policy-390e79c73b2580098822c96914ae2418?source=copy_link",
+      },
+    ],
+  },
+];
+
+const SOCIALS: NavLink[] = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/swiped.ai?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr",
+  },
+  {
+    label: "YouTube",
+    href: "https://youtube.com/@swiped-h2u?si=lfJd-iQSIMv0an7X",
+  },
+  { label: "Discord", href: "https://discord.gg/xexnRhqBP" },
+];
+
+const linkClass =
+  "mono text-xs uppercase tracking-tight text-white/55 transition-colors duration-150 hover:text-blue-900";
 
 const Footer = () => {
-  const [cells, setCells] = useState<Cell[]>(
-    Array.from({ length: COLS * ROWS }, (_, i) => ({
-      x: i % COLS,
-      y: Math.floor(i / COLS),
-      active: false,
-    })),
-  );
+  const [glow, setGlow] = useState({ x: 50, y: 0, active: false });
 
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
+    setGlow({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+      active: true,
+    });
+  }, []);
 
-    const cellW = rect.width / COLS;
-    const cellH = rect.height / ROWS;
+  const handleLeave = useCallback(() => {
+    setGlow((g) => ({ ...g, active: false }));
+  }, []);
 
-    const cx = Math.floor((e.clientX - rect.left) / cellW);
-    const cy = Math.floor((e.clientY - rect.top) / cellH);
-
-    setCells((prev) =>
-      prev.map((c) => {
-        const dx = Math.abs(c.x - cx);
-        const dy = Math.abs(c.y - cy);
-
-        return {
-          ...c,
-          active: dx <= RADIUS && dy <= RADIUS,
-        };
-      }),
-    );
-  };
+  const spotlightMask = glow.active
+    ? `radial-gradient(360px circle at ${glow.x}% ${glow.y}%, black 0%, transparent 75%)`
+    : "radial-gradient(360px circle at 50% -10%, black 0%, transparent 75%)";
 
   return (
-    <footer className="relative w-full overflow-hidden rounded-b-3xl px-8 pt-8 text-white">
+    <footer
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      className="relative w-full overflow-hidden rounded-b-3xl bg-[#0B0B0D] px-6 pb-6 pt-16 text-white sm:px-10"
+    >
+      {/* Ambient dot grid, always faintly visible */}
       <div
-        onMouseMove={handleMove}
-        className="absolute inset-0 z-0 grid grid-cols-12 opacity-20"
-      >
-        {cells.map((c, i) => (
-          <div
-            key={i}
-            className={[
-              "border border-white/5 transition-colors duration-200",
-              c.active ? "bg-white/10 border-white/30" : "",
-            ].join(" ")}
-          />
-        ))}
-      </div>
-      <div className="relative z-10 grid w-full grid-cols-12 gap-10">
-        {/* Explore */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
-          <h1 className="mono text-sm tracking-tight text-white/50">Explore</h1>
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(245,243,238,1) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+        }}
+      />
+      {/* Cursor spotlight: brightens the same grid where the pointer is */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(253, 253, 253, 0.9) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+          WebkitMaskImage: spotlightMask,
+          maskImage: spotlightMask,
+          opacity: glow.active ? 0.5 : 0,
+        }}
+      />
 
-          <div className="mt-2 flex flex-col mono tracking-tight gap-1 text-sm uppercase">
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Knowledge center
-            </a>
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Enterprise
-            </a>
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Pricing
-            </a>
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Help
-            </a>
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              FAQ
-            </a>
-          </div>
-        </div>
-
-        {/* Follow */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
-          <h1 className="mono text-sm tracking-tight text-white/50">
-            Follow us
-          </h1>
-
-          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
-            <a
-              href="https://www.instagram.com/swiped.ai?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Instagram
-            </a>
-            <a
-              href="https://youtube.com/@swiped-h2u?si=lfJd-iQSIMv0an7X"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              YouTube
-            </a>
-            <a
-              href="https://discord.gg/xexnRhqBP"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight  transition hover:text-white/70"
-            >
-              Discord
-            </a>
-            <a
-              href="#"
-              className="tracking-tight hidden transition hover:text-white/70"
-            >
-              X
-            </a>
-          </div>
-        </div>
-
-        {/* Company */}
-        <div className="col-span-12 hidden sm:col-span-3 lg:col-span-2">
-          <h1 className="mono text-sm tracking-tight text-white/50">Company</h1>
-
-          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
-            <a
-              href="https://maize-vault-44c.notion.site/About-Swiped-37be79c73b2580749f62d30aa1955d84?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              About
-            </a>
-
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Trust-Center-1620bb4e3ce549ddba8330935878d23d?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Trust
-            </a>
-
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Terms-of-Service-fce1fe0dccfc4fe0a05ad64f7363266e?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Terms
-            </a>
-
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Privacy-Policy-5a5e723ba16e4f44af9c888898f7746e?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Privacy
-            </a>
-          </div>
-        </div>
-
-        {/* Legal */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
-          <h1 className="mono text-sm tracking-tight text-white/50">Legal</h1>
-
-          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
-            <a
-              href="https://app.notion.com/p/Reflow-Cookie-Policy-390e79c73b25803093a5c64819f5698b?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Cookie Policy
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-Beta-Testing-Agreement-390e79c73b2580ca9ee8fd76f8274d24?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Beta Agreement
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-Acceptable-Use-Policy-390e79c73b25804cae66dbb15c9dd216?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Acceptable Use
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-Community-Guidelines-390e79c73b2580468094e1196d301fce?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight hidden transition hover:text-white/70"
-            >
-              Guidelines
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-AI-Usage-Policy-390e79c73b2580668ae4daab0c271fc2?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              AI Usage Policy
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-Copyright-Intellectual-Property-Policy-390e79c73b25806cbc96f3313f7e90b6?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              IP Notice
-            </a>
-            <a
-              href="https://app.notion.com/p/Reflow-Account-Deletion-Data-Retention-Policy-390e79c73b2580098822c96914ae2418?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Account deletion
-            </a>
-          </div>
-        </div>
-
-        {/* Contact */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
-          <h1 className="mono text-sm tracking-tight text-white/50">
-            Contact Us
-          </h1>
-
-          <div className="mt-2 mono tracking-tight flex flex-col gap-1 text-sm uppercase">
-            <a
-              href="mailto:hello@swipes.com"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              hello@swipes.com
-            </a>
-
-            <a
-              href="#"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Support center
-            </a>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="col-span-12 lg:col-span-4">
-          <p className="mono text-xs uppercase tracking-wide text-white/80">
+      <div className="relative z-10 grid w-full grid-cols-2 gap-10 sm:grid-cols-2 lg:grid-cols-12">
+        {/* Brand */}
+        {/* Brand */}
+        <div className="col-span-2 sm:col-span-2 lg:col-span-4">
+          <span className="mono text-sm uppercase tracking-tight text-white/50">
+            Reflow
+          </span>
+          <p className="mono mt-3 md:max-w-sm text-xs uppercase leading-relaxed tracking-wide text-white/70">
             Reflow transforms ideas into visuals at the speed of thought. Built
             for creators, designers, and storytellers, it blends AI generation
-            with human direction to make creative work feel fluid, expressive,
-            and alive.
+            with human direction.
           </p>
-
-          <div className="mt-4 flex flex-col uppercase">
-            <p className="mono text-xs text-white/40">Reflow Inc</p>
-            <p className="mono text-xs text-white/40">
-              ©2026 All Rights Reserved
-            </p>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1">
+            {SOCIALS.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                {s.label}
+              </a>
+            ))}
           </div>
+          <a
+            href="mailto:hello@swipes.com"
+            className={`${linkClass} my-4 block w-fit`}
+          >
+            hello@swipes.com
+          </a>
+          <span className="mono text-white/70 t-4 text-xs uppercase tracking-tight">
+            © 2026 Reflow Inc. All rights reserved.
+          </span>
+        </div>
 
-          <div className="mt-4 flex gap-6 uppercase">
-            <a
-              href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mono text-xs text-white/40 transition hover:text-white/70"
-            >
-              Terms of service
+        {/* Nav groups */}
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title} className="lg:col-span-2">
+            <h2 className="mono text-xs uppercase tracking-tight text-white/40">
+              {group.title}
+            </h2>
+            <div className="mt-3 flex flex-col gap-2">
+              {group.links.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target={link.href.startsWith("http") ? "_blank" : undefined}
+                  rel={
+                    link.href.startsWith("http")
+                      ? "noopener noreferrer"
+                      : undefined
+                  }
+                  className={linkClass}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Contact / support */}
+        <div className="lg:col-span-2">
+          <h2 className="mono text-xs uppercase tracking-tight text-white/40">
+            Support
+          </h2>
+          <div className="mt-3 flex flex-col gap-2">
+            <a href="#" className={linkClass}>
+              Support center
             </a>
-
-            <a
-              href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mono text-xs text-white/40 transition hover:text-white/70"
-            >
-              Privacy Policy
+            <a href="mailto:hello@swipes.com" className={linkClass}>
+              Contact us
             </a>
           </div>
         </div>
       </div>
 
-      {/* Footer graphic */}
-      <div className="-mt-16 w-full lg:-mt-1">
+      {/* Wordmark */}
+      <div className="relative z-10 mt-16 w-full select-none">
         <img
           src="/images/Reflow.svg"
-          alt="Reflow footer graphic"
-          className="pointer-events-none w-full select-none object-contain"
+          alt="Reflow"
+          className="pointer-events-none w-full object-contain opacity-90"
           draggable={false}
         />
       </div>
-      <p className="text-white mix-blend-difference  justify-center mono items-center flex text-xs mb-2 -mt-10">
-        CURRENTLY IN BETA
-      </p>
     </footer>
   );
 };
