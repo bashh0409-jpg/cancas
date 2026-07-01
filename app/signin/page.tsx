@@ -195,7 +195,10 @@ export default function Page() {
                   setShowEmailForm(true);
                 }}
               >
-                <AtSign className="w-4 h-4 text-black/60 mr-2" strokeWidth={1.5} />
+                <AtSign
+                  className="w-4 h-4 text-black/60 mr-2"
+                  strokeWidth={1.5}
+                />
                 Sign in with email
               </button>
             </div>
@@ -205,24 +208,18 @@ export default function Page() {
           <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
             By continuing, you agree to the{" "}
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
               className="underline underline-offset-2 hover:text-white"
             >
-              Terms of Use
-            </a>{" "}
+              Terms of service
+            </a>
+            
             and acknowledge the{" "}
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
               className="underline underline-offset-2 hover:text-white"
             >
               Privacy Policy
-            </a>{" "}
-            and{" "}
-            <a
-              href="#"
-              className="underline underline-offset-2 hover:text-white"
-            >
-              Code of Conduct
             </a>
           </p>
         </div>

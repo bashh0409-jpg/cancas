@@ -187,23 +187,7 @@ const Footer = () => {
 
           <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
             <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Terms of Service
-            </a>
-            <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Cookie-Policy-390e79c73b25803093a5c64819f5698b?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
@@ -211,7 +195,7 @@ const Footer = () => {
               Cookie Policy
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Beta-Testing-Agreement-390e79c73b2580ca9ee8fd76f8274d24?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
@@ -219,7 +203,7 @@ const Footer = () => {
               Beta Agreement
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Acceptable-Use-Policy-390e79c73b25804cae66dbb15c9dd216?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
@@ -227,15 +211,15 @@ const Footer = () => {
               Acceptable Use
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Community-Guidelines-390e79c73b2580468094e1196d301fce?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
+              className="tracking-tight hidden transition hover:text-white/70"
             >
               Guidelines
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-AI-Usage-Policy-390e79c73b2580668ae4daab0c271fc2?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
@@ -243,7 +227,7 @@ const Footer = () => {
               AI Usage Policy
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Copyright-Intellectual-Property-Policy-390e79c73b25806cbc96f3313f7e90b6?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
@@ -251,12 +235,12 @@ const Footer = () => {
               IP Notice
             </a>
             <a
-              href="#"
+              href="https://app.notion.com/p/Reflow-Account-Deletion-Data-Retention-Policy-390e79c73b2580098822c96914ae2418?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
-              Data Retention
+              Account deletion
             </a>
           </div>
         </div>
@@ -302,16 +286,16 @@ const Footer = () => {
 
           <div className="mt-4 flex gap-6 uppercase">
             <a
-              href="https://maize-vault-44c.notion.site/Swiped-Terms-of-Service-fce1fe0dccfc4fe0a05ad64f7363266e?source=copy_link"
+              href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="mono text-xs text-white/40 transition hover:text-white/70"
             >
-              Terms & Conditions
+              Terms of service
             </a>
 
             <a
-              href="https://maize-vault-44c.notion.site/Swiped-Privacy-Policy-5a5e723ba16e4f44af9c888898f7746e?source=copy_link"
+              href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
               target="_blank"
               rel="noopener noreferrer"
               className="mono text-xs text-white/40 transition hover:text-white/70"
