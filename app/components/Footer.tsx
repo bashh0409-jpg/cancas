@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 
 type Cell = {
   x: number;
@@ -186,54 +187,42 @@ const Footer = () => {
           <h1 className="mono text-sm tracking-tight text-white/50">Legal</h1>
 
           <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Cookie-Policy-1bcfb0e3ce549ddba8330935878d23d?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/legal"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              All Legal Docs
+            </Link>
+            <Link
+              href="/legal#terms"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Terms of Service
+            </Link>
+            <Link
+              href="/legal#privacy"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/legal#cookies"
               className="tracking-tight transition hover:text-white/70"
             >
               Cookie Policy
-            </a>
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Beta-Agreement-1bcfb0e3ce549ddba8330935878d23e?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              href="/legal#ai-usage"
               className="tracking-tight transition hover:text-white/70"
             >
-              Beta Agreement
-            </a>
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Acceptable-Use-1bcfb0e3ce549ddba8330935878d23f?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
+              AI Usage Policy
+            </Link>
+            <Link
+              href="/legal#deletion"
               className="tracking-tight transition hover:text-white/70"
             >
-              Acceptable Use
-            </a>
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Community-Guidelines-1bcfb0e3ce549ddba8330935878d240?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Guidelines
-            </a>
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-IP-Notice-1bcfb0e3ce549ddba8330935878d241?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              IP Notice
-            </a>
-            <a
-              href="https://maize-vault-44c.notion.site/Swiped-Data-Processing-1bcfb0e3ce549ddba8330935878d242?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              Data Processing
-            </a>
+              Data Retention
+            </Link>
           </div>
         </div>
 
