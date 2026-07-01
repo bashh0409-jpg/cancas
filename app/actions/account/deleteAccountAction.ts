@@ -3,7 +3,7 @@
 import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-export async function deleteAccountAction() {
+export async function deleteAccountAction(verificationCode: string) {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,6 +26,36 @@ export async function deleteAccountAction() {
   }
 
   const userId = user.id;
+
+  // Verify the deletion code
+  const { data: codeRecord, error: codeError } = await supabase
+    .from("account_deletion_codes")
+    .select("code, expires_at")
+    .eq("user_id", userId)
+    .single();
+
+  if (codeError || !codeRecord) {
+    throw new Error("Verification code not found. Please request a new code.");
+  }
+
+  // Check if code has expired
+  if (new Date(codeRecord.expires_at) < new Date()) {
+    await supabase
+      .from("account_deletion_codes")
+      .delete()
+      .eq("user_id", userId);
+    throw new Error(
+      "Verification code has expired. Please request a new code.",
+    );
+  }
+
+  // Verify the code matches
+  if (codeRecord.code !== verificationCode.trim()) {
+    throw new Error("Invalid verification code.");
+  }
+
+  // Delete the used code
+  await supabase.from("account_deletion_codes").delete().eq("user_id", userId);
 
   // Move all canvases to trash (soft-delete) instead of permanently deleting them
   const deletedAt = new Date().toISOString();

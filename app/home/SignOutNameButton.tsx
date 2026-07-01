@@ -14,7 +14,9 @@ export function SignOutNameButton({
 
   signOutAction,
 }: SignOutNameButtonProps) {
-  const fullName = userFullName || `${firstName} ${lastName}`;
+  const fullName =
+    userFullName ||
+    (lastName && lastName !== "User" ? `${firstName} ${lastName}` : firstName);
 
   return (
     <form

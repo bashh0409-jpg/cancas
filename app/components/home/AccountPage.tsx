@@ -6,7 +6,6 @@ import { ArrowLeft, Settings, User, Loader2 } from "lucide-react";
 import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
 import type { UserSettings } from "@/lib/user/settingsRepository";
 
-
 type AccountTab = "profile" | "settings";
 
 type Profile = {
@@ -57,13 +56,14 @@ export function AccountPage({
 
   const fullName =
     safeProfile.nickname?.trim() ||
-    `${safeProfile.firstName} ${safeProfile.lastName}`.trim();
+    (safeProfile.lastName && safeProfile.lastName !== "User"
+      ? `${safeProfile.firstName} ${safeProfile.lastName}`
+      : safeProfile.firstName
+    ).trim();
 
   return (
     <div className="flex items-start justify-center min-h-full pt-16 pb-16">
       <div className="flex gap-12">
-
-
         {/* nav */}
         <nav className="flex flex-col gap-0.5 w-50 shrink-0 pt-1">
           {TABS.map((tab) => (
@@ -80,7 +80,9 @@ export function AccountPage({
               `}
             >
               {tab.icon}
-              <span className="text-sm mono tracking-tight uppercase">{tab.label}</span>
+              <span className="text-sm mono tracking-tight uppercase">
+                {tab.label}
+              </span>
             </button>
           ))}
         </nav>
@@ -90,7 +92,6 @@ export function AccountPage({
 
         {/* content */}
         <div className="w-[700px]">
-
           {activeTab === "profile" && (
             <ProfileTab
               profile={safeProfile}
@@ -158,7 +159,7 @@ function ProfileTab({
   }
 
   return (
-    <div className="flex max-w-lg flex-col gap-8">
+    <div className="flex max-w-2xl flex-col gap-8">
       {/* avatar */}
       <div className="flex items-center gap-5">
         <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md  overflow-hidden">
@@ -210,7 +211,6 @@ function ProfileTab({
                 focus:border-white/10
               "
             />
-
           </div>
         </div>
 
@@ -352,7 +352,7 @@ function SettingsTab({
                 </span>
 
                 <span className="text-xs mono tracking-tight text-white/40">
-                  Limited canvas creation · 50 credits / month
+                  Limited canvas creation · 100 credits / month
                 </span>
               </div>
 

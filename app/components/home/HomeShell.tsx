@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import gsap from "gsap";
-import { siDiscord,siInstagram, siYoutube } from "simple-icons";
+import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import {
   AudioLines,
   ClockFading,
@@ -18,18 +18,19 @@ import { Loader2 } from "lucide-react";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
-import { AccountPage } from "@/app/components/home/AccountPage";
 import Tutorials from "./Tutorials";
 import type { UserSettings } from "@/lib/user/settingsRepository";
 import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
+import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
+import { useRouter } from "next/navigation";
 
 type ActivePage =
   | "files"
-  | "account"
   | "recently-deleted"
+  | "settings"
   | "tutorials"
   | "library";
 
@@ -43,7 +44,7 @@ interface HomeShellProps {
   errorMessage: string | undefined;
   createCanvasAction: (idempotencyKey: string) => Promise<void>;
   signOut: () => Promise<void>;
-  deleteAccountAction: () => Promise<void>;
+  deleteAccountAction: (verificationCode: string) => Promise<void>;
   profile: {
     firstName: string;
     lastName: string;
@@ -136,7 +137,10 @@ export function AccountCard({
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium leading-tight text-white">
-              {firstName} {lastName}&apos;s Workspace
+              {lastName && lastName !== "User"
+                ? `${firstName} ${lastName}`
+                : firstName}
+              &apos;s Workspace
             </p>
           </div>
 
@@ -186,7 +190,7 @@ export function AccountCard({
           <span className="cursor-pointer underline">Upgrade</span>
         </button>
       </div>
-     {/* Account Switcher */}
+      {/* Account Switcher */}
       <div className="border-t border-white/20 px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Switch account</span>
@@ -197,10 +201,22 @@ export function AccountCard({
             className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
             </svg>
             Google
           </a>
@@ -209,10 +225,38 @@ export function AccountCard({
             className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
-              <rect x="1" y="1" width="10" height="10" rx="1.5" fill="#F25022"/>
-              <rect x="13" y="1" width="10" height="10" rx="1.5" fill="#7FBA00"/>
-              <rect x="1" y="13" width="10" height="10" rx="1.5" fill="#00A4EF"/>
-              <rect x="13" y="13" width="10" height="10" rx="1.5" fill="#FFB900"/>
+              <rect
+                x="1"
+                y="1"
+                width="10"
+                height="10"
+                rx="1.5"
+                fill="#F25022"
+              />
+              <rect
+                x="13"
+                y="1"
+                width="10"
+                height="10"
+                rx="1.5"
+                fill="#7FBA00"
+              />
+              <rect
+                x="1"
+                y="13"
+                width="10"
+                height="10"
+                rx="1.5"
+                fill="#00A4EF"
+              />
+              <rect
+                x="13"
+                y="13"
+                width="10"
+                height="10"
+                rx="1.5"
+                fill="#FFB900"
+              />
             </svg>
             Microsoft
           </a>
@@ -234,8 +278,6 @@ export function AccountCard({
           <span className="cursor-pointer underline">Submit feedback</span>
         </a>
       </div>
-
- 
 
       {/* Bug report */}
       <div className="flex flex-col px-3 py-2.5">
@@ -292,7 +334,8 @@ export function HomeShell({
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fullName = `${firstName} ${lastName}`;
+  const fullName =
+    lastName && lastName !== "User" ? `${firstName} ${lastName}` : firstName;
   const labelsRef = useRef<HTMLElement[]>([]);
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const createBtnRef = useRef<HTMLDivElement>(null);
@@ -301,10 +344,7 @@ export function HomeShell({
     const labels = labelsRef.current.filter(Boolean);
     const wordmark = wordmarkRef.current;
     const createBtn = createBtnRef.current;
-    const targets = [
-      ...labels,
-      ...(createBtn ? [createBtn] : []),
-    ];
+    const targets = [...labels, ...(createBtn ? [createBtn] : [])];
 
     if (collapsed) {
       gsap.to(targets, {
@@ -356,8 +396,18 @@ export function HomeShell({
                 className="md:hidden flex items-center justify-center w-[34px] h-[24px] rounded hover:bg-white/10 transition-colors"
                 aria-label="Toggle sidebar"
               >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
               <Image
@@ -367,7 +417,10 @@ export function HomeShell({
                 width={84}
                 height={24}
                 className="object-contain hover:bg-white/30 cursor-pointer rounded shrink-0"
-              /> <span className="mono text-white/60  tracking-tight text-xs ml-2">BETA</span>
+              />{" "}
+              <span className="mono text-white/60  tracking-tight text-xs ml-2">
+                BETA
+              </span>
             </div>
           </div>
         </div>
@@ -410,9 +463,7 @@ export function HomeShell({
             <span
               ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
               className={`${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
-            >
-             
-            </span>
+            ></span>
           </button>
         </div>
 
@@ -425,7 +476,7 @@ export function HomeShell({
             photoUrl={photoUrl}
             onClose={() => setAccountOpen(false)}
             onSettings={() => {
-              setActivePage("account");
+              setActivePage("settings");
               setAccountOpen(false);
             }}
             onSignOut={() => signOut()}
@@ -498,6 +549,16 @@ export function HomeShell({
             collapsed={collapsed}
             labelRef={addLabelRef}
             onClick={() => setActivePage("recently-deleted")}
+          />
+          {/* Trash */}
+          <NavItem
+            icon={<Settings className="w-4 h-4 text-white" />}
+            label="Settings"
+            endIcon={<ClockFading className="hidden" />}
+            active={activePage === "settings"}
+            collapsed={collapsed}
+            labelRef={addLabelRef}
+            onClick={() => setActivePage("settings")}
           />
         </nav>
         <div className="p-1 hidden w-full min-h-30">
@@ -574,19 +635,19 @@ export function HomeShell({
             onSearchChange={setSearchQuery}
           />
         )}
-        {activePage === "account" && (
-          <AccountPage
-            profile={profile}
-            photoUrl={photoUrl}
-            updateNicknameAction={updateNicknameAction}
-            updateSettingsAction={updateSettingsAction}
-            userSettings={userSettings}
-            deleteAccountAction={deleteAccountAction}
-            signOut={signOut}
-          />
-        )}
         {activePage === "library" && <LibraryPage canvases={canvases} />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
+        {activePage === "settings" && (
+          <SettingsPage
+            profile={profile}
+            photoUrl={photoUrl}
+            deleteAccountAction={deleteAccountAction}
+            signOut={signOut}
+            userSettings={userSettings}
+            updateSettingsAction={updateSettingsAction}
+            updateNicknameAction={updateNicknameAction}
+          />
+        )}
       </main>
     </div>
   );
@@ -624,7 +685,10 @@ function FilesPage({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="mono text-sm tracking-tight text-white">
-            {firstName} {lastName}&apos;s Workspace
+            {lastName && lastName !== "User"
+              ? `${firstName} ${lastName}`
+              : firstName}
+            &apos;s Workspace
           </div>
 
           <div className="pixel hidden flex items-center gap-2 rounded-md bg-white/20 px-3 py-2 text-sm text-white">
@@ -635,13 +699,13 @@ function FilesPage({
           </div>
         </div>
         <div className="flex items-center gap-1">
-        {errorMessage && (
-          <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
-            {errorMessage}
-          </div>
-        )}
-        <CreditsBadge credits={credits} />
-      </div>
+          {errorMessage && (
+            <div className="rounded-xs border tracking-tight mono  border-rose-500/30 bg-red-400/30 p-1 text-xs w-fit text-rose-100">
+              {errorMessage}
+            </div>
+          )}
+          <CreditsBadge credits={credits} />
+        </div>
       </div>
       <div className="">
         <Tutorials />
@@ -727,6 +791,452 @@ function RecentlyDeletedPage() {
   );
 }
 
+function SettingsPage({
+  profile,
+  photoUrl,
+  deleteAccountAction,
+  signOut,
+  userSettings,
+  updateSettingsAction,
+  updateNicknameAction,
+}: {
+  profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    nickname?: string | null;
+  };
+  photoUrl?: string;
+  deleteAccountAction: (verificationCode: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  userSettings: UserSettings;
+  updateSettingsAction: (formData: FormData) => Promise<void>;
+  updateNicknameAction: (formData: FormData) => Promise<void>;
+}) {
+  const [activeTab, setActiveTab] = useState<"account" | "settings">("account");
+
+  const safeProfile = profile ?? {
+    nickname: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+  };
+
+  const fullName =
+    safeProfile.nickname?.trim() ||
+    (safeProfile.lastName && safeProfile.lastName !== "User"
+      ? `${safeProfile.firstName} ${safeProfile.lastName}`
+      : safeProfile.firstName
+    ).trim();
+
+  return (
+    <div className="flex items-start  min-h-full ">
+      <div className="flex flex-col w-full max-w-4xl">
+        {/* nav tabs at top */}
+        <nav className="flex gap-0.5  mb-8">
+          <button
+            onClick={() => setActiveTab("account")}
+            className={`
+              flex items-center gap-2.5 px-3 py-1.5 h-8 rounded tracking-tight text-left transition-colors
+              ${
+                activeTab === "account"
+                  ? "bg-white/20 text-white "
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              }
+            `}
+          >
+            <span className="text-sm mono tracking-tight uppercase">
+              Account
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`
+              flex items-center gap-2.5 px-3 py-1.5 h-8 rounded tracking-tight text-left transition-colors
+              ${
+                activeTab === "settings"
+                  ? "bg-white/20 text-white "
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              }
+            `}
+          >
+            <span className="text-sm mono tracking-tight uppercase">
+              Settings
+            </span>
+          </button>
+        </nav>
+
+        {/* content */}
+        <div>
+          {activeTab === "account" && (
+            <AccountInfoTab
+              profile={safeProfile}
+              fullName={fullName}
+              photoUrl={photoUrl}
+              updateNicknameAction={updateNicknameAction}
+            />
+          )}
+
+          {activeTab === "settings" && (
+            <WorkspaceSettingsTab
+              deleteAccountAction={deleteAccountAction}
+              signOut={signOut}
+              userSettings={userSettings}
+              updateSettingsAction={updateSettingsAction}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccountInfoTab({
+  profile,
+  fullName,
+  photoUrl,
+  updateNicknameAction,
+}: {
+  profile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    nickname?: string | null;
+  };
+  fullName: string;
+  photoUrl?: string;
+  updateNicknameAction: (formData: FormData) => Promise<void>;
+}) {
+  const initialName = profile?.nickname?.trim() || fullName;
+
+  const [nickname, setNickname] = useState(initialName);
+  const [displayName, setDisplayName] = useState(initialName);
+
+  const [pending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+
+  async function handleSave() {
+    setSaved(false);
+
+    const trimmed = nickname.trim();
+
+    if (!trimmed) return;
+
+    const formData = new FormData();
+    formData.append("nickname", trimmed);
+
+    startTransition(async () => {
+      await updateNicknameAction(formData);
+
+      // why: reflect latest nickname instantly without refresh
+      setDisplayName(trimmed);
+
+      setSaved(true);
+
+      setTimeout(() => {
+        setSaved(false);
+      }, 2000);
+    });
+  }
+
+  return (
+    <div className="flex max-w-2xl flex-col gap-8">
+      {/* avatar */}
+      <div className="flex items-center gap-5">
+        <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md  overflow-hidden">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={displayName}
+              className="h-full w-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="text-2xl font-medium text-black">
+              {displayName.charAt(0).toUpperCase()}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <h2 className="text-lg mono uppercase tracking-tight text-white">
+            {displayName}
+          </h2>
+
+          <p className="text-sm mono tracking-tight text-white/40">
+            Personal account settings
+          </p>
+        </div>
+      </div>
+
+      {/* fields */}
+      <div className="flex flex-col gap-4">
+        {/* nickname */}
+        <div className="flex flex-col gap-2 text-white">
+          <span className="text-xs mono uppercase tracking-tight text-white">
+            Display Name
+          </span>
+
+          <div className="flex items-center gap-2">
+            <input
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Enter nickname"
+              className="
+                h-9 w-full max-w-120
+                rounded border border-transparent
+                bg-white/10
+                px-3
+                text-xs text-white mono
+                outline-none
+                focus:border-white/10
+              "
+            />
+          </div>
+        </div>
+
+        {/* email */}
+        <div className="flex flex-col gap-2 text-white">
+          <span className="text-xs mono tracking-tight  uppercase text-white">
+            Email
+          </span>
+
+          <div className="flex h-9 max-w-120 items-center rounded bg-white/10 px-3 text-xs text-white/70 mono">
+            {profile?.email ?? "No email"}
+          </div>
+        </div>
+
+        {/* role */}
+        <div className="flex flex-col gap-2 text-white">
+          <span className="text-xs mono tracking-tight uppercase text-white">
+            Role
+          </span>
+
+          <div className="flex h-9 max-w-120 items-center rounded bg-white/10 px-3 text-xs text-white/70 mono">
+            Admin
+          </div>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={pending}
+          className="
+                flex h-9 w-fit items-center justify-center
+                rounded bg-white px-3
+                text-xs font-medium text-black
+                transition hover:bg-white/90
+                disabled:opacity-50
+              "
+        >
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : saved ? (
+            "Saved"
+          ) : (
+            "Save"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function WorkspaceSettingsTab({
+  deleteAccountAction,
+  signOut,
+  userSettings,
+  updateSettingsAction,
+}: {
+  deleteAccountAction: (verificationCode: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  userSettings: UserSettings;
+  updateSettingsAction: (formData: FormData) => Promise<void>;
+}) {
+  const router = useRouter();
+  const [openDelete, setOpenDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [productUpdates, setProductUpdates] = useState(
+    userSettings.product_updates ?? true,
+  );
+  const [canvasActivity, setCanvasActivity] = useState(
+    userSettings.canvas_activity ?? true,
+  );
+  const [saved, setSaved] = useState(false);
+  const [saving, startTransition] = useTransition();
+
+  async function handleSaveSettings() {
+    setSaved(false);
+
+    const formData = new FormData();
+    formData.append("product_updates", String(productUpdates));
+    formData.append("canvas_activity", String(canvasActivity));
+
+    startTransition(async () => {
+      await updateSettingsAction(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    });
+  }
+
+  async function handleDeleteAccount(verificationCode: string) {
+    setDeleting(true);
+    setDeleteError(null);
+    setOpenDelete(false);
+
+    try {
+      await deleteAccountAction(verificationCode);
+      await signOut();
+      router.push("/signin");
+    } catch (error) {
+      setDeleting(false);
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : String(error) || "Unable to delete account.",
+      );
+      setOpenDelete(true);
+    }
+  }
+
+  return (
+    <>
+      <div className="flex max-w-xl flex-col gap-8">
+        {/* header */}
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm mono uppercase tracking-tight text-white">
+            Workspace Settings
+          </h2>
+
+          <p className="text-sm font-normal mono tracking-tight text-white/60">
+            Manage your plan, notifications, and account preferences.
+          </p>
+        </div>
+
+        {/* plan */}
+        <div className="flex flex-col gap-4">
+          <span className="text-xs text-white tracking-tight uppercase mono">
+            Plan
+          </span>
+
+          <div className="flex flex-col gap-4 rounded bg-white/10 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-sm  mono tracking-tight font-medium text-white">
+                  Free
+                </span>
+
+                <span className="text-xs mono tracking-tight text-white/40">
+                  Limited canvas creation · 100 credits / month
+                </span>
+              </div>
+
+              <button className="h-9 rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90">
+                Upgrade
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* notifications */}
+        <div className="flex flex-col gap-4">
+          <span className="text-xs  uppercase mono tracking-tight text-white">
+            Notifications
+          </span>
+
+          <div className="flex flex-col mono tracking-tight rounded bg-white/10 p-3">
+            <Toggle
+              label="Product updates"
+              description="New features and announcements"
+              checked={productUpdates}
+              onChange={() => setProductUpdates((current) => !current)}
+            />
+
+            <div className="h-px bg-white/5" />
+
+            <Toggle
+              label="Canvas activity"
+              description="Comments and edits on your canvases"
+              checked={canvasActivity}
+              onChange={() => setCanvasActivity((current) => !current)}
+            />
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="flex h-8 min-w-[70px] items-center justify-center self-end rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : saved ? (
+                  "Saved"
+                ) : (
+                  "update"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* danger zone */}
+        <div className="flex flex-col gap-4">
+          <span className="text-xs uppercase mono tracking-tight text-white">
+            Danger zone
+          </span>
+
+          <div className="flex items-center justify-between rounded bg-white/10 p-4">
+            <div className="flex flex-col">
+              <span className="text-sm mono tracking-tight text-white">
+                Delete account
+              </span>
+
+              <span className="text-xs mono tracking-tight text-white/40">
+                Permanently removes all your files and account data.
+              </span>
+            </div>
+
+            <button
+              onClick={() => setOpenDelete(true)}
+              className="h-9 cursor-pointer rounded border border-rose-500/30 px-3 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <DeleteAccountModal
+        open={openDelete}
+        onClose={() => {
+          if (!deleting) {
+            setOpenDelete(false);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={handleDeleteAccount}
+      />
+
+      {deleteError ? (
+        <div className="mt-4 rounded border border-rose-500/50 bg-rose-500/10 p-3 text-xs text-rose-200">
+          {deleteError}
+        </div>
+      ) : null}
+
+      {deleting ? (
+        <div
+          aria-label="Deleting account"
+          aria-live="polite"
+          className="fixed inset-0 z-[1000] grid place-items-center bg-black"
+          role="status"
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 type TutorialItem = {
   id: string;
   title: string;
@@ -737,62 +1247,74 @@ const tutorials: TutorialItem[] = [
   {
     id: "1",
     title: "Getting Started with Canvas",
-    description: "",
+    description:
+      "Learn the basics of creating your first canvas and navigating the interface.",
   },
   {
     id: "2",
     title: "Creating and Managing Projects",
-    description: "",
+    description:
+      "Master project creation, organization, and workspace management.",
   },
   {
     id: "3",
     title: "Working with Images",
-    description: "",
+    description:
+      "Upload, edit, and manipulate images within your canvas projects.",
   },
   {
     id: "4",
     title: "Text and Typography",
-    description: "",
+    description:
+      "Add and style text elements with typography controls and formatting options.",
   },
   {
     id: "5",
     title: "Advanced Layout Techniques",
-    description: "",
+    description:
+      "Explore grids, alignment, and positioning for professional designs.",
   },
   {
     id: "6",
     title: "Exporting Your Work",
-    description: "",
+    description:
+      "Export your designs in various formats for web and print use.",
   },
   {
     id: "7",
     title: "Collaboration Features",
-    description: "",
+    description:
+      "Invite team members and collaborate in real-time on shared canvases.",
   },
   {
     id: "8",
     title: "Keyboard Shortcuts & Tips",
-    description: "",
+    description:
+      "Speed up your workflow with essential keyboard shortcuts and pro tips.",
   },
   {
     id: "9",
     title: "Design System Setup",
-    description: "",
+    description:
+      "Create consistent designs using design systems and component libraries.",
   },
   {
     id: "10",
     title: "Performance Optimization",
-    description: "",
+    description:
+      "Optimize your projects for faster loading and smoother performance.",
   },
   {
     id: "11",
     title: "Prototyping and Animation",
-    description: "",
+    description:
+      "Create interactive prototypes and add animations to bring designs to life.",
   },
   {
     id: "12",
     title: "Best Practices Guide",
-    description: "",
+    description:
+      "Industry best practices for design, organization, and workflow efficiency.",
   },
 ];
 
@@ -815,13 +1337,16 @@ function TutorialPage() {
         {tutorials.map((item) => (
           <div
             key={item.id}
-            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between"
+            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between border border-white/5 hover:border-white/10"
           >
             <div>
               <h3 className="text-white text-xs mono font-medium tracking-tight">
                 {item.title}
               </h3>
             </div>
+            <p className="text-white/50 text-xs mono leading-tight">
+              {item.description}
+            </p>
           </div>
         ))}
       </div>
@@ -1185,5 +1710,40 @@ function Icon() {
       <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="1.5" />
     </svg>
+  );
+}
+
+function Toggle({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div>
+        <p className="text-white text-sm">{label}</p>
+
+        <p className="text-white/40 text-xs mt-0.5">{description}</p>
+      </div>
+
+      <button
+        onClick={onChange}
+        className={`relative w-11 h-5 rounded-full transition-colors duration-200 shrink-0 ${
+          checked ? "bg-green-500" : "bg-white/15"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+            checked ? "translate-x-4 bg-white" : "bg-white/40"
+          }`}
+        />
+      </button>
+    </div>
   );
 }

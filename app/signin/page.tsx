@@ -199,21 +199,21 @@ export default function Page() {
             By continuing, you agree to the{" "}
             <a
               href="#"
-              className="underline underline-offset-2 hover:text-black"
+              className="underline underline-offset-2 hover:text-white"
             >
               Terms of Use
             </a>{" "}
             and acknowledge the{" "}
             <a
               href="#"
-              className="underline underline-offset-2 hover:text-black"
+              className="underline underline-offset-2 hover:text-white"
             >
               Privacy Policy
             </a>{" "}
             and{" "}
             <a
               href="#"
-              className="underline underline-offset-2 hover:text-black"
+              className="underline underline-offset-2 hover:text-white"
             >
               Code of Conduct
             </a>
