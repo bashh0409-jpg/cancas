@@ -1,43 +1,51 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { AtSign, Mail } from "lucide-react";
+import { AtSign } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const LOGIN_IMAGES = [
   "/images/login/login1.jpg",
   "/images/login/login2.jpg",
   "/images/login/login3.jpg",
-  "/images/login/login4.jpeg",
   "/images/login/login5.jpg",
 ] as const;
 
 type Provider = "google" | "azure" | "email" | null;
+const IMAGE_ROTATION_INTERVAL_MS = 20_000;
+
+function getInitialFormError() {
+  if (typeof window === "undefined") return null;
+
+  const authError = new URLSearchParams(window.location.search).get("error");
+
+  if (!authError) return null;
+
+  return authError === "missing_code"
+    ? "Sign-in was interrupted. Please try again."
+    : authError;
+}
 
 export default function Page() {
-  const [loginImage, setLoginImage] = useState<string>(LOGIN_IMAGES[0]);
-
+  const [loginImageIndex, setLoginImageIndex] = useState(0);
   const [loadingProvider, setLoadingProvider] = useState<Provider>(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  // hydration-safe randomness
-  useEffect(() => {
-    const index = Math.floor(Math.random() * LOGIN_IMAGES.length);
-    setLoginImage(LOGIN_IMAGES[index]);
-  }, []);
+  const [formError, setFormError] = useState<string | null>(
+    getInitialFormError,
+  );
+  const loginImage = LOGIN_IMAGES[loginImageIndex];
 
   useEffect(() => {
-    const authError = new URLSearchParams(window.location.search).get("error");
-    if (authError) {
-      setFormError(
-        authError === "missing_code"
-          ? "Sign-in was interrupted. Please try again."
-          : authError,
+    const intervalId = window.setInterval(() => {
+      setLoginImageIndex((currentIndex) =>
+        currentIndex === LOGIN_IMAGES.length - 1 ? 0 : currentIndex + 1,
       );
-    }
+    }, IMAGE_ROTATION_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   function handleAuth(provider: "google" | "azure") {
@@ -83,8 +91,7 @@ export default function Page() {
     <div className="flex h-screen w-full overflow-hidden bg-black text-white">
       {/* LEFT */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
-
-        <img
+        <Image
           src="/images/Reflow.svg"
           alt="Logo"
           width={64}
@@ -188,7 +195,7 @@ export default function Page() {
                   setShowEmailForm(true);
                 }}
               >
-                <AtSign className="w-4 h-4 text-black/60 mr-2 strokeWidth={1}" />
+                <AtSign className="w-4 h-4 text-black/60 mr-2" strokeWidth={1.5} />
                 Sign in with email
               </button>
             </div>
@@ -223,9 +230,12 @@ export default function Page() {
 
       {/* RIGHT */}
       <div className="relative hidden w-full md:flex">
-        <img
+        <Image
           src={loginImage}
           alt="Login background"
+          fill
+          priority
+          sizes="(min-width: 768px) 60vw, 100vw"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/10" />
