@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { Mail } from "lucide-react";
+import { AtSign, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const LOGIN_IMAGES = [
@@ -80,17 +80,22 @@ export default function Page() {
   const isLoading = loadingProvider !== null;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-white">
+    <div className="flex h-screen w-full overflow-hidden bg-black text-white">
       {/* LEFT */}
       <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
-        <h1 className="absolute left-15 top-10 hidden text-3xl tracking-tight text-black">
-          SWIPED.AI
-        </h1>
 
-        <div className="flex w-full max-w-[380px] flex-col items-center gap-12 rounded-lg  p-4">
+        <img
+          src="/images/Reflow.svg"
+          alt="Logo"
+          width={64}
+          height={64}
+          className="object-contain shrink-0"
+        />
+
+        <div className="flex w-full max-w-[380px] flex-col items-center gap-8 rounded-lg  p-4">
           <div className="flex w-full flex-col gap-2">
-            <div className="text-2xl font-medium tracking-tight text-black">
-              Sign in to your workspace
+            <div className="text-2xl mt-6 uppercase font-medium  text-center tracking-tight">
+              Sign in to your workspace to start your journey.
             </div>
           </div>
 
@@ -107,7 +112,7 @@ export default function Page() {
                 >
                   <input
                     autoComplete="email"
-                    className="h-[40px] w-full rounded border-2 border-black/10 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
+                    className="h-[35px] w-full mono rounded border-2 border-black/10 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
                     disabled={isLoading}
                     placeholder="you@example.com"
                     type="email"
@@ -116,7 +121,7 @@ export default function Page() {
                   />
 
                   <button
-                    className="inline-flex h-[40px] w-full items-center justify-center rounded-lg bg-zinc-100 px-4 text-sm font-semibold text-black hover:bg-zinc-200 disabled:opacity-60"
+                    className="inline-flex h-[35px] mono uppercase w-full items-center justify-center rounded bg-white px-4 text-xs text-black hover:bg-zinc-200 cursor-pointer disabled:opacity-60"
                     disabled={isLoading}
                     type="submit"
                   >
@@ -128,7 +133,7 @@ export default function Page() {
                   </button>
 
                   {formError && (
-                    <p className="text-center text-xs text-red-600">
+                    <p className="text-center mono text-xs text-red-600">
                       {formError}
                     </p>
                   )}
@@ -136,7 +141,7 @@ export default function Page() {
               )}
 
               <button
-                className="text-sm  text-zinc-500 hover:text-black"
+                className="text-sm  mono cursor-pointer uppercase text-zinc-500 hover:text-white/80 transition-colors"
                 type="button"
                 onClick={() => {
                   setShowEmailForm(false);
@@ -150,14 +155,14 @@ export default function Page() {
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-2">
               {formError && (
-                <p className="w-full text-center text-xs text-red-600">
+                <p className="w-full text-center mono text-xs text-red-600">
                   {formError}
                 </p>
               )}
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="inline-flex h-[35px] w-full items-center cursor-pointer justify-center gap-3 rounded bg-white   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
                 {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
@@ -167,7 +172,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center gap-3 rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="inline-flex h-[35px] w-full items-center cursor-pointer justify-center gap-3 rounded bg-blue-600 px-4 text-xs mono uppercase tracking-tight text-white transition-all hover:bg-blue-700 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -177,20 +182,20 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center justify-center rounded-xs bg-zinc-100 px-4 text-sm font-medium tracking-tight text-black transition-all hover:bg-zinc-200 disabled:opacity-60"
+                className="flex h-[35px] w-full items-center justify-center mono uppercase rounded cursor-pointer bg-white   px-4 text-xs tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => {
                   setFormError(null);
                   setShowEmailForm(true);
                 }}
               >
-                <Mail className="w-5 h-5 text-black/50 mr-2" />
+                <AtSign className="w-4 h-4 text-black/60 mr-2 strokeWidth={1}" />
                 Sign in with email
               </button>
             </div>
           )}
 
           {/* RESTORED FOOTER TEXT */}
-          <p className="max-w-[320px] text-center text-xs font-medium leading-5 tracking-tight text-zinc-500">
+          <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
             By continuing, you agree to the{" "}
             <a
               href="#"

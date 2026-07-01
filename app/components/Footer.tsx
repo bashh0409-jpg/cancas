@@ -142,7 +142,7 @@ const Footer = () => {
         <div className="col-span-12 sm:col-span-6 lg:col-span-2">
           <h1 className="mono text-sm tracking-tight text-white/50">Company</h1>
 
-          <div className="mt-2 flex flex-col gap-1 text-sm uppercase">
+          <div className="mt-2 flex mono flex-col gap-1 text-sm uppercase">
             <a
               href="https://maize-vault-44c.notion.site/About-Swiped-37be79c73b2580749f62d30aa1955d84?source=copy_link"
               target="_blank"
@@ -251,7 +251,7 @@ const Footer = () => {
           draggable={false}
         />
       </div>
-      <p className="text-white justify-center items-center flex text-xs mb-2 -mt-10">
+      <p className="text-white justify-center mono items-center flex text-xs mb-2 -mt-10">
         CURRENTLY IN BETA
       </p>
     </footer>

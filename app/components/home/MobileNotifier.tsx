@@ -47,7 +47,7 @@ const MobileNotifier: React.FC<Props> = ({
             src="/images/Reflow.svg"
             alt="Logo"
             width={64}
-            height={24}
+            height={34}
             className="object-contain shrink-0"
           />
           <span className="mono text-xs text-white/60 ml-2">BETA</span>
@@ -109,7 +109,7 @@ const MobileNotifier: React.FC<Props> = ({
       </div>
 
       <div className="w-full flex flex-col mb-8 justify-center items-center gap-2">
-        <span className="text-white mono uppercase  tracking-tight text-[10px] text-center">For now...</span>
+        <span className="text-white mono uppercase  tracking-tight text-[10px] text-center">For now you can...</span>
         <a
           href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
           target="_blank"
