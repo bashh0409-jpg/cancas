@@ -160,14 +160,14 @@ const Navbar = () => {
           <button
             onClick={handleStartProject}
             disabled={checkingSession}
-            className="ml-2 flex cursor-pointer items-center gap-1 rounded-xs bg-white px-1 uppercase mono py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
+            className="ml-2 h-8 flex cursor-pointer items-center gap-1 rounded-xs bg-white px-1.5 uppercase mono py-1.5 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
             Start Now
             <ArrowUpRight className="h-4 w-4 rounded-xs bg-black p-0.5 text-white" />
           </button>
           <button
             onClick={() => setOpen((prev) => !prev)}
-            className="grid h-6 w-6 place-items-center rounded-xs bg-white lg:hidden"
+            className="grid h-8 w-8 place-items-center rounded-xs bg-white lg:hidden"
             aria-label="Toggle Menu"
           >
             {open ? (
