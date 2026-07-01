@@ -8,19 +8,22 @@ import {
   siPanasonic,
   siSpotify,
   siNotion,
-    siStripe,
-    siWebflow,
-  siNike,
+  siStripe,
+  siWebflow,
   siAdidas,
   siPuma,
   siVisa,
   siMastercard,
   siTicketmaster,
   siAwwwards,
+  siNike,
+  siApple,
 } from "simple-icons";
 
 const LOGOS = [
+  siApple,
   siGoogle,
+
   siNetflix,
   siNvidia,
   siUber,
@@ -30,16 +33,21 @@ const LOGOS = [
   siSpotify,
   siNotion,
   siStripe,
-    siPanasonic, siAwwwards,
-    siWebflow,
-    siNike,
-  siAdidas, siPuma, siVisa, siMastercard
+
+  siPanasonic,
+  siAwwwards,
+  siWebflow,
+  siVisa,
+  siMastercard,
+  siAdidas,
+  siPuma,
+  siNike,
 ];
 
 export function TrustedBy() {
   return (
     <div className="max-w-7xl mx-auto mt-20 mb-40 text-center px-4">
-      <div className="grid grid-cols-6  gap-x-15 gap-y-8 items-center justify-items-center">
+      <div className="grid grid-cols-5  gap-x-15 gap-y-8 items-center justify-items-center">
         {LOGOS.map((icon) => (
           <svg
             key={icon.slug}

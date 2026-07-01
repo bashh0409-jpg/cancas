@@ -139,7 +139,7 @@ const Footer = () => {
         </div>
 
         {/* Company */}
-        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
+        <div className="col-span-12 hidden sm:col-span-3 lg:col-span-2">
           <h1 className="mono text-sm tracking-tight text-white/50">Company</h1>
 
           <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
