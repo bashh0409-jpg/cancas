@@ -106,7 +106,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-50 flex w-full bg-white/0 mix-blend-difference items-center justify-between px-4 py-4 md:px-6">
+      <nav className="fixed z-100 top-0 left-0 z-50 flex w-full bg-white/0 mix-blend-difference items-center justify-between px-4 py-4 md:px-6">
         <div className="flex items-baseline ">
           {" "}
           <Image

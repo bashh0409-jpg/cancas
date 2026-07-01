@@ -100,7 +100,7 @@ const MobileNotifier: React.FC<Props> = ({
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-">
         <p className="text-sm font-normal tracking-tight mono uppercase max-w-90 text-white/90">
-          This page is best viewed on a larger screen.
+          This application is best viewed on a larger screen.
         </p>
         <p className="text-xs tracking-tight font-normal mono uppercase max-w-90 mt-1 text-white/60">
           Please use a desktop or tablet to access all features.

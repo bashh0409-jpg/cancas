@@ -64,7 +64,7 @@ const Footer = () => {
         <div className="col-span-12 sm:col-span-6 lg:col-span-2">
           <h1 className="mono text-sm tracking-tight text-white/50">Explore</h1>
 
-          <div className="mt-2 flex flex-col gap-1 text-sm uppercase">
+          <div className="mt-2 flex flex-col mono tracking-tight gap-1 text-sm uppercase">
             <a
               href="#"
               className="tracking-tight transition hover:text-white/70"
@@ -104,7 +104,7 @@ const Footer = () => {
             Follow us
           </h1>
 
-          <div className="mt-2 flex flex-col gap-1 text-sm uppercase">
+          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
             <a
               href="https://www.instagram.com/swiped.ai?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
               target="_blank"
@@ -142,7 +142,7 @@ const Footer = () => {
         <div className="col-span-12 sm:col-span-6 lg:col-span-2">
           <h1 className="mono text-sm tracking-tight text-white/50">Company</h1>
 
-          <div className="mt-2 flex mono flex-col gap-1 text-sm uppercase">
+          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
             <a
               href="https://maize-vault-44c.notion.site/About-Swiped-37be79c73b2580749f62d30aa1955d84?source=copy_link"
               target="_blank"
@@ -187,7 +187,7 @@ const Footer = () => {
             Contact Us
           </h1>
 
-          <div className="mt-2 flex flex-col gap-1 text-sm uppercase">
+          <div className="mt-2 mono tracking-tight flex flex-col gap-1 text-sm uppercase">
             <a
               href="mailto:hello@swipes.com"
               className="tracking-tight transition hover:text-white/70"
