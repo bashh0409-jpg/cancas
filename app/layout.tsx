@@ -8,6 +8,7 @@ import { PostHogPageView } from "./PostHogPageView";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { CookieConsent } from "./components/CookieConsent";
 
 const cmGeom = localFont({
   src: [
@@ -67,6 +68,7 @@ export default function RootLayout({
           </Suspense>
           {children}
         </PHProvider>
+        <CookieConsent />
       </body>
     </html>
   );

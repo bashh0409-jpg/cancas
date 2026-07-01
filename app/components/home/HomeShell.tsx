@@ -851,7 +851,7 @@ function SettingsPage({
           <button
             onClick={() => setActiveTab("account")}
             className={`
-              flex items-center gap-2.5 px-3 py-1.5 h-8 rounded tracking-tight text-left transition-colors
+              flex items-center cursor-pointer gap-2.5 px-3 py-1.5 h-8 rounded tracking-tight text-left transition-colors
               ${
                 activeTab === "account"
                   ? "bg-white/20 text-white "
@@ -867,7 +867,7 @@ function SettingsPage({
           <button
             onClick={() => setActiveTab("settings")}
             className={`
-              flex items-center gap-2.5 px-3 py-1.5 h-8 rounded tracking-tight text-left transition-colors
+              flex items-center cursor-pointer gap-2.5 px-3 py-1 text-xs h-8 rounded tracking-tight text-left transition-colors
               ${
                 activeTab === "settings"
                   ? "bg-white/20 text-white "
@@ -978,10 +978,11 @@ function AccountInfoTab({
             {displayName}
           </h2>
 
-          <p className="text-sm mono tracking-tight text-white/40">
+          <p className="text-[11px] uppercase mono tracking-tight text-white/40">
             Personal account settings
           </p>
         </div>
+    
       </div>
 
       {/* fields */}
@@ -1145,7 +1146,7 @@ function WorkspaceSettingsTab({
                 </span>
               </div>
 
-              <button className="h-9 rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90">
+              <button className="h-8 mono cursor-pointer uppercase rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90">
                 Upgrade
               </button>
             </div>
@@ -1154,7 +1155,7 @@ function WorkspaceSettingsTab({
 
         {/* notifications */}
         <div className="flex flex-col gap-4">
-          <span className="text-xs  uppercase mono tracking-tight text-white">
+          <span className="text-xs   uppercase mono tracking-tight text-white">
             Notifications
           </span>
 
@@ -1179,7 +1180,7 @@ function WorkspaceSettingsTab({
               <button
                 onClick={handleSaveSettings}
                 disabled={saving}
-                className="flex h-8 min-w-[70px] items-center justify-center self-end rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
+                className="flex h-8 min-w-[70px] cursor-pointer  font-medium cursor-pointer items-center justify-center self-end rounded bg-white px-3 text-xs  mono uppercase text-black transition hover:bg-white/90 disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1212,7 +1213,7 @@ function WorkspaceSettingsTab({
 
             <button
               onClick={() => setOpenDelete(true)}
-              className="h-9 cursor-pointer rounded border border-rose-500/30 px-3 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
+              className="h-8 mono cursor-pointer uppercase cursor-pointer rounded border border-rose-500/30 px-3 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
             >
               Delete
             </button>
@@ -1368,20 +1369,49 @@ export function TutorialPage() {
   );
 }
 
+const ITEMS_PER_PAGE = 40;
+type FileType = "image" | "web" | "voice";
+type ActiveFilter = "all" | FileType;
+
+const FILTER_OPTIONS: { value: ActiveFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "image", label: "Images" },
+  { value: "web", label: "Web" },
+  { value: "voice", label: "Voice" },
+];
+
 function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
   const [files, setFiles] = useState<
     Array<{
       id: string;
-      type: "image" | "web" | "voice";
+      type: FileType;
       title: string;
       thumbnail?: string;
+      url?: string;
+      audioDataUrl?: string;
+      durationMs?: number;
       canvasName: string;
       canvasId: string;
     }>
   >([]);
   const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<ActiveFilter>("all");
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [previewImage, setPreviewImage] = useState<{
     src: string;
+    title: string;
+    canvasName: string;
+    canvasId: string;
+  } | null>(null);
+  const [previewVoice, setPreviewVoice] = useState<{
+    audioDataUrl: string;
+    title: string;
+    transcription?: string;
+    canvasName: string;
+    canvasId: string;
+  } | null>(null);
+  const [previewWeb, setPreviewWeb] = useState<{
+    url: string;
     title: string;
     canvasName: string;
     canvasId: string;
@@ -1410,6 +1440,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                     type: "image",
                     title: node.fileName,
                     thumbnail: node.url,
+                    url: node.url,
                     canvasName: canvas.name,
                     canvasId: canvas.id,
                   });
@@ -1424,6 +1455,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                     id: node.id,
                     type: "web",
                     title: node.title || new URL(node.url).hostname,
+                    url: node.url,
                     canvasName: canvas.name,
                     canvasId: canvas.id,
                   });
@@ -1433,11 +1465,13 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
 
             if (content?.voiceNodes) {
               content.voiceNodes.forEach(
-                (node: { id: string; title: string }) => {
+                (node: { id: string; title: string; audioDataUrl: string; durationMs?: number }) => {
                   allFiles.push({
                     id: node.id,
                     type: "voice",
                     title: node.title,
+                    audioDataUrl: node.audioDataUrl,
+                    durationMs: node.durationMs,
                     canvasName: canvas.name,
                     canvasId: canvas.id,
                   });
@@ -1461,6 +1495,10 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
     };
   }, [canvases]);
 
+  const filteredFiles = typeFilter === "all" ? files : files.filter((f) => f.type === typeFilter);
+  const visibleFiles = filteredFiles.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredFiles.length;
+
   const getFileIcon = (type: string) => {
     switch (type) {
       case "image":
@@ -1482,29 +1520,53 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
     <div className="flex flex-col gap-6">
       {/* header */}
       <div className="flex flex-col gap-2">
-        <h2 className="text-white text-sm tracking-tight mono">My Library.</h2>
+        <h2 className="text-white uppercase  text-sm tracking-tight mono">
+          My Library.
+        </h2>
         <p className="text-white/50 text-xs mono">
           All files from all canvases will appear here.
         </p>
       </div>
 
+      {/* Filter bar */}
+      {!loading && files.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {FILTER_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => {
+                setTypeFilter(option.value);
+                setVisibleCount(ITEMS_PER_PAGE);
+              }}
+              className={`rounded px-2.5 py-1 cursor-pointer text-xs mono uppercase tracking-tight transition ${
+                typeFilter === option.value
+                  ? "bg-white/20 text-white"
+                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center p-8">
-          <Loader2 className="animate-spin text-white" />
+          <Loader2 className="animate-spin text-white/20" />
         </div>
       ) : files.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
           <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
             <CanvasPlaceholderIcon />
           </div>
-          <p className="text-white/50 uppercase text-xs mono text-center max-w-sm">
+          <p className="text-white/50 tracking-tight uppercase text-xs mono text-center max-w-sm">
             No files yet. Create some canvases and add content to see them here.
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-8">
           {Object.entries(
-            files.reduce(
+            visibleFiles.reduce(
               (acc, file) => {
                 if (!acc[file.canvasId]) {
                   acc[file.canvasId] = { name: file.canvasName, files: [] };
@@ -1518,7 +1580,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
             <div key={canvasId} className="flex flex-col gap-4">
               {/* Canvas title divider */}
               <div className="flex items-center gap-3">
-                <h3 className="text-white text-sm mono font-medium">
+                <h3 className="text-white uppercase tracking-tight text-xs mono">
                   {group.name}
                 </h3>
                 <div className="flex-1  h-px bg-white/10"></div>
@@ -1535,6 +1597,22 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                         e.preventDefault();
                         setPreviewImage({
                           src: file.thumbnail,
+                          title: file.title,
+                          canvasName: file.canvasName,
+                          canvasId: file.canvasId,
+                        });
+                      } else if (file.type === "web" && file.url) {
+                        e.preventDefault();
+                        setPreviewWeb({
+                          url: file.url,
+                          title: file.title,
+                          canvasName: file.canvasName,
+                          canvasId: file.canvasId,
+                        });
+                      } else if (file.type === "voice" && file.audioDataUrl) {
+                        e.preventDefault();
+                        setPreviewVoice({
+                          audioDataUrl: file.audioDataUrl,
                           title: file.title,
                           canvasName: file.canvasName,
                           canvasId: file.canvasId,
@@ -1575,10 +1653,22 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
               </div>
             </div>
           ))}
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="flex justify-center pt-2 pb-4">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+                className="flex items-center cursor-pointer gap-2 rounded border border-white/20 bg-white/5 px-2  py-1 text-xs mono uppercase tracking-tight text-white/70 transition hover:bg-white/10 hover:text-white"
+              >
+                Load More ({filteredFiles.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Image Preview Modal */}
+      {/* ── Image Preview Modal ── */}
       {previewImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -1617,15 +1707,197 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
               priority
             />
 
-            {/* Image info footer */}
+            {/* Image info footer + download */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <p className="text-white text-sm mono font-medium">
-                {previewImage.title}
-              </p>
-              <p className="text-white/60 text-xs mono">
-                {previewImage.canvasName}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-sm mono font-medium">
+                    {previewImage.title}
+                  </p>
+                  <p className="text-white/60 text-xs mono">
+                    {previewImage.canvasName}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(previewImage.src);
+                        const blob = await res.blob();
+
+                        // Save to localStorage
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          localStorage.setItem(
+                            `reflow:downloaded:${previewImage.title}`,
+                            base64,
+                          );
+                        };
+                        reader.readAsDataURL(blob);
+
+                        // Trigger browser download
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = previewImage.title;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      } catch {
+                        // Silently fail
+                      }
+                    }}
+                    className="shrink-0 rounded bg-white px-3 py-1.5 text-[11px] mono font-medium text-black transition hover:bg-white/80"
+                  >
+                    Download
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice Preview Modal ── */}
+      {previewVoice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewVoice(null)}
+        >
+          <div
+            className="relative w-full max-w-md mx-4 rounded-lg overflow-hidden bg-[#1a1a1e] border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close */}
+            <button
+              onClick={() => setPreviewVoice(null)}
+              className="absolute top-3 right-3 z-10 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded transition"
+              aria-label="Close"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            <div className="p-6 flex flex-col items-center gap-4">
+              {/* Icon */}
+              <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
+                <AudioLines className="w-6 h-6 text-white" />
+              </div>
+
+              {/* Title */}
+              <p className="text-white text-sm mono font-medium text-center truncate max-w-full">
+                {previewVoice.title}
+              </p>
+              <p className="text-white/40 text-[10px] mono uppercase">
+                {previewVoice.canvasName}
+              </p>
+
+              {/* Audio Player */}
+              <audio
+                controls
+                src={previewVoice.audioDataUrl}
+                className="w-full h-10 rounded"
+                controlsList="nodownload"
+              />
+
+              {/* Transcription placeholder */}
+              {previewVoice.transcription ? (
+                <div className="w-full border-t border-white/10 pt-3 mt-1">
+                  <p className="text-[10px] mono uppercase tracking-tight text-white/40 mb-2">
+                    Transcription
+                  </p>
+                  <p className="text-xs mono text-white/70 leading-relaxed">
+                    {previewVoice.transcription}
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full border-t border-white/10 pt-3 mt-1">
+                  <p className="text-[10px] mono uppercase tracking-tight text-white/30 text-center">
+                    No transcription available
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Web Link Preview Modal ── */}
+      {previewWeb && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewWeb(null)}
+        >
+          <div className="relative w-full items-center max-w-md mx-4 flex flex-col gap-2 ">
+            {" "}
+
+            <div
+              className="relative w-full max-w-md mx-4 rounded-lg overflow-hidden bg-white "
+              onClick={(e) => e.stopPropagation()}
+            >
+
+              <div className="p-6 flex flex-col  gap-4">
+                {/* Globe icon */}
+                <div className="w-14 h-14 rounded bg-black/10 flex items-center justify-center">
+                  <Globe className="w-6 h-6 text-black" />
+                </div>
+
+                {/* Website title */}
+                <p className="text-black text-sm mono font-medium truncate max-w-full">
+                  {previewWeb.title}
+                </p>
+                <p className="text-black/70 text-[10px] mono uppercase">
+                  {previewWeb.canvasName}
+                </p>
+
+                {/* URL */}
+                <p className="text-xs mono text-black/50 text-left break-all max-w-full  rounded  py-2">
+                  Url:{previewWeb.url}
+                </p>
+
+                {/* Open in new tab */}
+                <a
+                  href={previewWeb.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className=" w-fit rounded uppercase tracking-tight bg-black px-4 py-1.5  text-xs mono font-medium text-white  text-center transition hover:bg-black/80"
+                >
+                  Open in New Tab
+                </a>
+              </div>
+            </div>            {/* Close */}
+            <button
+              onClick={() => setPreviewWeb(null)}
+              className="z-10 p-1.5 bg-white cursor-pointer hover:bg-white/80 text-black rounded transition"
+              aria-label="Close"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -1752,7 +2024,7 @@ function Toggle({
 
       <button
         onClick={onChange}
-        className={`relative w-11 h-5 rounded-full transition-colors duration-200 shrink-0 ${
+        className={`relative w-11 cursor-pointer  h-5 rounded-full transition-colors duration-200 shrink-0 ${
           checked ? "bg-green-500" : "bg-white/15"
         }`}
       >

@@ -133,7 +133,7 @@ if (canvases.length === 0) {
   }
 
   return (
-    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-md bg-white/10 tracking-tight p-6 text-sm text-white mono">
+    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded bg-white/10 tracking-tight p-6 text-sm text-white mono">
       <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
         <CanvasPlaceholderIcon />
       </div>
