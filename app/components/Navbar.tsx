@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
-import { ArrowUpRight, Equal, Menu, X } from "lucide-react";
+import React, { useLayoutEffect, useRef, useState} from "react";
+import { ArrowUpRight, Equal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
@@ -20,6 +20,10 @@ const NAV_LINKS = [
   {
     label: "HELP",
     href: "/signin",
+  },
+  {
+    label: "LEGAL",
+    href: "/legal",
   },
   {
     label: "FAQs",
