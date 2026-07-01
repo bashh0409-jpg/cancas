@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 
 type Cell = {
   x: number;
@@ -187,42 +186,78 @@ const Footer = () => {
           <h1 className="mono text-sm tracking-tight text-white/50">Legal</h1>
 
           <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
-            <Link
-              href="/legal"
-              className="tracking-tight transition hover:text-white/70"
-            >
-              All Legal Docs
-            </Link>
-            <Link
-              href="/legal#terms"
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
               Terms of Service
-            </Link>
-            <Link
-              href="/legal#privacy"
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
               Privacy Policy
-            </Link>
-            <Link
-              href="/legal#cookies"
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
               Cookie Policy
-            </Link>
-            <Link
-              href="/legal#ai-usage"
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Beta Agreement
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Acceptable Use
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Guidelines
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
               AI Usage Policy
-            </Link>
-            <Link
-              href="/legal#deletion"
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              IP Notice
+            </a>
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
               className="tracking-tight transition hover:text-white/70"
             >
               Data Retention
-            </Link>
+            </a>
           </div>
         </div>
 
