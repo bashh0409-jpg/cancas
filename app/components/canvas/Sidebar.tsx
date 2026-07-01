@@ -160,13 +160,13 @@ const CanvasSwitcherOverlay = ({
                     setDraftName(canvasName ?? "");
                   }
                 }}
-                className="w-full cursor-pointer  mono tracking-tight rounded border border-white/20 bg-[#17171b] px-2 py-1 text-xs text-white mono outline-none focus:border-white/40"
+                className="w-full cursor-pointer  uppercase mono tracking-tight rounded border border-white/20 bg-[#17171b] px-2 py-1 text-xs text-white mono outline-none focus:border-white/40"
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="w-full truncate cursor-pointer text-left text-xs font-medium leading-tight text-white transition hover:text-white/80"
+                className="w-full truncate uppercase cursor-pointer text-left text-xs font-medium leading-tight text-white transition hover:text-white/80"
                 title="Click to rename"
               >
                 {isSaving ? "Saving…" : canvasName}
@@ -178,7 +178,7 @@ const CanvasSwitcherOverlay = ({
 
       {/* Switch canvas */}
       {canvases && canvases.length > 0 ? (
-        <div className="max-h-52 hidden overflow-y-auto px-3 py-2.5">
+        <div className="max-h-52 border-t uppercase border-white/10 overflow-y-auto px-3 py-2.5">
           <p className="mb-2 text-[10px] mono uppercase tracking-wider text-white/40">
             Switch canvas
           </p>
@@ -196,13 +196,13 @@ const CanvasSwitcherOverlay = ({
                       onSwitchCanvas(canvas.slug);
                     }
                   }}
-                  className={`flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs mono transition ${
+                  className={`flex items-center justify-between gap-2 rounded-xs px-1.5 py-1.5 text-[11px] mono transition ${
                     isActive
                       ? "bg-white/15 text-white"
                       : "text-white/60 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  <span className="truncate">{canvas.name}</span>
+                  <span className="truncate ">{canvas.name}</span>
                   {isActive ? (
                     <span className="shrink-0 text-[9px] uppercase tracking-wide text-lime-300">
                       Current
@@ -223,7 +223,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-xs mono tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          className="text-xs mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
         >
           Back to files
         </a>

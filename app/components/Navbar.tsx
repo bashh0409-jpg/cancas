@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowUpRight, Equal, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
@@ -106,19 +106,24 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 py-4 md:px-6">
-      <div className="flex items-baseline "> <Image
-          src="/images/Reflow.svg"
-          alt="Reflow logo"
-          width={180}
-          height={48}
-          priority
-          className="h-8 w-auto mix-blend-difference"
-        />
-        <span className="text-xs uppercase -mt-1 tracking-tight mono ml-2">beta</span></div> 
+      <nav className="fixed top-0 left-0 z-50 flex w-full bg-white/0 mix-blend-difference items-center justify-between px-4 py-4 md:px-6">
+        <div className="flex items-baseline ">
+          {" "}
+          <Image
+            src="/images/Reflow.svg"
+            alt="Reflow logo"
+            width={180}
+            height={48}
+            priority
+            className="h-8 w-auto mix-blend-difference"
+          />
+          <span className="text-xs uppercase -mt-1 tracking-tight mono ml-2">
+            beta
+          </span>
+        </div>
 
         {/* Desktop */}
-        <div className="hidden mono p-2 rounded items-center gap-1 lg:flex">
+        <div className="hidden mono p-2 rounded items-center gap-1">
           {NAV_LINKS.map((item) => (
             <Link
               key={item.label}
@@ -129,14 +134,23 @@ const Navbar = () => {
             </Link>
           ))}
         </div>
-        <div className="hidden items-center gap-1 lg:flex">
+        <div className="hidden mix-blend-difference items-center gap-1 md:flex lg:flex">
+          {NAV_LINKS.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="flex mono items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
+            >
+              {item.label}
+            </Link>
+          ))}
           <button
             onClick={handleStartProject}
             disabled={checkingSession}
-            className="ml-2 flex cursor-pointer items-center gap-1 rounded bg-white px-2 py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
+            className="ml-2 flex cursor-pointer items-center gap-1 rounded-xs bg-white px-1 uppercase mono py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
             Start Now
-            <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
+            <ArrowUpRight className="h-4 w-4 rounded-xs bg-black p-0.5 text-white" />
           </button>
         </div>
 
@@ -144,25 +158,22 @@ const Navbar = () => {
         <div className="flex gap-2 md:hidden">
           {" "}
           <button
-            onClick={() => {
-              handleStartProject();
-              setOpen(false);
-            }}
+            onClick={handleStartProject}
             disabled={checkingSession}
-            className="flex w-fit cursor-pointer items-center gap-2 rounded bg-white px-4 py-2 text-sm text-black disabled:opacity-70"
+            className="ml-2 flex cursor-pointer items-center gap-1 rounded-xs bg-white px-1 uppercase mono py-1 text-xs tracking-tight text-black transition-opacity hover:opacity-90 disabled:opacity-70"
           >
             Start Now
-            <ArrowUpRight className="h-4 w-4 rounded bg-black p-0.5 text-white" />
-          </button>{" "}
+            <ArrowUpRight className="h-4 w-4 rounded-xs bg-black p-0.5 text-white" />
+          </button>
           <button
             onClick={() => setOpen((prev) => !prev)}
-            className="grid h-9 w-9 place-items-center rounded bg-white lg:hidden"
+            className="grid h-6 w-6 place-items-center rounded-xs bg-white lg:hidden"
             aria-label="Toggle Menu"
           >
             {open ? (
               <X className="h-5 w-5 text-black" />
             ) : (
-              <Menu className="h-5 w-5 text-black" />
+              <Equal className="h-5 w-5 text-black" />
             )}
           </button>
         </div>
@@ -177,7 +188,7 @@ const Navbar = () => {
           pointerEvents: "none",
         }}
       >
-        <div className="flex h-full flex-col justify-between px-6 pt-28 pb-10">
+        <div className="flex h-full lime flex-col justify-between px-6 pt-28 pb-10">
           <div className="flex flex-col">
             {NAV_LINKS.map((item, index) => (
               <Link
@@ -187,7 +198,7 @@ const Navbar = () => {
                   if (el) linksRef.current[index] = el;
                 }}
                 onClick={() => setOpen(false)}
-                className="border-b border-white/10 py-5 text-4xl tracking-tight"
+                className=" py-5 mix-blend-difference text-4xl tracking-tight"
               >
                 {item.label}
               </Link>

@@ -71,21 +71,6 @@ function readBoolean(record: Record<string, unknown>, key: string) {
   return record[key] === true;
 }
 
-function isMissingRpcError(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const code = "code" in error ? error.code : undefined;
-  const message = "message" in error ? error.message : undefined;
-
-  return (
-    code === "42883" ||
-    (typeof message === "string" &&
-      /function .* does not exist|schema cache/i.test(message))
-  );
-}
-
 export async function consumeUserCredits(
   supabase: SupabaseClient,
   userId: string,
@@ -101,11 +86,11 @@ export async function consumeUserCredits(
       p_scope: scope,
     });
 
-    if (error && !isMissingRpcError(error)) {
+    if (error) {
       throw error;
     }
 
-    if (!error && data && typeof data === "object" && !Array.isArray(data)) {
+    if (data && typeof data === "object" && !Array.isArray(data)) {
       return readBoolean(data as Record<string, unknown>, "success");
     }
   }
@@ -172,11 +157,11 @@ export async function addUserCredits(
       p_scope: scope,
     });
 
-    if (error && !isMissingRpcError(error)) {
+    if (error) {
       throw error;
     }
 
-    if (!error && data && typeof data === "object" && !Array.isArray(data)) {
+    if (data && typeof data === "object" && !Array.isArray(data)) {
       return readBoolean(data as Record<string, unknown>, "success");
     }
   }

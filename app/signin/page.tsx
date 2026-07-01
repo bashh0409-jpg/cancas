@@ -119,7 +119,7 @@ export default function Page() {
                 >
                   <input
                     autoComplete="email"
-                    className="h-[35px] w-full mono rounded border-2 border-black/10 bg-white px-3 text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
+                    className="h-[35px] w-full mono rounded border-2 border-black/10 bg-white px-3 text-[16px] text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
                     disabled={isLoading}
                     placeholder="you@example.com"
                     type="email"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 export type BillingCycle = "monthly" | "annual";
@@ -64,20 +64,25 @@ interface CheckoutPageProps {
   userEmail: string;
 }
 
-export function CheckoutPage({ userCountry, userEmail }: CheckoutPageProps) {
+export function CheckoutPage({ userCountry }: CheckoutPageProps) {
   const [selectedPlan, setSelectedPlan] = useState<"starter" | "pro" | "ultra">(
     "pro",
   );
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pendingCheckoutKeyRef = useRef<string | null>(null);
 
   const handleCheckout = async () => {
+    if (pendingCheckoutKeyRef.current) {
+      return;
+    }
+
+    pendingCheckoutKeyRef.current = crypto.randomUUID();
     setIsLoading(true);
     setError(null);
 
     try {
-      const idempotencyKey = crypto.randomUUID();
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +92,7 @@ export function CheckoutPage({ userCountry, userEmail }: CheckoutPageProps) {
           countryCode: userCountry,
           returnUrl: `${window.location.origin}/billing/success`,
           cancelUrl: `${window.location.origin}/billing/cancel`,
-          idempotencyKey,
+          idempotencyKey: pendingCheckoutKeyRef.current,
         }),
       });
 
@@ -101,12 +106,11 @@ export function CheckoutPage({ userCountry, userEmail }: CheckoutPageProps) {
       // Redirect to payment provider
       window.location.href = checkoutUrl;
     } catch (err) {
+      pendingCheckoutKeyRef.current = null;
       setError(err instanceof Error ? err.message : "Checkout failed");
       setIsLoading(false);
     }
   };
-
-  const selectedPlanData = PLANS.find((p) => p.id === selectedPlan)!;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white p-8">

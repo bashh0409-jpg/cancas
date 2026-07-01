@@ -146,6 +146,7 @@ export function CanvasTextNode({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const ttsRequestKeyRef = useRef<string | null>(null);
   const wordTimingsRef = useRef<
     {
       charIndex: number;
@@ -218,6 +219,7 @@ export function CanvasTextNode({
       audioRef.current = null;
     }
     wordTimingsRef.current = [];
+    ttsRequestKeyRef.current = null;
     queueMicrotask(() => {
       setActiveWordIndex(null);
       setIsSpeaking(false);
@@ -273,16 +275,18 @@ export function CanvasTextNode({
   const speakText = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
+      if (ttsRequestKeyRef.current) return;
+
+      ttsRequestKeyRef.current = crypto.randomUUID();
       setIsLoading(true);
 
       try {
-        const idempotencyKey = crypto.randomUUID();
         const creditRes = await fetch("/api/credits/consume", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             amount: 3,
-            idempotencyKey,
+            idempotencyKey: ttsRequestKeyRef.current,
             scope: "tts.speak",
           }),
         });

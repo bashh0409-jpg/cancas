@@ -251,7 +251,7 @@ const Footer = () => {
           draggable={false}
         />
       </div>
-      <p className="text-white justify-center mono items-center flex text-xs mb-2 -mt-10">
+      <p className="text-white mix-blend-difference  justify-center mono items-center flex text-xs mb-2 -mt-10">
         CURRENTLY IN BETA
       </p>
     </footer>

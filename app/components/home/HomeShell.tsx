@@ -416,7 +416,7 @@ export function HomeShell({
                 alt="Logo"
                 width={84}
                 height={24}
-                className="object-contain hover:bg-white/30 cursor-pointer rounded shrink-0"
+                className="object-contain cursor-pointer rounded shrink-0"
               />{" "}
               <span className="mono text-white/60  tracking-tight text-xs ml-2">
                 BETA

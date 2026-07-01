@@ -1,10 +1,12 @@
 "use server";
 
 import {
-  createUserCanvas,
   createUserCanvasWithCreditOnce,
 } from "@/lib/canvas/repository";
-import { consumeUserCredits } from "@/lib/credits/repository";
+import {
+  requireIdempotencyKey,
+  userScopedIdempotencyKey,
+} from "@/lib/idempotency";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -17,10 +19,15 @@ export async function createCanvasAction(idempotencyKey: string) {
     redirect("/signin");
   }
 
+  const scopedIdempotencyKey = userScopedIdempotencyKey(
+    user.id,
+    requireIdempotencyKey(idempotencyKey),
+  );
+
   const idempotentResult = await createUserCanvasWithCreditOnce(
     supabase,
     user.id,
-    idempotencyKey,
+    scopedIdempotencyKey,
   );
 
   if (idempotentResult.slug) {
@@ -30,19 +37,4 @@ export async function createCanvasAction(idempotencyKey: string) {
   if (idempotentResult.insufficientCredits) {
     redirect("/home?error=no_credits");
   }
-
-  const hasCredits = await consumeUserCredits(
-    supabase,
-    user.id,
-    2,
-    idempotencyKey,
-    "canvas.create.fallback",
-  );
-
-  if (!hasCredits) {
-    redirect("/home?error=no_credits");
-  }
-
-  const canvasId = await createUserCanvas(supabase, user.id);
-  redirect(`/canvas/${canvasId}`);
 }

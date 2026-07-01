@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { consumeUserCredits, getUserCredits } from "@/lib/credits/repository";
+import {
+  IdempotencyKeyError,
+  requireIdempotencyKey,
+  userScopedIdempotencyKey,
+} from "@/lib/idempotency";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +22,10 @@ export async function POST(request: NextRequest) {
       scope?: string;
     };
     const amount = payload.amount ?? 3;
-    const idempotencyKey =
-      typeof payload.idempotencyKey === "string"
-        ? payload.idempotencyKey.trim()
-        : undefined;
+    const idempotencyKey = userScopedIdempotencyKey(
+      userData.user.id,
+      requireIdempotencyKey(payload.idempotencyKey),
+    );
     const scope =
       typeof payload.scope === "string" && payload.scope.trim()
         ? payload.scope.trim()
@@ -45,6 +50,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, consumed: amount, balance });
   } catch (error) {
+    if (error instanceof IdempotencyKeyError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     const message =
       error instanceof Error ? error.message : "Failed to consume credits";
     return NextResponse.json({ error: message }, { status: 500 });

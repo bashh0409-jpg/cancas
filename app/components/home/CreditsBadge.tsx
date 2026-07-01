@@ -24,6 +24,9 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
   });
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [loadingCurrency, setLoadingCurrency] = useState(false);
+  const [pendingCheckoutKey, setPendingCheckoutKey] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -53,9 +56,15 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
   }, [open, currencyData.currency, currencyData.rate]);
 
   async function initiateCheckout(planId: string) {
+    if (pendingCheckoutKey) {
+      return;
+    }
+
+    const idempotencyKey = crypto.randomUUID();
+    setPendingCheckoutKey(idempotencyKey);
+
     try {
       const countryCode = currencyData.currency === "ZAR" ? "ZA" : "US";
-      const idempotencyKey = crypto.randomUUID();
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +86,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
       const { checkoutUrl } = await res.json();
       if (checkoutUrl) window.location.assign(checkoutUrl);
     } catch (err) {
+      setPendingCheckoutKey(null);
       console.error("Checkout initiation failed:", err);
       alert(err instanceof Error ? err.message : "Checkout failed");
     }

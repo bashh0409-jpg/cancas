@@ -42,6 +42,35 @@ async function createUniqueCanvasSlug(
   return `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+function readErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : typeof error === "object" && error !== null && "message" in error
+      ? String(error.message)
+      : "";
+}
+
+function readErrorCode(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String(error.code)
+    : "";
+}
+
+function readErrorStatus(error: unknown) {
+  if (typeof error !== "object" || error === null || !("status" in error)) {
+    return null;
+  }
+
+  return typeof error.status === "number" ? error.status : null;
+}
+
+function isMissingDeletedAtColumn(error: unknown) {
+  return (
+    readErrorCode(error) === "42703" ||
+    /deleted_at/.test(readErrorMessage(error))
+  );
+}
+
 export async function listUserCanvases(
   supabase: SupabaseClient,
   userId: string,
@@ -59,9 +88,9 @@ export async function listUserCanvases(
     }
 
     return data ?? [];
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If the deleted_at column doesn't exist, fall back to querying without it.
-    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+    if (isMissingDeletedAtColumn(err)) {
       const { data, error } = await supabase
         .from("canvases")
         .select("id, slug, name, created_at, updated_at")
@@ -99,21 +128,6 @@ export async function createUserCanvas(
   return data.slug;
 }
 
-function isMissingRpcError(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const code = "code" in error ? error.code : undefined;
-  const message = "message" in error ? error.message : undefined;
-
-  return (
-    code === "42883" ||
-    (typeof message === "string" &&
-      /function .* does not exist|schema cache/i.test(message))
-  );
-}
-
 export async function createUserCanvasWithCreditOnce(
   supabase: SupabaseClient,
   userId: string,
@@ -132,10 +146,6 @@ export async function createUserCanvasWithCreditOnce(
   );
 
   if (error) {
-    if (isMissingRpcError(error)) {
-      return { insufficientCredits: false };
-    }
-
     throw error;
   }
 
@@ -192,8 +202,8 @@ export async function getUserCanvas(
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
-  } catch (err: any) {
-    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+  } catch (err: unknown) {
+    if (isMissingDeletedAtColumn(err)) {
       let query = supabase
         .from("canvases")
         .select("id, slug, name, content, created_at, updated_at")
@@ -302,7 +312,7 @@ export async function deleteUserCanvas(
 
       if (!error) return data ?? [];
 
-      const status = (error as any)?.status;
+      const status = readErrorStatus(error);
 
       if (status === 429 || status === 503) {
         attempt += 1;
@@ -327,7 +337,7 @@ export async function deleteUserCanvas(
 
       if (!error) return;
 
-      const status = (error as any)?.status;
+      const status = readErrorStatus(error);
 
       if (status === 429 || status === 503) {
         attempt += 1;
@@ -376,7 +386,10 @@ export async function deleteUserCanvas(
   }
 }
 
-export async function getUserCanvases(supabase: any, userId: string) {
+export async function getUserCanvases(
+  supabase: SupabaseClient,
+  userId: string,
+) {
   try {
     const { data, error } = await supabase
       .from("canvases")
@@ -387,8 +400,8 @@ export async function getUserCanvases(supabase: any, userId: string) {
 
     if (error) throw error;
     return data ?? [];
-  } catch (err: any) {
-    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+  } catch (err: unknown) {
+    if (isMissingDeletedAtColumn(err)) {
       const { data, error } = await supabase
         .from("canvases")
         .select("id,name,slug")
@@ -417,9 +430,9 @@ export async function listUserTrashedCanvases(
 
     if (error) throw error;
     return data ?? [];
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If deleted_at doesn't exist yet, return empty
-    if (err?.code === "42703" || /deleted_at/.test(String(err?.message))) {
+    if (isMissingDeletedAtColumn(err)) {
       return [];
     }
     throw err;

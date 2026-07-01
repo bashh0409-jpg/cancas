@@ -1,4 +1,9 @@
 import { createBillingCheckout } from "@/lib/billing/checkout-service";
+import {
+  IdempotencyKeyError,
+  requireIdempotencyKey,
+  userScopedIdempotencyKey,
+} from "@/lib/idempotency";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -24,10 +29,10 @@ export async function POST(req: Request) {
       idempotencyKey,
     } = body;
 
-    const normalizedIdempotencyKey =
-      typeof idempotencyKey === "string" && idempotencyKey.trim().length > 0
-        ? idempotencyKey.trim()
-        : crypto.randomUUID();
+    const normalizedIdempotencyKey = userScopedIdempotencyKey(
+      user.id,
+      requireIdempotencyKey(idempotencyKey),
+    );
 
     const normalizedBillingCycle =
       billingCycle === "annually" ? "annual" : billingCycle;
@@ -75,6 +80,10 @@ export async function POST(req: Request) {
       subscriptionId: user.id,
     });
   } catch (error) {
+    if (error instanceof IdempotencyKeyError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     console.error("Checkout error:", error);
 
     const message =

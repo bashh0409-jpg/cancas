@@ -215,12 +215,12 @@ export function CanvasFileList({
             <div className="mb-3 flex aspect-square items-center justify-center rounded bg-white/10 text-white/30 transition">
               <CanvasPlaceholderIcon />
             </div>
-            <h3 className="truncate text-sm text-white">{canvas.name}</h3>
-            <p className="mt-1 text-xs text-white/50">
+            <h3 className="truncate text-xs mono tracking-tight uppercase text-white">{canvas.name}</h3>
+            <p className="mt-1 mono tracking-tight text-xs text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>
             {isTrash && canvas.deleted_at && (
-              <p className="mt-1 text-xs text-amber-300">
+              <p className="mt-1  text-xs text-amber-300">
                 {(() => {
                   const deletedAt = new Date(canvas.deleted_at).getTime();
                   const msPerDay = 1000 * 60 * 60 * 24;

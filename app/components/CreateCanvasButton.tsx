@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 
 export function CreateCanvasButton({
@@ -13,12 +13,20 @@ export function CreateCanvasButton({
   labelRef: (el: HTMLElement | null) => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const pendingKeyRef = useRef<string | null>(null);
 
   const handleClick = async () => {
+    if (pendingKeyRef.current) {
+      return;
+    }
+
+    pendingKeyRef.current = crypto.randomUUID();
+
     try {
       setLoading(true);
-      await createCanvasAction(crypto.randomUUID());
+      await createCanvasAction(pendingKeyRef.current);
     } finally {
+      pendingKeyRef.current = null;
       setLoading(false);
     }
   };
