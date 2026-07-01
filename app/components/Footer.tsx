@@ -181,6 +181,62 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Legal */}
+        <div className="col-span-12 sm:col-span-6 lg:col-span-2">
+          <h1 className="mono text-sm tracking-tight text-white/50">Legal</h1>
+
+          <div className="mt-2 flex mono tracking-tight flex-col gap-1 text-sm uppercase">
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Cookie-Policy-1bcfb0e3ce549ddba8330935878d23d?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Cookie Policy
+            </a>
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Beta-Agreement-1bcfb0e3ce549ddba8330935878d23e?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Beta Agreement
+            </a>
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Acceptable-Use-1bcfb0e3ce549ddba8330935878d23f?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Acceptable Use
+            </a>
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Community-Guidelines-1bcfb0e3ce549ddba8330935878d240?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Guidelines
+            </a>
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-IP-Notice-1bcfb0e3ce549ddba8330935878d241?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              IP Notice
+            </a>
+            <a
+              href="https://maize-vault-44c.notion.site/Swiped-Data-Processing-1bcfb0e3ce549ddba8330935878d242?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-tight transition hover:text-white/70"
+            >
+              Data Processing
+            </a>
+          </div>
+        </div>
+
         {/* Contact */}
         <div className="col-span-12 sm:col-span-6 lg:col-span-2">
           <h1 className="mono text-sm tracking-tight text-white/50">
