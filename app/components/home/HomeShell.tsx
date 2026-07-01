@@ -26,6 +26,7 @@ import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
 import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
 import { useRouter } from "next/navigation";
+import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 
 type ActivePage =
   | "files"
@@ -439,7 +440,7 @@ export function HomeShell({
             <div
               className={`flex items-center ${collapsed ? "gap-0" : "gap-2.5"}`}
             >
-              <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="w-7 h-7 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
                 {photoUrl ? (
                   <Image
                     src={photoUrl}
@@ -455,7 +456,7 @@ export function HomeShell({
               </div>
               <span
                 ref={addLabelRef as React.LegacyRef<HTMLSpanElement>}
-                className={`whitespace-nowrap mono uppercase text-white ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
+                className={`whitespace-nowrap text-sm mono uppercase tracking-tight text-white ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}`}
               >
                 {fullName}
               </span>
@@ -633,10 +634,12 @@ export function HomeShell({
             errorMessage={errorMessage}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            createCanvasAction={createCanvasAction}
           />
         )}
         {activePage === "library" && <LibraryPage canvases={canvases} />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
+        {activePage === "tutorials" && <TutorialPage />}
         {activePage === "settings" && (
           <SettingsPage
             profile={profile}
@@ -664,6 +667,7 @@ function FilesPage({
   errorMessage,
   searchQuery = "",
   onSearchChange = () => {},
+  createCanvasAction,
 }: {
   firstName: string;
   lastName: string;
@@ -673,6 +677,7 @@ function FilesPage({
   errorMessage: string | undefined;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  createCanvasAction?: (idempotencyKey: string) => Promise<void>;
 }) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
@@ -742,7 +747,7 @@ function FilesPage({
           </button>
         </div>
       )}
-      <CanvasFileList canvases={filteredCanvases} />
+      <CanvasFileList canvases={filteredCanvases} createCanvasAction={createCanvasAction} />
     </>
   );
 }
@@ -772,7 +777,7 @@ function RecentlyDeletedPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-white text-sm tracking-tight mono">
+        <h2 className="text-white uppercase text-sm tracking-tight mono">
           Recently Deleted
         </h2>
         <p className="text-white/50 text-xs mono">
@@ -832,8 +837,17 @@ function SettingsPage({
   return (
     <div className="flex items-start  min-h-full ">
       <div className="flex flex-col w-full max-w-4xl">
+        <div className="mb-8 hidden ">
+          <h2 className="text-white uppercase text-sm tracking-tight mono">
+            Settings
+          </h2>
+          <p className="text-white/50 text-xs mono">
+            All account related settings will appear here.
+          </p>
+        </div>
         {/* nav tabs at top */}
-        <nav className="flex gap-0.5  mb-8">
+
+        <nav className="flex gap-0.5   mb-8">
           <button
             onClick={() => setActiveTab("account")}
             className={`
@@ -1318,12 +1332,12 @@ const tutorials: TutorialItem[] = [
   },
 ];
 
-function TutorialPage() {
+export function TutorialPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* header */}
       <div className="flex max-w-sm flex-col gap-2">
-        <h2 className="text-white text-sm tracking-tight mono">
+        <h2 className="text-white uppercase text-sm tracking-tight mono">
           Tutorial Lessons.
         </h2>
         <p className="text-white/50 text-xs  mono">
@@ -1337,14 +1351,14 @@ function TutorialPage() {
         {tutorials.map((item) => (
           <div
             key={item.id}
-            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/15 transition flex flex-col justify-between border border-white/5 hover:border-white/10"
+            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/11 transition flex flex-col justify-between  hover:border-white/10"
           >
             <div>
               <h3 className="text-white text-xs mono font-medium tracking-tight">
                 {item.title}
               </h3>
             </div>
-            <p className="text-white/50 text-xs mono leading-tight">
+            <p className="text-white/50 hidden text-xs mono leading-tight">
               {item.description}
             </p>
           </div>
@@ -1353,6 +1367,7 @@ function TutorialPage() {
     </div>
   );
 }
+
 function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
   const [files, setFiles] = useState<
     Array<{
@@ -1478,8 +1493,11 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
           <Loader2 className="animate-spin text-white" />
         </div>
       ) : files.length === 0 ? (
-        <div className="text-center p-8">
-          <p className="text-white/50 text-sm mono">
+        <div className="flex flex-col items-center justify-center gap-4 p-8">
+          <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
+            <CanvasPlaceholderIcon />
+          </div>
+          <p className="text-white/50 uppercase text-xs mono text-center max-w-sm">
             No files yet. Create some canvases and add content to see them here.
           </p>
         </div>

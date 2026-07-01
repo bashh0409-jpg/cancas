@@ -3,13 +3,14 @@
 import type { CanvasListItem } from "@/types/canvas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 import { Trash2, Loader2} from "lucide-react";
 
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
   isTrash?: boolean;
+  createCanvasAction?: (idempotencyKey: string) => Promise<void>;
 };
 
 function formatRelativeDate(value: string) {
@@ -40,15 +41,30 @@ function formatRelativeDate(value: string) {
 export function CanvasFileList({
   canvases: initialCanvases,
   isTrash = false,
+  createCanvasAction,
 }: CanvasFileListProps) {
   const router = useRouter();
   const [canvases, setCanvases] = useState(initialCanvases);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [recoveringId, setRecoveringId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const pendingKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     setCanvases(initialCanvases);
   }, [initialCanvases]);
+
+  const handleCreateCanvas = async () => {
+    if (!createCanvasAction || pendingKeyRef.current) return;
+    pendingKeyRef.current = crypto.randomUUID();
+    try {
+      setCreating(true);
+      await createCanvasAction(pendingKeyRef.current);
+    } finally {
+      pendingKeyRef.current = null;
+      setCreating(false);
+    }
+  };
 
   async function handleDelete(canvasId: string, canvasName: string) {
     // If in trash view, this is permanent delete
@@ -100,24 +116,45 @@ export function CanvasFileList({
       setDeletingId(null);
     }
   }
-
-  if (canvases.length === 0) {
+  
+if (canvases.length === 0) {
+  if (isTrash) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-md bg-white/10 tracking-tight p-6 text-sm text-white mono">
-        <p className="max-w-sm text-center leading-relaxed opacity-80">
-          {isTrash ? (
-            "Trash is empty. Files in the trash will be permanently deleted after 30 days."
-          ) : (
-            <>
-              You don&apos;t have any projects yet. Click{" "}
-              <span className="underline cursor-pointer">New File</span> to
-              create one.
-            </>
-          )}
+      <div className="flex flex-col items-center justify-center gap-4 p-8">
+        <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
+          <CanvasPlaceholderIcon />
+        </div>
+        <p className="text-white/50 uppercase text-xs mono text-center max-w-sm">
+          Trash is empty. Files in the trash will be permanently deleted after
+          30 days.
         </p>
       </div>
     );
   }
+
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-md bg-white/10 tracking-tight p-6 text-sm text-white mono">
+      <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
+        <CanvasPlaceholderIcon />
+      </div>
+      <p className="text-white/50 uppercase text-xs mono text-center max-w-sm">
+        You don&apos;t have any projects yet. Click{" "}
+        <span
+          className="underline hover:text-white cursor-pointer"
+          onClick={handleCreateCanvas}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") handleCreateCanvas();
+          }}
+        >
+          {creating ? "Creating..." : "Create New File"}
+        </span>{" "}
+        to create one.
+      </p>
+    </div>
+  );
+}
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
