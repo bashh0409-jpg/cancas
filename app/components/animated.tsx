@@ -168,19 +168,19 @@ export default function Animated() {
       <section className="animated-titles reletive w-full overflow-hidden text-black bg-white">
         <div className="title lime">
           <div className="title-container">
-            <h1 className="head1 tracking-tight grotesk">Start</h1>
+            <h1 className="head1 tracking-tight uppercase  grotesk">Start</h1>
           </div>
         </div>
 
         <div className="title">
           <div className="title-container">
-            <h1 className="head1 tracking-tight grotest">Your</h1>
+            <h1 className="head1 tracking-tight  uppercase  grotest">Your</h1>
           </div>
         </div>
 
         <div className="title lime">
           <div className="title-container">
-            <h1 className="head1 tracking-tight grotesk">Way</h1>
+            <h1 className="head1 tracking-tight  uppercase grotesk">Way</h1>
           </div>
         </div>
       </section>
