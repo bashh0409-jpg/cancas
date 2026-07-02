@@ -48,7 +48,7 @@ export function BillingToggle({ value, onChange }: BillingToggleProps) {
         className="relative z-10 h-8 min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
         style={{ color: selectedCycle === "annually" ? "#000" : "#fff" }}
       >
-        Annually <span className="ml-1">-15%</span>
+        Annually <span className="ml-1 grotesk">-15%</span>
       </button>
     </div>
   );

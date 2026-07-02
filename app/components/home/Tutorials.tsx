@@ -264,7 +264,7 @@ const buildEmbedUrl = (videoId: string) => {
                 <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
 
                 <div className="absolute left-2 bottom-2">
-                  <p className="line-clamp-2 max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
+                  <p className="line-clamp-2  max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
                     {video.title}
                   </p>
                 </div>
@@ -342,7 +342,7 @@ const buildEmbedUrl = (videoId: string) => {
             ========================== */}
             <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white  pl-3 shadow-2xl">
               <div className="min-w-0">
-                <span className="truncate text-[13px] font-medium tracking-tight text-black">
+                <span className="truncate grotesk  uppercase text-[11px] font-medium tracking-tight text-black">
                   {selectedVideo.title}
                 </span>
               </div>

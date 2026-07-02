@@ -94,7 +94,7 @@ export default function Faq() {
   }, [openIndex]);
 
   return (
-    <section className="w-full bg-[#111] min-h-screen px-6 md:px-16 py-24">
+    <section className="w-full grotesk bg-[#111] min-h-screen px-6 md:px-16 py-24">
       <div className="grid grid-cols-1 lg:grid-cols-3 ">
         <div className="lg:sticky lg:top-24 lg:self-start">
           <h2 className="text-5xl flex items-center gap-2 xl:text-5xl pixel font-bold text-white leading-[1.05] tracking-tight">
@@ -104,7 +104,7 @@ export default function Faq() {
         </div>
 
         <div className="flex flex-col col-span-2">
-          <h2 className="text-3xl mb-4 mt-2 xl:text-6xl pixel font-bold text-white leading-[1.05] tracking-tight">
+          <h2 className="text-3xl mb-4 grotesk mt-2 xl:text-6xl font-semibold text-white leading-[1.05] tracking-tight">
             We&apos;ve heard every concern. Here&apos;s what you really need to
             know.
           </h2>

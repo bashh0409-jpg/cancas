@@ -42,7 +42,7 @@ export function PlanCard({
 
   return (
     <div
-      className={`bg-white/10 backdrop-blur-md border border-white/5 p-6 rounded-lg text-white flex flex-col ${className}`}
+      className={`bg-white/10 backdrop-blur-md border border-white/5 p-6 rounded text-white flex flex-col ${className}`}
     >
       <div className="mb-6">
         <div className="w-full flex justify-between items-start">
@@ -60,8 +60,8 @@ export function PlanCard({
 
       <div className="flex flex-col items-start mb-4">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-5xl tracking-tight">{price}</h2>
-          <p className="text-xs text-white/70">
+          <h2 className="text-5xl grotesk tracking-tight">{price}</h2>
+          <p className="text-xs grotesk uppercase text-white/70">
             {/* Show currency code alongside /month when it's not obvious from symbol */}
             {currency !== "USD" ? `${currency} ` : ""}/month
           </p>

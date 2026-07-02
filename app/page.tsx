@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import { Pricing } from "./components/Pricing";
 import Faq from "./components/Faq";
 import Footer from "./components/Footer";
+import Animated from "./components/animated";
 
 const page = () => {
   return (
@@ -28,6 +29,8 @@ const page = () => {
             <p className="max-w-[330px] hidden flex-1 text-center text-[26px]  tracking-tight max-lg:mx-auto lg:max-w-[300px] lg:text-left"></p>
           </div>
         </section>
+        <div className="mt-10">
+        <Animated /></div>
         <Pricing />
         <Faq />
         <div className=" text-white  h-screen w-full flex items-center justify-center">

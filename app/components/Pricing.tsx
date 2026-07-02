@@ -36,12 +36,12 @@ export function Pricing() {
       <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-12">
-          <h1 className="text-5xl tracking-tight text-white">
+          <h1 className="text-3xl tracking-tight text-white">
             Choose the best plan for you
           </h1>
           <BillingToggle value={billingCycle} onChange={setBillingCycle} />
           {loadingCurrency && (
-            <p className="text-white/40 text-xs mt-3">
+            <p className="text-white/40 grotesk text-xs mt-3">
               Detecting your currency…
             </p>
           )}

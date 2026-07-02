@@ -25,18 +25,15 @@
 }
 
 .sans {
-  font-family: var(--font-helvetica-neue);
+    font-family: var(--font-lay-grotesk);
 }
 
-.pixel {
-  font-family: var(--font-geist-pixel-square);
-}
 
 .rinter {
   font-family: var(--font-rinter);
 }
 
-.lay-grotesk {
+.grotesk {
   font-family: var(--font-lay-grotesk);
 }
 
@@ -127,4 +124,42 @@ body {
 }
 .max-h-64 {
   scroll-behavior: smooth;
+}
+
+
+.head1 {
+  font-size: 15rem;
+  font-weight: 500;
+  line-height: 1;
+  font-weight: 400;
+
+}
+
+.title {
+  height: 85svh;
+  display: flex;
+  align-items: center;
+}
+
+
+.title-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  will-change: transform;
+}
+
+.char {
+  position: relative;
+  display: inline-block;
+  will-change: transform;
+}
+
+@media (max-width: 1000px) {
+  .head1 {
+    letter-spacing: -0.2rem;
+    font-size: 6rem;
+  }
 }

@@ -106,7 +106,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         ].join(" ")}
       >
         <Icon />
-        <span className="text-sm h-3 leading-none">{credits}</span>
+        <span className="text-sm h-3 grotesk leading-none">{credits}</span>
         <span className="text-white text-xs  hidden leading-none">credits</span>
       </button>
 
