@@ -238,7 +238,7 @@ const buildEmbedUrl = (videoId: string) => {
       {/* =========================
           TUTORIAL STRIP
       ========================== */}
-      <div className="mono rounded-md bg-white/10 p-3 text-xs text-white">
+      <div className="mono rounded bg-white/10 p-3 text-xs text-white">
         <p className="mb-3 max-w-60 tracking-tight">
           Learn how to use the canvas with our step-by-step guides.
         </p>
@@ -340,14 +340,14 @@ const buildEmbedUrl = (videoId: string) => {
             {/* =========================
                 FLOATING TOOLBAR
             ========================== */}
-            <div className="flex w-fit min-w-[340px] items-center justify-between gap-4 rounded border border-black/10 bg-white p-0.5 pl-3 shadow-2xl">
+            <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white  pl-3 shadow-2xl">
               <div className="min-w-0">
                 <span className="truncate text-[13px] font-medium tracking-tight text-black">
                   {selectedVideo.title}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 rounded bg-black/10 p-0.5">
+              <div className="flex items-center gap-1 rounded  p-0.5">
                 {/* Play */}
                 <button
                   type="button"
@@ -355,9 +355,9 @@ const buildEmbedUrl = (videoId: string) => {
                   className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isPlaying ? (
-                    <Pause className="h-4.5 w-4.5 fill-black" />
+                    <Pause className="h-4.5 w-4.5 " />
                   ) : (
-                    <Play className="ml-0.5 h-4.5 w-4.5 fill-black" />
+                    <Play className="ml-0.5 h-4.5 w-4.5 " />
                   )}
                 </button>
 
@@ -381,15 +381,6 @@ const buildEmbedUrl = (videoId: string) => {
                   className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
                 >
                   <Maximize className="h-4.5 w-4.5" />
-                </button>
-
-                {/* Close */}
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
-                >
-                  <X className="h-4.5 w-4.5" />
                 </button>
               </div>
             </div>

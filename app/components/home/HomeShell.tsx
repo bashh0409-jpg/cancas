@@ -6,11 +6,13 @@ import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import {
   AudioLines,
   ClockFading,
+  Download,
   Globe,
   LogOut,
   Plus,
   Settings,
   User,
+  X,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import Image from "next/image";
@@ -1643,7 +1645,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                         <p className="text-white text-xs mono font-medium truncate">
                           {file.title}
                         </p>
-                        <p className="text-white/60 text-[10px] mono truncate">
+                        <p className="text-white/60 uppercase tracking-tight text-[10px] mono truncate">
                           {file.canvasName}
                         </p>
                       </div>
@@ -1675,29 +1677,53 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
           onClick={() => setPreviewImage(null)}
         >
           <div
-            className="relative max-w-2xl max-h-[90vh] rounded-lg overflow-hidden"
+            className="relative max-w-2xl max-h-[90vh] rounded overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex gap-1 absolute top-1 right-1 z-10">
             <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute top-2 right-2 z-10 p-2 bg-black/60 hover:bg-black/80 text-white rounded transition"
+              onClick={async () => {
+                try {
+                  const res = await fetch(previewImage.src);
+                  const blob = await res.blob();
+
+                  // Save to localStorage
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    const base64 = reader.result as string;
+                    localStorage.setItem(
+                      `reflow:downloaded:${previewImage.title}`,
+                      base64,
+                    );
+                  };
+                  reader.readAsDataURL(blob);
+
+                  // Trigger browser download
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = previewImage.title;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                } catch {
+                  // Silently fail
+                }
+              }}
+              className="cursor-pointer  z-10 p-1 bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
               aria-label="Close preview"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <Download className="w-4 h-4" />
+            </button>  <button
+              onClick={() => setPreviewImage(null)}
+              className=" z-10 p-1 cursor-pointer mix-blend-difference bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
+              aria-label="Close preview"
+            >
+              <X className="w-4 h-4" />
             </button>
-
+          
+</div>
             <Image
               src={previewImage.src}
               alt={previewImage.title}
@@ -1711,48 +1737,12 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white text-sm mono font-medium">
+                  <p className="text-white text-sm mono tracking-tight truncate max-w-full">
                     {previewImage.title}
                   </p>
-                  <p className="text-white/60 text-xs mono">
+                  <p className="text-white/60 tracking-tight max-w-full uppercase text-xs mono">
                     {previewImage.canvasName}
                   </p>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(previewImage.src);
-                        const blob = await res.blob();
-
-                        // Save to localStorage
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          const base64 = reader.result as string;
-                          localStorage.setItem(
-                            `reflow:downloaded:${previewImage.title}`,
-                            base64,
-                          );
-                        };
-                        reader.readAsDataURL(blob);
-
-                        // Trigger browser download
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = previewImage.title;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      } catch {
-                        // Silently fail
-                      }
-                    }}
-                    className="shrink-0 rounded bg-white px-3 py-1.5 text-[11px] mono font-medium text-black transition hover:bg-white/80"
-                  >
-                    Download
-                  </button>
                 </div>
               </div>
             </div>
@@ -1843,12 +1833,10 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
         >
           <div className="relative w-full items-center max-w-md mx-4 flex flex-col gap-2 ">
             {" "}
-
             <div
               className="relative w-full max-w-md mx-4 rounded-lg overflow-hidden bg-white "
               onClick={(e) => e.stopPropagation()}
             >
-
               <div className="p-6 flex flex-col  gap-4">
                 {/* Globe icon */}
                 <div className="w-14 h-14 rounded bg-black/10 flex items-center justify-center">
@@ -1878,7 +1866,8 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                   Open in New Tab
                 </a>
               </div>
-            </div>            {/* Close */}
+            </div>{" "}
+            {/* Close */}
             <button
               onClick={() => setPreviewWeb(null)}
               className="z-10 p-1.5 bg-white cursor-pointer hover:bg-white/80 text-black rounded transition"

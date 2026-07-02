@@ -13,13 +13,20 @@ jobs:
   purge-trash:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
-      - name: Validate app URL
+      - name: Validate secrets
         env:
           APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           if [ -z "$APP_URL" ]; then
             echo "APP_URL secret is not configured." >&2
+            exit 1
+          fi
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET secret is not configured." >&2
             exit 1
           fi
 
@@ -27,23 +34,32 @@ jobs:
         id: purge
         env:
           APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           echo "Calling ${APP_URL}/api/admin/purge-trash"
+
           RESPONSE=$(curl --fail --silent --show-error \
             -X POST "${APP_URL}/api/admin/purge-trash" \
             -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
             -d '{}' \
-            --max-time 60 \
-            -w "\nHTTP Status: %{http_code}\n")
+            --retry 3 \
+            --retry-delay 5 \
+            --max-time 60)
+
           echo "$RESPONSE"
-          echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$RESPONSE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+
+          DELIMITER=$(uuidgen)
+
+          {
+            echo "result<<$DELIMITER"
+            echo "$RESPONSE"
+            echo "$DELIMITER"
+          } >> $GITHUB_OUTPUT
 
       - name: Report failure
         if: failure()
         run: |
           echo "::error::Purge trash cron job FAILED"
-          echo "::error::Check the workflow run logs for details:"
-          echo "::error::$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          echo "::error::Check logs: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           exit 1
