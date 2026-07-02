@@ -1013,7 +1013,7 @@ function AccountInfoTab({
       </div>
 
       {/* fields */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {/* nickname */}
         <div className="flex flex-col gap-2 text-white">
           <span className="text-xs mono uppercase tracking-tight text-white">
@@ -1059,6 +1059,17 @@ function AccountInfoTab({
             Admin
           </div>
         </div>
+        {/* region */}
+        <div className="flex flex-col gap-2 text-white">
+          <span className="text-xs mono tracking-tight uppercase text-white">
+            Region
+          </span>
+
+          <div className="flex h-9 max-w-120 items-center rounded bg-white/10 px-3 text-xs text-white/70 mono">
+            {Intl.DateTimeFormat().resolvedOptions().timeZone}
+          </div>
+        </div>
+     
         <button
           onClick={handleSave}
           disabled={pending}
