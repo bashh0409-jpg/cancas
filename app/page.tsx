@@ -9,12 +9,14 @@ import Animated from "./components/animated";
 const page = () => {
   return (
     <div className="text-white">
-      <div>
-        <div className="relative h-screen mb-60 overflow-hidden">
-          <Navbar />
-          <Hero />
+      <div><Navbar />
+        <div className="relative h-screen bg-white  overflow-hidden">
+          
         </div>
-        <section className="mx-auto flex w-full max-w-[1300px] flex-col items-center gap-5 px-4 lg:flex-row lg:justify-center lg:gap-12 lg:px-0  ">
+        <div >
+          <Animated />
+        </div>
+        <section className="mx-auto hidden flex w-full max-w-[1300px] flex-col items-center gap-5 px-4 lg:flex-row lg:justify-center lg:gap-12 lg:px-0  ">
           <div className="flex w-full flex-1 justify-end">
             <h1 className="flex-1 text-center text-[36px]  leading-15 tracking-tight max-lg:mx-auto lg:max-w-[372px] lg:text-right lg:text-[66px] lg:tracking-[-2.64px]">
               Know what you&apos;re looking at.
@@ -25,12 +27,13 @@ const page = () => {
             <div className="bg-white h-full w-full rounded" />
           </div>
 
-          <div className="w-full flex-1">
+          <div className="w-full hidden flex-1">
             <p className="max-w-[330px] hidden flex-1 text-center text-[26px]  tracking-tight max-lg:mx-auto lg:max-w-[300px] lg:text-left"></p>
           </div>
         </section>
-        <div className="mt-10">
-        <Animated /></div>
+        <div className="mt-10 hidden">
+          <Animated />
+        </div>
         <Pricing />
         <Faq />
         <div className=" text-white  h-screen w-full flex items-center justify-center">

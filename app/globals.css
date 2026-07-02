@@ -125,22 +125,46 @@ body {
 .max-h-64 {
   scroll-behavior: smooth;
 }
-
-
 .head1 {
   font-size: 15rem;
-  font-weight: 500;
-  line-height: 1;
   font-weight: 400;
-
+  line-height: 1;
 }
 
 .title {
-  height: 85svh;
+  --tip: 2%;
+  position: relative;
+  height: 100svh;
   display: flex;
   align-items: center;
+  overflow: hidden;
+  will-change: transform;
 }
 
+/* Tall on the right, comes to a point on the left */
+.title--from-right {
+  clip-path: polygon(
+    0% calc(40% - var(--tip)),
+    100% 0%,
+    100% 100%,
+    0% calc(50% + var(--tip))
+  );
+}
+
+/* Tall on the left, comes to a point on the right */
+.title--from-left {
+  clip-path: polygon(
+    0% 0%,
+    100% calc(50% - var(--tip)),
+    100% calc(50% + var(--tip)),
+    0% 100%
+  );
+}
+
+/* Middle title: true triangle, apex up */
+.title--center {
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
 
 .title-container {
   position: relative;
@@ -163,6 +187,7 @@ body {
   }
 
   .title {
-    height: 70svh;
+    height: 85svh;
+    --tip: 4%;
   }
 }

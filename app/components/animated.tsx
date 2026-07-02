@@ -18,7 +18,6 @@ export default function Animated() {
 
     const lenis = new Lenis();
 
-    // Track scroll velocity for the smear effect
     let velocity = 0;
     lenis.on("scroll", (e: any) => {
       ScrollTrigger.update();
@@ -58,18 +57,23 @@ export default function Animated() {
         });
       });
 
-      if (prefersReducedMotion) {
-        // Show final state immediately, skip scroll-driven motion
-        splits.forEach((split) => {
-          gsap.set(split.chars, { y: 0, opacity: 1, scale: 1 });
-        });
-        return;
-      }
-
       const titles = gsap.utils.toArray<HTMLElement>(".title");
       const titleContainers = titles.map(
         (title) => title.querySelector(".title-container") as HTMLElement,
       );
+      const titleShapes = titles.map(
+        (title) => title.querySelector(".title-shape") as HTMLElement,
+      );
+
+      if (prefersReducedMotion) {
+        splits.forEach((split) => {
+          gsap.set(split.chars, { y: 0, opacity: 1, scale: 1 });
+        });
+        titleShapes.forEach((shape) => {
+          if (shape) gsap.set(shape, { scale: 1, opacity: 1 });
+        });
+        return;
+      }
 
       // Continuous velocity-driven smear, independent of scrub throttling
       const smear = () => {
@@ -89,6 +93,7 @@ export default function Animated() {
 
       titles.forEach((title, index) => {
         const titleContainer = titleContainers[index];
+        const titleShape = titleShapes[index];
         const titleContainerInitialX = index === 1 ? -100 : 100;
         const split = splits[index];
 
@@ -97,16 +102,41 @@ export default function Animated() {
         );
         const charCount = Math.max(visibleChars.length, 1);
 
+        // Zoom-in starting point for the triangle shape.
+        // >1 = starts zoomed in past full size and settles down to 1
+        // <1 = starts small and grows up to 1
+        const shapeStartScale = 1.6;
+
+        if (titleShape) {
+          gsap.set(titleShape, {
+            scale: shapeStartScale,
+            opacity: 0.35,
+            transformOrigin: "50% 50%",
+          });
+        }
+
         ScrollTrigger.create({
           trigger: title,
           start: "top bottom",
-          end: "top -25",
+          end: "top -15",
           scrub: 1,
 
           onUpdate: (self) => {
             gsap.set(titleContainer, {
               xPercent: titleContainerInitialX * (1 - self.progress),
             });
+
+            if (titleShape) {
+              const shapeProgress = ease(gsap.utils.clamp(0, 1, self.progress));
+              gsap.set(titleShape, {
+                scale: gsap.utils.interpolate(
+                  shapeStartScale,
+                  1,
+                  shapeProgress,
+                ),
+                opacity: gsap.utils.interpolate(0.35, 1, shapeProgress),
+              });
+            }
 
             const charStartDelay = 0.1;
             const staggerAmount = 0.45;
@@ -164,23 +194,27 @@ export default function Animated() {
 
   return (
     <div ref={containerRef}>
-
       <section className="animated-titles reletive w-full overflow-hidden text-black bg-white">
-        <div className="title lime">
+        <div className="title lime title--from-right">
+          <div className="title-shape" />
           <div className="title-container">
-            <h1 className="head1 tracking-tight uppercase  grotesk">Start</h1>
+            <h1 className="head1 tracking-tight uppercase grotesk">Start</h1>
           </div>
         </div>
 
-        <div className="title">
+        <div className="title title--from-left lg:-mt-60">
+          <div className="title-shape" />
           <div className="title-container">
-            <h1 className="head1 tracking-tight  uppercase  grotest">Your</h1>
+            <h1 className="head1 tracking-tight uppercase grotest">
+              reflow
+            </h1>
           </div>
         </div>
 
-        <div className="title lime">
+        <div className="title lime title--from-right lg:-mt-60">
+          <div className="title-shape" />
           <div className="title-container">
-            <h1 className="head1 tracking-tight  uppercase grotesk">Way</h1>
+            <h1 className="head1 tracking-tight uppercase grotesk">now</h1>
           </div>
         </div>
       </section>

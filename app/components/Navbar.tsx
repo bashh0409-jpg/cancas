@@ -143,7 +143,7 @@ const Navbar = () => {
             <Link
               key={item.label}
               href={item.href}
-              className="flex mono items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
+              className="flex grotesk items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
             >
               {item.label}
             </Link>
