@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import gsap from "gsap";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import {
@@ -59,6 +59,21 @@ interface HomeShellProps {
   userSettings: UserSettings;
 }
 
+function useUserRegion() {
+  return useMemo(() => {
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      // Format timezone like "America/New_York" → "New York" or "Africa/Johannesburg" → "Johannesburg"
+      const parts = timeZone.split("/");
+      if (parts.length < 2) return timeZone;
+      // Return the city/region part, replacing underscores with spaces
+      return parts.slice(1).join(" - ").replace(/_/g, " ");
+    } catch {
+      return "Unknown";
+    }
+  }, []);
+}
+
 export function AccountCard({
   firstName,
   lastName,
@@ -76,6 +91,7 @@ export function AccountCard({
   onSettings: () => void;
   onClose: () => void;
 }) {
+  const region = useUserRegion();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const plan = credits > 1000 ? "Pro" : "Free";
@@ -180,6 +196,15 @@ export function AccountCard({
         <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
           <span className="cursor-pointer underline">Upgrade for more</span>
         </button>
+      </div>
+
+      {/* Region row */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
+          <span>Region</span>
+          <span>{region}</span>
+        </div>
+        <Globe className="h-3.5 w-3.5 text-white/40" />
       </div>
 
       {/* Plan row */}
