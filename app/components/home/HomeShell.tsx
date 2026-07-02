@@ -196,6 +196,16 @@ export function AccountCard({
         <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
           <span className="cursor-pointer underline">Upgrade for more</span>
         </button>
+      </div>  {/* Plan row */}
+      <div className="flex items-center justify-between px-3 py-2.5">
+        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
+          <span>Plan</span>
+          <span>{plan}</span>
+        </div>
+
+        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
+          <span className="cursor-pointer underline">Upgrade</span>
+        </button>
       </div>
 
       {/* Region row */}
@@ -207,17 +217,7 @@ export function AccountCard({
         <Globe className="h-3.5 w-3.5 text-white/40" />
       </div>
 
-      {/* Plan row */}
-      <div className="flex items-center justify-between px-3 py-2.5">
-        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
-          <span>Plan</span>
-          <span>{plan}</span>
-        </div>
-
-        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
-          <span className="cursor-pointer underline">Upgrade</span>
-        </button>
-      </div>
+    
       {/* Account Switcher */}
       <div className="border-t border-white/20 px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
