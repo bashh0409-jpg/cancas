@@ -43,6 +43,22 @@ const rinter = localFont({
   variable: "--font-rinter",
 });
 
+const layGrotesk = localFont({
+  src: [
+    {
+      path: "../public/fonts/LayGrotesk-Medium.woff",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/LayGrotesk-Black.woff",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-lay-grotesk",
+});
+
 export const metadata: Metadata = {
   title: "REFLOW",
   description:
@@ -57,7 +73,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${GeistPixelSquare.variable} h-full antialiased`}
+      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${layGrotesk.variable} ${GeistPixelSquare.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SpeedInsights />

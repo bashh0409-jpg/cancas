@@ -13,6 +13,7 @@
   --font-mono: var(--font-geist-mono);
   --font-geom: var(--font-cmgeom);
   --font-pixel: var(--font-geist-pixel-square);
+  --font-lay-grotesk: var(--font-lay-grotesk);
 }
 
 .geom {
@@ -33,6 +34,10 @@
 
 .rinter {
   font-family: var(--font-rinter);
+}
+
+.lay-grotesk {
+  font-family: var(--font-lay-grotesk);
 }
 
 .scrollbar-hide {
