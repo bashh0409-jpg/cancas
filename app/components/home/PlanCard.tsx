@@ -76,14 +76,14 @@ export function PlanCard({
       {isCurrent ? (
         <button
           disabled
-          className="w-full flex text-xs uppercase items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
+          className="w-full flex text-xs  items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
         >
           Current Plan
         </button>
       ) : (
         <button
           onClick={onSelect}
-          className="w-full cursor-pointer uppercase text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
+          className="w-full cursor-pointer text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
         >
           {ctaLabel ?? `Upgrade to ${name}`}
         </button>
