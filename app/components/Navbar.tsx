@@ -11,15 +11,15 @@ import gsap from "gsap";
 const NAV_LINKS = [
   {
     label: "ENTERPRISE",
-    href: "/signin",
+    href: "#",
   },
   {
     label: "PRICING",
-    href: "/signin",
+    href: "#",
   },
   {
     label: "HELP",
-    href: "/signin",
+    href: "#",
   },
   {
     label: "LEGAL",
@@ -27,7 +27,7 @@ const NAV_LINKS = [
   },
   {
     label: "FAQs",
-    href: "/signin",
+    href: "#",
   },
 ];
 
