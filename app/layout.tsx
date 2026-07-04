@@ -83,7 +83,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-          <LenisProvider>{children}</LenisProvider>
+        {children}
         </PHProvider>
         <CookieConsent />
       </body>

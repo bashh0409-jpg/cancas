@@ -1,5 +1,5 @@
 -- =============================================================================
--- SWIPED.AI — RESET DATABASE FROM SCRATCH
+-- REFLOW — RESET DATABASE FROM SCRATCH
 -- =============================================================================
 -- WARNING: Permanently deletes ALL canvas projects (database rows).
 --
