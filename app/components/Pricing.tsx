@@ -131,7 +131,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       description:
         "Explore AI-powered creation with chat, canvas, and generation tools.",
       credits: {
-        amount: "100 monthly credits",
+        amount: "100 monthly",
         equivalence: "=100 AI actions",
       },
       features: [
@@ -150,7 +150,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       description:
         "For creators and students building projects with AI every day.",
       credits: {
-        amount: "1,000 monthly credits",
+        amount: "1,000 monthly",
         equivalence: "=1,000 AI actions",
       },
       features: [
@@ -171,7 +171,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       description:
         "Built for advanced creators shipping products, designs, and AI workflows.",
       credits: {
-        amount: "5,000 monthly credits",
+        amount: "5,000 monthly",
         equivalence: "=5,000 AI actions",
       },
       features: [
@@ -193,7 +193,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       description:
         "High-compute plan for heavy AI usage and large creative pipelines.",
       credits: {
-        amount: "20,000 monthly credits",
+        amount: "20,000 monthly",
         equivalence: "=12,000 AI actions",
       },
       features: [

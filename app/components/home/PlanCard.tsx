@@ -46,7 +46,7 @@ export function PlanCard({
     >
       <div className="mb-6">
         <div className="w-full flex justify-between items-start">
-          <h1 className="text-2xl capitalize">{name}</h1>
+          <h1 className="text-xl uppercase">{name}</h1>
 
           {popular && (
             <div className="bg-[#F7FFA8]/30 text-[#F7FFA8] rounded p-0.1 px-1 flex items-center gap-1">
@@ -55,13 +55,13 @@ export function PlanCard({
           )}
         </div>
 
-        <p className="text-sm text-white/70 mt-4 leading-snug">{description}</p>
+        <p className="text-sm tracking-tight  text-white/70 mt-4 leading-snug">{description}</p>
       </div>
 
       <div className="flex flex-col items-start mb-4">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-5xl grotesk tracking-tight">{price}</h2>
-          <p className="text-xs grotesk uppercase text-white/70">
+          <h2 className="text-4xl grotesk tracking-tight">{price}</h2>
+          <p className="text-xs mono uppercase tracking-tight capitalize text-white/70">
             {/* Show currency code alongside /month when it's not obvious from symbol */}
             {currency !== "USD" ? `${currency} ` : ""}/month
           </p>
@@ -76,14 +76,14 @@ export function PlanCard({
       {isCurrent ? (
         <button
           disabled
-          className="w-full flex text-xs items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
+          className="w-full flex text-xs uppercase items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
         >
           Current Plan
         </button>
       ) : (
         <button
           onClick={onSelect}
-          className="w-full cursor-pointer text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
+          className="w-full cursor-pointer uppercase text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
         >
           {ctaLabel ?? `Upgrade to ${name}`}
         </button>
@@ -93,15 +93,15 @@ export function PlanCard({
         <div className="flex items-start gap-2">
           <CreditIcon />
           <div className="text-sm">
-            <p className="text-white">{credits.amount}</p>
-            <p className="text-white/60 text-xs">{credits.equivalence}</p>
+            <p className="text-white tracking-tight mono uppercase text-xs">{credits.amount}</p>
+            <p className="text-white/60 hidden text-xs">{credits.equivalence}</p>
           </div>
         </div>
       </div>
 
       <hr className="border-white/10 my-5" />
 
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 tracking-tight mono uppercase space-y-3">
         {features.map((text) => (
           <Feature key={text} text={text} />
         ))}
@@ -112,7 +112,7 @@ export function PlanCard({
 
 function Feature({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-white/80">
+    <div className="flex items-center gap-2 text-[10px]  text-white/80">
       <CheckIcon />
       <span>{text}</span>
     </div>

@@ -60,7 +60,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 25,
     description: "More power and resources for growing studios and creators.",
     credits: {
-      amount: "1,000 monthly credits",
+      amount: "1,000 monthly",
       equivalence: "≈ 2,500 images per canvas",
     },
     features: [
@@ -76,7 +76,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 40,
     description: "Maximum output for high-volume production and large teams.",
     credits: {
-      amount: "2,000 monthly credits",
+      amount: "2,000 monthly",
       equivalence: "≈ 5,000 images per canvas",
     },
     features: [
