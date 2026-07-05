@@ -69,7 +69,22 @@ export async function GET(req: NextRequest) {
       expiresAt: tokens.expiry_date ?? undefined,
     });
 
-    return NextResponse.redirect(new URL("/home?google=connected", req.url));
+    // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }
+    const stateParam = req.nextUrl.searchParams.get("state");
+    let redirectPath = "/home?google=connected";
+
+    if (stateParam) {
+      try {
+        const parsed = JSON.parse(stateParam);
+        if (parsed.canvasId) {
+          redirectPath = `/canvas/${parsed.canvasId}?google=connected`;
+        }
+      } catch {
+        // state was a plain userId string, use default redirect
+      }
+    }
+
+    return NextResponse.redirect(new URL(redirectPath, req.url));
   } catch (err) {
     console.error("Google callback error:", err);
 

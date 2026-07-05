@@ -54,6 +54,29 @@ type IntegrationTokenRecord = {
   expires_at: string | null;
 };
 
+export async function deleteIntegrationToken(provider: IntegrationProvider) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Unable to determine authenticated user.");
+  }
+
+  const { error } = await supabase
+    .from("integration_tokens")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("provider", provider);
+
+  if (error) {
+    console.error("Failed to delete integration token:", error);
+    throw error;
+  }
+}
+
 export async function getIntegrationToken(provider: IntegrationProvider) {
   const supabase = await createClient();
   const {

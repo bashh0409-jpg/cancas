@@ -1,11 +1,11 @@
 // src/app/api/integrations/dropbox/connect/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const clientId = process.env.DROPBOX_CLIENT_ID;
     const redirectUri = process.env.DROPBOX_REDIRECT_URI;
@@ -30,11 +30,17 @@ export async function GET() {
       );
     }
 
+    // Encode canvas redirect in state if provided
+    const canvasId = req.nextUrl.searchParams.get("canvasId");
+    const statePayload = canvasId
+      ? JSON.stringify({ userId: user.id, canvasId })
+      : user.id;
+
     const params = new URLSearchParams({
       response_type: "code",
       client_id: clientId,
       redirect_uri: redirectUri,
-      state: user.id,
+      state: statePayload,
       token_access_type: "offline",
     });
 

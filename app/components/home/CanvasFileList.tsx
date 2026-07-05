@@ -286,7 +286,7 @@ export function CanvasFileList({
             <h3 className="truncate text-xs mono tracking-tight uppercase text-white">
               {canvas.name}
             </h3>
-            <p className="mt-1 mono uppercase tracking-tight text-[10px] text-white/50">
+            <p className="mt-1 mono uppercase tracking-tight  text-[10px] text-white/50">
               Edited {formatRelativeDate(canvas.updated_at)}
             </p>
             {isTrash &&

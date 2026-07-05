@@ -15,12 +15,14 @@ import {
   ZoomIn,
   ZoomOut,
   Cable,
+  PlugZap,
   Loader2,
   ExternalLink,
   Folder,
   FileText,
   ImageIcon,
   ArrowLeft,
+  Unplug,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -556,6 +558,7 @@ type Provider = {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   connected?: boolean;
+  expired?: boolean;
   loading?: boolean;
 };
 
@@ -916,18 +919,49 @@ const initialProviders: Provider[] = [
 export const ConnectPanel = ({
   onClose,
   onImportCloudFile,
+  activeCanvasId,
 }: {
   onClose: () => void;
   onImportCloudFile: (file: File) => Promise<void>;
+  activeCanvasId?: string;
 }) => {
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
-  const [activeProviderId, setActiveProviderId] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [browsingProvider, setBrowsingProvider] = useState<string | null>(null);
 
   const handleConnect = async (providerId: string) => {
     try {
-      window.location.href = `/api/integrations/${providerId}/connect`;
+      const canvasParam = activeCanvasId ? `?canvasId=${activeCanvasId}` : "";
+      window.location.href = `/api/integrations/${providerId}/connect${canvasParam}`;
     } catch (error) {
       console.error("Failed to connect provider:", error);
+    }
+  };
+
+  const handleDisconnect = async (providerId: string) => {
+    setDisconnecting(providerId);
+    try {
+      const key = providerId.replace(/-/g, "_");
+      const res = await fetch(`/api/integrations/disconnect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: key }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || "Failed to disconnect");
+      }
+
+      setProviders((prev) =>
+        prev.map((p) =>
+          p.id === providerId ? { ...p, connected: false, expired: false } : p,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to disconnect provider:", err);
+    } finally {
+      setDisconnecting(null);
     }
   };
 
@@ -940,13 +974,14 @@ export const ConnectPanel = ({
         if (!res.ok) return;
         const json = await res.json();
         const connected = json.connected || {};
+        const expired = json.expired || {};
 
         if (!mounted) return;
 
         setProviders((prev) =>
           prev.map((p) => {
             const key = p.id.replace(/-/g, "_");
-            return { ...p, connected: Boolean(connected[key]) };
+            return { ...p, connected: Boolean(connected[key]), expired: Boolean(expired[key]) };
           }),
         );
       } catch (err) {
@@ -960,6 +995,40 @@ export const ConnectPanel = ({
       mounted = false;
     };
   }, []);
+
+  // If browsing a provider, show the CloudBrowser
+  if (browsingProvider) {
+    const provider = providers.find((p) => p.id === browsingProvider);
+    const providerName = provider?.name ?? browsingProvider;
+
+    return (
+      <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col overflow-y-auto">
+        <div className="flex items-center justify-between pb-2 mb-2">
+          <button
+            onClick={() => setBrowsingProvider(null)}
+            className="text-white/60 cursor-pointer hover:text-white transition flex items-center gap-1 text-xs mono uppercase tracking-tight"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </button>
+          <button
+            onClick={onClose}
+            className="text-white/60 cursor-pointer hover:text-white transition"
+          >
+            <X className="w-4 h-4" strokeWidth={1.25} />
+          </button>
+        </div>
+
+        <CloudBrowser
+          providerId={browsingProvider}
+          providerName={providerName}
+          connected={true}
+          onConnect={() => handleConnect(browsingProvider)}
+          onImportCloudFile={onImportCloudFile}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col">
@@ -994,13 +1063,19 @@ export const ConnectPanel = ({
                 {/* Content */}
                 <div className=" w-full min-w-0 ">
                   <div className="flex items-center w-full justify-between ">
-                    <div className="text-sm gap-3 w-full items-center justify-between flex text-white mono uppercase tracking-tight truncate">
-                      <p className="text-xs">{provider.name} </p>
+                    <div className="text-sm gap-3 w-full items-center justify-between  text-white mono uppercase tracking-tight truncate">
+                      <p className="text-xs mb-2">{provider.name} </p>
                       <p>
-                        {provider.connected && (
-                          <span className="uppercase w-full justify-between flex items-center gap-2 mono  text-lime-300 text-xs uppercase tracking-wide">
+                        {provider.connected && !provider.expired && (
+                          <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs tracking-wide">
                           connected
-                             <Cable className="w-3.5 h-3.5" />
+                             <PlugZap className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                        {provider.connected && provider.expired && (
+                          <span className="uppercase w-full justify-between flex items-center gap-2 mono text-amber-400 text-xs tracking-wide">
+                          expired
+                             <PlugZap className="w-3.5 h-3.5" />
                           </span>
                         )}
                       </p>
@@ -1008,34 +1083,56 @@ export const ConnectPanel = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex justify-between items-center gap-2 mt-3">
-                    <p></p><button
-                      onClick={() => handleConnect(provider.id)}
-                      disabled={provider.loading}
-                      className={`
-                        h-8 px-3 rounded mono tracking-tight text-xs font-medium transition cursor-pointer
-                        flex items-center gap-2
-                        ${
-                          provider.connected
-                            ? "bg-white/20 text-white hover:bg-white/15"
-                            : "lime text-black hover:opacity-90"
-                        }
-                      `}
-                    >
-                      {provider.loading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : provider.connected ? (
-                        <>
-                          Manage 
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </>
-                      ) : (
-                        <>
-                          <Cable className="w-3.5 h-3.5" />
-                          Connect
-                        </>
+                  <div className="flex flex-col gap-2 mt-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (provider.connected && !provider.expired) {
+                            setBrowsingProvider(provider.id);
+                          } else {
+                            void handleConnect(provider.id);
+                          }
+                        }}
+                        disabled={provider.loading}
+                        className={`
+                          h-7 px-2 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer
+                          flex items-center gap-2
+                          ${
+                            provider.connected && !provider.expired
+                              ? "bg-white/20 text-white hover:bg-white/15"
+                              : "lime text-black hover:opacity-90"
+                          }
+                        `}
+                      >
+                        {provider.loading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : provider.connected && !provider.expired ? (
+                          <>
+                            Browse Files
+                            <Folder className="w-3.5 h-3.5" />
+                          </>
+                        ) : (
+                          <>
+                            <Unplug className="w-3.5 h-3.5" />
+                            {provider.connected && provider.expired ? "Reconnect" : "Connect"}
+                          </>
+                        )}
+                      </button>
+
+                      {provider.connected && (
+                        <button
+                          onClick={() => void handleDisconnect(provider.id)}
+                          disabled={disconnecting === provider.id}
+                          className="h-7 px-2 rounded-xs border border-white/10 bg-white/5 mono uppercase tracking-tight text-xs text-white/60 transition cursor-pointer hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/30 disabled:opacity-50"
+                        >
+                          {disconnecting === provider.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Unplug className="w-3.5 h-3.5" />
+                          )}
+                        </button>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1684,7 +1781,7 @@ export const Sidebar = ({
       case "layers":
         return <LayersPanel onClose={handleClose} />;
       case "connect":
-        return <ConnectPanel onClose={handleClose} onImportCloudFile={onImportCloudFile} />;
+        return <ConnectPanel onClose={handleClose} onImportCloudFile={onImportCloudFile} activeCanvasId={activeCanvasId} />;
       case "help":
         return <HelpPanel onClose={handleClose} />;
       case "settings":

@@ -412,7 +412,7 @@ function SettingsTab({
 
           <div className="flex items-center justify-between rounded bg-white/10 p-4">
             <div className="flex flex-col">
-              <span className="text-sm mono tracking-tight text-white">
+              <span className="text-sm mono uppercase tracking-tight text-white">
                 Delete account
               </span>
 

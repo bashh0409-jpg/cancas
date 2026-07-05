@@ -79,7 +79,21 @@ export async function GET(req: NextRequest) {
         : undefined,
     });
 
-    return NextResponse.redirect(new URL("/home?dropbox=connected", req.url));
+    // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }
+    let redirectPath = "/home?dropbox=connected";
+
+    if (state) {
+      try {
+        const parsed = JSON.parse(state);
+        if (parsed.canvasId) {
+          redirectPath = `/canvas/${parsed.canvasId}?dropbox=connected`;
+        }
+      } catch {
+        // state was a plain userId string, use default redirect
+      }
+    }
+
+    return NextResponse.redirect(new URL(redirectPath, req.url));
   } catch (err) {
     console.error("Dropbox callback error:", err);
 

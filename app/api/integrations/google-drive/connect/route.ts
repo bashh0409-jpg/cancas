@@ -42,6 +42,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Encode canvas redirect in state if provided
+    const canvasId = req.nextUrl.searchParams.get("canvasId");
+    const statePayload = canvasId
+      ? JSON.stringify({ userId: user.id, canvasId })
+      : user.id;
+
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -51,7 +57,7 @@ export async function GET(req: NextRequest) {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       prompt: "consent",
-      state: user.id,
+      state: statePayload,
       scope: [
         "openid",
         "email",
