@@ -713,21 +713,14 @@ function FilesPage({
   );
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex flex-col scrollbar-hidden overflow-x-hidden gap-4" >
+      <div className="flex flex-wrap  items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="mono text-sm tracking-tight text-white">
             {lastName && lastName !== "User"
               ? `${firstName} ${lastName}`
               : firstName}
             &apos;s Workspace
-          </div>
-
-          <div className="pixel hidden flex items-center gap-2 rounded-md bg-white/20 px-3 py-2 text-sm text-white">
-            Unlock unlimited creation
-            <span className="rounded bg-blue-500 px-2 py-1 text-xs">
-              Upgrade to Pro
-            </span>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -742,7 +735,7 @@ function FilesPage({
       <div className="">
         <Tutorials />
       </div>
-      <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-3">
+      <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-2">
         <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
         <div className="flex items-center gap-2">
           <div>
@@ -775,7 +768,7 @@ function FilesPage({
         </div>
       )}
       <CanvasFileList canvases={filteredCanvases} createCanvasAction={createCanvasAction} />
-    </>
+    </div>
   );
 }
 
