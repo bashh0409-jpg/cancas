@@ -1,10 +1,10 @@
 import React from "react";
 import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
 import { Pricing } from "./components/Pricing";
 import Faq from "./components/Faq";
 import Footer from "./components/Footer";
 import Animated from "./components/animated";
+import { getAppUrl } from "@/lib/appUrl";
 
 const page = () => {
   return (
@@ -39,7 +39,7 @@ const page = () => {
         <div className=" text-white  h-screen w-full flex items-center justify-center">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <a
-              href="/home"
+              href={getAppUrl("/home")}
               className="text-xl tracking-tight bg-white text-black rounded p-2 cursor-pointer capitalize hover:bg-white/80"
             >
               Sign up now

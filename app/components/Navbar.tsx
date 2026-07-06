@@ -4,9 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useLayoutEffect, useRef, useState} from "react";
 import { ArrowUpRight, Equal, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
+import { getAppUrl } from "@/lib/appUrl";
 
 const NAV_LINKS = [
   {
@@ -32,7 +32,6 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [checkingSession, setCheckingSession] = useState(false);
 
@@ -47,13 +46,13 @@ const Navbar = () => {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        router.push("/home");
+        window.location.href = getAppUrl("/home");
       } else {
-        router.push("/signin");
+        window.location.href = getAppUrl("/signin");
       }
     } catch (error) {
       console.error("Error checking session:", error);
-      router.push("/signin");
+      window.location.href = getAppUrl("/signin");
     } finally {
       setCheckingSession(false);
     }
