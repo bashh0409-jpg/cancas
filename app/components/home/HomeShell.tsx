@@ -649,7 +649,7 @@ export function HomeShell({
         </div>
       </aside>
 
-      {/* ── Main content ────────────────────────────────────────── */}
+      {/* ── App Main content ────────────────────────────────────────── */}
       <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 flex flex-col gap-4">
         {activePage === "files" && (
           <FilesPage
