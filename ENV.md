@@ -144,9 +144,10 @@ http://localhost:3000/api/integrations/dropbox/callback
 5. Click **"Add"** again and enter `http://localhost:3000/api/integrations/dropbox/callback`
 6. Click **"Save"**
 
+
 ---
 
-## 6. PayFast
+## 7. PayFast
 
 **Console URL:** https://www.payfast.co.za/eng/account
 
@@ -166,9 +167,10 @@ http://localhost:3000/api/integrations/dropbox/callback
 5. Under **"Notify URL"**, enter `https://app.swipes.site/api/billing/webhooks/payfast`
 6. Click **"Save"**
 
+
 ---
 
-## 7. Stripe Webhooks
+## 8. Stripe Webhooks
 
 **Console URL:** https://dashboard.stripe.com/webhooks
 
@@ -196,6 +198,7 @@ https://app.swipes.site/api/billing/webhooks/stripe
 | `NEXT_PUBLIC_SITE_URL` | `https://app.swipes.site` | `http://localhost:3000` | Fallback for app URL |
 | `GOOGLE_REDIRECT_URI` | `https://app.swipes.site/api/integrations/google-drive/callback` | `http://localhost:3000/api/integrations/google-drive/callback` | Google Drive OAuth |
 | `DROPBOX_REDIRECT_URI` | `https://app.swipes.site/api/integrations/dropbox/callback` | `http://localhost:3000/api/integrations/dropbox/callback` | Dropbox OAuth |
+| `ONEDRIVE_REDIRECT_URI` | `https://app.swipes.site/api/integrations/onedrive/callback` | `http://localhost:3000/api/integrations/onedrive/callback` | OneDrive (Azure AD) OAuth |
 | `PAYFAST_RETURN_URL` | `https://app.swipes.site/billing/success` | `http://localhost:3000/billing/success` | PayFast dashboard |
 | `PAYFAST_CANCEL_URL` | `https://app.swipes.site/billing/cancel` | `http://localhost:3000/billing/cancel` | PayFast dashboard |
 | `PAYFAST_NOTIFY_URL` | `https://app.swipes.site/api/billing/webhooks/payfast` | `http://localhost:3000/api/billing/webhooks/payfast` | PayFast dashboard |
@@ -209,6 +212,7 @@ When deploying to `app.swipes.site`, update these places:
 - [ ] **Supabase Auth** (https://supabase.com/dashboard/project/okgjifzweuehbcxrohmh/auth/url-configuration): Site URL → `https://app.swipes.site`, add redirect URLs
 - [ ] **Google Cloud Console** (https://console.cloud.google.com/apis/credentials): add `https://app.swipes.site/api/auth/callback` and `https://app.swipes.site/api/integrations/google-drive/callback`
 - [ ] **Azure Portal** (https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade): add `https://app.swipes.site/api/auth/callback?next=/home`
+- [ ] **Azure Portal** (https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade): add `https://app.swipes.site/api/integrations/onedrive/callback` (can be same app or separate)
 - [ ] **Dropbox Developer Console** (https://www.dropbox.com/developers/apps): add `https://app.swipes.site/api/integrations/dropbox/callback`
 - [ ] **PayFast Dashboard** (https://www.payfast.co.za/eng/account): update Return/Cancel/Notify URLs
 - [ ] **Stripe Dashboard** (https://dashboard.stripe.com/webhooks): update webhook endpoint to `https://app.swipes.site/api/billing/webhooks/stripe`
