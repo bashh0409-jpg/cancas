@@ -5,12 +5,13 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    const clientId = process.env.ONEDRIVE_CLIENT_ID;
-    const redirectUri = process.env.ONEDRIVE_REDIRECT_URI;
+    // Try OneDrive-specific vars first, then fall back to shared Azure AD vars
+    const clientId = process.env.ONEDRIVE_CLIENT_ID ?? process.env.AZURE_CLIENT_ID;
+    const redirectUri = process.env.ONEDRIVE_REDIRECT_URI ?? process.env.AZURE_REDIRECT_URI;
 
     if (!clientId || !redirectUri) {
       return NextResponse.json(
-        { error: "Missing OneDrive OAuth environment variables" },
+        { error: "Missing OneDrive OAuth environment variables. Set ONEDRIVE_CLIENT_ID and ONEDRIVE_REDIRECT_URI, or AZURE_CLIENT_ID and AZURE_REDIRECT_URI." },
         { status: 500 },
       );
     }
