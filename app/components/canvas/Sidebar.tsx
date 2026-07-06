@@ -17,10 +17,7 @@ import {
   Cable,
   PlugZap,
   Loader2,
-  ExternalLink,
-  Folder,
-  FileText,
-  ImageIcon,
+  ChevronsLeftRightEllipsis,
   ArrowLeft,
   Unplug,
 } from "lucide-react";
@@ -741,14 +738,6 @@ export const ConnectPanel = ({
             <X className="w-4 h-4" strokeWidth={1.25} />
           </button>
         </div>
-
-        <CloudBrowser
-          providerId={browsingProvider}
-          providerName={providerName}
-          connected={true}
-          onConnect={() => handleConnect(browsingProvider)}
-          onImportCloudFile={onImportCloudFile}
-        />
       </div>
     );
   }
@@ -791,14 +780,14 @@ export const ConnectPanel = ({
                       <p>
                         {provider.connected && !provider.expired && (
                           <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs tracking-wide">
-                          connected
-                             <PlugZap className="w-3.5 h-3.5" />
+                            connected
+                            <ChevronsLeftRightEllipsis className="w-3.5 h-3.5" />
                           </span>
                         )}
                         {provider.connected && provider.expired && (
                           <span className="uppercase w-full justify-between flex items-center gap-2 mono text-amber-400 text-xs tracking-wide">
-                          expired
-                             <PlugZap className="w-3.5 h-3.5" />
+                            expired
+                            <PlugZap className="w-3.5 h-3.5" />
                           </span>
                         )}
                       </p>
@@ -817,7 +806,7 @@ export const ConnectPanel = ({
                           {disconnecting === provider.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            "Disconnect"
+                            <Unplug className="w-3.5 h-3.5" />
                           )}
                         </button>
                       ) : (
@@ -830,8 +819,10 @@ export const ConnectPanel = ({
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
                             <>
-                              <Unplug className="w-3.5 h-3.5" />
-                              {provider.connected && provider.expired ? "Reconnect" : "Connect"}
+                              
+                              {provider.connected && provider.expired
+                                ? "Reconnect"
+                                : "Connect"}
                             </>
                           )}
                         </button>
