@@ -20,6 +20,11 @@ import {
   ChevronsLeftRightEllipsis,
   ArrowLeft,
   Unplug,
+  Plus,
+  ImageIcon,
+  Globe,
+  Volume2,
+  FileText,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -165,7 +170,7 @@ const CanvasSwitcherOverlay = ({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="w-full truncate uppercase cursor-pointer text-left text-xs font-medium leading-tight text-white transition hover:text-white/80"
+                className="w-full truncate uppercase tracking-tight cursor-pointer text-left text-[11px] font-medium  text-white transition hover:text-white/80"
                 title="Click to rename"
               >
                 {isSaving ? "Saving…" : canvasName}
@@ -195,7 +200,7 @@ const CanvasSwitcherOverlay = ({
                       onSwitchCanvas(canvas.slug);
                     }
                   }}
-                  className={`flex items-center justify-between gap-2 rounded-xs px-1.5 py-1.5 text-[11px] mono transition ${
+                  className={`flex items-center justify-between gap-2 rounded-xs p-1 py-1.5 text-[11px] mono transition ${
                     isActive
                       ? "bg-white/15 text-white"
                       : "text-white/60 hover:bg-white/10 hover:text-white"
@@ -204,7 +209,7 @@ const CanvasSwitcherOverlay = ({
                   <span className="truncate ">{canvas.name}</span>
                   {isActive ? (
                     <span className="shrink-0 text-[9px] uppercase tracking-wide text-lime-300">
-                      Current
+                      <Plus className="w-3.5 h-3.5"/>
                     </span>
                   ) : null}
                 </a>
@@ -213,7 +218,7 @@ const CanvasSwitcherOverlay = ({
           </div>
         </div>
       ) : (
-        <div className="px-3 py-3 text-xs mono text-white/50">
+        <div className="px-3 py-3 text-xs tracking-tight mono text-white/50">
           No other canvases yet
         </div>
       )}
@@ -222,7 +227,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-xs mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          className="text-[11px] mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
         >
           Back to files
         </a>
@@ -908,7 +913,7 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                   : "hover:bg-white/10"
               }`}
             >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 {/* Visibility Toggle */}
                 <button
                   onClick={(e) => {
@@ -923,6 +928,14 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                     <EyeOff className="w-3 h-3" strokeWidth={1.25} />
                   )}
                 </button>
+
+                {/* Type Icon */}
+                <span className="flex-shrink-0 text-white/40" title={layer.type}>
+                  {layer.type === "image" && <ImageIcon className="w-3 h-3" strokeWidth={1.5} />}
+                  {layer.type === "web" && <Globe className="w-3 h-3" strokeWidth={1.5} />}
+                  {layer.type === "voice" && <Volume2 className="w-3 h-3" strokeWidth={1.5} />}
+                  {layer.type === "text" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
+                </span>
 
                 {/* Layer Name / Edit */}
                 {editingId === layer.id ? (
