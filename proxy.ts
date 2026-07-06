@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
 const MARKETING_HOSTS = new Set(["swipes.site", "www.swipes.site"]);
 const APP_HOST = "app.swipes.site";
@@ -73,7 +72,6 @@ const rateLimitBypassPrefixes = [
 ];
 
 export async function proxy(request: NextRequest) {
-  const cookieStore = await cookies();
   const requestUrl = new URL(request.url);
   const pathname = requestUrl.pathname;
   const hostname = request.nextUrl.hostname;
@@ -112,23 +110,31 @@ export async function proxy(request: NextRequest) {
     }));
   }
 
-  // Create a Supabase client with the cookies from the request
+  // Use a mutable response so we can set cookies on it
+  const response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  // Create a Supabase client using request cookies for reading
+  // and the response for setting cookies (so they reach the browser)
   const supabaseClient = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll: () => cookieStore.getAll(),
+        getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, {
               ...options,
               maxAge: options?.maxAge ?? 60 * 60 * 24 * 365,
               sameSite: options?.sameSite ?? "lax",
               secure: process.env.NODE_ENV === "production",
               path: options?.path ?? "/",
-            }),
-          );
+            });
+          });
         },
       },
     },
@@ -143,11 +149,7 @@ export async function proxy(request: NextRequest) {
     return withSecurityHeaders(NextResponse.redirect(new URL("/signin", request.url)));
   }
 
-  return withSecurityHeaders(NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  }));
+  return withSecurityHeaders(response);
 }
 
 export const config = {
