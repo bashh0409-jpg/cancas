@@ -100,7 +100,31 @@ http://localhost:3000/api/auth/callback?next=/home
 
 ---
 
-## 5. Dropbox Integration
+## 5. OneDrive Integration
+
+**Console URL:** https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade
+
+**Navigation:** Azure Portal → App Registrations → Your App → Authentication
+
+**Redirect URI:**
+```
+https://app.swipes.site/api/integrations/onedrive/callback
+http://localhost:3000/api/integrations/onedrive/callback
+```
+
+**Where to click:**
+1. Go to https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade
+2. Click on your app registration (or create a new one)
+3. In the left menu, click **"Authentication"**
+4. Under **"Redirect URIs"**, click **"Add URI"**
+5. Add each URL above
+6. Under **"Certificates & secrets"**, create a new client secret and copy the value
+7. Under **"API permissions"**, add `Files.Read` (delegated) permission
+8. Click **"Save"**
+
+---
+
+## 6. Dropbox Integration
 
 **Console URL:** https://www.dropbox.com/developers/apps
 
