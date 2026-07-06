@@ -604,300 +604,8 @@ function formatFileSize(size?: number) {
   return `${current.toFixed(1)} ${units[index]}`;
 }
 
-function getItemIcon(fileType: CloudFileType, isFolder: boolean) {
-  if (isFolder) {
-    return <Folder className="h-4 w-4" />;
-  }
 
-  if (fileType === "image") {
-    return <ImageIcon className="h-4 w-4" />;
-  }
 
-  return <FileText className="h-4 w-4" />;
-}
-
-function isImageFile(file: CloudFileItem) {
-  return file.fileType === "image";
-}
-
-function getProviderRootFolder(providerId: string): CloudFolder {
-  return providerId === "dropbox"
-    ? { id: "", name: "Dropbox" }
-    : { id: "root", name: "My Drive" };
-}
-
-function CloudBrowser({
-  providerId,
-  providerName,
-  connected,
-  onConnect,
-  onImportCloudFile,
-}: CloudBrowserProps) {
-  const [folderStack, setFolderStack] = useState<CloudFolder[]>([]);
-  const [currentFolder, setCurrentFolder] = useState<CloudFolder>(
-    getProviderRootFolder(providerId),
-  );
-  const [items, setItems] = useState<CloudFileItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [importingId, setImportingId] = useState<string | null>(null);
-
-  const rootFolder = getProviderRootFolder(providerId);
-
-  useEffect(() => {
-    setFolderStack([]);
-    setCurrentFolder(rootFolder);
-    setItems([]);
-    setError(null);
-
-    if (connected) {
-      void loadFolder(rootFolder);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providerId, connected]);
-
-  async function loadFolder(folder: CloudFolder) {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const queryParam =
-        providerId === "dropbox"
-          ? `path=${encodeURIComponent(folder.id)}`
-          : `folderId=${encodeURIComponent(folder.id)}`;
-      const res = await fetch(
-        `/api/integrations/${providerId}/list?${queryParam}`,
-      );
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(
-          payload?.error || "Unable to load cloud storage contents.",
-        );
-      }
-
-      const data = await res.json();
-
-      setCurrentFolder({
-        id: data.folder.id,
-        name: data.folder.name,
-      });
-      setItems(data.items ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load cloud storage contents.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleSelectFolder(item: CloudFileItem) {
-    if (!item.isFolder) {
-      return;
-    }
-
-    setFolderStack((current) => [...current, currentFolder]);
-    void loadFolder({ id: item.id, name: item.name });
-  }
-
-  function handleGoBack() {
-    const previous = folderStack[folderStack.length - 1];
-
-    if (!previous) {
-      return;
-    }
-
-    setFolderStack((current) => current.slice(0, -1));
-    void loadFolder(previous);
-  }
-
-  async function handleImport(item: CloudFileItem) {
-    if (!onImportCloudFile || !isImageFile(item)) {
-      return;
-    }
-
-    setImportingId(item.id);
-
-    try {
-      const queryParam =
-        providerId === "dropbox"
-          ? `path=${encodeURIComponent(item.path ?? item.id)}`
-          : `fileId=${encodeURIComponent(item.id)}`;
-      const response = await fetch(
-        `/api/integrations/${providerId}/download?${queryParam}`,
-      );
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error || "Unable to download cloud file.");
-      }
-
-      const blob = await response.blob();
-      const fileName =
-        response.headers.get("x-file-name") ?? item.name ?? "cloud-file";
-      const file = new File([blob], fileName, {
-        type: blob.type || item.mimeType || "application/octet-stream",
-      });
-
-      await onImportCloudFile(file);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Unable to import cloud file.",
-      );
-    } finally {
-      setImportingId(null);
-    }
-  }
-
-  if (!connected) {
-    return (
-      <div className="rounded border border-white/10 bg-[#17171b] p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs mono uppercase tracking-wide text-white/50">
-              {providerName}
-            </p>
-            <h3 className="mt-1 text-sm font-semibold text-white">
-              Connect to browse files
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onConnect}
-            className="rounded bg-lime-400 px-3 py-2 text-xs font-semibold text-black transition hover:bg-lime-300"
-          >
-            Connect
-          </button>
-        </div>
-
-        <p className="mt-4 text-[11px] leading-5 text-white/50">
-          Link your cloud storage account to browse files and import images
-          directly into the canvas.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded border border-white/10 bg-[#17171b] p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs mono uppercase tracking-wide text-white/50">
-            {providerName}
-          </p>
-          <h3 className="mt-1 text-sm font-semibold text-white">
-            {currentFolder.name}
-          </h3>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {folderStack.length > 0 ? (
-            <button
-              type="button"
-              onClick={handleGoBack}
-              className="flex items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => void loadFolder(currentFolder)}
-            className="rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
-          >
-            Reload
-          </button>
-        </div>
-      </div>
-
-      <p className="mt-3 text-[11px] text-white/50">
-        Only image files can be imported to the canvas from cloud storage.
-      </p>
-
-      {error ? (
-        <div className="mt-4 rounded border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-200">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="mt-4">
-        {loading ? (
-          <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
-            Loading files…
-          </div>
-        ) : items.length === 0 ? (
-          <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-white/70">
-            No files found in this folder.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-[1fr_auto] gap-3 rounded border border-white/10 bg-white/5 p-3"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSelectFolder(item)}
-                  disabled={!item.isFolder}
-                  className="flex items-start gap-3 text-left"
-                >
-                  <div className="grid h-9 w-9 place-items-center rounded bg-black/20 text-white/70">
-                    {getItemIcon(item.fileType, item.isFolder)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">
-                      {item.name}
-                    </p>
-                    <p className="text-[11px] text-white/50">
-                      {item.isFolder
-                        ? "Folder"
-                        : `${item.mimeType} ${formatFileSize(item.size)}`}
-                    </p>
-                  </div>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {item.isFolder ? (
-                    <button
-                      type="button"
-                      onClick={() => handleSelectFolder(item)}
-                      className="rounded border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/70 transition hover:bg-white/10"
-                    >
-                      Open
-                    </button>
-                  ) : isImageFile(item) ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleImport(item)}
-                      disabled={Boolean(importingId)}
-                      className="rounded bg-lime-400 px-3 py-2 text-[11px] font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {importingId === item.id ? "Importing…" : "Import"}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="rounded border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/40"
-                    >
-                      Unsupported
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function OneDriveIcon({ className }: { className?: string }) {
   return (
@@ -1100,50 +808,31 @@ export const ConnectPanel = ({
                   {/* Actions */}
                   <div className="flex flex-col gap-2 mt-3">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          if (provider.connected && !provider.expired) {
-                            setBrowsingProvider(provider.id);
-                          } else {
-                            void handleConnect(provider.id);
-                          }
-                        }}
-                        disabled={provider.loading}
-                        className={`
-                          h-7 px-2 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer
-                          flex items-center gap-2
-                          ${
-                            provider.connected && !provider.expired
-                              ? "bg-white/20 text-white hover:bg-white/15"
-                              : "lime text-black hover:opacity-90"
-                          }
-                        `}
-                      >
-                        {provider.loading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : provider.connected && !provider.expired ? (
-                          <>
-                            Browse Files
-                            <Folder className="w-3.5 h-3.5" />
-                          </>
-                        ) : (
-                          <>
-                            <Unplug className="w-3.5 h-3.5" />
-                            {provider.connected && provider.expired ? "Reconnect" : "Connect"}
-                          </>
-                        )}
-                      </button>
-
-                      {provider.connected && (
+                      {provider.connected && !provider.expired ? (
                         <button
                           onClick={() => void handleDisconnect(provider.id)}
                           disabled={disconnecting === provider.id}
-                          className="h-7 px-2 rounded-xs border border-white/10 bg-white/5 mono uppercase tracking-tight text-xs text-white/60 transition cursor-pointer hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/30 disabled:opacity-50"
+                          className="h-7 px-3 rounded-xs border border-white/10 bg-white/5 mono uppercase tracking-tight text-xs text-white/60 transition cursor-pointer hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/30 disabled:opacity-50"
                         >
                           {disconnecting === provider.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            <Unplug className="w-3.5 h-3.5" />
+                            "Disconnect"
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => void handleConnect(provider.id)}
+                          disabled={provider.loading}
+                          className="h-7 px-3 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer lime text-black hover:opacity-90 flex items-center gap-2"
+                        >
+                          {provider.loading ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Unplug className="w-3.5 h-3.5" />
+                              {provider.connected && provider.expired ? "Reconnect" : "Connect"}
+                            </>
                           )}
                         </button>
                       )}
