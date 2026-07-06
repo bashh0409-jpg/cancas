@@ -2,6 +2,41 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const MARKETING_HOSTS = new Set(["swipes.site", "www.swipes.site"]);
+const APP_HOST = "app.swipes.site";
+
+const APP_ROUTE_PREFIXES = [
+  "/auth",
+  "/billing",
+  "/canvas",
+  "/home",
+  "/signin",
+  "/notfound",
+];
+
+const APP_API_PREFIXES = [
+  "/api/account",
+  "/api/auth",
+  "/api/billing",
+  "/api/canvases",
+  "/api/credits",
+  "/api/integrations",
+];
+
+function isAppRoute(pathname: string) {
+  return [...APP_ROUTE_PREFIXES, ...APP_API_PREFIXES].some((prefix) => {
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
+  });
+}
+
+function withHost(request: NextRequest, host: string) {
+  const url = request.nextUrl.clone();
+  url.hostname = host;
+  url.port = "";
+  url.protocol = "https:";
+  return url;
+}
+
 type RateLimitConfig = {
   readonly limit: number;
   readonly windowMs: number;
@@ -38,10 +73,22 @@ const rateLimitBypassPrefixes = [
 ];
 
 export async function proxy(request: NextRequest) {
-  // Clone the request headers for the Supabase client
   const cookieStore = await cookies();
   const requestUrl = new URL(request.url);
   const pathname = requestUrl.pathname;
+  const hostname = request.nextUrl.hostname;
+
+  // Host-based routing: rewrite / on app host to /home
+  if (hostname === APP_HOST && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/home";
+    return NextResponse.rewrite(url);
+  }
+
+  // Host-based routing: redirect app routes on marketing hosts to app host
+  if (MARKETING_HOSTS.has(hostname) && isAppRoute(pathname)) {
+    return NextResponse.redirect(withHost(request, APP_HOST));
+  }
 
   if (pathname.startsWith("/api/")) {
     const rateLimitResponse = applyApiRateLimit(request, pathname);
