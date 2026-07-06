@@ -9,11 +9,18 @@
 
 ---
 
-## Redirect URLs to Configure in External Services
+## 1. Supabase Authentication
 
-### 1. Supabase Authentication (Dashboard → Authentication → URL Configuration)
+**Console URL:** https://supabase.com/dashboard/project/okgjifzweuehbcxrohmh/auth/url-configuration
 
-**Redirect URLs** (add all of these to "Redirect URLs" in Supabase):
+**Navigation:** Supabase Dashboard → Project → Authentication → URL Configuration
+
+**Site URL:**
+```
+https://app.swipes.site
+```
+
+**Redirect URLs** (add all of these):
 ```
 https://app.swipes.site/api/auth/callback
 https://app.swipes.site/auth/callback
@@ -21,60 +28,139 @@ http://localhost:3000/api/auth/callback
 http://localhost:3000/auth/callback
 ```
 
-**Site URL** (in Supabase Auth settings):
-```
-https://app.swipes.site
-```
+**Where to click:**
+1. Go to the console URL above
+2. In **"Site URL"** field, enter `https://app.swipes.site`
+3. In **"Redirect URLs"** section, click **"Add URL"** for each URL above
+4. Click **"Save"**
 
 ---
 
-### 2. Google OAuth (Google Cloud Console → APIs & Services → Credentials)
+## 2. Google OAuth (Sign-In)
 
-**Authorized Redirect URIs** (for Google Sign-In):
+**Console URL:** https://console.cloud.google.com/apis/credentials?project=reflow-ai
+
+**Navigation:** Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID
+
+**Authorized Redirect URIs:**
 ```
 https://app.swipes.site/api/auth/callback
 http://localhost:3000/api/auth/callback
 ```
 
-**Authorized Redirect URIs** (for Google Drive integration):
+**Where to click:**
+1. Go to the console URL above
+2. Click on your OAuth 2.0 Client ID (the one used for "Web application")
+3. Under **"Authorized redirect URIs"**, click **"Add URI"**
+4. Add each URL above
+5. Click **"Save"**
+
+---
+
+## 3. Google Drive Integration
+
+**Console URL:** https://console.cloud.google.com/apis/credentials?project=reflow-ai
+
+**Navigation:** Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID (same app as sign-in, or a separate one)
+
+**Authorized Redirect URI:**
 ```
 https://app.swipes.site/api/integrations/google-drive/callback
 http://localhost:3000/api/integrations/google-drive/callback
 ```
 
+**Where to click:**
+1. Go to the console URL above
+2. Click on the OAuth 2.0 Client ID used for Google Drive
+3. Under **"Authorized redirect URIs"**, click **"Add URI"**
+4. Add each URL above
+5. Click **"Save"**
+
 ---
 
-### 3. Microsoft / Azure OAuth (Azure Portal → App Registrations)
+## 4. Microsoft / Azure OAuth
 
-**Redirect URI**:
+**Console URL:** https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade
+
+**Navigation:** Azure Portal → App Registrations → Your App → Authentication
+
+**Redirect URI:**
 ```
 https://app.swipes.site/api/auth/callback?next=/home
 http://localhost:3000/api/auth/callback?next=/home
 ```
 
+**Where to click:**
+1. Go to the console URL above
+2. Click on your app registration
+3. In the left menu, click **"Authentication"**
+4. Under **"Redirect URIs"**, click **"Add URI"**
+5. Add each URL above
+6. Click **"Save"**
+
 ---
 
-### 4. Dropbox OAuth (Dropbox App Console)
+## 5. Dropbox Integration
 
-**Redirect URI**:
+**Console URL:** https://www.dropbox.com/developers/apps
+
+**Navigation:** Dropbox Developer Console → Your App → Permissions
+
+**Redirect URI:**
 ```
 https://app.swipes.site/api/integrations/dropbox/callback
 http://localhost:3000/api/integrations/dropbox/callback
 ```
 
+**Where to click:**
+1. Go to https://www.dropbox.com/developers/apps
+2. Click on your app (e.g., "Reflow")
+3. Under **"OAuth 2"** section, find **"Redirect URIs"**
+4. Click **"Add"** and enter `https://app.swipes.site/api/integrations/dropbox/callback`
+5. Click **"Add"** again and enter `http://localhost:3000/api/integrations/dropbox/callback`
+6. Click **"Save"**
+
 ---
 
-### 5. PayFast (PayFast Dashboard)
+## 6. PayFast
 
-**Return URL**: `https://app.swipes.site/billing/success`
-**Cancel URL**: `https://app.swipes.site/billing/cancel`
-**Notify URL**: `https://app.swipes.site/api/billing/webhooks/payfast`
+**Console URL:** https://www.payfast.co.za/eng/account
+
+**Navigation:** PayFast Dashboard → Settings → Integration
+
+| URL Type | Production URL |
+|---|---|
+| Return URL | `https://app.swipes.site/billing/success` |
+| Cancel URL | `https://app.swipes.site/billing/cancel` |
+| Notify URL | `https://app.swipes.site/api/billing/webhooks/payfast` |
+
+**Where to click:**
+1. Go to https://www.payfast.co.za/eng/account
+2. Log in and go to **"Settings"** → **"Integration"**
+3. Under **"Return URL"**, enter `https://app.swipes.site/billing/success`
+4. Under **"Cancel URL"**, enter `https://app.swipes.site/billing/cancel`
+5. Under **"Notify URL"**, enter `https://app.swipes.site/api/billing/webhooks/payfast`
+6. Click **"Save"**
 
 ---
 
-### 6. Stripe Webhooks (Stripe Dashboard → Webhooks)
+## 7. Stripe Webhooks
 
-**Webhook endpoint**: `https://app.swipes.site/api/billing/webhooks/stripe`
+**Console URL:** https://dashboard.stripe.com/webhooks
+
+**Navigation:** Stripe Dashboard → Developers → Webhooks
+
+**Webhook endpoint:**
+```
+https://app.swipes.site/api/billing/webhooks/stripe
+```
+
+**Where to click:**
+1. Go to https://dashboard.stripe.com/webhooks
+2. Click **"Add endpoint"**
+3. In **"Endpoint URL"**, enter `https://app.swipes.site/api/billing/webhooks/stripe`
+4. Select events to listen for (e.g., `checkout.session.completed`, `customer.subscription.updated`, `invoice.paid`)
+5. Click **"Add endpoint"**
 
 ---
 
@@ -96,11 +182,9 @@ http://localhost:3000/api/integrations/dropbox/callback
 
 When deploying to `app.swipes.site`, update these places:
 
-- [ ] Supabase Auth: Site URL → `https://app.swipes.site`
-- [ ] Supabase Auth: Redirect URLs → add `https://app.swipes.site/*`
-- [ ] Google Cloud Console: add `https://app.swipes.site/api/auth/callback`
-- [ ] Google Cloud Console: add `https://app.swipes.site/api/integrations/google-drive/callback`
-- [ ] Azure App Registration: add `https://app.swipes.site/api/auth/callback?next=/home`
-- [ ] Dropbox App Console: add `https://app.swipes.site/api/integrations/dropbox/callback`
-- [ ] PayFast Dashboard: update Return/Cancel/Notify URLs to `https://app.swipes.site/*`
-- [ ] Stripe Dashboard: update webhook endpoint to `https://app.swipes.site/api/billing/webhooks/stripe`
+- [ ] **Supabase Auth** (https://supabase.com/dashboard/project/okgjifzweuehbcxrohmh/auth/url-configuration): Site URL → `https://app.swipes.site`, add redirect URLs
+- [ ] **Google Cloud Console** (https://console.cloud.google.com/apis/credentials): add `https://app.swipes.site/api/auth/callback` and `https://app.swipes.site/api/integrations/google-drive/callback`
+- [ ] **Azure Portal** (https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/AppRegistrationsBlade): add `https://app.swipes.site/api/auth/callback?next=/home`
+- [ ] **Dropbox Developer Console** (https://www.dropbox.com/developers/apps): add `https://app.swipes.site/api/integrations/dropbox/callback`
+- [ ] **PayFast Dashboard** (https://www.payfast.co.za/eng/account): update Return/Cancel/Notify URLs
+- [ ] **Stripe Dashboard** (https://dashboard.stripe.com/webhooks): update webhook endpoint to `https://app.swipes.site/api/billing/webhooks/stripe`
