@@ -11,6 +11,10 @@ function normalizeProvider(provider: string) {
     return "dropbox" as const;
   }
 
+  if (provider === "onedrive") {
+    return "onedrive" as const;
+  }
+
   return null;
 }
 

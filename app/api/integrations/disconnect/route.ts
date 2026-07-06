@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const { provider } = await req.json();
 
-    if (!provider || !["google_drive", "dropbox"].includes(provider)) {
+    if (!provider || !["google_drive", "dropbox", "onedrive"].includes(provider)) {
       return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
     }
 

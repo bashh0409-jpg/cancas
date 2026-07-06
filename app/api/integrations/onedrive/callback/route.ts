@@ -1,0 +1,106 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { upsertIntegrationToken } from "@/lib/integrations/store/store";
+
+export const runtime = "nodejs";
+
+export async function GET(req: NextRequest) {
+  try {
+    const code = req.nextUrl.searchParams.get("code");
+    const state = req.nextUrl.searchParams.get("state");
+    const error = req.nextUrl.searchParams.get("error");
+
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/signin?error=${encodeURIComponent(error)}`, req.url),
+      );
+    }
+
+    if (!code || !state) {
+      return NextResponse.redirect(
+        new URL("/signin?error=missing_params", req.url),
+      );
+    }
+
+    // Parse state to get userId
+    let userId: string;
+    try {
+      const parsed = JSON.parse(state);
+      userId = parsed.userId;
+    } catch {
+      userId = state;
+    }
+
+    const clientId = process.env.ONEDRIVE_CLIENT_ID;
+    const clientSecret = process.env.ONEDRIVE_CLIENT_SECRET;
+    const redirectUri = process.env.ONEDRIVE_REDIRECT_URI;
+
+    if (!clientId || !clientSecret || !redirectUri) {
+      return NextResponse.json(
+        { error: "Missing OneDrive OAuth environment variables" },
+        { status: 500 },
+      );
+    }
+
+    // Exchange authorization code for tokens
+    const tokenResponse = await fetch(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }),
+      },
+    );
+
+    if (!tokenResponse.ok) {
+      const payload = await tokenResponse.json().catch(() => null);
+      console.error("OneDrive token exchange error:", payload);
+      return NextResponse.redirect(
+        new URL("/signin?error=token_exchange_failed", req.url),
+      );
+    }
+
+    const tokens = await tokenResponse.json();
+
+    // Calculate expiry date
+    const expiresAt = tokens.expires_in
+      ? Date.now() + tokens.expires_in * 1000
+      : undefined;
+
+    // Store the token
+    await upsertIntegrationToken({
+      userId,
+      provider: "onedrive",
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresAt,
+    });
+
+    // Redirect back to origin (or to canvas if specified)
+    const origin = new URL(req.url).origin;
+    let redirectTo = origin;
+
+    try {
+      const parsed = JSON.parse(state);
+      if (parsed.canvasId) {
+        redirectTo = `${origin}/canvas/${parsed.canvasId}`;
+      }
+    } catch {
+      // state was just userId, redirect to home
+      redirectTo = `${origin}/home`;
+    }
+
+    return NextResponse.redirect(redirectTo);
+  } catch (error) {
+    console.error("OneDrive callback error:", error);
+    return NextResponse.redirect(
+      new URL("/signin?error=callback_error", req.url),
+    );
+  }
+}

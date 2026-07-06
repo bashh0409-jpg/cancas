@@ -899,6 +899,14 @@ function CloudBrowser({
   );
 }
 
+function OneDriveIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M23.11 17.86a2.9 2.9 0 0 1-2.65 1.8H5.94a2.9 2.9 0 0 1-1.34-.32 2.78 2.78 0 0 1-1.09-.97 3.1 3.1 0 0 1-.4-1.47 3.1 3.1 0 0 1 .4-1.47 2.78 2.78 0 0 1 1.08-.97l.38-.17A4.34 4.34 0 0 1 5.1 10.1a4.3 4.3 0 0 1 1.55-.92 4.16 4.16 0 0 1 1-.24 5.5 5.5 0 0 1 1.04.03 5.4 5.4 0 0 1 1.02.2c.33.1.65.23.95.38a4.5 4.5 0 0 1 .87.55A5 5 0 0 1 12 11.1a5.5 5.5 0 0 1 .61-.93c.25-.3.53-.57.84-.8l.44-.3-.15-.05a4.2 4.2 0 0 1 .96-.5l.3-.1A5.4 5.4 0 0 1 16.65 8a5.5 5.5 0 0 1 1.7-.56A5.2 5.2 0 0 1 19.6 7.4a5.3 5.3 0 0 1 1.35.5 5.1 5.1 0 0 1 1.09.9 4.6 4.6 0 0 1 .73 1.2 4.9 4.9 0 0 1 .34 1.4l.02.2.16.08a3.5 3.5 0 0 1 1.03.78c.28.33.5.7.64 1.1.14.4.22.84.22 1.28 0 .44-.08.87-.22 1.28a3.3 3.3 0 0 1-.64 1.1 3.5 3.5 0 0 1-1.04.78Z" />
+    </svg>
+  );
+}
+
 const initialProviders: Provider[] = [
   {
     id: "google-drive",
@@ -912,6 +920,13 @@ const initialProviders: Provider[] = [
     name: "Dropbox",
     description: "Access cloud storage files",
     icon: SiDropbox,
+    connected: false,
+  },
+  {
+    id: "onedrive",
+    name: "OneDrive",
+    description: "Browse and import files from OneDrive",
+    icon: OneDriveIcon,
     connected: false,
   },
 ];

@@ -31,11 +31,13 @@ export async function GET() {
     const connected = {
       google_drive: false,
       dropbox: false,
+      onedrive: false,
     } as Record<string, boolean>;
 
     const expired = {
       google_drive: false,
       dropbox: false,
+      onedrive: false,
     } as Record<string, boolean>;
 
     (data || []).forEach((row: { provider: string; expires_at: string | null }) => {
