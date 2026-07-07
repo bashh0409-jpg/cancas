@@ -189,7 +189,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="flex h-[35px] w-full items-center justify-center mono uppercase rounded cursor-pointer bg-white   px-4 text-xs tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
+                className="flex h-[35px] hidden w-full items-center justify-center mono uppercase rounded cursor-pointer bg-white   px-4 text-xs tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => {
                   setFormError(null);
                   setShowEmailForm(true);
