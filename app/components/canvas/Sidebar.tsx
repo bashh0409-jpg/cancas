@@ -36,6 +36,7 @@ import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import { useAiSettingsStore, ELEVENLABS_VOICES } from "@/lib/canvas/aiSettingsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
+import { createCanvasAction } from "@/app/actions/createCanvasAction";
 
 type PanelType =
   | "search"
@@ -223,14 +224,16 @@ const CanvasSwitcherOverlay = ({
         </div>
       )}
 
-      {/* New file shortcut*/}
+      {/* New file shortcut — creates a new canvas */}
       <div className="border-t border-white/10 px-3 py-1">
-        <button
-          onClick={() => { window.location.href = "/home"; }}
-          className="text-[11px] mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
-        >
-          Create new file
-        </button>
+        <form action={createCanvasAction}>
+          <button
+            type="submit"
+            className="text-[11px] mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          >
+            Create new file
+          </button>
+        </form>
       </div>
       {/* Back to workspace */}
       <div className="border-t border-white/10 px-3 py-1">
