@@ -80,11 +80,11 @@ export function WebsitePreviewModal({
             PREVIEW CARD
         ========================== */}
         <article
-          className="flex w-full max-w-4xl flex-col overflow-hidden rounded border border-black bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
+          className="flex w-full max-w-4xl aspect-video  flex-col overflow-hidden rounded border border-black bg-[#FAF8F4] shadow-[0_32px_100px_rgba(12,10,6,0.28)]"
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative h-[min(70vh,920px)] min-h-[380px] overflow-hidden bg-white">
+          <div className="relative h-full overflow-hidden bg-white">
             {readerMode ? (
               /* =========================
                   READER MODE UI
@@ -142,7 +142,7 @@ export function WebsitePreviewModal({
                       }}
                     />
 
-                    <div className="h-16" />
+               
                   </div>
                 )}
               </div>
@@ -158,32 +158,22 @@ export function WebsitePreviewModal({
         {/* =========================
             FLOATING TOOLBAR
         ========================== */}
-        <div className="flex items-center justify-between gap-4 bg-white p-2 rounded-lg min-w-[360px] w-fit shadow-lg">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Globe className="h-4.5 w-4.5 shrink-0" />
-
-            <span
-              className="text-[13px] font-medium tracking-tight truncate"
-              title={url}
-            >
+       <div className="flex items-center justify-between gap-4 bg-white px-2 py-1 rounded min-w-[360px] w-fit shadow-lg">
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenInNewTab();
+            }}
+            className="flex hover:underline cursor-pointer items-center gap- flex-1 min-w-0"
+          >
+            <Globe className="h-4 stroke-[1.8] w-4 mr-2 shrink-0" />
+            <span className="text-[13px] mono tracking-tight">https://</span>
+            <span className="text-xs mono tracking-tight truncate" title={url}>
               {displayTitle}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Open in new tab */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenInNewTab();
-              }}
-              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
-              aria-label="Open in new tab"
-            >
-              <ArrowUpRight className="h-5 w-5" />
-            </button>
-
+          <div className="flex items-center gap-2">
             {/* Reader Mode */}
             <button
               type="button"
@@ -196,25 +186,12 @@ export function WebsitePreviewModal({
                   loadReaderMode();
                 }
               }}
-              className={`rounded-md p-1 transition-colors ${
+              className={`rounded-xs p-1 transition-colors ${
                 readerMode ? "bg-black text-white" : "hover:bg-gray-100"
               } ${readerLoading ? "opacity-50" : ""}`}
               aria-label="Reader mode"
             >
-              <BookOpen className="h-4.5 w-4.5" />
-            </button>
-
-            {/* Delete */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("Delete clicked");
-              }}
-              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
-              aria-label="Delete"
-            >
-              <Trash2Icon className="h-4.5 w-4.5" />
+              <BookOpen className="h-4 w-4 stroke-[1.8]" />
             </button>
 
             {/* Close */}
@@ -224,10 +201,10 @@ export function WebsitePreviewModal({
                 e.stopPropagation();
                 onClose();
               }}
-              className="rounded-md p-1 hover:bg-gray-100 transition-colors"
+              className="rounded-xs p-1 hover:bg-gray-100 transition-colors"
               aria-label="Close"
             >
-              <X className="h-4.5 w-4.5" />
+              <X className="h-4 stroke-[1.8] w-4" />
             </button>
           </div>
         </div>

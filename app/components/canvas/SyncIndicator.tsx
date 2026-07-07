@@ -93,7 +93,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
       <div
         className={[
           "pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2",
-          "-translate-x-1/2 whitespace-nowrap rounded-lg border border-white/10",
+          "-translate-x-1/2 whitespace-nowrap rounded border border-white/10",
           "bg-black/90 px-2.5 py-1.5 backdrop-blur-xl",
           "transition-all duration-150",
           showTooltip ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",

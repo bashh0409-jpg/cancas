@@ -223,6 +223,15 @@ const CanvasSwitcherOverlay = ({
         </div>
       )}
 
+      {/* New file shortcut*/}
+      <div className="border-t border-white/10 px-3 py-1">
+        <button
+          onClick={() => { window.location.href = "/home"; }}
+          className="text-[11px] mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+        >
+          Create new file
+        </button>
+      </div>
       {/* Back to workspace */}
       <div className="border-t border-white/10 px-3 py-1">
         <a

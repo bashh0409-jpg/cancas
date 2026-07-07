@@ -299,12 +299,12 @@ export function CanvasAiChatNode({
       >
         {/* ── Header (drag handle) ── */}
         <div
-          className="flex items-center justify-between px-3 shrink-0 border-b border-black/5"
+          className="flex items-center justify-between px-3 shrink-0"
           style={{ height: HEADER_HEIGHT }}
         >
           <div className="flex items-center gap-2">
             <span
-              className="text-xs mono uppercase font-medium tracking-tight"
+              className="text-xs mono hidden uppercase font-medium tracking-tight"
               style={{ color: node.style.color, opacity: 0.7 }}
             >
               Untitled
@@ -362,7 +362,7 @@ export function CanvasAiChatNode({
             <div className="flex-1 flex mono flex-col items-center justify-center gap-2 py-8 select-none">
               <p
                 className="text-xs mono mono tracking-tight text-center"
-                style={{ color: node.style.color, opacity: 0.4, ...textStyle }}
+                style={{ color: node.style.color, opacity: 0.4, }}
               >
                 Ask me anything
               </p>

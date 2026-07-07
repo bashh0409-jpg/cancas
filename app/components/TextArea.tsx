@@ -43,7 +43,7 @@ const TextArea = ({
         aria-invalid={error ? true : undefined}
         aria-describedby={descriptionId}
         className={joinClassNames(
-          "block min-h-28 w-full resize-y rounded-md border bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm outline-none transition",
+          "block min-h-28 w-full resize-y rounded border bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm outline-none transition",
           "placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500",
           error
             ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-100"

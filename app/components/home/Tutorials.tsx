@@ -4,11 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Maximize,
-  Pause,
+  SquarePause,
   Play,
+  SquarePlay,
   Volume2,
   VolumeX,
   X,
+  VolumeOff,
+  Video,
+  Film,
+  Clapperboard,
 } from "lucide-react";
 
 const tutorials = [
@@ -341,8 +346,9 @@ const buildEmbedUrl = (videoId: string) => {
                 FLOATING TOOLBAR
             ========================== */}
             <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white  pl-3 shadow-2xl">
-              <div className="min-w-0">
-                <span className="truncate grotesk  uppercase text-[11px] font-medium tracking-tight text-black">
+              <div className="min-w-0 gap-1 flex items-center hover:underline cursor-pointer" onClick={closeModal}>
+                <Clapperboard className="w-4.5 h-4.5 stroke-[1.5] text-black/70" />
+                <span className="text-xs mono uppercase tracking-tight truncate" >
                   {selectedVideo.title}
                 </span>
               </div>
@@ -352,12 +358,12 @@ const buildEmbedUrl = (videoId: string) => {
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
+                  className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isPlaying ? (
-                    <Pause className="h-4.5 w-4.5 " />
+                    <SquarePause className="h-4.5 stroke-[1.5] text-black/70 w-4.5 " />
                   ) : (
-                    <Play className="ml-0.5 h-4.5 w-4.5 " />
+                    <SquarePlay className=" stroke-[1.5] text-black/70  h-4.5 w-4.5 " />
                   )}
                 </button>
 
@@ -365,12 +371,12 @@ const buildEmbedUrl = (videoId: string) => {
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
+                  className="rounded cursor-pointer stroke-[1.5] text-black/70  p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isMuted ? (
-                    <VolumeX className="h-4.5 w-4.5" />
+                    <VolumeOff className="h-4.5 stroke-[1.8] text-black/70  w-4.5" />
                   ) : (
-                    <Volume2 className="h-4.5 w-4.5" />
+                    <Volume2 className="h-4.5  stroke-[1.8] text-black/70 w-4.5" />
                   )}
                 </button>
 
@@ -378,9 +384,9 @@ const buildEmbedUrl = (videoId: string) => {
                 <button
                   type="button"
                   onClick={openFullscreen}
-                  className="rounded-md p-1.5 text-black transition-colors hover:bg-white"
+                  className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
-                  <Maximize className="h-4.5 w-4.5" />
+                  <Maximize className="h-4 stroke-[1.8] text-black/70  w-4" />
                 </button>
               </div>
             </div>

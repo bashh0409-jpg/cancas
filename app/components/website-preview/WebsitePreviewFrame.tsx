@@ -60,7 +60,7 @@ export function WebsitePreviewFrame({
     >
       <iframe
         className={[
-          "absolute left-0 top-0 border-0 bg-white",
+          "absolute left-0 top-0 border-0",
           interactive ? "pointer-events-auto" : "pointer-events-none",
         ].join(" ")}
         height={PREVIEW_HEIGHT}
