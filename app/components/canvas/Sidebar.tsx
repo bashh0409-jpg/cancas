@@ -229,7 +229,7 @@ const CanvasSwitcherOverlay = ({
         <form action={createCanvasAction}>
           <button
             type="submit"
-            className="text-[11px] mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
+            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
           >
             Create new file
           </button>
