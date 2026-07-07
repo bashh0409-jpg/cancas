@@ -147,7 +147,6 @@ const CanvasSwitcherOverlay = ({
       {/* Current canvas */}
       <div className=" px-3 py-1">
         <div className="flex mono tracking-tight  items-center gap-2.5">
-
           <div className="min-w-0 flex-1">
             {editing ? (
               <input
@@ -210,7 +209,7 @@ const CanvasSwitcherOverlay = ({
                   <span className="truncate ">{canvas.name}</span>
                   {isActive ? (
                     <span className="shrink-0 text-[9px] uppercase tracking-wide text-lime-300">
-                      <Plus className="w-3.5 h-3.5"/>
+                      <Plus className="w-3.5 h-3.5" />
                     </span>
                   ) : null}
                 </a>
@@ -229,7 +228,7 @@ const CanvasSwitcherOverlay = ({
         <form action={createCanvasAction}>
           <button
             type="submit"
-            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
+            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-fit text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
           >
             Create new file
           </button>
@@ -239,7 +238,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-[11px] mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          className="text-[11px] p-1 rounded-xs cursor-pointer mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
         >
           Back to files
         </a>
