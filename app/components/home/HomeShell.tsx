@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, useMemo } from "react";
-import gsap from "gsap";
+import { gsap } from "gsap";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import {
   AudioLines,
@@ -159,7 +159,7 @@ export function AccountCard({
               {lastName && lastName !== "User"
                 ? `${firstName} ${lastName}`
                 : firstName}
-              &apos;s Workspace
+              's Workspace
             </p>
           </div>
 
@@ -720,7 +720,7 @@ function FilesPage({
             {lastName && lastName !== "User"
               ? `${firstName} ${lastName}`
               : firstName}
-            &apos;s Workspace
+            's Workspace
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -942,6 +942,26 @@ function AccountInfoTab({
   photoUrl?: string;
   updateNicknameAction: (formData: FormData) => Promise<void>;
 }) {
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    gsap.to(imgRef.current, {
+      scale: 1.08,
+      rotate: 2,
+      duration: 0.4,
+      ease: "power2.out",
+    });
+  };
+
+  const handleMouseLeave = () => {
+    gsap.to(imgRef.current, {
+      scale: 1,
+      rotate: 0,
+      duration: 0.4,
+      ease: "power2.out",
+    });
+  };
+
   const initialName = profile?.nickname?.trim() || fullName;
 
   const [nickname, setNickname] = useState(initialName);
@@ -978,16 +998,22 @@ function AccountInfoTab({
     <div className="flex max-w-2xl flex-col gap-8">
       {/* avatar */}
       <div className="flex items-center gap-5">
-        <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md  overflow-hidden">
+        <div
+          className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md overflow-hidden"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
           {photoUrl ? (
-            <Image
-              src={photoUrl}
-              alt={displayName}
-              width={96}
-              height={96}
-              className="h-full w-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+            <div ref={imgRef} className="h-full w-full">
+              <Image
+                width={96}
+                height={96}
+                src={photoUrl}
+                alt={displayName}
+                className="h-full cursor-pointer w-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
           ) : (
             <span className="text-2xl font-medium text-black">
               {displayName.charAt(0).toUpperCase()}
@@ -1004,7 +1030,6 @@ function AccountInfoTab({
             Personal account settings
           </p>
         </div>
-    
       </div>
 
       {/* fields */}
@@ -1064,7 +1089,7 @@ function AccountInfoTab({
             {Intl.DateTimeFormat().resolvedOptions().timeZone}
           </div>
         </div>
-     
+
         <button
           onClick={handleSave}
           disabled={pending}
