@@ -980,9 +980,11 @@ function AccountInfoTab({
       <div className="flex items-center gap-5">
         <div className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md  overflow-hidden">
           {photoUrl ? (
-            <img
+            <Image
               src={photoUrl}
               alt={displayName}
+              width={96}
+              height={96}
               className="h-full w-full object-cover"
               referrerPolicy="no-referrer"
             />
@@ -1067,9 +1069,9 @@ function AccountInfoTab({
           onClick={handleSave}
           disabled={pending}
           className="
-                flex h-9 w-fit items-center justify-center
+                flex h-8 w-fit items-center justify-center
                 rounded bg-white px-3
-                text-xs font-medium text-black
+                text-xs mono cursor-pointer uppercase tracking-tight font-medium text-black
                 transition hover:bg-white/90
                 disabled:opacity-50
               "

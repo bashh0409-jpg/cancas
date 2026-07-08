@@ -103,7 +103,7 @@ export default function Page() {
 
         <div className="flex w-full max-w-[380px] flex-col items-center gap-8 rounded-lg  p-4">
           <div className="flex w-full flex-col gap-2">
-            <div className="text-2xl mt-6 uppercase font-medium  text-center tracking-tight">
+            <div className="text-xl mt-6 uppercase  leading-tight text-center tracking-tight">
               Sign in to your workspace to start your journey.
             </div>
           </div>
