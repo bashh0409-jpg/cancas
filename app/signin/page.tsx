@@ -6,10 +6,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const LOGIN_IMAGES = [
-  "/images/login/login1.jpg",
-  "/images/login/login2.jpg",
-  "/images/login/login3.jpg",
-  "/images/login/login5.jpg",
+  "/images/login/auth-1.webp",
+  "/images/login/auth-2.webp",
+  "/images/login/auth-3.webp",
+  "/images/login/auth-4.webp",
+  "/images/login/auth-5.webp",
+  "/images/login/auth-6.webp",
 ] as const;
 
 type Provider = "google" | "azure" | "email" | null;
