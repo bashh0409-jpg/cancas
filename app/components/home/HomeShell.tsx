@@ -141,7 +141,9 @@ export function AccountCard({
         <div className="flex items-center gap-2.5">
           <div className=" flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded">
             {photoUrl ? (
-              <img
+              <Image
+                width={96}
+                height={96}
                 src={photoUrl}
                 alt={firstName}
                 className="h-full w-full object-cover"
@@ -159,7 +161,7 @@ export function AccountCard({
               {lastName && lastName !== "User"
                 ? `${firstName} ${lastName}`
                 : firstName}
-              's Workspace
+              &apos;s Workspace
             </p>
           </div>
 
@@ -720,7 +722,7 @@ function FilesPage({
             {lastName && lastName !== "User"
               ? `${firstName} ${lastName}`
               : firstName}
-            's Workspace
+            &apos;s Workspace
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -943,24 +945,25 @@ function AccountInfoTab({
   updateNicknameAction: (formData: FormData) => Promise<void>;
 }) {
   const imgRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = () => {
-    gsap.to(imgRef.current, {
-      scale: 1.08,
-      rotate: 2,
-      duration: 0.4,
-      ease: "power2.out",
-    });
-  };
+const handleMouseEnter = () => {
+  gsap.to(containerRef.current, {
+    scale: 1.12,
+    rotate: 6,
+    duration: 0.5,
+    ease: "elastic.out(1, 0.5)",
+  });
+};
 
-  const handleMouseLeave = () => {
-    gsap.to(imgRef.current, {
-      scale: 1,
-      rotate: 0,
-      duration: 0.4,
-      ease: "power2.out",
-    });
-  };
+const handleMouseLeave = () => {
+  gsap.to(containerRef.current, {
+    scale: 1,
+    rotate: 0,
+    duration: 0.5,
+    ease: "elastic.out(1, 0.5)",
+  });
+};
 
   const initialName = profile?.nickname?.trim() || fullName;
 
@@ -999,6 +1002,7 @@ function AccountInfoTab({
       {/* avatar */}
       <div className="flex items-center gap-5">
         <div
+          ref={containerRef}
           className="lime flex h-24 w-24 shrink-0 items-center justify-center rounded-md overflow-hidden"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
