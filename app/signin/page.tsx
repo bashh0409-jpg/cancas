@@ -234,7 +234,8 @@ export default function Page() {
           alt="Login background"
           fill
           priority
-          sizes="(min-width: 768px) 60vw, 100vw"
+          fetchPriority="high"
+          sizes="50vw"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/10" />
