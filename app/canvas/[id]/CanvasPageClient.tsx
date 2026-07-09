@@ -4,8 +4,14 @@ import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQue
 import FloatingToolbar from "@/app/components/FloatingToolbar";
 import type { CanvasContent } from "@/types/canvas";
 import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import type { UploadDebugEntry } from "@/lib/canvas/uploadDebug";
-import CanvasWorkspace from "./CanvasWorkspace";
+import { createClient } from "@/lib/supabase/client";
+import { getUserCanvases } from "@/lib/canvas/repository";
+import { getUserCredits } from "@/lib/credits/repository";
+const CanvasWorkspace = dynamic(() => import("./CanvasWorkspace"), {
+  ssr: false,
+});
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
 import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import {
@@ -43,6 +49,7 @@ export default function CanvasPageClient({
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
   const [currentCredits, setCurrentCredits] = useState(credits);
+  const [userCanvases, setUserCanvases] = useState(canvases);
 
   const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
     synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
@@ -75,6 +82,29 @@ export default function CanvasPageClient({
       );
     };
   }, []);
+
+  useEffect(() => {
+    if (canvases.length > 0 || credits > 0) {
+      return;
+    }
+
+    const loadDeferredData = async () => {
+      try {
+        const supabase = createClient();
+        const [loadedCanvases, loadedCredits] = await Promise.all([
+          getUserCanvases(supabase, userId),
+          getUserCredits(supabase, userId),
+        ]);
+
+        setUserCanvases(loadedCanvases);
+        setCurrentCredits(loadedCredits);
+      } catch (error) {
+        console.error("Failed to load deferred canvas data:", error);
+      }
+    };
+
+    void loadDeferredData();
+  }, [canvases.length, credits, userId]);
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#111111]">

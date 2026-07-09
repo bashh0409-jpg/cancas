@@ -29,11 +29,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
 
   if (!user) redirect("/signin");
 
-  const [canvas, canvases, credits] = await Promise.all([
-    getUserCanvas(supabase, user.id, id),
-    getUserCanvases(supabase, user.id),
-    getUserCredits(supabase, user.id),
-  ]);
+  const canvas = await getUserCanvas(supabase, user.id, id);
 
   if (!canvas) notFound();
 
@@ -53,8 +49,8 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     <CanvasPageClient
       canvasId={canvas.id}
       canvasName={canvas.name}
-      canvases={canvases} // ✅ FIX: required prop
-      credits={credits}
+      canvases={[]}
+      credits={0}
       firstName={baseName}
       lastName={baseName}
       initialContent={initialContent}
