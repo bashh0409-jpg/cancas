@@ -21,6 +21,9 @@ import { CreditsBadge } from "@/app/components/home/CreditsBadge";
 import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import Tutorials from "./Tutorials";
+import MuxPlayer from "@mux/mux-player-react";
+import type { MuxCSSProperties } from "@mux/mux-player-react";
+import { tutorials } from "./tutorialData";
 import type { UserSettings } from "@/lib/user/settingsRepository";
 import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
@@ -184,7 +187,6 @@ export function AccountCard({
           </div>
         </div>
       </div>
-
       {/* Credits row */}
       <div className="mb-1 mt-2 flex items-center justify-between px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
@@ -198,7 +200,8 @@ export function AccountCard({
         <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
           <span className="cursor-pointer underline">Upgrade for more</span>
         </button>
-      </div>  {/* Plan row */}
+      </div>{" "}
+      {/* Plan row */}
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Plan</span>
@@ -209,7 +212,6 @@ export function AccountCard({
           <span className="cursor-pointer underline">Upgrade</span>
         </button>
       </div>
-
       {/* Region row */}
       <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
@@ -218,8 +220,6 @@ export function AccountCard({
         </div>
         <Globe className="h-3.5 w-3.5 text-white/40" />
       </div>
-
-    
       {/* Account Switcher */}
       <div className="border-t border-white/20 px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
@@ -308,7 +308,6 @@ export function AccountCard({
           <span className="cursor-pointer underline">Submit feedback</span>
         </a>
       </div>
-
       {/* Bug report */}
       <div className="flex flex-col px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
@@ -715,7 +714,7 @@ function FilesPage({
   );
 
   return (
-    <div className="flex flex-col scrollbar-hidden overflow-x-hidden gap-4" >
+    <div className="flex flex-col scrollbar-hidden overflow-x-hidden gap-4">
       <div className="flex flex-wrap  items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="mono text-sm tracking-tight text-white">
@@ -769,7 +768,10 @@ function FilesPage({
           </button>
         </div>
       )}
-      <CanvasFileList canvases={filteredCanvases} createCanvasAction={createCanvasAction} />
+      <CanvasFileList
+        canvases={filteredCanvases}
+        createCanvasAction={createCanvasAction}
+      />
     </div>
   );
 }
@@ -947,23 +949,23 @@ function AccountInfoTab({
   const imgRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-const handleMouseEnter = () => {
-  gsap.to(containerRef.current, {
-    scale: 1.12,
-    rotate: 6,
-    duration: 0.5,
-    ease: "elastic.out(1, 0.5)",
-  });
-};
+  const handleMouseEnter = () => {
+    gsap.to(containerRef.current, {
+      scale: 1.12,
+      rotate: 6,
+      duration: 0.5,
+      ease: "elastic.out(1, 0.5)",
+    });
+  };
 
-const handleMouseLeave = () => {
-  gsap.to(containerRef.current, {
-    scale: 1,
-    rotate: 0,
-    duration: 0.5,
-    ease: "elastic.out(1, 0.5)",
-  });
-};
+  const handleMouseLeave = () => {
+    gsap.to(containerRef.current, {
+      scale: 1,
+      rotate: 0,
+      duration: 0.5,
+      ease: "elastic.out(1, 0.5)",
+    });
+  };
 
   const initialName = profile?.nickname?.trim() || fullName;
 
@@ -1314,87 +1316,6 @@ function WorkspaceSettingsTab({
   );
 }
 
-type TutorialItem = {
-  id: string;
-  title: string;
-  description: string;
-};
-
-const tutorials: TutorialItem[] = [
-  {
-    id: "1",
-    title: "Getting Started with Canvas",
-    description:
-      "Learn the basics of creating your first canvas and navigating the interface.",
-  },
-  {
-    id: "2",
-    title: "Creating and Managing Projects",
-    description:
-      "Master project creation, organization, and workspace management.",
-  },
-  {
-    id: "3",
-    title: "Working with Images",
-    description:
-      "Upload, edit, and manipulate images within your canvas projects.",
-  },
-  {
-    id: "4",
-    title: "Text and Typography",
-    description:
-      "Add and style text elements with typography controls and formatting options.",
-  },
-  {
-    id: "5",
-    title: "Advanced Layout Techniques",
-    description:
-      "Explore grids, alignment, and positioning for professional designs.",
-  },
-  {
-    id: "6",
-    title: "Exporting Your Work",
-    description:
-      "Export your designs in various formats for web and print use.",
-  },
-  {
-    id: "7",
-    title: "Collaboration Features",
-    description:
-      "Invite team members and collaborate in real-time on shared canvases.",
-  },
-  {
-    id: "8",
-    title: "Keyboard Shortcuts & Tips",
-    description:
-      "Speed up your workflow with essential keyboard shortcuts and pro tips.",
-  },
-  {
-    id: "9",
-    title: "Design System Setup",
-    description:
-      "Create consistent designs using design systems and component libraries.",
-  },
-  {
-    id: "10",
-    title: "Performance Optimization",
-    description:
-      "Optimize your projects for faster loading and smoother performance.",
-  },
-  {
-    id: "11",
-    title: "Prototyping and Animation",
-    description:
-      "Create interactive prototypes and add animations to bring designs to life.",
-  },
-  {
-    id: "12",
-    title: "Best Practices Guide",
-    description:
-      "Industry best practices for design, organization, and workflow efficiency.",
-  },
-];
-
 export function TutorialPage() {
   return (
     <div className="flex flex-col gap-6">
@@ -1410,20 +1331,42 @@ export function TutorialPage() {
       </div>
 
       {/* grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1  sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
         {tutorials.map((item) => (
           <div
             key={item.id}
-            className="w-full cursor-pointer aspect-video rounded bg-white/10 p-3 hover:bg-white/11 transition flex flex-col justify-between  hover:border-white/10"
+            className="w-full aspect-video overflow-hidden rounded bg-white/10 transition hover:bg-white/11 hover:border-white/10"
           >
-            <div>
-              <h3 className="text-white text-xs mono font-medium tracking-tight">
-                {item.title}
-              </h3>
+            <div className="relative cursor-pointer aspect-video h-full w-full">
+              <MuxPlayer
+                playbackId={item.playbackId}
+                metadata={{ video_title: item.title }}
+                poster={item.thumbnail}
+                muted={true}
+                loop={false}
+                autoPlay={false}
+                className="h-full mux w-full"
+                style={
+                  {
+                    width: "100%",
+                    height: "100%",
+                    minHeight: 0,
+                    minWidth: 0,
+                    objectFit: "cover",
+                    "--media-object-fit": "cover",
+                    "--controls": "none",
+                    "--media-control-display": "none",
+                  } as MuxCSSProperties
+                }
+              />
+
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute left-3 bottom-3 right-3">
+                <h3 className="text-white text-xs mono font-medium tracking-tight">
+                  {item.title}
+                </h3>
+              </div>
             </div>
-            <p className="text-white/50 hidden text-xs mono leading-tight">
-              {item.description}
-            </p>
           </div>
         ))}
       </div>
@@ -1527,7 +1470,12 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
 
             if (content?.voiceNodes) {
               content.voiceNodes.forEach(
-                (node: { id: string; title: string; audioDataUrl: string; durationMs?: number }) => {
+                (node: {
+                  id: string;
+                  title: string;
+                  audioDataUrl: string;
+                  durationMs?: number;
+                }) => {
                   allFiles.push({
                     id: node.id,
                     type: "voice",
@@ -1557,7 +1505,8 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
     };
   }, [canvases]);
 
-  const filteredFiles = typeFilter === "all" ? files : files.filter((f) => f.type === typeFilter);
+  const filteredFiles =
+    typeFilter === "all" ? files : files.filter((f) => f.type === typeFilter);
   const visibleFiles = filteredFiles.slice(0, visibleCount);
   const hasMore = visibleCount < filteredFiles.length;
 
@@ -1741,49 +1690,49 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex gap-1 absolute top-1 right-1 z-10">
-            <button
-              onClick={async () => {
-                try {
-                  const res = await fetch(previewImage.src);
-                  const blob = await res.blob();
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(previewImage.src);
+                    const blob = await res.blob();
 
-                  // Save to localStorage
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const base64 = reader.result as string;
-                    localStorage.setItem(
-                      `reflow:downloaded:${previewImage.title}`,
-                      base64,
-                    );
-                  };
-                  reader.readAsDataURL(blob);
+                    // Save to localStorage
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64 = reader.result as string;
+                      localStorage.setItem(
+                        `reflow:downloaded:${previewImage.title}`,
+                        base64,
+                      );
+                    };
+                    reader.readAsDataURL(blob);
 
-                  // Trigger browser download
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = previewImage.title;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                } catch {
-                  // Silently fail
-                }
-              }}
-              className="cursor-pointer  z-10 p-1 bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
-              aria-label="Close preview"
-            >
-              <Download className="w-4 h-4" />
-            </button>  <button
-              onClick={() => setPreviewImage(null)}
-              className=" z-10 p-1 cursor-pointer mix-blend-difference bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
-              aria-label="Close preview"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          
-</div>
+                    // Trigger browser download
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = previewImage.title;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } catch {
+                    // Silently fail
+                  }
+                }}
+                className="cursor-pointer  z-10 p-1 bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
+                aria-label="Close preview"
+              >
+                <Download className="w-4 h-4" />
+              </button>{" "}
+              <button
+                onClick={() => setPreviewImage(null)}
+                className=" z-10 p-1 cursor-pointer mix-blend-difference bg-black/60 hover:bg-black/80 text-white rounded-xs transition"
+                aria-label="Close preview"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <Image
               src={previewImage.src}
               alt={previewImage.title}
@@ -1857,10 +1806,8 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
 
               {/* Audio Player */}
               <audio
-                controls
                 src={previewVoice.audioDataUrl}
                 className="w-full h-10 rounded"
-                controlsList="nodownload"
               />
 
               {/* Transcription placeholder */}

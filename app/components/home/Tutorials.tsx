@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import MuxPlayer from "@mux/mux-player-react";
+import type { MuxCSSProperties } from "@mux/mux-player-react";
 import {
   ArrowRight,
   Maximize,
@@ -8,156 +10,38 @@ import {
   Play,
   SquarePlay,
   Volume2,
-  VolumeX,
-  X,
   VolumeOff,
-  Video,
-  Film,
   Clapperboard,
 } from "lucide-react";
+import { tutorials, type TutorialItem } from "./tutorialData";
 
-const tutorials = [
-  {
-    title: "Cinematic Portfolio Breakdown",
-    videoId: "LcxREB8BL8c",
-    thumbnail: "https://i.ytimg.com/vi/LcxREB8BL8c/maxresdefault.jpg",
-  },
-  {
-    title: "Creative Studio Website Process",
-    videoId: "E2iMwzwPJCw",
-    thumbnail: "https://i.ytimg.com/vi/E2iMwzwPJCw/maxresdefault.jpg",
-  },
-  {
-    title: "Modern Motion Design Workflow",
-    videoId: "_v40ddCwrQg",
-    thumbnail: "https://i.ytimg.com/vi/_v40ddCwrQg/maxresdefault.jpg",
-  },
-  {
-    title: "Designing Premium Experiences",
-    videoId: "dtSbMGzi2lQ",
-    thumbnail: "https://i.ytimg.com/vi/dtSbMGzi2lQ/maxresdefault.jpg",
-  },
-  {
-    title: "Building Interactive Interfaces",
-    videoId: "XEUzDdypXc8",
-    thumbnail: "https://i.ytimg.com/vi/XEUzDdypXc8/maxresdefault.jpg",
-  },
-  {
-    title: "Creative Direction & Motion",
-    videoId: "n8PtYmpDixU",
-    thumbnail: "https://i.ytimg.com/vi/n8PtYmpDixU/maxresdefault.jpg",
-  },
-  {
-    title: "Immersive Website Storytelling",
-    videoId: "fvy6fQbnMYQ",
-    thumbnail: "https://i.ytimg.com/vi/fvy6fQbnMYQ/maxresdefault.jpg",
-  },
-  {
-    title: "Advanced UI Animation Concepts",
-    videoId: "O238WIpdKbs",
-    thumbnail: "https://i.ytimg.com/vi/O238WIpdKbs/maxresdefault.jpg",
-  },
-  {
-    title: "High-End Visual Design Systems",
-    videoId: "DVnJqq1vx-Q",
-    thumbnail: "https://i.ytimg.com/vi/DVnJqq1vx-Q/maxresdefault.jpg",
-  },
-  {
-    title: "Designing Interactive Motion",
-    videoId: "FZPRgrP_s4E",
-    thumbnail: "https://i.ytimg.com/vi/FZPRgrP_s4E/maxresdefault.jpg",
-  },
-  {
-    title: "Creative Development Deep Dive",
-    videoId: "KaKJM3YaePA",
-    thumbnail: "https://i.ytimg.com/vi/KaKJM3YaePA/maxresdefault.jpg",
-  },
-];
-
-type SelectedVideo = {
-  title: string;
-  videoId: string;
-};
-
-function sendYTCommand(
-  iframe: HTMLIFrameElement,
-  func: string,
-  args: unknown[] = [],
-) {
-  iframe.contentWindow?.postMessage(
-    JSON.stringify({
-      event: "command",
-      func,
-      args,
-    }),
-    "*",
-  );
-}
+type SelectedVideo = TutorialItem;
 
 export default function Tutorials() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const playerRef = useRef<any>(null);
 
   const [canScrollRight, setCanScrollRight] = useState(true);
-
   const [selectedVideo, setSelectedVideo] = useState<SelectedVideo | null>(
     null,
   );
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  /* =========================
-     LOCK BACKGROUND SCROLL
-  ========================== */
   useEffect(() => {
     if (!selectedVideo) return;
 
     document.body.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = "";
     };
   }, [selectedVideo]);
 
-  /* =========================
-     PLAYER STATE SYNC
-  ========================== */
-  useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      try {
-        const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-
-        if (
-          data?.event === "infoDelivery" &&
-          data?.info?.playerState !== undefined
-        ) {
-          setIsPlaying(data.info.playerState === 1);
-        }
-      } catch {
-        // Ignore non-YouTube messages
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, []);
-
-  /* =========================
-     SCROLL
-  ========================== */
   const handleScroll = () => {
     if (!scrollRef.current) return;
 
-    scrollRef.current.scrollBy({
-      left: 240,
-      behavior: "smooth",
-    });
-
+    scrollRef.current.scrollBy({ left: 240, behavior: "smooth" });
     const el = scrollRef.current;
 
     requestAnimationFrame(() => {
@@ -165,84 +49,52 @@ export default function Tutorials() {
     });
   };
 
-  /* =========================
-     OPEN VIDEO
-  ========================== */
   const openVideo = (video: SelectedVideo) => {
     setSelectedVideo(video);
-
     setIsLoaded(false);
     setIsPlaying(true);
     setIsMuted(false);
   };
 
-  /* =========================
-     CLOSE MODAL
-  ========================== */
   const closeModal = () => {
-    if (iframeRef.current) {
-      sendYTCommand(iframeRef.current, "pauseVideo");
+    if (playerRef.current?.pause) {
+      playerRef.current.pause();
     }
-
     setSelectedVideo(null);
     setIsPlaying(false);
     setIsLoaded(false);
   };
 
-  /* =========================
-     PLAY / PAUSE
-  ========================== */
   const togglePlay = () => {
-    if (!iframeRef.current) return;
+    if (!playerRef.current) return;
 
     if (isPlaying) {
-      sendYTCommand(iframeRef.current, "pauseVideo");
+      playerRef.current.pause?.();
       setIsPlaying(false);
     } else {
-      sendYTCommand(iframeRef.current, "playVideo");
+      playerRef.current.play?.();
       setIsPlaying(true);
     }
   };
 
-  /* =========================
-     MUTE
-  ========================== */
   const toggleMute = () => {
-    if (!iframeRef.current) return;
+    if (!playerRef.current) return;
 
     if (isMuted) {
-      sendYTCommand(iframeRef.current, "unMute");
+      playerRef.current.muted = false;
       setIsMuted(false);
     } else {
-      sendYTCommand(iframeRef.current, "mute");
+      playerRef.current.muted = true;
       setIsMuted(true);
     }
   };
 
-  /* =========================
-     FULLSCREEN
-  ========================== */
   const openFullscreen = () => {
-    if (!iframeRef.current) return;
-
-    iframeRef.current.requestFullscreen?.();
+    playerRef.current?.requestFullscreen?.();
   };
-
-  /* =========================
-     EMBED URL
-     origin fixes API issues
-  ========================== */
-const buildEmbedUrl = (videoId: string) => {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
-  return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1&mute=0&controls=0&rel=0&modestbranding=1&playsinline=1&origin=${origin}`;
-};
 
   return (
     <>
-      {/* =========================
-          TUTORIAL STRIP
-      ========================== */}
       <div className="mono rounded bg-white/10 p-3 text-xs text-white">
         <p className="mb-3 max-w-60 tracking-tight">
           Learn how to use the canvas with our step-by-step guides.
@@ -255,7 +107,7 @@ const buildEmbedUrl = (videoId: string) => {
           >
             {tutorials.map((video) => (
               <button
-                key={video.videoId}
+                key={video.id}
                 type="button"
                 onClick={() => openVideo(video)}
                 className="group relative aspect-video h-40 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
@@ -269,7 +121,7 @@ const buildEmbedUrl = (videoId: string) => {
                 <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
 
                 <div className="absolute left-2 bottom-2">
-                  <p className="line-clamp-2  max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
+                  <p className="line-clamp-2 max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
                     {video.title}
                   </p>
                 </div>
@@ -294,9 +146,6 @@ const buildEmbedUrl = (videoId: string) => {
         </div>
       </div>
 
-      {/* =========================
-          VIDEO MODAL
-      ========================== */}
       {selectedVideo && (
         <div
           className="fixed inset-0 z-[999] grid place-items-center bg-black p-4 backdrop-blur-md sm:p-8"
@@ -307,9 +156,6 @@ const buildEmbedUrl = (videoId: string) => {
             className="flex w-full max-w-5xl flex-col items-center gap-4"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* =========================
-                VIDEO CARD
-            ========================== */}
             <article
               className="flex w-full flex-col overflow-hidden rounded border border-black bg-[#111] shadow-[0_32px_100px_rgba(0,0,0,0.45)]"
               role="dialog"
@@ -322,71 +168,79 @@ const buildEmbedUrl = (videoId: string) => {
                   </div>
                 )}
 
-                <iframe
-                  ref={iframeRef}
-                  src={buildEmbedUrl(selectedVideo.videoId)}
-                  title={selectedVideo.title}
-                  className={`aspect-video w-full transition-opacity duration-300 ${
-                    isLoaded ? "opacity-100" : "opacity-0"
-                  }`}
-                  allow="autoplay; fullscreen; encrypted-media"
-                  allowFullScreen
-                  onLoad={() => setIsLoaded(true)}
+                <MuxPlayer
+                  ref={playerRef}
+                  playbackId={selectedVideo.playbackId}
+                  metadata={{ video_title: selectedVideo.title }}
+                  poster={selectedVideo.thumbnail}
+                  autoPlay
+                  muted={isMuted}
+                  loop={false}
+                  onCanPlay={() => setIsLoaded(true)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  className={`aspect-video mux w-full transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+                  style={
+                    {
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 0,
+                      minWidth: 0,
+                      objectFit: "cover",
+                      "--media-object-fit": "cover",
+                      "--controls": "none",
+                      "--media-control-display": "none",
+                    } as MuxCSSProperties
+                  }
                 />
 
-                {/* Prevent YouTube hover overlays */}
                 <div className="pointer-events-none absolute inset-0 z-20" />
-
-                {/* Bottom gradient */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
               </div>
             </article>
 
-            {/* =========================
-                FLOATING TOOLBAR
-            ========================== */}
-            <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white  pl-3 shadow-2xl">
-              <div className="min-w-0 gap-1 flex items-center hover:underline cursor-pointer" onClick={closeModal}>
+            <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white pl-3 shadow-2xl">
+              <div
+                className="min-w-0 gap-1 flex items-center hover:underline cursor-pointer"
+                onClick={closeModal}
+              >
                 <Clapperboard className="w-4.5 h-4.5 stroke-[1.5] text-black/70" />
-                <span className="text-xs mono uppercase tracking-tight truncate" >
+                <span className="text-xs mono uppercase tracking-tight truncate">
                   {selectedVideo.title}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 rounded  p-0.5">
-                {/* Play */}
+              <div className="flex items-center gap-1 rounded p-0.5">
                 <button
                   type="button"
                   onClick={togglePlay}
                   className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isPlaying ? (
-                    <SquarePause className="h-4.5 stroke-[1.5] text-black/70 w-4.5 " />
+                    <SquarePause className="h-4.5 stroke-[1.5] text-black/70 w-4.5" />
                   ) : (
-                    <SquarePlay className=" stroke-[1.5] text-black/70  h-4.5 w-4.5 " />
+                    <SquarePlay className="stroke-[1.5] text-black/70 h-4.5 w-4.5" />
                   )}
                 </button>
 
-                {/* Mute */}
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="rounded cursor-pointer stroke-[1.5] text-black/70  p-1.5 text-black transition-colors hover:bg-white"
+                  className="rounded cursor-pointer stroke-[1.5] text-black/70 p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isMuted ? (
-                    <VolumeOff className="h-4.5 stroke-[1.8] text-black/70  w-4.5" />
+                    <VolumeOff className="h-4.5 stroke-[1.8] text-black/70 w-4.5" />
                   ) : (
-                    <Volume2 className="h-4.5  stroke-[1.8] text-black/70 w-4.5" />
+                    <Volume2 className="h-4.5 stroke-[1.8] text-black/70 w-4.5" />
                   )}
                 </button>
 
-                {/* Fullscreen */}
                 <button
                   type="button"
                   onClick={openFullscreen}
                   className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
-                  <Maximize className="h-4 stroke-[1.8] text-black/70  w-4" />
+                  <Maximize className="h-4 stroke-[1.8] text-black/70 w-4" />
                 </button>
               </div>
             </div>

@@ -2,6 +2,8 @@
 
 import { X } from "lucide-react";
 import React, { useState } from "react";
+import MuxPlayer from "@mux/mux-player-react";
+import type { MuxCSSProperties } from "@mux/mux-player-react";
 
 type Props = {
   userId: string | null;
@@ -46,28 +48,28 @@ const NewReleaseUpdate = ({ userId }: Props) => {
           </h1>
 
           <div className="mt-6 w-full flex-1 overflow-hidden rounded bg-neutral-100">
-            <video
-              className="h-full w-full object-cover"
+            <MuxPlayer
+              src="https://storage.googleapis.com/muxdemofiles/mux-video-intro.mp4"
+              poster="https://image.mux.com/eOfyCKGLznhB7xa2IkN1MQWXe3dIn3iJLaRso4zEd4Q/animated.gif"
+              metadata={{ video_title: "What's new in Canvas" }}
               autoPlay
               muted
-              playsInline
               loop
-              controls
-              preload="auto"
-            >
-              <source
-                src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-                type="video/mp4"
-              />
-            </video>
+              className="h-full mux w-full"
+              style={
+                {
+                  width: "100%",
+                  height: "100%",
+                  minHeight: 0,
+                  minWidth: 0,
+                  objectFit: "cover",
+                  "--media-object-fit": "cover",
+                  "--controls": "none",
+                  "--media-control-display": "none",
+                } as MuxCSSProperties
+              }
+            />
           </div>
-
-          <button
-            onClick={close}
-            className="mt-6 h-8 cursor-pointer rounded bg-black px-2 text-xs font-medium uppercase text-white"
-          >
-            Explore what&apos;s new
-          </button>
         </div>
       </div>
     </div>
