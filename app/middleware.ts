@@ -5,7 +5,6 @@
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import { getCacheStrategy, CACHE_PRESETS } from "@/lib/caching/vercelEdgeCache";
 
 export async function middleware(request: NextRequest) {
@@ -25,26 +24,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Determine if user is authenticated by checking Supabase session cookies
-  let isAuthenticated = false;
-  try {
-    // Create a lightweight Supabase client at the edge to check auth
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: () => {}, // Middleware shouldn't set cookies
-        },
-      },
-    );
-    const { data } = await supabase.auth.getSession();
-    isAuthenticated = !!data.session;
-  } catch {
-    // If auth check fails (e.g. missing env vars), assume unauthenticated
-    isAuthenticated = false;
-  }
+  // Determine if user is authenticated by checking for Supabase session cookie
+  // Don't call auth.getSession() at the edge - it's too heavy and can fail
+  const authCookie = request.cookies.get("sb-auth-token")?.value ||
+    request.cookies.get("sb-access-token")?.value;
+  const isAuthenticated = !!authCookie;
 
   // Determine cache strategy based on route + auth status
   const strategy = getCacheStrategy(pathname, isAuthenticated);
