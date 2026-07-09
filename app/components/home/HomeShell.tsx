@@ -1221,7 +1221,7 @@ function AccountInfoTab({
 
       {/* fields */}
       <div className="flex flex-col gap-2">
-        {/* nickname */}
+        {/* nickname will be used later */}
         <div className="flex flex-col gap-2 text-white">
           <span className="text-xs mono uppercase tracking-tight text-white">
             Display Name
@@ -1234,7 +1234,7 @@ function AccountInfoTab({
               placeholder="Enter nickname"
               className="
                 h-9 w-full max-w-120
-                rounded border border-transparent
+                rounded border capitalize border-transparent
                 bg-white/10
                 px-3
                 text-xs text-white mono
