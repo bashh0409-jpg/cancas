@@ -1614,73 +1614,83 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
 
     const fetchAllFiles = async () => {
       try {
+        if (canvases.length === 0) {
+          if (mounted) setFiles([]);
+          return;
+        }
+
+        const canvasIds = Array.from(new Set(canvases.map((canvas) => canvas.id)));
+        const res = await fetch(
+          `/api/canvases/library?ids=${encodeURIComponent(canvasIds.join(","))}`,
+          { cache: "no-store" },
+        );
+
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
         const allFiles: typeof files = [];
 
-        for (const canvas of canvases) {
-          try {
-            const res = await fetch(`/api/canvases/${canvas.id}`);
-            if (!res.ok) continue;
-
-            const data = await res.json();
-            const content = data.content;
-
-            if (content?.imageNodes) {
-              content.imageNodes.forEach(
-                (node: { id: string; fileName: string; url?: string }) => {
-                  allFiles.push({
-                    id: node.id,
-                    type: "image",
-                    title: node.fileName,
-                    thumbnail: node.url,
-                    url: node.url,
-                    canvasName: canvas.name,
-                    canvasId: canvas.id,
-                  });
-                },
-              );
-            }
-
-            if (content?.webNodes) {
-              content.webNodes.forEach(
-                (node: { id: string; title: string; url: string }) => {
-                  allFiles.push({
-                    id: node.id,
-                    type: "web",
-                    title: node.title || new URL(node.url).hostname,
-                    url: node.url,
-                    canvasName: canvas.name,
-                    canvasId: canvas.id,
-                  });
-                },
-              );
-            }
-
-            if (content?.voiceNodes) {
-              content.voiceNodes.forEach(
-                (node: {
+        for (const canvas of data.canvases ?? []) {
+          const content = canvas.content as
+            | {
+                imageNodes?: Array<{ id: string; fileName: string; url?: string }>;
+                webNodes?: Array<{ id: string; title: string; url: string }>;
+                voiceNodes?: Array<{
                   id: string;
                   title: string;
                   audioDataUrl: string;
                   durationMs?: number;
-                }) => {
-                  allFiles.push({
-                    id: node.id,
-                    type: "voice",
-                    title: node.title,
-                    audioDataUrl: node.audioDataUrl,
-                    durationMs: node.durationMs,
-                    canvasName: canvas.name,
-                    canvasId: canvas.id,
-                  });
-                },
-              );
-            }
-          } catch {
-            // Continue if one canvas fails
+                }>;
+              }
+            | undefined;
+
+          if (content?.imageNodes) {
+            content.imageNodes.forEach((node) => {
+              allFiles.push({
+                id: node.id,
+                type: "image",
+                title: node.fileName,
+                thumbnail: node.url,
+                url: node.url,
+                canvasName: canvas.name,
+                canvasId: canvas.id,
+              });
+            });
+          }
+
+          if (content?.webNodes) {
+            content.webNodes.forEach((node) => {
+              allFiles.push({
+                id: node.id,
+                type: "web",
+                title: node.title || new URL(node.url).hostname,
+                url: node.url,
+                canvasName: canvas.name,
+                canvasId: canvas.id,
+              });
+            });
+          }
+
+          if (content?.voiceNodes) {
+            content.voiceNodes.forEach((node) => {
+              allFiles.push({
+                id: node.id,
+                type: "voice",
+                title: node.title,
+                audioDataUrl: node.audioDataUrl,
+                durationMs: node.durationMs,
+                canvasName: canvas.name,
+                canvasId: canvas.id,
+              });
+            });
           }
         }
 
         if (mounted) setFiles(allFiles);
+      } catch {
+        if (mounted) setFiles([]);
       } finally {
         if (mounted) setLoading(false);
       }

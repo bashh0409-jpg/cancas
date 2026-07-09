@@ -416,6 +416,49 @@ export async function getUserCanvases(
   }
 }
 
+export async function getUserCanvasesByIds(
+  supabase: SupabaseClient,
+  userId: string,
+  canvasIds: string[],
+): Promise<CanvasRecord[]> {
+  if (canvasIds.length === 0) {
+    return [];
+  }
+
+  const uniqueCanvasIds = Array.from(new Set(canvasIds.filter(Boolean)));
+
+  if (uniqueCanvasIds.length === 0) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("canvases")
+      .select("id,name,slug,content,created_at,updated_at")
+      .eq("user_id", userId)
+      .in("id", uniqueCanvasIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+    return (data as CanvasRecord[] | null) ?? [];
+  } catch (err: unknown) {
+    if (isMissingDeletedAtColumn(err)) {
+      const { data, error } = await supabase
+        .from("canvases")
+        .select("id,name,slug,content,created_at,updated_at")
+        .eq("user_id", userId)
+        .in("id", uniqueCanvasIds)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      return (data as CanvasRecord[] | null) ?? [];
+    }
+
+    throw err;
+  }
+}
+
 export async function listUserTrashedCanvases(
   supabase: SupabaseClient,
   userId: string,
