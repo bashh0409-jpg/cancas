@@ -167,7 +167,7 @@ export function AccountCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium leading-tight text-white">
+            <p className="truncate capitalize text-xs font-medium leading-tight text-white">
               {lastName && lastName !== "User"
                 ? `${firstName} ${lastName}`
                 : firstName}
@@ -898,7 +898,7 @@ function FilesPage({
     <div className="flex flex-col scrollbar-hidden overflow-x-hidden gap-4">
       <div className="flex flex-wrap  items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-          <div className="mono text-sm tracking-tight text-white">
+          <div className="mono capitalize text-sm tracking-tight text-white">
             {lastName && lastName !== "User"
               ? `${firstName} ${lastName}`
               : firstName}
