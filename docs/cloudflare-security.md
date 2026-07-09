@@ -76,8 +76,9 @@ Characteristics: IP
 Period: 60 seconds
 Requests: 30
 Mitigation timeout: 60 seconds
-Action: Managed Challenge
+Action: Managed Challenge 
 ```
+
 
 ```text
 Name: General API abuse control
