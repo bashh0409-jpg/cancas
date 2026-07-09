@@ -82,6 +82,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "image.mux.com",
+      },
     ],
   },
   async rewrites() {

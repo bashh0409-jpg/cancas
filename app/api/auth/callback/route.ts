@@ -30,6 +30,10 @@ export async function GET(request: NextRequest) {
               maxAge: options?.maxAge ?? 60 * 60 * 24 * 365,
               sameSite: options?.sameSite ?? "lax",
               secure: process.env.NODE_ENV === "production",
+              domain:
+                process.env.NODE_ENV === "production"
+                  ? ".swipes.site"
+                  : options?.domain,
               path: options?.path ?? "/",
             }),
           );

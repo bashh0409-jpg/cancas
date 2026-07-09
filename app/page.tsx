@@ -20,11 +20,10 @@ const page = async () => {
 
   return (
     <div className="text-white">
-      <div><Navbar />
-        <div className="relative h-screen bg-white  overflow-hidden">
-          
-        </div>
-        <div >
+      <div>
+        <Navbar />
+        <div className="relative h-screen bg-white  overflow-hidden"></div>
+        <div>
           <Animated />
         </div>
         <section className="mx-auto hidden flex w-full max-w-[1300px] flex-col items-center gap-5 px-4 lg:flex-row lg:justify-center lg:gap-12 lg:px-0  ">

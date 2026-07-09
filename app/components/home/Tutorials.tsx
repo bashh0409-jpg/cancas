@@ -1,17 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import MuxPlayer from "@mux/mux-player-react";
+import type MuxPlayerElement from "@mux/mux-player";
 import type { MuxCSSProperties } from "@mux/mux-player-react";
 import {
   ArrowRight,
-  Maximize,
   SquarePause,
   Play,
   SquarePlay,
   Volume2,
   VolumeOff,
   Clapperboard,
+  Fullscreen,
 } from "lucide-react";
 import { tutorials, type TutorialItem } from "./tutorialData";
 
@@ -19,7 +21,7 @@ type SelectedVideo = TutorialItem;
 
 export default function Tutorials() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<MuxPlayerElement | null>(null);
 
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<SelectedVideo | null>(
@@ -28,6 +30,8 @@ export default function Tutorials() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     if (!selectedVideo) return;
@@ -54,6 +58,8 @@ export default function Tutorials() {
     setIsLoaded(false);
     setIsPlaying(true);
     setIsMuted(false);
+    setCurrentTime(0);
+    setDuration(0);
   };
 
   const closeModal = () => {
@@ -63,6 +69,8 @@ export default function Tutorials() {
     setSelectedVideo(null);
     setIsPlaying(false);
     setIsLoaded(false);
+    setCurrentTime(0);
+    setDuration(0);
   };
 
   const togglePlay = () => {
@@ -93,6 +101,18 @@ export default function Tutorials() {
     playerRef.current?.requestFullscreen?.();
   };
 
+  const handleTimeUpdate = () => {
+    if (!playerRef.current) return;
+    setCurrentTime(playerRef.current.currentTime ?? 0);
+    setDuration(playerRef.current.duration ?? 0);
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${String(secs).padStart(2, "0")}`;
+  };
+
   return (
     <>
       <div className="mono rounded bg-white/10 p-3 text-xs text-white">
@@ -103,19 +123,21 @@ export default function Tutorials() {
         <div className="relative">
           <div
             ref={scrollRef}
-            className="scrollbar-none flex gap-2 overflow-x-auto pr-14"
+            className="scrollbar-none flex gap-2 overflow-x-auto scroll-smooth"
           >
             {tutorials.map((video) => (
               <button
                 key={video.id}
                 type="button"
                 onClick={() => openVideo(video)}
-                className="group relative aspect-video h-40 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
+                className="group cursor-pointer relative aspect-video h-40 min-w-[200px] shrink-0 overflow-hidden rounded bg-white/10 text-left"
               >
-                <img
+                <Image
                   src={video.thumbnail}
                   alt={video.title}
-                  className="h-full w-full object-cover transition-transform duration-300"
+                  fill
+                  priority={false}
+                  className="object-cover transition-transform duration-300"
                 />
 
                 <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
@@ -175,10 +197,11 @@ export default function Tutorials() {
                   poster={selectedVideo.thumbnail}
                   autoPlay
                   muted={isMuted}
-                  loop={false}
+                  loop={true}
                   onCanPlay={() => setIsLoaded(true)}
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
+                  onTimeUpdate={handleTimeUpdate}
                   className={`aspect-video mux w-full transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                   style={
                     {
@@ -201,10 +224,15 @@ export default function Tutorials() {
 
             <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white pl-3 shadow-2xl">
               <div
-                className="min-w-0 gap-1 flex items-center hover:underline cursor-pointer"
+                className="min-w-0 gap-1 flex items-center cursor-pointer"
                 onClick={closeModal}
               >
-                <Clapperboard className="w-4.5 h-4.5 stroke-[1.5] text-black/70" />
+                <Clapperboard className="w-4 h-4 stroke-[1.5] text-black/70" />
+                <span className="mono uppercase text-xs mx-2">
+                  {duration > 0
+                    ? `${formatTime(currentTime)}`
+                    : "00:00"}
+                </span>
                 <span className="text-xs mono uppercase tracking-tight truncate">
                   {selectedVideo.title}
                 </span>
@@ -217,9 +245,9 @@ export default function Tutorials() {
                   className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isPlaying ? (
-                    <SquarePause className="h-4.5 stroke-[1.5] text-black/70 w-4.5" />
+                    <SquarePause className="h-4.5 stroke-[1.9] hover:text-black  text-black/70 w-4.5" />
                   ) : (
-                    <SquarePlay className="stroke-[1.5] text-black/70 h-4.5 w-4.5" />
+                    <SquarePlay className="stroke-[1.9] hover:text-black text-black/70 h-4.5 w-4.5" />
                   )}
                 </button>
 
@@ -229,9 +257,9 @@ export default function Tutorials() {
                   className="rounded cursor-pointer stroke-[1.5] text-black/70 p-1.5 text-black transition-colors hover:bg-white"
                 >
                   {isMuted ? (
-                    <VolumeOff className="h-4.5 stroke-[1.8] text-black/70 w-4.5" />
+                    <VolumeOff className="h-4.5 stroke-[1.9] hover:text-black  text-black/70 w-4.5" />
                   ) : (
-                    <Volume2 className="h-4.5 stroke-[1.8] text-black/70 w-4.5" />
+                    <Volume2 className="h-4.5 stroke-[1.9] hover:text-black text-black/70 w-4.5" />
                   )}
                 </button>
 
@@ -240,7 +268,7 @@ export default function Tutorials() {
                   onClick={openFullscreen}
                   className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
                 >
-                  <Maximize className="h-4 stroke-[1.8] text-black/70 w-4" />
+                  <Fullscreen className="h-4 stroke-[1.9] hover:text-black  text-black/70 w-4" />
                 </button>
               </div>
             </div>

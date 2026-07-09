@@ -7,11 +7,17 @@ import {
   AudioLines,
   ClockFading,
   Download,
+  Fullscreen,
   Globe,
   LogOut,
+  Clapperboard,
   Plus,
   Settings,
+  SquarePause,
+  SquarePlay,
   User,
+  Volume2,
+  VolumeOff,
   X,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
@@ -22,8 +28,9 @@ import { CanvasFileList } from "@/app/components/home/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import Tutorials from "./Tutorials";
 import MuxPlayer from "@mux/mux-player-react";
+import type MuxPlayerElement from "@mux/mux-player";
 import type { MuxCSSProperties } from "@mux/mux-player-react";
-import { tutorials } from "./tutorialData";
+import { tutorials, type TutorialItem } from "./tutorialData";
 import type { UserSettings } from "@/lib/user/settingsRepository";
 import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
@@ -362,16 +369,77 @@ export function HomeShell({
   const [activePage, setActivePage] = useState<ActivePage>("files");
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedVideo, setSelectedVideo] = useState<TutorialItem | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const playerRef = useRef<MuxPlayerElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedVideo) return;
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedVideo]);
+
+  const openVideo = (video: TutorialItem) => {
+    setSelectedVideo(video);
+    setIsLoaded(false);
+    setIsPlaying(true);
+    setIsMuted(false);
+  };
+
+  const closeModal = () => {
+    if (playerRef.current?.pause) {
+      playerRef.current.pause();
+    }
+    setSelectedVideo(null);
+    setIsPlaying(false);
+    setIsLoaded(false);
+    setCurrentTime(0);
+    setDuration(0);
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const togglePlay = () => {
+    if (!playerRef.current) return;
+
+    if (isPlaying) {
+      playerRef.current.pause?.();
+      setIsPlaying(false);
+    } else {
+      playerRef.current.play?.();
+      setIsPlaying(true);
+    }
+  };
+
+  const toggleMute = () => {
+    if (!playerRef.current) return;
+
+    playerRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
+  const openFullscreen = () => {
+    playerRef.current?.requestFullscreen?.();
+  };
 
   const fullName =
     lastName && lastName !== "User" ? `${firstName} ${lastName}` : firstName;
   const labelsRef = useRef<HTMLElement[]>([]);
-  const wordmarkRef = useRef<HTMLDivElement>(null);
   const createBtnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const labels = labelsRef.current.filter(Boolean);
-    const wordmark = wordmarkRef.current;
     const createBtn = createBtnRef.current;
     const targets = [...labels, ...(createBtn ? [createBtn] : [])];
 
@@ -403,6 +471,12 @@ export function HomeShell({
     if (el && !labelsRef.current.includes(el)) {
       labelsRef.current.push(el);
     }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!playerRef.current) return;
+    setCurrentTime(playerRef.current.currentTime ?? 0);
+    setDuration(playerRef.current.duration ?? 0);
   };
 
   return (
@@ -667,7 +741,7 @@ export function HomeShell({
         )}
         {activePage === "library" && <LibraryPage canvases={canvases} />}
         {activePage === "recently-deleted" && <RecentlyDeletedPage />}
-        {activePage === "tutorials" && <TutorialPage />}
+        {activePage === "tutorials" && <TutorialPage openVideo={openVideo} />}
         {activePage === "settings" && (
           <SettingsPage
             profile={profile}
@@ -680,6 +754,115 @@ export function HomeShell({
           />
         )}
       </main>
+
+      {selectedVideo && (
+        <div
+          className="fixed inset-0 cursor-pointer z-[999] grid place-items-center bg-black p-4 backdrop-blur-md sm:p-8"
+          onClick={closeModal}
+          role="presentation"
+        >
+          <div
+            className="flex w-full max-w-5xl flex-col items-center gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <article
+              className="flex cursor-pointer w-full flex-col overflow-hidden rounded border border-black bg-[#111] shadow-[0_32px_100px_rgba(0,0,0,0.45)]"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="relative overflow-hidden bg-black">
+                {!isLoaded && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111]">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  </div>
+                )}
+
+                <MuxPlayer
+                  ref={playerRef}
+                  playbackId={selectedVideo.playbackId}
+                  metadata={{ video_title: selectedVideo.title }}
+                  poster={selectedVideo.thumbnail}
+                  autoPlay
+                  muted={isMuted}
+                  loop={true}
+                  onCanPlay={() => setIsLoaded(true)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onTimeUpdate={handleTimeUpdate}
+                  className={`aspect-video mux w-full transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+                  style={
+                    {
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 0,
+                      minWidth: 0,
+                      objectFit: "cover",
+                      "--media-object-fit": "cover",
+                      "--controls": "none",
+                      "--media-control-display": "none",
+                    } as MuxCSSProperties
+                  }
+                />
+
+                <div className="pointer-events-none absolute inset-0 z-20" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
+              </div>
+            </article>
+
+            <div className="flex w-fit min-w-[340px] h-8 items-center justify-between gap-4 rounded border border-black/10 bg-white pl-3 shadow-2xl">
+              <div
+                className="min-w-0 gap-1 cursor-pointer flex items-center"
+                onClick={closeModal}
+              >
+                {" "}
+                <Clapperboard className="w-4 h-4 stroke-[1.5] text-black/70" />
+                <span className="mono min-w-[4rem] uppercase text-xs mx-2">
+                  {duration > 0
+                    ? `${formatTime(currentTime)}`
+                    : "00:00"}
+                </span>
+                <span className="text-xs mono uppercase tracking-tight truncate">
+                  {selectedVideo.title}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 rounded p-0.5">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
+                >
+                  {isPlaying ? (
+                    <SquarePause className="stroke-[1.9] hover:text-black  text-black/70 h-4.5 w-4.5" />
+                  ) : (
+                    <SquarePlay className="stroke-[1.9] hover:text-black  text-black/70 h-4.5 w-4.5" />
+                  )}{" "}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="rounded cursor-pointer stroke-[1.9] hover:text-black text-black/70 p-1.5 text-black transition-colors hover:bg-white"
+                >
+                  {isMuted ? (
+                    <VolumeOff className="stroke-[1.9] hover:text-black text-black/70 h-4.5 w-4.5" />
+                  ) : (
+                    <Volume2 className="stroke-[1.9] hover:text-black text-black/70 h-4.5 w-4.5" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openFullscreen}
+                  className="rounded cursor-pointer p-1.5 text-black transition-colors hover:bg-white"
+                >
+                  <Fullscreen className="h-4 stroke-[1.9] hover:text-black  text-black/70 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1316,7 +1499,11 @@ function WorkspaceSettingsTab({
   );
 }
 
-export function TutorialPage() {
+export function TutorialPage({
+  openVideo,
+}: {
+  openVideo: (video: TutorialItem) => void;
+}) {
   return (
     <div className="flex flex-col gap-6">
       {/* header */}
@@ -1333,17 +1520,19 @@ export function TutorialPage() {
       {/* grid */}
       <div className="grid grid-cols-1  sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
         {tutorials.map((item) => (
-          <div
+          <button
             key={item.id}
-            className="w-full aspect-video overflow-hidden rounded bg-white/10 transition hover:bg-white/11 hover:border-white/10"
+            type="button"
+            onClick={() => openVideo(item)}
+            className="w-full text-left cursor-pointer aspect-video overflow-hidden rounded bg-white/10 transition hover:bg-white/11 hover:border-white/10"
           >
-            <div className="relative cursor-pointer aspect-video h-full w-full">
+            <div className="relative aspect-video h-full w-full">
               <MuxPlayer
                 playbackId={item.playbackId}
                 metadata={{ video_title: item.title }}
                 poster={item.thumbnail}
                 muted={true}
-                loop={false}
+                loop={true}
                 autoPlay={false}
                 className="h-full mux w-full"
                 style={
@@ -1362,12 +1551,12 @@ export function TutorialPage() {
 
               <div className="absolute inset-0 bg-black/20" />
               <div className="absolute left-3 bottom-3 right-3">
-                <h3 className="text-white text-xs mono font-medium tracking-tight">
+                <h3 className="text-white  text-xs mono font-medium tracking-tight">
                   {item.title}
                 </h3>
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

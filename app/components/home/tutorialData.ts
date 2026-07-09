@@ -25,7 +25,7 @@ const tutorialsData = [
   },
   {
     playbackId: "MvG01we02sEUmWGapHryLGEqfPZ024TRYANKIeatyZl1eE",
-    title: "",
+    title: "Customizing Your Workspace",
   },
 ];
 
