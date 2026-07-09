@@ -5,8 +5,19 @@ import Faq from "./components/Faq";
 import Footer from "./components/Footer";
 import Animated from "./components/animated";
 import { getAppUrl } from "@/lib/appUrl";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-const page = () => {
+const page = async () => {
+  if (process.env.NODE_ENV === "production") {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+
+    if (data?.user) {
+      redirect(getAppUrl("/"));
+    }
+  }
+
   return (
     <div className="text-white">
       <div><Navbar />
