@@ -36,7 +36,11 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Apply the determined cache control header
-  response.headers.set("Cache-Control", CACHE_PRESETS[strategy]);
+  const cacheControl = CACHE_PRESETS[strategy];
+  response.headers.set("Cache-Control", cacheControl);
+
+  // Debug: confirm middleware is running
+  response.headers.set("X-Middleware-Cache-Strategy", strategy);
 
   // For authenticated routes, also set Vary to ensure no accidental caching
   if (isAuthenticated || strategy.startsWith("NO_CACHE")) {
@@ -47,7 +51,7 @@ export async function middleware(request: NextRequest) {
 
   // Set CDN-Cache-Control for public cacheable routes to instruct Vercel/Cloudflare CDN
   if (strategy !== "NO_CACHE_AUTH" && !strategy.startsWith("NO_CACHE")) {
-    const maxAge = extractMaxAge(CACHE_PRESETS[strategy]);
+    const maxAge = extractMaxAge(cacheControl);
     if (maxAge) {
       response.headers.set("CDN-Cache-Control", `public, max-age=${maxAge}`);
     }
