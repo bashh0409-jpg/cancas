@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
 import { CreditNotifier } from "@/app/components/home/CreditNotifier";
 import { createCanvasAction } from "@/app/home/actions";
@@ -17,6 +18,12 @@ import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
 import { updateSettingsAction } from "@/app/actions/updateSettingsAction";
 import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 import NewReleaseUpdate from "@/app/components/home/NewReleasUpdate";
+
+export const metadata: Metadata = {
+  title: "REFLOW",
+  description:
+    "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
+};
 
 export default async function HomePage({
   searchParams,

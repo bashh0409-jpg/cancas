@@ -816,10 +816,8 @@ export function HomeShell({
               >
                 {" "}
                 <Clapperboard className="w-4 h-4 stroke-[1.5] text-black/70" />
-                <span className="mono min-w-[4rem] uppercase text-xs mx-2">
-                  {duration > 0
-                    ? `${formatTime(currentTime)}`
-                    : "00:00"}
+                <span className="mono min-w-[3rem] text-center uppercase text-xs ">
+                  {duration > 0 ? `${formatTime(currentTime)}` : "00:00"}
                 </span>
                 <span className="text-xs mono uppercase tracking-tight truncate">
                   {selectedVideo.title}

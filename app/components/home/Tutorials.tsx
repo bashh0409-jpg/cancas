@@ -143,7 +143,7 @@ export default function Tutorials() {
                 <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/40" />
 
                 <div className="absolute left-2 bottom-2">
-                  <p className="line-clamp-2 max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
+                  <p className="line-clamp-2 uppercase max-w-[160px] truncate text-[10px] font-medium tracking-tight text-white">
                     {video.title}
                   </p>
                 </div>
@@ -228,10 +228,8 @@ export default function Tutorials() {
                 onClick={closeModal}
               >
                 <Clapperboard className="w-4 h-4 stroke-[1.5] text-black/70" />
-                <span className="mono uppercase text-xs mx-2">
-                  {duration > 0
-                    ? `${formatTime(currentTime)}`
-                    : "00:00"}
+                <span className="mono min-w-[3rem] text-center uppercase text-xs">
+                  {duration > 0 ? `${formatTime(currentTime)}` : "00:00"}
                 </span>
                 <span className="text-xs mono uppercase tracking-tight truncate">
                   {selectedVideo.title}
