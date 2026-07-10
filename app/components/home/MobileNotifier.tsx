@@ -163,7 +163,7 @@ const MobileNotifier: React.FC<Props> = ({
           </svg>
           Join our Discord community
         </a>{" "}
-        <Notice />
+      
       </div>
       <div className="w-full absolute bottom-0 left-0">
         <Notice />
