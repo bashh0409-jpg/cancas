@@ -73,6 +73,93 @@ type SidebarProps = {
   onSwitchCanvas?: (slug: string) => void;
 };
 
+// Canvas switcher flyout — hover to reveal canvas list on the right
+const CanvasSwitcherFlyout = ({
+  canvases,
+  activeCanvasId,
+  onSwitchCanvas,
+}: {
+  canvases?: { id: string; name: string; slug: string }[];
+  activeCanvasId?: string;
+  onSwitchCanvas?: (slug: string) => void;
+}) => {
+  const [showFlyout, setShowFlyout] = useState(false);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowFlyout(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowFlyout(false);
+    }, 150);
+  };
+
+  return (
+    <div
+      className="relative border-t border-white/10"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white/60 transition hover:text-white flex items-center gap-2"
+      >
+        Switch canvas
+      </button>
+
+      {showFlyout && canvases && canvases.length > 0 && (
+        <div
+          className="absolute left-full top-0 z-[70] w-[200px] rounded border border-white/10 bg-[#212126] shadow-2xl py-2"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="max-h-64 overflow-y-auto">
+            {canvases.map((canvas) => {
+              const isActive = canvas.id === activeCanvasId;
+
+              return (
+                <a
+                  key={canvas.id}
+                  href={`/canvas/${canvas.slug}`}
+                  onClick={(e) => {
+                    if (onSwitchCanvas) {
+                      e.preventDefault();
+                      onSwitchCanvas(canvas.slug);
+                    }
+                  }}
+                  className={`flex items-center justify-between gap-2 px-3 py-1.5 text-[11px] mono transition ${
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <span className="truncate">{canvas.name}</span>
+                  {isActive && (
+                    <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-lime-400" />
+                  )}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {showFlyout && (!canvases || canvases.length === 0) && (
+        <div
+          className="absolute left-full top-0 z-[70] w-[200px] rounded border border-white/10 bg-[#212126] shadow-2xl py-3 px-3"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <p className="text-[11px] mono text-white/50">No other canvases yet</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Canvas switcher popup — styled like the home account card
 const CanvasSwitcherOverlay = ({
   canvasName,
@@ -187,48 +274,12 @@ const CanvasSwitcherOverlay = ({
         </div>
       </div>
 
-      {/* Switch canvas */}
-      {canvases && canvases.length > 0 ? (
-        <div className="max-h-52 border-t uppercase border-white/10 overflow-y-auto px-3 py-2.5">
-          <p className="mb-2 text-[10px] mono uppercase tracking-wider text-white/40">
-            Switch canvas
-          </p>
-          <div className="flex flex-col gap-0.5">
-            {canvases.map((canvas) => {
-              const isActive = canvas.id === activeCanvasId;
-
-              return (
-                <a
-                  key={canvas.id}
-                  href={`/canvas/${canvas.slug}`}
-                  onClick={(e) => {
-                    if (onSwitchCanvas) {
-                      e.preventDefault();
-                      onSwitchCanvas(canvas.slug);
-                    }
-                  }}
-                  className={`flex items-center justify-between gap-2 rounded-xs p-1 py-1.5 text-[11px] mono transition ${
-                    isActive
-                      ? "bg-white/15 text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <span className="truncate ">{canvas.name}</span>
-                  {isActive ? (
-                    <span className="shrink-0 text-[9px] uppercase tracking-wide text-lime-300">
-                      <Plus className="w-3.5 h-3.5" />
-                    </span>
-                  ) : null}
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="px-3 py-3 text-xs tracking-tight mono text-white/50">
-          No other canvases yet
-        </div>
-      )}
+      {/* Switch canvas — hover to open flyout */}
+      <CanvasSwitcherFlyout
+        canvases={canvases}
+        activeCanvasId={activeCanvasId}
+        onSwitchCanvas={onSwitchCanvas}
+      />
 
       {/* New file shortcut — creates a new canvas */}
       <div className="border-t border-white/10 px-3 py-1">
