@@ -14,7 +14,7 @@ const page = async () => {
     const { data } = await supabase.auth.getUser();
 
     if (data?.user) {
-      redirect(getAppUrl("/"));
+      redirect(getAppUrl("/home"));
     }
   }
 
