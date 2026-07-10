@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 import { Trash2, Loader2 } from "lucide-react";
+import { showToast } from "./Toast";
 
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
@@ -90,52 +91,51 @@ export function CanvasFileList({
   async function handleDelete(canvasId: string, canvasName: string) {
     // If in trash view, this is permanent delete
     if (isTrash) {
-      const confirmed = window.confirm(
-        `Permanently delete "${canvasName}"? This cannot be undone.`,
-      );
-      if (!confirmed) return;
-
-      setDeletingId(canvasId);
-      try {
-        const res = await fetch(`/api/canvases/${canvasId}/permanent`, {
-          method: "DELETE",
-        });
-        if (!res.ok) return;
-        setCanvases((current) => current.filter((c) => c.id !== canvasId));
-        window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
-        router.refresh();
-      } finally {
-        setDeletingId(null);
-      }
-
-      return;
-    }
-
-    const confirmed = window.confirm(`Move "${canvasName}" to trash.`);
-
-    if (!confirmed) {
-      return;
-    }
-
-    setDeletingId(canvasId);
-
-    try {
-      const response = await fetch(`/api/canvases/${canvasId}`, {
-        method: "DELETE",
+      showToast({
+        type: "confirm",
+        title: "Permanently delete?",
+        message: `"${canvasName}" will be permanently deleted. This cannot be undone.`,
+        confirmLabel: "Delete Forever",
+        onConfirm: async () => {
+          setDeletingId(canvasId);
+          try {
+            const res = await fetch(`/api/canvases/${canvasId}/permanent`, {
+              method: "DELETE",
+            });
+            if (!res.ok) return;
+            setCanvases((current) => current.filter((c) => c.id !== canvasId));
+            window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
+            router.refresh();
+          } finally {
+            setDeletingId(null);
+          }
+        },
       });
-
-      if (!response.ok) {
-        return;
-      }
-
-      setCanvases((current) =>
-        current.filter((canvas) => canvas.id !== canvasId),
-      );
-      window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
-      router.refresh();
-    } finally {
-      setDeletingId(null);
+      return;
     }
+
+    showToast({
+      type: "confirm",
+      title: "Move to trash?",
+      message: `"${canvasName}" will be moved to trash. You can recover it within 30 days.`,
+      confirmLabel: "Move to Trash",
+      onConfirm: async () => {
+        setDeletingId(canvasId);
+        try {
+          const response = await fetch(`/api/canvases/${canvasId}`, {
+            method: "DELETE",
+          });
+          if (!response.ok) return;
+          setCanvases((current) =>
+            current.filter((canvas) => canvas.id !== canvasId),
+          );
+          window.localStorage.removeItem(`canvasai:canvas:${canvasId}:draft`);
+          router.refresh();
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
   }
 
   if (canvases.length === 0) {
@@ -211,25 +211,30 @@ export function CanvasFileList({
                     className="flex cursor-pointer items-center justify-center rounded-xs bg-white p-1 text-black opacity-0 transition group-hover:opacity-100 hover:bg-green-500/20 hover:text-green-200 disabled:opacity-50"
                     disabled={recoveringId === canvas.id}
                     type="button"
-                    onClick={async () => {
-                      const confirmed = window.confirm(
-                        `Recover \"${canvas.name}\"?`,
-                      );
-                      if (!confirmed) return;
-                      setRecoveringId(canvas.id);
-                      try {
-                        const res = await fetch(
-                          `/api/canvases/${canvas.id}/recover`,
-                          { method: "POST" },
-                        );
-                        if (!res.ok) return;
-                        setCanvases((current) =>
-                          current.filter((c) => c.id !== canvas.id),
-                        );
-                        router.refresh();
-                      } finally {
-                        setRecoveringId(null);
-                      }
+                    onClick={() => {
+                      showToast({
+                        type: "confirm",
+                        title: "Recover canvas?",
+                        message: `"${canvas.name}" will be restored from trash.`,
+                        confirmLabel: "Recover",
+                        cancelLabel: "Cancel",
+                        onConfirm: async () => {
+                          setRecoveringId(canvas.id);
+                          try {
+                            const res = await fetch(
+                              `/api/canvases/${canvas.id}/recover`,
+                              { method: "POST" },
+                            );
+                            if (!res.ok) return;
+                            setCanvases((current) =>
+                              current.filter((c) => c.id !== canvas.id),
+                            );
+                            router.refresh();
+                          } finally {
+                            setRecoveringId(null);
+                          }
+                        },
+                      });
                     }}
                   >
                     {recoveringId === canvas.id ? (
