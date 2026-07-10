@@ -8,7 +8,7 @@ import {
   getUserSettings,
   type UserSettings,
 } from "@/lib/user/settingsRepository";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,6 +18,7 @@ import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
 import { updateSettingsAction } from "@/app/actions/updateSettingsAction";
 import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 import NewReleaseUpdate from "@/app/components/home/NewReleasUpdate";
+import Notice from "../components/home/Notice";
 
 export const metadata: Metadata = {
   title: "REFLOW",
@@ -44,8 +45,7 @@ export default async function HomePage({
   }
 
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) redirect("/signin");
 
@@ -137,6 +137,10 @@ export default async function HomePage({
           userSettings={settings}
         />
       </div>
+      <div className="absolute bottom-0 left-0 w-full">
+         <Notice />
+      </div>
+     
     </div>
   );
 }

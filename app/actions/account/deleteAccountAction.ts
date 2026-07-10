@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient as createServerSupabaseClient } from "@/lib/supabase/server";
+import { createClient as createServerSupabaseClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export async function deleteAccountAction(verificationCode: string) {
@@ -15,13 +15,9 @@ export async function deleteAccountAction(verificationCode: string) {
   }
 
   const supabase = await createServerSupabaseClient();
+  const user = await getAuthenticatedUser(supabase);
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
+  if (!user) {
     throw new Error("Unauthorized");
   }
 

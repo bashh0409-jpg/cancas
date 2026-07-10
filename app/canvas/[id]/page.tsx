@@ -1,6 +1,6 @@
 import { getUserCanvas, getUserCanvases } from "@/lib/canvas/repository";
 import { getUserCredits } from "@/lib/credits/repository";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { EMPTY_CANVAS_CONTENT, parseCanvasContent } from "@/types/canvas";
 import { notFound, redirect } from "next/navigation";
 import CanvasPageClient from "./CanvasPageClient";
@@ -24,8 +24,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) redirect("/signin");
 

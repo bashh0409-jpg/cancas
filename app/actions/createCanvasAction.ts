@@ -5,13 +5,12 @@ import {
   requireIdempotencyKey,
   userScopedIdempotencyKey,
 } from "@/lib/idempotency";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export async function createCanvasAction() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) {
     redirect("/signin");

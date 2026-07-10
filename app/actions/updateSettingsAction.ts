@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import {
   upsertUserSettings,
   type UserSettings,
@@ -8,9 +8,7 @@ import {
 
 export async function updateSettingsAction(formData: FormData) {
   const supabase = await createClient();
-
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) {
     throw new Error("Unauthorized");
