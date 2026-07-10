@@ -25,6 +25,8 @@ import {
   Globe,
   Volume2,
   FileText,
+  Keyboard,
+  ExternalLink,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -37,6 +39,8 @@ import { useAiSettingsStore, ELEVENLABS_VOICES } from "@/lib/canvas/aiSettingsSt
 import type { CanvasGridLineType } from "@/types/canvas";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 import { createCanvasAction } from "@/app/actions/createCanvasAction";
+import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
+import ShortcutsPanel from "./ShortcutsPanel";
 
 type PanelType =
   | "search"
@@ -46,6 +50,7 @@ type PanelType =
   | "connect"
   | "settings"
   | "help"
+  | "shortcuts"
   | null;
 
 type GridControlsValue = {
@@ -234,6 +239,21 @@ const CanvasSwitcherOverlay = ({
           </button>
         </form>
       </div>
+      {/* Shortcuts toggle */}
+      <div className="border-t border-white/10 px-3 py-1">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(
+              new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "shortcuts" }),
+            );
+          }}
+          className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white/60 transition hover:text-white flex items-center gap-2"
+        >
+          <Keyboard className="w-3.5 h-3.5" strokeWidth={1.25} />
+          Shortcuts
+        </button>
+      </div>
       {/* Back to workspace */}
       <div className="border-t border-white/10 px-3 py-1">
         <a
@@ -307,7 +327,8 @@ const IconButton = ({
 const SearchPanel = ({ onClose }: { onClose: () => void }) => (
   <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4">
     <div className="flex items-center justify-between  pb-2">
-      <h3 className="text-white text-xs mono uppercase tracking-tight ">
+      <h3 className="text-white flex gap-2 items-center text-xs mono uppercase tracking-tight ">
+        <Search className="w-3.5 h-3.5" strokeWidth={1.25} />
         Search
       </h3>
       <button
@@ -318,11 +339,14 @@ const SearchPanel = ({ onClose }: { onClose: () => void }) => (
       </button>
     </div>
 
-    <input
-      type="text"
-      placeholder="Search files, layers..."
-      className="bg-white/10 my-1 w-full border border-white/20 rounded-xs px-1 py-1 text-sm text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20"
-    />
+    <div className=" w-full gap-2 px-1 flex bg-white/10 items-center rounded-xs border border-white/20  text-white">
+      <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
+      <input
+        type="text"
+        placeholder="Search files, layers..."
+        className=" w-full   h-full py-1 text-xs uppercase text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
+      />
+    </div>
 
     <div className="space-y-2">
       <h4 className="text-white/60 text-xs mono uppercase">Recent Searches</h4>
@@ -347,7 +371,8 @@ const ToolsPanel = ({
   return (
     <div className="w-60 h-screen bg-[#212126]  p-4 flex flex-col gap-4 max-h-screen overflow-y-auto">
       <div className="flex items-center justify-between  pb-2     ">
-        <h3 className="text-white text-xs  mono uppercase tracking-tight">
+        <h3 className="text-white flex items-center gap-2 text-xs  mono uppercase tracking-tight">
+          <Grid2x2 className="w-3.5 h-3.5" strokeWidth={1.25} />
           Canvas Settings
         </h3>
         <button
@@ -517,7 +542,8 @@ const ExportPanel = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="w-60 h-screen bg-[#212126]  border-white/10 p-4 flex flex-col gap-4">
       <div className="flex items-center  pb-2 justify-between mb-2">
-        <h3 className="text-white text-xs uppercase tracking-tight mono">
+        <h3 className="text-white flex items-center gap-2 text-xs uppercase tracking-tight mono">
+          <Download className="w-3.5 h-3.5" strokeWidth={1.25} />
           Export & Share
         </h3>
         <button
@@ -761,8 +787,10 @@ export const ConnectPanel = ({
   return (
     <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col">
       <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
-        <h3 className="text-white text-xs  mono  uppercase tracking-tight">
-          External storage
+        <h3 className="text-white flex items-center gap-2 text-xs  mono  uppercase tracking-tight">
+          <Cable className="w-3.5 h-3.5" strokeWidth={1.25} />
+          External
+          storage
         </h3>
         <button
           onClick={onClose}
@@ -835,7 +863,6 @@ export const ConnectPanel = ({
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
                             <>
-                              
                               {provider.connected && provider.expired
                                 ? "Reconnect"
                                 : "Connect"}
@@ -891,7 +918,8 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="w-60 pb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
       <div className="flex items-center scrollbar-hidden  justify-between ">
-        <h3 className="text-white text-xs  mono  uppercase tracking-tight">
+        <h3 className="text-white flex gap-2 items-center text-xs  mono  uppercase tracking-tight">
+          <Layers className="w-3.5 h-3.5" strokeWidth={1.25} />
           Layers
         </h3>
         <button
@@ -941,11 +969,22 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                 </button>
 
                 {/* Type Icon */}
-                <span className="flex-shrink-0 text-white/40" title={layer.type}>
-                  {layer.type === "image" && <ImageIcon className="w-3 h-3" strokeWidth={1.5} />}
-                  {layer.type === "web" && <Globe className="w-3 h-3" strokeWidth={1.5} />}
-                  {layer.type === "voice" && <Volume2 className="w-3 h-3" strokeWidth={1.5} />}
-                  {layer.type === "text" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
+                <span
+                  className="flex-shrink-0 text-white/40"
+                  title={layer.type}
+                >
+                  {layer.type === "image" && (
+                    <ImageIcon className="w-3 h-3" strokeWidth={1.5} />
+                  )}
+                  {layer.type === "web" && (
+                    <Globe className="w-3 h-3" strokeWidth={1.5} />
+                  )}
+                  {layer.type === "voice" && (
+                    <Volume2 className="w-3 h-3" strokeWidth={1.5} />
+                  )}
+                  {layer.type === "text" && (
+                    <FileText className="w-3 h-3" strokeWidth={1.5} />
+                  )}
                 </span>
 
                 {/* Layer Name / Edit */}
@@ -1043,13 +1082,13 @@ const ToolsSection = ({
   <div className="flex flex-col items-center gap-4">
     <IconButton
       icon={Search}
-      tooltip="Search (Cmd+F)"
+      tooltip="Search (S)"
       isActive={activePanel === "search"}
       onClick={() => onPanelChange(activePanel === "search" ? null : "search")}
     />
     <IconButton
       icon={Grid2x2}
-      tooltip="Canvas Settings"
+      tooltip="Canvas Settings (G)"
       isActive={activePanel === "tools"}
       onClick={() => onPanelChange(activePanel === "tools" ? null : "tools")}
     />
@@ -1099,13 +1138,14 @@ const ViewSection = () => {
         tooltip={`Zoom In (${zoomPercent})`}
         onClick={zoomIn}
       />
-      <div
-        className="text-white mono text-[11px] hover:bg-white/20 w-full h-8 flex items-center rounded justify-center cursor-pointer"
-        title="Reset zoom to 100%"
-        onClick={resetZoom}
-      >
-        {zoomPercent}
-      </div>
+      <Tooltip text="Reset zoom to 100%">
+        <button
+          onClick={resetZoom}
+          className="text-white mono text-[11px] hover:bg-white/20 w-full h-8 flex items-center rounded justify-center cursor-pointer"
+        >
+          {zoomPercent}
+        </button>
+      </Tooltip>
 
       <IconButton
         disabled={!canZoomOut}
@@ -1139,8 +1179,8 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-2 overflow-y-auto">
       <div className="flex items-center justify-between pb-2">
-        <h3 className="text-white text-xs mono uppercase tracking-tight">
-          AI Settings
+        <h3 className="text-white flex gap-2 items-center text-xs mono uppercase tracking-tight">
+          <Settings className="w-3.5 h-3.5" strokeWidth={1.25} /> Settings
         </h3>
         <button
           onClick={onClose}
@@ -1158,7 +1198,9 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
           </label>
           <select
             value={ttsProvider}
-            onChange={(e) => setTtsProvider(e.target.value as "elevenlabs" | "amazon-tts")}
+            onChange={(e) =>
+              setTtsProvider(e.target.value as "elevenlabs" | "amazon-tts")
+            }
             className="w-full bg-[#17171b] border border-white/10 rounded px-2 py-1.5 mono text-xs text-white focus:outline-none focus:border-white/30 cursor-pointer"
           >
             <option value="elevenlabs">ElevenLabs</option>
@@ -1212,7 +1254,11 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
           </label>
           <select
             value={defaultAction}
-            onChange={(e) => setDefaultAction(e.target.value as "ask" | "summarize" | "describe")}
+            onChange={(e) =>
+              setDefaultAction(
+                e.target.value as "ask" | "summarize" | "describe",
+              )
+            }
             className="w-full bg-[#17171b] border border-white/10 rounded px-2 py-1.5 mono text-xs text-white focus:outline-none focus:border-white/30 cursor-pointer"
           >
             <option value="ask">Ask AI</option>
@@ -1242,7 +1288,9 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
 const HelpPanel = ({ onClose }: { onClose: () => void }) => (
   <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 scrollbar-hidden overflow-y-auto">
     <div className="flex items-center justify-between pb-2">
-      <h3 className="text-white text-xs mono uppercase tracking-tight">
+      <h3 className="text-white d
+      flex items-center gap-2 text-xs mono uppercase tracking-tight">
+        <HelpCircle className="w-3.5 h-3.5" strokeWidth={1.25} />
         Help & docs
       </h3>
       <button
@@ -1259,9 +1307,20 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           AI Read Aloud
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p>Select any <span className="text-white/70">sticky note</span> and click the <span className="text-white/70">Read</span> button above it to hear the text spoken aloud using ElevenLabs AI voices.</p>
-          <p>Each read-aloud costs <span className="text-white/70">3 credits</span>. Words are highlighted in real-time as they&rsquo;re spoken.</p>
-          <p>Configure your preferred voice and speech speed in <span className="text-white/70">AI Settings</span>.</p>
+          <p>
+            Select any <span className="text-white/70">sticky note</span> and
+            click the <span className="text-white/70">Read</span> button above
+            it to hear the text spoken aloud using ElevenLabs AI voices.
+          </p>
+          <p>
+            Each read-aloud costs{" "}
+            <span className="text-white/70">3 credits</span>. Words are
+            highlighted in real-time as they&rsquo;re spoken.
+          </p>
+          <p>
+            Configure your preferred voice and speech speed in{" "}
+            <span className="text-white/70">AI Settings</span>.
+          </p>
         </div>
       </div>
 
@@ -1270,10 +1329,22 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           AI Actions
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p><span className="text-white/70">Ask AI</span> — Open a floating chat window to ask questions about a file</p>
-          <p><span className="text-white/70">Summarize</span> — AI-generated summary of documents & spreadsheets</p>
-          <p><span className="text-white/70">Describe</span> — AI describes the contents of an image</p>
-          <p><span className="text-white/70">Edit with AI</span> — Edit documents or images via natural language prompts</p>
+          <p>
+            <span className="text-white/70">Ask AI</span> — Open a floating chat
+            window to ask questions about a file
+          </p>
+          <p>
+            <span className="text-white/70">Summarize</span> — AI-generated
+            summary of documents & spreadsheets
+          </p>
+          <p>
+            <span className="text-white/70">Describe</span> — AI describes the
+            contents of an image
+          </p>
+          <p>
+            <span className="text-white/70">Edit with AI</span> — Edit documents
+            or images via natural language prompts
+          </p>
         </div>
       </div>
 
@@ -1282,13 +1353,32 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           Canvas Controls
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p><span className="text-white/70">Pan</span> — Middle mouse drag or Space + left drag</p>
-          <p><span className="text-white/70">Zoom</span> — Scroll wheel or two-finger pinch</p>
-          <p><span className="text-white/70">Select</span> — Click a node, or drag to marquee select</p>
-          <p><span className="text-white/70">Multi-select</span> — Shift/Cmd + click</p>
-          <p><span className="text-white/70">Delete</span> — Backspace or Delete key</p>
-          <p><span className="text-white/70">Duplicate</span> — Cmd/Ctrl + D</p>
-          <p><span className="text-white/70">Deselect</span> — Escape</p>
+          <p>
+            <span className="text-white/70">Pan</span> — Middle mouse drag or
+            Space + left drag
+          </p>
+          <p>
+            <span className="text-white/70">Zoom</span> — Scroll wheel or
+            two-finger pinch
+          </p>
+          <p>
+            <span className="text-white/70">Select</span> — Click a node, or
+            drag to marquee select
+          </p>
+          <p>
+            <span className="text-white/70">Multi-select</span> — Shift/Cmd +
+            click
+          </p>
+          <p>
+            <span className="text-white/70">Delete</span> — Backspace or Delete
+            key
+          </p>
+          <p>
+            <span className="text-white/70">Duplicate</span> — Cmd/Ctrl + D
+          </p>
+          <p>
+            <span className="text-white/70">Deselect</span> — Escape
+          </p>
         </div>
       </div>
 
@@ -1297,7 +1387,11 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           Sticky Notes
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p>Use the <span className="text-white/70">Text tool</span> to create sticky notes on the canvas. Double-click to edit, click outside to save. Drag to reposition. Right-click for more options.</p>
+          <p>
+            Use the <span className="text-white/70">Text tool</span> to create
+            sticky notes on the canvas. Double-click to edit, click outside to
+            save. Drag to reposition. Right-click for more options.
+          </p>
         </div>
       </div>
 
@@ -1306,9 +1400,18 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           File Actions
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p><span className="text-white/70">Drop files</span> — Drag images from your OS onto the canvas</p>
-          <p><span className="text-white/70">Right-click</span> — Context menu with AI actions per file type</p>
-          <p><span className="text-white/70">Resize</span> — Drag corner handles on selected nodes</p>
+          <p>
+            <span className="text-white/70">Drop files</span> — Drag images from
+            your OS onto the canvas
+          </p>
+          <p>
+            <span className="text-white/70">Right-click</span> — Context menu
+            with AI actions per file type
+          </p>
+          <p>
+            <span className="text-white/70">Resize</span> — Drag corner handles
+            on selected nodes
+          </p>
         </div>
       </div>
 
@@ -1317,7 +1420,11 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           Cloud Storage
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p>Connect Google Drive or Dropbox from the <span className="text-white/70">External storage</span> panel to browse and import images directly.</p>
+          <p>
+            Connect Google Drive or Dropbox from the{" "}
+            <span className="text-white/70">External storage</span> panel to
+            browse and import images directly.
+          </p>
         </div>
       </div>
 
@@ -1326,10 +1433,38 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
           Shortcuts
         </h4>
         <div className="space-y-2 text-[11px] mono text-white/50 leading-relaxed">
-          <p><span className="text-white/70">L</span> — Open layers panel</p>
-          <p><span className="text-white/70">Cmd+F</span> — Search</p>
-          <p><span className="text-white/70">Cmd+D</span> — Duplicate selected</p>
-          <p><span className="text-white/70">Esc</span> — Deselect / close panels</p>
+          <p>
+            <span className="text-white/70">S</span> — Open Search panel
+          </p>
+          <p>
+            <span className="text-white/70">G</span> — Open Canvas Settings
+          </p>
+          <p>
+            <span className="text-white/70">L</span> — Open Layers panel
+          </p>
+          <p>
+            <span className="text-white/70">Z</span> — Reset zoom to 100%
+          </p>
+          <p>
+            <span className="text-white/70">F</span> — Fit all content to screen
+          </p>
+          <p>
+            <span className="text-white/70">Backspace / Delete</span> — Remove
+            selected node
+          </p>
+          <p>
+            <span className="text-white/70">Cmd/Ctrl + D</span> — Duplicate
+            selected
+          </p>
+          <p>
+            <span className="text-white/70">Cmd/Ctrl + A</span> — Select all
+          </p>
+          <p>
+            <span className="text-white/70">Cmd/Ctrl + Z</span> — Undo delete
+          </p>
+          <p>
+            <span className="text-white/70">Esc</span> — Deselect / close panels
+          </p>
         </div>
       </div>
     </div>
@@ -1441,6 +1576,21 @@ export const Sidebar = ({
     };
   }, [activePanel]);
 
+  // Listen for external panel-open events (e.g. from keyboard shortcuts)
+  useEffect(() => {
+    function handleSidebarPanelEvent(event: Event) {
+      const detail = (event as CustomEvent<string>).detail;
+      if (detail && (detail === "search" || detail === "tools" || detail === "export" || detail === "layers" || detail === "connect" || detail === "settings" || detail === "help" || detail === "shortcuts")) {
+        setActivePanel((current) => (current === detail ? null : detail as PanelType));
+      }
+    }
+
+    window.addEventListener(SIDEBAR_PANEL_EVENT, handleSidebarPanelEvent);
+    return () => {
+      window.removeEventListener(SIDEBAR_PANEL_EVENT, handleSidebarPanelEvent);
+    };
+  }, []);
+
   // GSAP animation: simple left-to-right slide when panel opens/closes
   useGSAP(() => {
     // Animate out the previous panel
@@ -1505,6 +1655,8 @@ export const Sidebar = ({
         return <HelpPanel onClose={handleClose} />;
       case "settings":
         return <SettingsPanel onClose={handleClose} />;
+      case "shortcuts":
+        return <ShortcutsPanel onClose={handleClose} />;
       default:
         return null;
     }

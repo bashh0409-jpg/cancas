@@ -73,6 +73,7 @@ import {
   parseCanvasContent,
   type CanvasContent,
 } from "@/types/canvas";
+import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
 import {
   CanvasTranscriptionNode,
   type CanvasTranscriptionNodeData,
@@ -1729,6 +1730,48 @@ export default function CanvasWorkspace({
       }
 
       const primaryModifier = event.metaKey || event.ctrlKey;
+
+      // S → open Search panel
+      if (!primaryModifier && (event.key === "s" || event.key === "S")) {
+        event.preventDefault();
+        window.dispatchEvent(
+          new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "search" }),
+        );
+        return;
+      }
+
+      // G → open Canvas Settings (grid/tools)
+      if (!primaryModifier && (event.key === "g" || event.key === "G")) {
+        event.preventDefault();
+        window.dispatchEvent(
+          new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "tools" }),
+        );
+        return;
+      }
+
+      // L → open Layers panel
+      if (!primaryModifier && (event.key === "l" || event.key === "L")) {
+        event.preventDefault();
+        window.dispatchEvent(
+          new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "layers" }),
+        );
+        return;
+      }
+
+      // Z → reset zoom to 100%
+      if (!primaryModifier && (event.key === "z" || event.key === "Z")) {
+        event.preventDefault();
+        resetZoom();
+        return;
+      }
+
+      // F → fit to screen
+      if (!primaryModifier && (event.key === "f" || event.key === "F")) {
+        event.preventDefault();
+        fitContentToView();
+        return;
+      }
+
       const isUndoKey =
         event.code === "KeyZ" || event.key === "z" || event.key === "Z";
 
@@ -1747,21 +1790,45 @@ export default function CanvasWorkspace({
       }
 
       if (event.key === "Delete" || event.key === "Backspace") {
-        const selectedIds = imageNodesRef.current
-          .filter(
+        let handled = false;
+
+        // Delete selected web nodes
+        if (activeWebNodeId) {
+          const webNode = webNodesRef.current.find(
             (node) =>
-              selectedImageIdSet.has(node.id) &&
+              node.id === activeWebNodeId &&
               (node.visible ?? true) &&
               !(node.locked ?? false),
-          )
-          .map((node) => node.id);
-
-        if (selectedIds.length > 0) {
-          event.preventDefault();
-          removeImageNodes(selectedIds);
+          );
+          if (webNode) {
+            event.preventDefault();
+            setWebNodes((current) => current.filter((n) => n.id !== activeWebNodeId));
+            setActiveWebNodeId(null);
+            saveDelayMsRef.current = 0;
+            handled = true;
+          }
         }
 
-        if (selectedTextNodeId) {
+        // Delete selected images
+        if (!handled) {
+          const selectedIds = imageNodesRef.current
+            .filter(
+              (node) =>
+                selectedImageIdSet.has(node.id) &&
+                (node.visible ?? true) &&
+                !(node.locked ?? false),
+            )
+            .map((node) => node.id);
+
+          if (selectedIds.length > 0) {
+            event.preventDefault();
+            removeImageNodes(selectedIds);
+            handled = true;
+          }
+        }
+
+        // Delete selected text / AI chat / voice nodes
+        if (!handled && selectedTextNodeId) {
           const selectedTextNode = textNodesRef.current.find(
             (node) =>
               node.id === selectedTextNodeId &&
@@ -1856,6 +1923,9 @@ export default function CanvasWorkspace({
     selectedTextNodeId,
     undoImageDelete,
     setImageNodes,
+    activeWebNodeId,
+    resetZoom,
+    fitContentToView,
   ]);
 
   useEffect(() => {

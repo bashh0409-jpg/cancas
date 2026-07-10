@@ -19,6 +19,7 @@ import {
   Volume2,
   VolumeOff,
   X,
+  Search,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import Image from "next/image";
@@ -594,14 +595,16 @@ export function HomeShell({
 
         {/* ── Nav items ── */}
         <nav className="flex flex-col gap-2 px-1">
-          {/* Search - hidden on mobile when collapsed */}
-          <div className={`mb-2 ${collapsed ? "hidden" : ""}`}>
+          
+        
+          <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
+            <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded h-7  mono text-xs border border-white/20 bg-white/20 px-4 py-1 text-sm font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 ${collapsed ? "hidden" : ""}`}
+              className=" w-full   h-full py-1.5 font-medium text-xs uppercase text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
             />
           </div>
 
@@ -920,7 +923,8 @@ function FilesPage({
       <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-2">
         <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
         <div className="flex items-center gap-2">
-          <div>
+          <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
+            <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
             <input
               type="text"
               placeholder="Search files..."
@@ -929,7 +933,7 @@ function FilesPage({
                 setLocalSearch(e.target.value);
                 onSearchChange(e.target.value);
               }}
-              className="w-full mono rounded border border-white/20 bg-white/20 px-2 py-1 text-xs font-medium tracking-tight text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-blue-900 sm:w-auto"
+              className=" w-full   h-full py-1 font-medium uppercase text-xs text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
             />
           </div>
         </div>
@@ -1619,7 +1623,9 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
           return;
         }
 
-        const canvasIds = Array.from(new Set(canvases.map((canvas) => canvas.id)));
+        const canvasIds = Array.from(
+          new Set(canvases.map((canvas) => canvas.id)),
+        );
         const res = await fetch(
           `/api/canvases/library?ids=${encodeURIComponent(canvasIds.join(","))}`,
           { cache: "no-store" },
@@ -1635,7 +1641,11 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
         for (const canvas of data.canvases ?? []) {
           const content = canvas.content as
             | {
-                imageNodes?: Array<{ id: string; fileName: string; url?: string }>;
+                imageNodes?: Array<{
+                  id: string;
+                  fileName: string;
+                  url?: string;
+                }>;
                 webNodes?: Array<{ id: string; title: string; url: string }>;
                 voiceNodes?: Array<{
                   id: string;
@@ -2122,7 +2132,7 @@ function NavItem({
       onClick={onClick}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-8 cursor-pointer mt-1 rounded flex items-center text-sm font-light
+        w-full h-8 cursor-pointer mt-1 rounded-xs flex items-center text-sm font-light
         text-white hover:bg-white/15 transition-colors
         ${active ? "bg-white/15" : "hover:bg-white/10"}
         ${collapsed ? "justify-center h-8 w-8 px-0" : "justify-between px-2"}

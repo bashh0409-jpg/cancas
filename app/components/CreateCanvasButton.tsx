@@ -39,7 +39,7 @@ export function CreateCanvasButton({
       disabled={loading}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-8 lime cursor-pointer rounded flex items-center text-sm
+        w-full h-8 lime cursor-pointer rounded-xs flex items-center text-sm
         text-black transition-colors
         hover:bg-white/10
         disabled:opacity-60 disabled:cursor-not-allowed
