@@ -236,7 +236,7 @@ const CanvasSwitcherOverlay = ({
   return (
     <div
       ref={cardRef}
-      className="absolute left-12 top-0 z-[60] w-[240px] overflow-hidden rounded border border-white/5 bg-[#212126] shadow-2xl"
+      className="absolute left-12 top-0 z-[60] w-[240px] rounded border border-white/5 bg-[#212126] shadow-2xl"
     >
       {/* Current canvas */}
       <div className=" px-3 py-1">
