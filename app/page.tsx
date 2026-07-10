@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import { Pricing } from "./components/Pricing";
 import Faq from "./components/Faq";
 import Footer from "./components/Footer";
+import Notice from "./components/home/Notice";
 import Animated from "./components/animated";
 import { getAppUrl } from "@/lib/appUrl";
 import { cookies } from "next/headers";
@@ -27,6 +28,7 @@ const page = async () => {
     <div className="text-white">
       <div>
         <Navbar />
+        <Notice />
         <div className="relative h-screen bg-white  overflow-hidden"></div>
         <div>
           <Animated />
