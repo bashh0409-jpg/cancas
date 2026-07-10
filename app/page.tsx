@@ -9,13 +9,15 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 const page = async () => {
-  if (process.env.NODE_ENV === "production") {
+  try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
 
     if (data?.user) {
-      redirect(getAppUrl("/home"));
+      redirect("/home");
     }
+  } catch {
+    // Stale/invalid session cookie — gracefully show landing page
   }
 
   return (
