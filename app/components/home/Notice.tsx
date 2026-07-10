@@ -34,9 +34,9 @@ type NoticeBarProps = {
 
 const NoticeBar = ({ notice, onDismiss }: NoticeBarProps) => {
   return (
-    <div className="w-full px-4 py-0.5 font-medium text-xs lime2 text-black tracking-tight mono uppercase flex items-center justify-between">
+    <div className="w-full px-4 py-0.5 font-medium text-[10px] md:text-xs lime2 text-black tracking-tight mono uppercase flex items-center justify-between">
       {notice.badge && (
-        <span className="bg-black text-white rounded-full px-1 ">
+        <span className="bg-black mr-2 text-white rounded-full px-1 ">
           {notice.badge}
         </span>
       )}
