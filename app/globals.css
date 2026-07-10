@@ -17,21 +17,12 @@
   --font-host-grotesk: var(--font-host-grotesk);
 }
 
-.geom {
-  font-family: var(--font-cmgeom);
-}
-
 .mono {
   font-family: var(--font-geist-mono);
 }
 
 .sans {
     font-family: var(--font-lay-grotesk);
-}
-
-
-.rinter {
-  font-family: var(--font-rinter);
 }
 
 .grotesk {
@@ -58,8 +49,11 @@
 .lime {
   background-color: #f8ff9a;
 }
+.lime2 {
+  background-color: #c9fe6e;
+}
 .lime-one {
-  background-color: #f5fd83;
+  background-color: #f8ff9a;
 }
 .gray {
   background-color: #fcfcfc;

@@ -55,7 +55,7 @@ const NoticeBar = ({ notice, onDismiss }: NoticeBarProps) => {
         onClick={() => onDismiss(notice.id)}
         className="cursor-pointer"
       >
-        <X className="w-6 h-6 stroke-[1.7]" />
+        <X className="w-6 h-6 stroke-[1.5]" />
       </button>
     </div>
   );

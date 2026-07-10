@@ -28,7 +28,7 @@ const page = async () => {
     <div className="text-white">
       <div>
         <Navbar />
-        <Notice />
+     
         <div className="relative h-screen bg-white  overflow-hidden"></div>
         <div>
           <Animated />

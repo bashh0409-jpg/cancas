@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { User, ChevronDown } from "lucide-react";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import { AccountCard } from "../home/HomeShell";
+import Notice from "./Notice";
 
 type Props = {
   fullName?: string;
@@ -105,11 +106,12 @@ const MobileNotifier: React.FC<Props> = ({
         <p className="text-xs tracking-tight font-normal mono uppercase max-w-90 mt-1 text-white/60">
           Please use a desktop or tablet to access all features.
         </p>
-        
       </div>
 
       <div className="w-full flex flex-col mb-8 justify-center items-center gap-2">
-        <span className="text-white mono uppercase  tracking-tight text-[10px] text-center">For now you can...</span>
+        <span className="text-white mono uppercase  tracking-tight text-[10px] text-center">
+          For now you can...
+        </span>
         <a
           href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
           target="_blank"
@@ -144,51 +146,27 @@ const MobileNotifier: React.FC<Props> = ({
           </svg>
           Watch tutorials on Youtube
         </a>{" "}
-
-          <a
-            href="https://discord.gg/xexnRhqBP"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Join Discord"
-            className="lime h-8 w-full cursor-pointer max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded  flex items-center gap-2"
-          >
-            <svg
-              role="img"
-              viewBox="0 0 24 24"
-              className="w-4 h-4 fill-current"
-              strokeWidth={0.4}
-            >
-              <path d={siDiscord.path} />
-            </svg>
-            Join our Discord community
-          </a>{" "}
-
-      </div>
-
-      {/* Bottom social links */}
-      <div className="flex hidden items-center justify-center gap-6 px-4 py-6">
-        <a
-          href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-white/50 hover:text-white/80 transition-colors"
-          aria-label="YouTube"
-        >
-          <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-            <path d={siYoutube.path} />
-          </svg>
-        </a>
         <a
           href="https://discord.gg/xexnRhqBP"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white/50 hover:text-white/80 transition-colors"
-          aria-label="Discord"
+          aria-label="Join Discord"
+          className="lime h-8 w-full cursor-pointer max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded  flex items-center gap-2"
         >
-          <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+          <svg
+            role="img"
+            viewBox="0 0 24 24"
+            className="w-4 h-4 fill-current"
+            strokeWidth={0.4}
+          >
             <path d={siDiscord.path} />
           </svg>
-        </a>
+          Join our Discord community
+        </a>{" "}
+        <Notice />
+      </div>
+      <div className="w-full absolute bottom-0 left-0">
+        <Notice />
       </div>
     </div>
   );
