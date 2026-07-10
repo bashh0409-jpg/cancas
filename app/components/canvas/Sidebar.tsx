@@ -235,7 +235,7 @@ const CanvasSwitcherOverlay = ({
         <form action={createCanvasAction}>
           <button
             type="submit"
-            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
+            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white"
           >
             Create new file
           </button>
@@ -251,17 +251,16 @@ const CanvasSwitcherOverlay = ({
               new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "shortcuts" }),
             );
           }}
-          className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white/60 transition hover:text-white flex items-center gap-2"
+          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white flex items-center gap-2"
         >
-          
           Shortcuts
         </button>
       </div>
       {/* Back to workspace */}
-      <div className="border-t border-white/10 px-3 py-1">
+      <div className="border-t w-full border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white flex items-center gap-2"
         >
           Back to files
         </a>

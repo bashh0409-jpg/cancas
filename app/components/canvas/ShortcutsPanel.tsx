@@ -49,7 +49,7 @@ const shortcutGroups = [
 
 export default function ShortcutsPanel({ onClose }: ShortcutsPanelProps) {
   return (
-    <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 overflow-y-auto">
+    <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 scrollbar-hidden overflow-y-auto">
       <div className="flex items-center justify-between pb-2">
         <h3 className="text-white text-xs mono uppercase tracking-tight flex items-center gap-2">
           <Keyboard className="w-3.5 h-3.5" strokeWidth={1.25} />

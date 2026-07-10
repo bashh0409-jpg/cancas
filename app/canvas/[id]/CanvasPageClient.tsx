@@ -115,7 +115,7 @@ export default function CanvasPageClient({
       <CanvasWorkspace
         canvasId={canvasId}
         canvasName={canvasTitle}
-        canvases={canvases ?? []}
+        canvases={userCanvases}
         initialContent={initialContent}
         serverUpdatedAt={serverUpdatedAt}
         userId={userId}
