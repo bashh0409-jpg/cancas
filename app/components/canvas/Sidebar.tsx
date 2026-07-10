@@ -27,6 +27,7 @@ import {
   FileText,
   Keyboard,
   ExternalLink,
+  FolderOpen,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -130,7 +131,7 @@ const CanvasSwitcherFlyout = ({
                       onSwitchCanvas(canvas.slug);
                     }
                   }}
-                  className={`flex  items-center rounded-xs mb-0.5 justify-between gap-2 px-2 py-1.5 text-[11px] mono transition border-b border-white/10 last:border-b-0 ${
+                  className={`flex  items-center rounded-xs justify-between gap-2 px-2 py-1.5 text-[11px] mono transition ${
                     isActive
                       ? "bg-white/15 text-white"
                       : "text-white/60 hover:bg-white/10 hover:text-white"
@@ -138,7 +139,7 @@ const CanvasSwitcherFlyout = ({
                 >
                   <span className="truncate uppercase">{canvas.name}</span>
                   {isActive && (
-                    <Plus className="shrink-0 w-3.5  h-3.5 " />
+                    <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
                   )}
                   
                 </a>
