@@ -118,31 +118,35 @@ const CanvasSwitcherFlyout = ({
           onMouseLeave={handleMouseLeave}
         >
           <div className="max-h-64 p-1  overflow-y-auto">
-            {canvases.map((canvas) => {
+            {canvases.map((canvas, index) => {
               const isActive = canvas.id === activeCanvasId;
 
               return (
-                <a
-                  key={canvas.id}
-                  href={`/canvas/${canvas.slug}`}
-                  onClick={(e) => {
-                    if (onSwitchCanvas) {
-                      e.preventDefault();
-                      onSwitchCanvas(canvas.slug);
-                    }
-                  }}
-                  className={`flex  items-center rounded-xs justify-between gap-2 px-2 py-1.5 text-[11px] mono transition ${
-                    isActive
-                      ? "bg-white/15 text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <span className="truncate uppercase">{canvas.name}</span>
-                  {isActive && (
-                    <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
+                <React.Fragment key={canvas.id}>
+                  {index > 0 && (
+                    <div className="mx-2 h-px bg-white/10" />
                   )}
-                  
-                </a>
+                  <a
+                    href={`/canvas/${canvas.slug}`}
+                    onClick={(e) => {
+                      if (onSwitchCanvas) {
+                        e.preventDefault();
+                        onSwitchCanvas(canvas.slug);
+                      }
+                    }}
+                    className={`flex  items-center rounded-xs justify-between gap-2 px-2 py-1.5 text-[11px] mono transition ${
+                      isActive
+                        ? "bg-white/15 text-white"
+                        : "text-white/60 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <span className="truncate uppercase">{canvas.name}</span>
+                    {isActive && (
+                      <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
+                    )}
+                    
+                  </a>
+                </React.Fragment>
               );
             })}
           </div>
