@@ -68,13 +68,13 @@ export function ToastContainer() {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="w-[360px] rounded border border-white/10 bg-[#1a1a1e] shadow-2xl animate-in fade-in zoom-in-95"
+            className="w-[360px] rounded border bg-white shadow-2xl animate-in fade-in zoom-in-95"
           >
             <div className="p-4">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 shrink-0">
                   {toast.type === "confirm" && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20">
+                    <div className="flex h-8 w-8 items-center justify-center">
                       <AlertTriangle className="h-4 w-4 text-amber-400" />
                     </div>
                   )}
@@ -90,26 +90,26 @@ export function ToastContainer() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white mono uppercase tracking-tight">
+                  <p className="text-sm font-medium text-black mono uppercase tracking-tight">
                     {toast.title}
                   </p>
-                  <p className="mt-1 text-xs text-white/60 mono leading-relaxed">
+                  <p className="mt-1 text-xs text-black mono leading-snug uppercase tracking-tight">
                     {toast.message}
                   </p>
                 </div>
                 <button
                   onClick={() => removeToast(toast.id)}
-                  className="shrink-0 text-white/40 hover:text-white/80 transition cursor-pointer"
+                  className="shrink-0 text-black hover:text-black/80 transition cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
             {toast.type === "confirm" && (
-              <div className="flex items-center justify-end gap-2 border-t border-white/10 px-4 py-3">
+              <div className="flex items-center justify-end gap-2 p-1">
                 <button
                   onClick={() => handleCancel(toast)}
-                  className="px-3 py-1.5 text-xs mono uppercase tracking-tight rounded-xs text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                  className="px-3 py-1.5 text-xs mono uppercase tracking-tight rounded-xs text-black hover:text-black hover:bg-black/10 transition cursor-pointer"
                 >
                   {toast.cancelLabel || "Cancel"}
                 </button>
