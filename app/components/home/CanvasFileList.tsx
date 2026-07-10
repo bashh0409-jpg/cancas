@@ -287,7 +287,7 @@ export function CanvasFileList({
               {canvas.name}
             </h3>
             <p className="mt-1 mono uppercase tracking-tight  text-[10px] text-white/50">
-              Edited {formatRelativeDate(canvas.updated_at)}
+              Last Edited {formatRelativeDate(canvas.updated_at)}
             </p>
             {isTrash &&
               canvas.deleted_at &&
