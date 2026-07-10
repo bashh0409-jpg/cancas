@@ -84,7 +84,7 @@ export default function CanvasPageClient({
   }, []);
 
   useEffect(() => {
-    if (canvases.length > 0 || credits > 0) {
+    if (canvases.length > 0) {
       return;
     }
 
@@ -93,11 +93,11 @@ export default function CanvasPageClient({
         const supabase = createClient();
         const [loadedCanvases, loadedCredits] = await Promise.all([
           getUserCanvases(supabase, userId),
-          getUserCredits(supabase, userId),
+          credits <= 0 ? getUserCredits(supabase, userId) : Promise.resolve(credits),
         ]);
 
         setUserCanvases(loadedCanvases);
-        setCurrentCredits(loadedCredits);
+        if (credits <= 0) setCurrentCredits(loadedCredits);
       } catch (error) {
         console.error("Failed to load deferred canvas data:", error);
       }
