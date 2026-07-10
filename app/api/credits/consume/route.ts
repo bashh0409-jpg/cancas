@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { consumeUserCredits, getUserCredits } from "@/lib/credits/repository";
 import {
   IdempotencyKeyError,
@@ -10,9 +10,9 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: userData } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (!userData?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     };
     const amount = payload.amount ?? 3;
     const idempotencyKey = userScopedIdempotencyKey(
-      userData.user.id,
+      user.id,
       requireIdempotencyKey(payload.idempotencyKey),
     );
     const scope =
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const success = await consumeUserCredits(
       supabase,
-      userData.user.id,
+      user.id,
       amount,
       idempotencyKey,
       scope,
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const balance = await getUserCredits(supabase, userData.user.id);
+    const balance = await getUserCredits(supabase, user.id);
 
     return NextResponse.json({ success: true, consumed: amount, balance });
   } catch (error) {

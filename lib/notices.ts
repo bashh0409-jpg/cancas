@@ -19,10 +19,10 @@ export const activeNotices: NoticeConfig[] = [
   {
     id: "mac-desktop-app",
     badge: "New",
-    message: "desktop app available for mac",
+    message: "desktop app for Mac comming soon",
     link: {
-      text: "Download here",
-      href: "/download",
+      text: "Update me when available",
+      href: "/#",
     },
   },
   // Example — uncomment to show:

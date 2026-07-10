@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { getUserSubscription } from "@/lib/subscriptions/repository";
 import { NextResponse } from "next/server";
 
@@ -9,12 +9,9 @@ export async function GET(
   try {
     const { userId } = await params;
     const supabase = await createClient();
+    const user = await getAuthenticatedUser(supabase);
 
     // Verify the requesting user owns this subscription
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     if (!user || user.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

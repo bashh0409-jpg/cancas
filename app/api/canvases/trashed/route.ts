@@ -1,12 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { listUserTrashedCanvases } from "@/lib/canvas/repository";
 
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

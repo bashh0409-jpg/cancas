@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteUserCanvas } from "@/lib/canvas/repository";
 
@@ -9,8 +9,7 @@ export async function DELETE(
   try {
     const { id } = await context.params;
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

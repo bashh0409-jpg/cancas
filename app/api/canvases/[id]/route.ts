@@ -5,7 +5,7 @@ import {
   saveUserCanvasContent,
   updateUserCanvasName,
 } from "@/lib/canvas/repository";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { parseCanvasContent } from "@/types/canvas";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,8 +17,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,8 +47,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -105,8 +103,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

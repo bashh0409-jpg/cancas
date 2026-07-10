@@ -5,15 +5,13 @@ import {
   userScopedIdempotencyKey,
 } from "@/lib/idempotency";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

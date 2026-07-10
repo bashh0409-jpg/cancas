@@ -1,6 +1,6 @@
 import { cancelBillingSubscription } from "@/lib/billing/cancel-service";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -13,9 +13,7 @@ export async function POST(
     const { immediate = false } = body;
 
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
     if (!user || user.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -17,12 +17,9 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "User must be signed in to connect OneDrive" },
         { status: 401 },

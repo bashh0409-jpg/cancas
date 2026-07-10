@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 type BrevoErrorResponse = {
@@ -123,13 +123,9 @@ async function sendDeletionCodeEmail({
 export async function POST() {
   try {
     const supabase = await createClient();
+    const user = await getAuthenticatedUser(supabase);
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { upsertIntegrationToken } from "@/lib/integrations/store/store";
 
 export const runtime = "nodejs";
@@ -17,12 +17,9 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthenticated user" },
         { status: 401 },
