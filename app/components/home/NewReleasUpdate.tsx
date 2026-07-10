@@ -49,8 +49,8 @@ const NewReleaseUpdate = ({ userId }: Props) => {
 
           <div className="mt-6 w-full flex-1 overflow-hidden rounded bg-neutral-100">
             <MuxPlayer
-              src="https://storage.googleapis.com/muxdemofiles/mux-video-intro.mp4"
-              poster="https://image.mux.com/eOfyCKGLznhB7xa2IkN1MQWXe3dIn3iJLaRso4zEd4Q/animated.gif"
+              src="https://player.mux.com/velHpMwVI0000UWC2mG1UTfmcS7G901H8kgIyJqJB79bjo?metadata-video-title=107&video-title=107"
+              poster="https://image.mux.com/velHpMwVI0000UWC2mG1UTfmcS7G901H8kgIyJqJB79bjo/animated.gif"
               metadata={{ video_title: "What's new in Canvas" }}
               autoPlay
               muted

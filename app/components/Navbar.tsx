@@ -142,7 +142,7 @@ const Navbar = () => {
             <Link
               key={item.label}
               href={item.href}
-              className="flex grotesk items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
+              className="flex host-grotesk items-center gap-2 rounded px-2 text-xs tracking-tight text-white transition-opacity hover:opacity-70"
             >
               {item.label}
             </Link>
@@ -191,7 +191,7 @@ const Navbar = () => {
           pointerEvents: "none",
         }}
       >
-        <div className="flex h-full lime flex-col justify-between px-6 pt-28 pb-10">
+        <div className="flex h-full  lime flex-col justify-between px-6 pt-28 pb-10">
           <div className="flex flex-col">
             {NAV_LINKS.map((item, index) => (
               <Link
@@ -201,7 +201,7 @@ const Navbar = () => {
                   if (el) linksRef.current[index] = el;
                 }}
                 onClick={() => setOpen(false)}
-                className=" py-5 mix-blend-difference text-4xl tracking-tight"
+                className=" py-5 mix-blend-difference  host-grotesk text-4xl tracking-tight"
               >
                 {item.label}
               </Link>

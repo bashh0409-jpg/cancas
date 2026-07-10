@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistPixelSquare } from "geist/font/pixel";
+import { Host_Grotesk } from "next/font/google";
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import { PHProvider } from "./providers";
@@ -44,6 +45,12 @@ const rinter = localFont({
   variable: "--font-rinter",
 });
 
+const hostGrotesk = Host_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-host-grotesk",
+});
+
 const layGrotesk = localFont({
   src: [
     {
@@ -74,7 +81,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${layGrotesk.variable} ${GeistPixelSquare.variable} h-full antialiased`}
+      className={`${helveticaNeue.variable} ${GeistMono.variable} ${cmGeom.variable} ${rinter.variable} ${layGrotesk.variable} ${hostGrotesk.variable} ${GeistPixelSquare.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SpeedInsights />
