@@ -113,18 +113,18 @@ const CanvasSwitcherFlyout = ({
 
       {showFlyout && canvases && canvases.length > 0 && (
         <div
-          className="absolute left-full ml-1 top-0 z-[70] w-[240px] rounded border border-white/10 bg-[#212126] shadow-2xl py-2"
+          className="absolute left-full ml-2 top-0 z-[70] w-[240px] rounded border border-white/10 bg-[#212126] shadow-2xl "
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="max-h-64 p-1  overflow-y-auto">
+          <div className="max-h-64   overflow-y-auto">
             {canvases.map((canvas, index) => {
               const isActive = canvas.id === activeCanvasId;
 
               return (
                 <React.Fragment key={canvas.id}>
                   {index > 0 && (
-                    <div className="mx-2 h-px bg-white/10" />
+                    <div className="  h-px bg-white/10" />
                   )}
                   <a
                     href={`/canvas/${canvas.slug}`}
@@ -134,10 +134,10 @@ const CanvasSwitcherFlyout = ({
                         onSwitchCanvas(canvas.slug);
                       }
                     }}
-                    className={`flex  items-center rounded-xs justify-between gap-2 px-2 py-1.5 text-[11px] mono transition ${
+                    className={`flex   items-center rounded-xs justify-between gap-2 p-2 text-[11px] mono transition ${
                       isActive
-                        ? "bg-white/15 text-white"
-                        : "text-white/60 hover:bg-white/10 hover:text-white"
+                        ? " text-white"
+                        : "text-white/60  hover:text-white"
                     }`}
                   >
                     <span className="truncate uppercase">{canvas.name}</span>
@@ -247,9 +247,9 @@ const CanvasSwitcherOverlay = ({
       className="absolute left-12 top-0 z-[60] w-[240px] rounded border border-white/5 bg-[#212126] shadow-2xl"
     >
       {/* Current canvas */}
-      <div className=" px-3 py-1">
+      <div className=" px-4 py-1">
         <div className="flex mono tracking-tight  items-center gap-2.5">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 py-1 flex-1">
             {editing ? (
               <input
                 ref={inputRef}
@@ -266,16 +266,17 @@ const CanvasSwitcherOverlay = ({
                     setDraftName(canvasName ?? "");
                   }
                 }}
-                className="w-full cursor-pointer  uppercase mono tracking-tight rounded border border-white/20 bg-[#17171b] px-2 py-1 text-xs text-white mono outline-none focus:border-white/40"
+                className="w-full cursor-pointer  uppercase mono tracking-tight rounded-xs border border-white/20 bg-[#17171b] px-2 py-1 text-xs text-white mono outline-none focus:border-white/40"
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="w-full truncate uppercase tracking-tight cursor-pointer text-left text-[11px] font-medium  text-white transition hover:text-white/80"
-                title="Click to rename"
+                className="w-full truncate uppercase flex items-center justify-between tracking-tight cursor-pointer text-left text-[11px] font-medium  text-white transition hover:text-white/80"
+                title="CLICK TO RENAME"
               >
-                {isSaving ? "Saving…" : canvasName}
+                {isSaving ? "Saving…" : canvasName}{" "}
+                <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
               </button>
             )}
           </div>
@@ -1147,6 +1148,13 @@ const ToolsSection = ({
       isActive={activePanel === "search"}
       onClick={() => onPanelChange(activePanel === "search" ? null : "search")}
     />
+    
+    <IconButton
+      icon={Layers}
+      tooltip="Layers Panel (l)"
+      isActive={activePanel === "layers"}
+      onClick={() => onPanelChange(activePanel === "layers" ? null : "layers")}
+    />
     <IconButton
       icon={Grid2x2}
       tooltip="Canvas Settings (G)"
@@ -1762,6 +1770,7 @@ export const Sidebar = ({
             />
           ) : null}
         </div>
+
         {/* Tools Section */}
         <div className="mt-5">
           <ToolsSection
@@ -1769,17 +1778,15 @@ export const Sidebar = ({
             onPanelChange={setActivePanel}
           />
         </div>
+        {/* Divider */}
+        <div className="w-6 h-px bg-white/10" />
         {/* Edit Section */}
         {/* <EditSection /> */}
         {/* View Section */}
         <ViewSection />
         {/* Divider */}
 
-        {/* Layers Section */}
-        <LayersSection
-          activePanel={activePanel}
-          onPanelChange={setActivePanel}
-        />
+
         {/* Divider */}
         <div className="w-6 h-px bg-white/10" />
         {/* Spacer */}
