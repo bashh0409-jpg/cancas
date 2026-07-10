@@ -228,7 +228,7 @@ const CanvasSwitcherOverlay = ({
         <form action={createCanvasAction}>
           <button
             type="submit"
-            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-fit text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
+            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white/60 underline transition hover:text-white"
           >
             Create new file
           </button>
@@ -238,7 +238,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-[11px] p-1 rounded-xs cursor-pointer mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
+          className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono  uppercase tracking-tight  hover:bg-white/10 text-white/60 underline transition hover:text-white"
         >
           Back to files
         </a>
