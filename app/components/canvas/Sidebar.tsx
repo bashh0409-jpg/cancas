@@ -117,7 +117,7 @@ const CanvasSwitcherFlyout = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="max-h-64   overflow-y-auto">
+          <div className="  overflow-y-auto">
             {canvases.map((canvas, index) => {
               const isActive = canvas.id === activeCanvasId;
 
