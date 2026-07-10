@@ -99,24 +99,24 @@ const CanvasSwitcherFlyout = ({
 
   return (
     <div
-      className="relative border-t border-white/10"
+      className="relative border-t px-2 py-1 border-white/10"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <button
         type="button"
-        className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white/60 transition hover:text-white flex items-center gap-2"
+        className="text-[11px] px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white"
       >
         Switch canvas
       </button>
 
       {showFlyout && canvases && canvases.length > 0 && (
         <div
-          className="absolute left-full top-0 z-[70] w-[200px] rounded border border-white/10 bg-[#212126] shadow-2xl py-2"
+          className="absolute left-full ml-1 top-0 z-[70] w-[240px] rounded border border-white/10 bg-[#212126] shadow-2xl py-2"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-64 p-1  overflow-y-auto">
             {canvases.map((canvas) => {
               const isActive = canvas.id === activeCanvasId;
 
@@ -130,16 +130,17 @@ const CanvasSwitcherFlyout = ({
                       onSwitchCanvas(canvas.slug);
                     }
                   }}
-                  className={`flex items-center justify-between gap-2 px-3 py-1.5 text-[11px] mono transition ${
+                  className={`flex  items-center rounded-xs mb-0.5 justify-between gap-2 px-2 py-1.5 text-[11px] mono transition border-b border-white/10 last:border-b-0 ${
                     isActive
                       ? "bg-white/15 text-white"
                       : "text-white/60 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  <span className="truncate">{canvas.name}</span>
+                  <span className="truncate uppercase">{canvas.name}</span>
                   {isActive && (
-                    <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-lime-400" />
+                    <Plus className="shrink-0 w-3.5  h-3.5 " />
                   )}
+                  
                 </a>
               );
             })}
@@ -153,7 +154,9 @@ const CanvasSwitcherFlyout = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <p className="text-[11px] mono text-white/50">No other canvases yet</p>
+          <p className="text-[11px] mono text-white/50">
+            No other canvases yet
+          </p>
         </div>
       )}
     </div>
