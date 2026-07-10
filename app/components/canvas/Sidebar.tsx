@@ -80,12 +80,14 @@ const CanvasSwitcherOverlay = ({
   canvases,
   onRename,
   onSwitchCanvas,
+  onClose,
 }: {
   canvasName?: string;
   activeCanvasId?: string;
   canvases?: { id: string; name: string; slug: string }[];
   onRename?: (name: string) => void | Promise<void>;
   onSwitchCanvas?: (slug: string) => void;
+  onClose?: () => void;
 }) => {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(canvasName ?? "");
@@ -244,13 +246,14 @@ const CanvasSwitcherOverlay = ({
         <button
           type="button"
           onClick={() => {
+            onClose?.();
             window.dispatchEvent(
               new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "shortcuts" }),
             );
           }}
           className="text-[11px] w-full p-1 py-1.5 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white/60 transition hover:text-white flex items-center gap-2"
         >
-          <Keyboard className="w-3.5 h-3.5" strokeWidth={1.25} />
+          
           Shortcuts
         </button>
       </div>
@@ -1693,6 +1696,7 @@ export const Sidebar = ({
               canvasName={canvasName}
               canvases={canvases}
               onRename={onRename}
+              onClose={() => setShowCanvasOverlay(false)}
               onSwitchCanvas={(slug) => {
                 setShowCanvasOverlay(false);
                 onSwitchCanvas?.(slug);
