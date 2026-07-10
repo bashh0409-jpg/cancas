@@ -5,19 +5,22 @@ import Faq from "./components/Faq";
 import Footer from "./components/Footer";
 import Animated from "./components/animated";
 import { getAppUrl } from "@/lib/appUrl";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const page = async () => {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
+    const cookieStore = await cookies();
+    // Check for any Supabase auth cookie — lightweight, no server call
+    const hasSession = cookieStore.getAll().some(
+      (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token"
+    );
 
-    if (data?.user) {
+    if (hasSession) {
       redirect("/home");
     }
   } catch {
-    // Stale/invalid session cookie — gracefully show landing page
+    // Cookie access unavailable — gracefully show landing page
   }
 
   return (
