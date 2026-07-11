@@ -728,7 +728,7 @@ export function HomeShell({
       </aside>
 
       {/* ── App Main content ────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 flex flex-col gap-4">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-8 flex flex-col gap-4">
         {activePage === "files" && (
           <FilesPage
             firstName={firstName}
@@ -898,7 +898,7 @@ function FilesPage({
   );
 
   return (
-    <div className="flex flex-col scrollbar-hidden overflow-x-hidden gap-4">
+    <div className="flex flex-col scrollbar-hidden  gap-4">
       <div className="flex flex-wrap  items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="mono capitalize text-sm tracking-tight text-white">
@@ -984,7 +984,7 @@ function RecentlyDeletedPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex  flex-col gap-4">
       <div>
         <h2 className="text-white uppercase text-sm tracking-tight mono">
           Recently Deleted

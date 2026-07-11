@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import { User, ChevronDown } from "lucide-react";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import { AccountCard } from "../home/HomeShell";
@@ -44,7 +45,7 @@ const MobileNotifier: React.FC<Props> = ({
       <div className="flex  items-center justify-between px-4 py-4">
         {/* Logo */}
         <div className="flex ">
-          <img
+          <Image
             src="/images/Reflow.svg"
             alt="Logo"
             width={64}
@@ -62,8 +63,10 @@ const MobileNotifier: React.FC<Props> = ({
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-white/20 flex items-center justify-center shrink-0 overflow-hidden">
               {photoUrl ? (
-                <img
+                <Image
                   src={photoUrl}
+                  width={20}
+                  height={20}
                   alt={firstName}
                   className="h-full w-full object-cover"
                   referrerPolicy="no-referrer"
