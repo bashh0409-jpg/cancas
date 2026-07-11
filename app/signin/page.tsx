@@ -92,7 +92,7 @@ export default function Page() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-black text-white">
       {/* LEFT */}
-      <div className="flex w-full flex-col items-center justify-center px-6 lg:max-w-[480px]">
+      <div className="flex w-full flex-col  items-center h-full justify-between p-6 lg:max-w-[480px]">
         <Image
           src="/images/Reflow.svg"
           alt="Logo"
@@ -101,10 +101,18 @@ export default function Page() {
           className="object-contain shrink-0"
         />
 
-        <div className="flex w-full max-w-[380px] flex-col items-center gap-8 rounded-lg  p-4">
-          <div className="flex w-full flex-col gap-2">
-            <div className="text-xl mt-6 uppercase  leading-tight text-center tracking-tight">
-              Sign in to your workspace to start your journey.
+        <div className="flex w-full max-w-[380px] flex-col items-center gap-6 rounded-lg ">
+          <div className="flex w-full flex-col  gap-2">
+            <div className="flex justify-center p-4 gap-2 mt-6 items-center">
+              {" "}
+              <span className="lime text-center  h-2 w-2 "></span>
+              <span className="text-white text-xs tracking-wider  mono uppercase text-center">
+                ENTER THE COLLECTION
+              </span>
+            </div>
+
+            <div className="text-4xl grotesk mb-4 leading-none text-center tracking-tight">
+              Sign in to continue
             </div>
           </div>
 
@@ -171,7 +179,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[35px] w-full items-center cursor-pointer justify-center gap-3 rounded bg-white   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center cursor-pointer justify-center gap-3 rounded-full bg-white   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
                 {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
@@ -181,7 +189,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[35px] w-full items-center cursor-pointer justify-center gap-3 rounded bg-blue-600 px-4 text-xs mono uppercase tracking-tight text-white transition-all hover:bg-blue-700 disabled:opacity-60"
+                className="inline-flex h-[40px] w-full items-center cursor-pointer justify-center gap-3 rounded-full bg-white px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -206,7 +214,8 @@ export default function Page() {
             </div>
           )}
 
-          {/* RESTORED FOOTER TEXT */}
+         
+        </div> {/* RESTORED FOOTER TEXT */}
           <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
             By continuing, you agree to the{" "}
             <a
@@ -215,7 +224,6 @@ export default function Page() {
             >
               Terms of service
             </a>
-            
             and acknowledge the{" "}
             <a
               href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
@@ -224,7 +232,6 @@ export default function Page() {
               Privacy Policy
             </a>
           </p>
-        </div>
       </div>
 
       {/* RIGHT */}
