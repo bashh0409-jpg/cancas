@@ -595,8 +595,6 @@ export function HomeShell({
 
         {/* ── Nav items ── */}
         <nav className="flex flex-col gap-2 px-1">
-          
-        
           <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
             <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
             <input
@@ -708,7 +706,7 @@ export function HomeShell({
             labelRef={addLabelRef}
           />
           <SidebarLink
-            href="https://discord.gg/xexnRhqBP"
+            href="https://discord.gg/vfstVqF3gk"
             icon={
               <svg
                 role="img"
@@ -956,6 +954,7 @@ function FilesPage({
       <CanvasFileList
         canvases={filteredCanvases}
         createCanvasAction={createCanvasAction}
+        searchQuery={localSearch}
       />
     </div>
   );
@@ -989,7 +988,7 @@ function RecentlyDeletedPage() {
         <h2 className="text-white uppercase text-sm tracking-tight mono">
           Recently Deleted
         </h2>
-        <p className="text-white/50 text-xs mono">
+        <p className="text-white/50 text-xs tracking-tight mono">
           All recently deleted files will appear here.
         </p>
       </div>
@@ -1050,7 +1049,7 @@ function SettingsPage({
           <h2 className="text-white uppercase text-sm tracking-tight mono">
             Settings
           </h2>
-          <p className="text-white/50 text-xs mono">
+          <p className="text-white/50 text-xs tracking-tight mono">
             All account related settings will appear here.
           </p>
         </div>
@@ -1741,7 +1740,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
         <h2 className="text-white uppercase  text-sm tracking-tight mono">
           My Library.
         </h2>
-        <p className="text-white/50 text-xs mono">
+        <p className="text-white/50 text-xs tracking-tight mono">
           All files from all canvases will appear here.
         </p>
       </div>

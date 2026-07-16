@@ -150,7 +150,7 @@ const MobileNotifier: React.FC<Props> = ({
           Watch tutorials on Youtube
         </a>{" "}
         <a
-          href="https://discord.gg/xexnRhqBP"
+          href="https://discord.gg/vfstVqF3gk"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Join Discord"
@@ -166,7 +166,6 @@ const MobileNotifier: React.FC<Props> = ({
           </svg>
           Join our Discord community
         </a>{" "}
-      
       </div>
       <div className="w-full absolute bottom-0 left-0">
         <Notice />

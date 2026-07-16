@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { FilePlusCorner, Loader2, Plus } from "lucide-react";
 
 export function CreateCanvasButton({
   createCanvasAction,
@@ -40,7 +40,7 @@ export function CreateCanvasButton({
       title={collapsed ? label : undefined}
       className={`
         w-full h-8 lime cursor-pointer rounded-xs flex items-center text-sm
-        text-black transition-colors
+        text-white transition-colors
         hover:bg-white/10
         disabled:opacity-60 disabled:cursor-not-allowed
         ${collapsed ? "justify-center px-0" : "justify-between px-2"}
@@ -51,7 +51,7 @@ export function CreateCanvasButton({
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Plus className="w-4 h-4" />
+            <FilePlusCorner className="w-4 h-4" />
           )}
         </span>
 

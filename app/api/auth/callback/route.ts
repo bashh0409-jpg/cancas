@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { clearSupabaseAuthCookies } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -37,6 +38,8 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
+    clearSupabaseAuthCookies(redirectResponse, request);
+
     return NextResponse.redirect(
       `${origin}/signin?error=${encodeURIComponent(error.message)}`,
     );

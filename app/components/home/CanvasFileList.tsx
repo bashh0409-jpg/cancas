@@ -12,6 +12,7 @@ type CanvasFileListProps = {
   canvases: CanvasListItem[];
   isTrash?: boolean;
   createCanvasAction?: (idempotencyKey: string) => Promise<void>;
+  searchQuery?: string;
 };
 
 function Tooltip({
@@ -64,6 +65,7 @@ export function CanvasFileList({
   canvases: initialCanvases,
   isTrash = false,
   createCanvasAction,
+  searchQuery = "",
 }: CanvasFileListProps) {
   const router = useRouter();
   const [canvases, setCanvases] = useState(initialCanvases);
@@ -149,6 +151,31 @@ export function CanvasFileList({
             Trash is empty. Files in the trash will be permanently deleted after
             30 days.
           </p>
+        </div>
+      );
+    }
+
+    if (searchQuery.trim()) {
+      return (
+        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded bg-white/10 tracking-tight p-6 text-sm text-white mono">
+          <div className="mb-3 flex aspect-square items-center justify-center rounded text-white/30 transition">
+            <CanvasPlaceholderIcon />
+          </div>
+          <div className="flex flex-col gap-2 items-center">
+            <p className="text-white/60 uppercase text-xs mono text-center font-medium">
+              No canvases found
+            </p>
+            <p className="text-white/40 uppercase text-xs mono text-center max-w-sm leading-relaxed">
+              We couldn&apos;t find any canvases matching{" "}
+              <span className="text-white/70 font-semibold">
+                "{searchQuery}"
+              </span>
+            </p>
+            <p className="text-white/40 uppercase text-xs mono text-center max-w-sm leading-relaxed pt-1">
+              Try searching with different keywords, check the spelling, or
+              create a new canvas to get started.
+            </p>
+          </div>
         </div>
       );
     }

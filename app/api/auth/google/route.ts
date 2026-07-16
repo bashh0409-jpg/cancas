@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { clearSupabaseAuthCookies, createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -21,15 +21,21 @@ export async function GET(request: NextRequest) {
   });
 
   if (error || !data?.url) {
-    console.error("OAuth Error:", error);
-
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: error?.message ?? "Unable to start Google login",
       },
       { status: 500 },
     );
+
+    clearSupabaseAuthCookies(response, request);
+    console.error("OAuth Error:", error);
+
+    return response;
   }
 
-  return NextResponse.redirect(data.url);
+  const response = NextResponse.redirect(data.url);
+  clearSupabaseAuthCookies(response, request);
+
+  return response;
 }

@@ -1,6 +1,40 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+
+function isSupabaseAuthCookie(name: string) {
+  return (
+    name.startsWith("sb-") ||
+    name.includes("supabase-auth-token") ||
+    name.startsWith("supabase-")
+  );
+}
+
+export function clearSupabaseAuthCookies(
+  response: NextResponse,
+  request?: NextRequest,
+) {
+  const cookieNames = new Set<string>();
+
+  if (request) {
+    for (const cookie of request.cookies.getAll()) {
+      if (isSupabaseAuthCookie(cookie.name)) {
+        cookieNames.add(cookie.name);
+      }
+    }
+  }
+
+  for (const name of cookieNames) {
+    response.cookies.set(name, "", {
+      maxAge: 0,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+}
 
 export async function createClient() {
   const cookieStore = await cookies();

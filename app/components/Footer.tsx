@@ -87,7 +87,7 @@ const SOCIALS: NavLink[] = [
     label: "YouTube",
     href: "https://youtube.com/@swiped-h2u?si=lfJd-iQSIMv0an7X",
   },
-  { label: "Discord", href: "https://discord.gg/xexnRhqBP" },
+  { label: "Discord", href: "https://discord.gg/vfstVqF3gk" },
 ];
 
 const linkClass =

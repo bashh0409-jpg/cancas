@@ -24,9 +24,21 @@ function getInitialFormError() {
 
   if (!authError) return null;
 
-  return authError === "missing_code"
-    ? "Sign-in was interrupted. Please try again."
-    : authError;
+  const normalizedError = authError.toLowerCase();
+
+  if (authError === "missing_code") {
+    return "Sign-in was interrupted. Please try again.";
+  }
+
+  if (
+    normalizedError.includes("code challenge") ||
+    normalizedError.includes("code verifier") ||
+    normalizedError.includes("pkce")
+  ) {
+    return "Your previous sign-in was interrupted. We cleared the stale session state and you can try again.";
+  }
+
+  return authError;
 }
 
 export default function Page() {
@@ -100,7 +112,6 @@ export default function Page() {
           height={64}
           className="object-contain shrink-0"
         />
-
         <div className="flex w-full max-w-[380px] flex-col items-center gap-6 rounded-lg ">
           <div className="flex w-full flex-col  gap-2">
             <div className="flex justify-center p-4 gap-2 mt-6 items-center">
@@ -213,25 +224,24 @@ export default function Page() {
               </button>
             </div>
           )}
-
-         
-        </div> {/* RESTORED FOOTER TEXT */}
-          <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
-            By continuing, you agree to the{" "}
-            <a
-              href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
-              className="underline underline-offset-2 hover:text-white"
-            >
-              Terms of service
-            </a>
-            and acknowledge the{" "}
-            <a
-              href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
-              className="underline underline-offset-2 hover:text-white"
-            >
-              Privacy Policy
-            </a>
-          </p>
+        </div>{" "}
+        {/* RESTORED FOOTER TEXT */}
+        <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
+          By continuing, you agree to the{" "}
+          <a
+            href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
+            className="underline underline-offset-2 hover:text-white"
+          >
+            Terms of service
+          </a>
+          and acknowledge the{" "}
+          <a
+            href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
+            className="underline underline-offset-2 hover:text-white"
+          >
+            Privacy Policy
+          </a>
+        </p>
       </div>
 
       {/* RIGHT */}

@@ -1210,7 +1210,7 @@ const ViewSection = () => {
       <Tooltip text="Reset zoom to 100%">
         <button
           onClick={resetZoom}
-          className="text-white mono text-[11px] hover:bg-white/20 w-full h-8 flex items-center rounded justify-center cursor-pointer"
+          className="text-white mono text-[11px] hover:bg-white/20 w-8 h-8 flex items-center rounded justify-center cursor-pointer"
         >
           {zoomPercent}
         </button>
@@ -1746,7 +1746,7 @@ export const Sidebar = ({
             aria-expanded={showCanvasOverlay}
             aria-label="Canvas menu"
             onClick={() => setShowCanvasOverlay((open) => !open)}
-            className="cursor-pointer rounded p-1 py-1.5 hover:bg-white/20"
+            className="cursor-pointer rounded h-8 w-8 items-center justify-center flex hover:bg-white/20"
           >
             <Image
               src="/images/Re.svg"
@@ -1790,7 +1790,7 @@ export const Sidebar = ({
         {/* Divider */}
         <div className="w-6 h-px bg-white/10" />
         {/* Spacer */}
-        <div className="flex-1" />
+      
         {/* Export & Settings Section */}
         <ExportSection
           activePanel={activePanel}
