@@ -31,7 +31,7 @@ export function CanvasZoomControls({
 
         <button
           aria-label="Reset zoom to 100%"
-          className="flex h-8 min-w-[54px] items-center justify-center rounded-lg bg-black/[0.04] px-2 font-mono text-[10px] font-semibold text-black/70 transition hover:bg-black/[0.06] hover:text-black"
+          className="flex h-8 w-8 min-w-[54px] items-center justify-center rounded-lg bg-black/[0.04] px-2 font-mono text-[10px] font-semibold text-black/70 transition hover:bg-black/[0.06] hover:text-black"
           title="Reset zoom to 100%"
           type="button"
           onClick={onResetZoom}

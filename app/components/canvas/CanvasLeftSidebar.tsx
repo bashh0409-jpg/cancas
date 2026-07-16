@@ -223,7 +223,7 @@ export function CanvasLeftSidebar({
 
             <button
               aria-label="Reset zoom to 100%"
-              className="flex h-7 flex-1 items-center justify-center rounded-md font-mono text-[11px] font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+              className="flex h-7 w-7 flex-1 items-center justify-center rounded-md font-mono text-[11px] font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
               title="Reset zoom to 100%"
               type="button"
               onClick={onResetZoom}
