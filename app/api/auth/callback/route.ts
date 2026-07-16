@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/signin?error=missing_code`);
   }
 
+  const redirectResponse = NextResponse.redirect(`${origin}${redirectTo}`);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,9 +20,15 @@ export async function GET(request: NextRequest) {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value),
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            redirectResponse.cookies.set(name, value, {
+              ...options,
+              maxAge: options?.maxAge ?? 60 * 60 * 24 * 365,
+              sameSite: options?.sameSite ?? "lax",
+              secure: process.env.NODE_ENV === "production",
+              path: options?.path ?? "/",
+            });
+          });
         },
       },
     },
@@ -34,7 +42,5 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Create the redirect AFTER exchanging the code, so cookies set on
-  // request.cookies via setAll are automatically forwarded to the response.
-  return NextResponse.redirect(`${origin}${redirectTo}`);
+  return redirectResponse;
 }

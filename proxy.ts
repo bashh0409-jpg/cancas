@@ -140,16 +140,58 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabaseClient.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
 
-  if (userError || !user) {
+    if (userError || !user) {
+      return withSecurityHeaders(NextResponse.redirect(new URL("/signin", request.url)));
+    }
+
+    return withSecurityHeaders(response);
+  } catch (err: unknown) {
+    const authError = err as {
+      status?: number;
+      code?: string;
+      message?: string;
+    };
+
+    const isRefreshTokenError =
+      authError?.code === "refresh_token_not_found" ||
+      authError?.status === 400 ||
+      (typeof authError?.message === "string" &&
+        (authError.message.includes("refresh_token_not_found") ||
+          authError.message.includes("Invalid Refresh Token")));
+
+    if (isRefreshTokenError) {
+      // Stale refresh token: clear auth cookies and redirect to sign-in
+      const cookiesList = request.cookies
+        .getAll()
+        .filter(
+          (c) =>
+            c.name.startsWith("sb-") ||
+            c.name.includes("supabase-auth-token") ||
+            c.name.startsWith("supabase-"),
+        );
+
+      const redirectResponse = NextResponse.redirect(new URL("/signin", request.url));
+      for (const cookie of cookiesList) {
+        redirectResponse.cookies.set(cookie.name, "", {
+          maxAge: 0,
+          path: "/",
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+
+      return withSecurityHeaders(redirectResponse);
+    }
+
+    // Other auth errors: also redirect to sign-in
     return withSecurityHeaders(NextResponse.redirect(new URL("/signin", request.url)));
   }
-
-  return withSecurityHeaders(response);
 }
 
 export const config = {

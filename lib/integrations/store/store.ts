@@ -56,13 +56,24 @@ type IntegrationTokenRecord = {
 
 export async function deleteIntegrationToken(provider: IntegrationProvider) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  
+  let user;
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    throw new Error("Unable to determine authenticated user.");
+    if (authError || !authUser) {
+      throw authError || new Error("Unable to determine authenticated user.");
+    }
+    
+    user = authUser;
+  } catch (err: unknown) {
+    const error = err as Error;
+    throw new Error(
+      `Unable to determine authenticated user: ${error.message}`,
+    );
   }
 
   const { error } = await supabase
@@ -79,13 +90,24 @@ export async function deleteIntegrationToken(provider: IntegrationProvider) {
 
 export async function getIntegrationToken(provider: IntegrationProvider) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  
+  let user;
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    throw new Error("Unable to determine authenticated user.");
+    if (authError || !authUser) {
+      throw authError || new Error("Unable to determine authenticated user.");
+    }
+    
+    user = authUser;
+  } catch (err: unknown) {
+    const error = err as Error;
+    throw new Error(
+      `Unable to determine authenticated user: ${error.message}`,
+    );
   }
 
   const { data, error } = await supabase
