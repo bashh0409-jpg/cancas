@@ -10,18 +10,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const page = async () => {
-  try {
-    const cookieStore = await cookies();
-    // Check for any Supabase auth cookie — lightweight, no server call
-    const hasSession = cookieStore.getAll().some(
-      (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token"
-    );
+  const cookieStore = await cookies();
+  // Check for any Supabase auth cookie — lightweight, no server call
+  const hasSession = cookieStore.getAll().some(
+    (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token"
+  );
 
-    if (hasSession) {
-      redirect("/home");
-    }
-  } catch {
-    // Cookie access unavailable — gracefully show landing page
+  if (hasSession) {
+    redirect("/home");
   }
 
   return (
@@ -70,4 +66,3 @@ const page = async () => {
 };
 
 export default page;
-
