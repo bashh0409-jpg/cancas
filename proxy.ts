@@ -1,32 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const MARKETING_HOSTS = new Set(["swipes.site", "www.swipes.site"]);
-const APP_HOST = "app.swipes.site";
-
-const APP_ROUTE_PREFIXES = [
-  "/auth",
-  "/billing",
-  "/canvas",
-  "/home",
-  "/signin",
-  "/notfound",
-];
-
-const APP_API_PREFIXES = [
-  "/api/account",
-  "/api/auth",
-  "/api/billing",
-  "/api/canvases",
-  "/api/credits",
-  "/api/integrations",
-];
-
-function isAppRoute(pathname: string) {
-  return [...APP_ROUTE_PREFIXES, ...APP_API_PREFIXES].some((prefix) => {
-    return pathname === prefix || pathname.startsWith(`${prefix}/`);
-  });
-}
+const CANONICAL_HOST = "www.swipes.site";
+const LEGACY_HOSTS = new Set(["swipes.site", "app.swipes.site"]);
 
 function withHost(request: NextRequest, host: string) {
   const url = request.nextUrl.clone();
@@ -76,16 +52,10 @@ export async function proxy(request: NextRequest) {
   const pathname = requestUrl.pathname;
   const hostname = request.nextUrl.hostname;
 
-  // Host-based routing: rewrite / on app host to /home
-  if (hostname === APP_HOST && pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.rewrite(url);
-  }
-
-  // Host-based routing: redirect app routes on marketing hosts to app host
-  if (MARKETING_HOSTS.has(hostname) && isAppRoute(pathname)) {
-    return NextResponse.redirect(withHost(request, APP_HOST));
+  // Keep every public route and OAuth callback on one host so auth cookies and
+  // provider redirect URLs never switch domains mid-flow.
+  if (LEGACY_HOSTS.has(hostname)) {
+    return NextResponse.redirect(withHost(request, CANONICAL_HOST));
   }
 
   if (pathname.startsWith("/api/")) {

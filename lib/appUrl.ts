@@ -1,4 +1,4 @@
-const PRODUCTION_APP_ORIGIN = "https://app.swipes.site";
+const PRODUCTION_APP_ORIGIN = "https://www.swipes.site";
 
 function normalizePath(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
