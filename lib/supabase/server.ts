@@ -67,11 +67,19 @@ export async function createClient() {
  * The Supabase SSR client stores refresh tokens in cookies. When a refresh token
  * has already been consumed or is invalid (e.g. after OAuth re-authentication,
  * manual session invalidation, or cross-device sign-in), `getUser()` throws
- * with `refresh_token_not_found`. This wrapper:
+ * with `refresh_token_not_found` or `refresh_token_already_used`.
+ *
+ * On Vercel's serverless architecture, concurrent requests can race to refresh
+ * the same token. The first one succeeds and rotates the token; the rest get
+ * `refresh_token_already_used`. This wrapper handles that by retrying once —
+ * the winning request already set the new session cookies.
  *
  * 1. Catches the error
- * 2. Clears all stale Supabase auth cookies so the next request doesn't repeat the failure
- * 3. Returns `null` so callers redirect to sign-in gracefully
+ * 2. For `refresh_token_already_used`: retries `getUser()` once (the new session
+ *    cookies from the concurrent winner should now be in place)
+ * 3. For other refresh errors: clears stale Supabase auth cookies so the next
+ *    request doesn't repeat the failure
+ * 4. Returns `null` so callers redirect to sign-in gracefully
  *
  * @returns The authenticated user, or `null` if not authenticated or session is stale.
  */
@@ -89,12 +97,42 @@ export async function getAuthenticatedUser(
       message?: string;
     };
 
+    const errorCode = authError?.code ?? "";
+    const errorMessage = authError?.message ?? "";
+
+    // ── refresh_token_already_used: retry once ──────────────────────────
+    // This happens when multiple serverless functions race to refresh the
+    // same token. The first one wins and sets new session cookies. We retry
+    // `getUser()` — the new cookies should now be valid.
+    if (
+      errorCode === "refresh_token_already_used" ||
+      errorMessage.includes("refresh_token_already_used")
+    ) {
+      console.warn(
+        `[Auth] refresh_token_already_used — retrying getUser() once`,
+      );
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error && data.user) {
+          console.warn(
+            `[Auth] Retry succeeded for user ${data.user.id}`,
+          );
+          return data.user;
+        }
+      } catch {
+        // Fall through to the stale-cookie cleanup below
+      }
+    }
+
+    // ── Other refresh token errors: clear stale cookies ─────────────────
     const isRefreshTokenError =
-      authError?.code === "refresh_token_not_found" ||
+      errorCode === "refresh_token_not_found" ||
+      errorCode === "refresh_token_already_used" ||
       authError?.status === 400 ||
-      (typeof authError?.message === "string" &&
-        (authError.message.includes("refresh_token_not_found") ||
-          authError.message.includes("Invalid Refresh Token")));
+      (typeof errorMessage === "string" &&
+        (errorMessage.includes("refresh_token_not_found") ||
+          errorMessage.includes("Invalid Refresh Token") ||
+          errorMessage.includes("refresh_token_already_used")));
 
     if (isRefreshTokenError) {
       try {
@@ -118,7 +156,7 @@ export async function getAuthenticatedUser(
         }
 
         console.warn(
-          `[Auth] Cleared ${staleCookies.length} stale session cookie(s) due to ${authError.code ?? authError.message}`,
+          `[Auth] Cleared ${staleCookies.length} stale session cookie(s) due to ${errorCode || errorMessage}`,
         );
       } catch {
         // Cookie clearing is best-effort; the redirect to sign-in is the main recovery
@@ -126,7 +164,7 @@ export async function getAuthenticatedUser(
     } else {
       // Log non-refresh auth errors (e.g. network failures) but don't crash
       console.warn(
-        `[Auth] getUser() failed (non-refresh): ${authError?.message ?? "unknown"}`,
+        `[Auth] getUser() failed (non-refresh): ${errorMessage || "unknown"}`,
       );
     }
 
