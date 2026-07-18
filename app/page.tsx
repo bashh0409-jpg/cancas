@@ -60,62 +60,63 @@ const page = async () => {
             </a>
           </div>
         </div>
-        <RotatingImageOrbit
-          centerLine1="The Universal"
-          centerLine2="Font."
-          duration={40}
-          images={[
-            {
-              id: "1",
-              src: "/images/login/auth-1.webp",
-              alt: "Nested color frame poster",
-              tilt: -6,
-            },
-            {
-              id: "2",
-              src: "/images/login/auth-2.webp",
-              alt: "Green poster with large numerals",
-              tilt: 4,
-            },
-            {
-              id: "3",
-              src: "/images/login/auth-3.webp",
-              alt: "White poster with stacked numerals",
-              tilt: -3,
-            },
-            {
-              id: "4",
-              src: "/images/login/auth-4.webp",
-              alt: "Four-quadrant stamp grid poster",
-              tilt: 5,
-            },
-            {
-              id: "5",
-              src: "/images/login/auth-5.webp",
-              alt: "Sky blue poster with diagonal red text",
-              tilt: -4,
-            },
-            {
-              id: "6",
-              src: "/images/login/auth-6.webp",
-              alt: "Striped braille-pattern poster",
-              tilt: 3,
-            },
-            {
-              id: "7",
-              src: "/images/login/auth-1.webp",
-              alt: "Grayscale checkerboard poster",
-              tilt: -5,
-            },
-            {
-              id: "8",
-              src: "/images/login/auth-4.webp",
-              alt: "Orange duotone architectural poster",
-              tilt: 6,
-            },
-          ]}
-        />
-
+        <div className=" text-white  h-screen w-full flex items-center justify-center">
+          <RotatingImageOrbit
+            centerLine1="The Universal"
+            centerLine2="Font."
+            duration={40}
+            images={[
+              {
+                id: "1",
+                src: "/images/login/auth-1.webp",
+                alt: "Nested color frame poster",
+                tilt: -6,
+              },
+              {
+                id: "2",
+                src: "/images/login/auth-2.webp",
+                alt: "Green poster with large numerals",
+                tilt: 4,
+              },
+              {
+                id: "3",
+                src: "/images/login/auth-3.webp",
+                alt: "White poster with stacked numerals",
+                tilt: -3,
+              },
+              {
+                id: "4",
+                src: "/images/login/auth-4.webp",
+                alt: "Four-quadrant stamp grid poster",
+                tilt: 5,
+              },
+              {
+                id: "5",
+                src: "/images/login/auth-5.webp",
+                alt: "Sky blue poster with diagonal red text",
+                tilt: -4,
+              },
+              {
+                id: "6",
+                src: "/images/login/auth-6.webp",
+                alt: "Striped braille-pattern poster",
+                tilt: 3,
+              },
+              {
+                id: "7",
+                src: "/images/login/auth-1.webp",
+                alt: "Grayscale checkerboard poster",
+                tilt: -5,
+              },
+              {
+                id: "8",
+                src: "/images/login/auth-4.webp",
+                alt: "Orange duotone architectural poster",
+                tilt: 6,
+              },
+            ]}
+          />
+        </div>
         <Footer />
       </div>
     </div>

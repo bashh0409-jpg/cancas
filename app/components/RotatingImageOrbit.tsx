@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, useId } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import gsap from "gsap";
 
 export interface OrbitImage {
   id: string;
@@ -129,51 +130,75 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
     },
     ref,
   ) => {
-    // Unique per-instance keyframe names so multiple orbits on one page don't collide.
-    const uid = useId().replace(/:/g, "");
-    const ringAnim = `orbit-ring-${uid}`;
-    const counterAnim = `orbit-counter-${uid}`;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const ringRef = useRef<HTMLDivElement>(null);
+    const tweenRef = useRef<gsap.core.Tween | null>(null);
+
+    useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
+
+    useEffect(() => {
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const ring = ringRef.current;
+      if (!ring) return;
+
+      // No per-card counter-rotation here on purpose: each card's positioner is
+      // rotated to face outward along its radius (see the JSX below), and since
+      // that rotation lives inside this same ring, spinning the ring carries both
+      // the orbit position AND the outward-facing orientation together. That's
+      // what keeps every card pointing away from center as it travels clockwise,
+      // instead of staying screen-upright.
+      const ringSet = gsap.quickSetter(ring, "rotation", "deg");
+      ringSet(0);
+
+      if (reduceMotion) return;
+
+      tweenRef.current = gsap.to(
+        { angle: 0 },
+        {
+          angle: 360,
+          duration,
+          repeat: -1,
+          ease: "none",
+          onUpdate: function () {
+            ringSet(this.targets()[0].angle);
+          },
+        },
+      );
+
+      const node = containerRef.current;
+      // Touch devices fire mouseenter on tap with no reliable mouseleave, which
+      // would pause the tween and never resume it — so only wire up hover-pause
+      // where a real pointer with hover support exists.
+      const supportsHover = window.matchMedia("(hover: hover)").matches;
+      const pause = () => tweenRef.current?.pause();
+      const resume = () => tweenRef.current?.resume();
+      if (supportsHover) {
+        node?.addEventListener("mouseenter", pause);
+        node?.addEventListener("mouseleave", resume);
+      }
+
+      return () => {
+        tweenRef.current?.kill();
+        if (supportsHover) {
+          node?.removeEventListener("mouseenter", pause);
+          node?.removeEventListener("mouseleave", resume);
+        }
+      };
+      // duration only changes on remount in practice; re-running this effect
+      // mid-spin would snap the rotation, so we intentionally scope deps tightly.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const count = images.length;
 
     return (
       <section
-        ref={ref}
-        className={`orbit-root relative mx-auto flex aspect-square w-full max-w-[720px] items-center justify-center bg-black ${className}`}
+        ref={containerRef}
+        className={`relative mx-auto flex aspect-square w-full max-w-[720px] items-center justify-center bg-black ${className}`}
       >
-        {/* Two linear, same-duration keyframe animations running in opposite directions
-            cancel each other out on the card's own axis: the ring's rotation carries each
-            card's position clockwise around the circle, and the counter-spin on the inner
-            wrapper removes that same rotation from the artwork so it stays upright.
-            Both are CSS time-based, so they never drift out of sync the way two
-            independently-stepped JS loops eventually would. */}
-        <style>{`
-          @keyframes ${ringAnim} {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @keyframes ${counterAnim} {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(-360deg); }
-          }
-          .orbit-ring-${uid} {
-            animation: ${ringAnim} ${duration}s linear infinite;
-          }
-          .orbit-counter-${uid} {
-            animation: ${counterAnim} ${duration}s linear infinite;
-          }
-          .orbit-root:hover .orbit-ring-${uid},
-          .orbit-root:hover .orbit-counter-${uid} {
-            animation-play-state: paused;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .orbit-ring-${uid},
-            .orbit-counter-${uid} {
-              animation: none;
-            }
-          }
-        `}</style>
-
-        <div className={`orbit-ring-${uid} absolute inset-0`}>
+        <div ref={ringRef} className="absolute inset-0">
           {images.map((img, i) => {
             const angle = (360 / count) * i;
             const tilt = img.tilt ?? 0;
@@ -182,22 +207,21 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
                 key={img.id}
                 className="absolute left-1/2 top-1/2"
                 style={{
-                  transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(clamp(-260px, -34vw, -150px)) rotate(${-angle}deg)`,
+                  // Only one rotate() here, not the cancelling pair from before — the
+                  // card is pushed out along the radius and left rotated by `angle`
+                  // (plus its own hand-placed `tilt`), so its top edge points away
+                  // from center instead of staying screen-upright.
+                  transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(clamp(-260px, -34vw, -150px)) rotate(${tilt}deg)`,
                 }}
               >
-                <div className={`orbit-counter-${uid}`}>
-                  <div
-                    className="w-[clamp(90px,12vw,150px)] overflow-hidden rounded-[2px] shadow-[0_12px_30px_rgba(0,0,0,0.55)]"
-                    style={{ transform: `rotate(${tilt}deg)` }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.src}
-                      alt={img.alt}
-                      className="block h-auto w-full"
-                      draggable={false}
-                    />
-                  </div>
+                <div className="w-[clamp(90px,12vw,150px)] overflow-hidden rounded-[2px] shadow-[0_12px_30px_rgba(0,0,0,0.55)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="block h-auto w-full"
+                    draggable={false}
+                  />
                 </div>
               </div>
             );
