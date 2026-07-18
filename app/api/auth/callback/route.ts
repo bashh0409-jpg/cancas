@@ -38,11 +38,12 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    clearSupabaseAuthCookies(redirectResponse, request);
-
-    return NextResponse.redirect(
+    const errorResponse = NextResponse.redirect(
       `${origin}/signin?error=${encodeURIComponent(error.message)}`,
     );
+    clearSupabaseAuthCookies(errorResponse, request);
+
+    return errorResponse;
   }
 
   return redirectResponse;
