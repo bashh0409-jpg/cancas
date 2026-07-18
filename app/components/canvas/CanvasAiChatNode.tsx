@@ -1,9 +1,9 @@
 "use client";
 
-import { Send, X, Bot, RotateCcw } from "lucide-react";
+import { Send, X, Bot, RotateCcw, Link, ChevronsLeftRightEllipsis, Plus } from "lucide-react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
+import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export type CanvasAiChatNodeData = {
@@ -45,9 +45,9 @@ type CanvasAiChatNodeProps = {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const FIXED_WIDTH = 380;
+const FIXED_WIDTH = 400;
 const MIN_HEIGHT = 320;
-const MAX_HEIGHT = 600;
+const MAX_HEIGHT = 800;
 const HEADER_HEIGHT = 30;
 const INPUT_HEIGHT = 30;
 const MESSAGES_HEIGHT = MAX_HEIGHT - HEADER_HEIGHT - INPUT_HEIGHT;
@@ -102,10 +102,7 @@ export function CanvasAiChatNode({
     const el = scrollContainerRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      const atTop = scrollTop === 0 && e.deltaY < 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
-      if (!atTop && !atBottom) e.stopPropagation();
+      e.stopPropagation();
     };
     el.addEventListener("wheel", onWheel, { passive: true });
     return () => el.removeEventListener("wheel", onWheel);
@@ -278,6 +275,7 @@ export function CanvasAiChatNode({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
+      onWheelCapture={(event) => event.stopPropagation()}
       style={{
         cursor: isDragging ? "grabbing" : "grab",
         left: node.position.x,
@@ -290,149 +288,176 @@ export function CanvasAiChatNode({
     >
       <div
         className={[
-          "flex flex-col w-full h-full rounded border shadow-sm overflow-hidden transition",
+          "flex flex w-full h-full p-2 rounded-xl border shadow-sm overflow-hidden transition",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
         ].join(" ")}
         style={{ backgroundColor: node.style.backgroundColor }}
       >
-        {/* ── Header (drag handle) ── */}
-        <div
-          className="flex items-center justify-between px-3 shrink-0"
-          style={{ height: HEADER_HEIGHT }}
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className="text-xs mono hidden uppercase font-medium tracking-tight"
-              style={{ color: node.style.color, opacity: 0.7 }}
-            >
-              Untitled
-            </span>
-            {isStreaming && (
-              <span className="flex gap-0.5 items-center">
-                <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:0ms]" />
-                <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:150ms]" />
-                <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:300ms]" />
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            {isStreaming && (
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded px-2 py-0.5 text-xs bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  stopStreaming();
-                }}
-              >
-                <X className="w-3 h-3" />
-                Stop
-              </button>
-            )}
-            {!isEmpty && !isStreaming && (
-              <button
-                type="button"
-                className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  clearMessages();
-                }}
-              >
-                <RotateCcw className="w-3 h-3" />
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Messages ── */}
-        <div
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2"
-          style={{ maxHeight: MESSAGES_HEIGHT }}
-          onPointerDown={(e) => {
-            const el = scrollContainerRef.current;
-            if (el && el.scrollHeight > el.clientHeight) e.stopPropagation();
-          }}
-        >
-          {isEmpty ? (
-            <div className="flex-1 flex mono flex-col items-center justify-center gap-2 py-8 select-none">
-              <p
-                className="text-xs mono mono tracking-tight text-center"
-                style={{ color: node.style.color, opacity: 0.4, }}
-              >
-                Ask me anything
-              </p>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={[
-                  "flex",
-                  msg.role === "user" ? "justify-end" : "justify-start",
-                ].join(" ")}
-              >
-                <div
-                  className={[
-                    "max-w-[85%] rounded px-2 py-2 text-xs  tracking-tight whitespace-pre-wrap break-words",
-                    msg.role === "user"
-                      ? "bg-[#2244ec] text-white rounded-br-sm"
-                      : " rounded",
-                  ].join(" ")}
-                  style={{
-                    ...textStyle,
-                    color: msg.role === "user" ? "#fff" : node.style.color,
-                  }}
-                >
-                  {msg.content}
-                  {msg.streaming && (
-                    <span className="inline-block w-1.5 h-3 ml-0.5 bg-current opacity-70 animate-pulse rounded-sm align-middle" />
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* ── Input ── */}
-        <div
-          className="shrink-0   px-2 py-1 flex items-end gap-2"
-          style={{ minHeight: INPUT_HEIGHT }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <textarea
-            ref={inputRef}
-            className="flex-1 resize-none bg-black/5 rounded px-3 py-2 text-xs outline-none tracking-tight leading-relaxed placeholder:opacity-40 transition-colors focus:bg-black/8"
-            placeholder="Ask a question… (Enter to send)"
-            value={input}
-            rows={1}
-            disabled={isStreaming}
-            style={{ ...textStyle, color: node.style.color, maxHeight: 96 }}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPointerDown={(e) => e.stopPropagation()}
-          />
+        <div className="flex h-full scrollbar-hidden w-[60px] overflow-y-auto shrink-0 flex-col gap-2 rounded-xl border border-black/5 bg-white/90 p-2 shadow-xl">
           <button
             type="button"
-            disabled={!input.trim() || isStreaming}
-            className={[
-              "shrink-0 flex items-center justify-center w-8 h-8 rounded hidden mono transition-colors mb-0.5",
-              input.trim() && !isStreaming
-                ? "bg-[#2244ec] mono text-white hover:bg-[#1a35c4]"
-                : "bg-black/5 text-gray-300 cursor-not-allowed",
-            ].join(" ")}
+            aria-label="Current chat"
+            className="flex aspect-square h-10  cursor-pointer w-full items-center justify-center rounded bg-[#2244ec] p-2 text-white shadow-sm transition hover:brightness-110"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <CanvasPlaceholderIcon />
+          </button>
+          <button
+            type="button"
+            aria-label="Chat two"
+            className="flex aspect-square h-10 cursor-pointer  w-full items-center justify-center rounded p-2 text-black/50 transition hover:bg-black/[0.04] hover:text-black"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <CanvasPlaceholderIcon />
+          </button>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* ── Header (drag handle) ── */}
+          <div
+            className="flex items-center justify-between px-3 shrink-0"
+            style={{ height: HEADER_HEIGHT }}
+          >
+            <div className="flex items-center gap-2">
+              {" "}
+              <button aria-label="New chat" className="rounded-full p-1 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
+                <Plus className="w-4 h-4" />
+              </button>
+              <span
+                className="text-[10px] mono  uppercase font-medium tracking-tight"
+                style={{ color: node.style.color, opacity: 0.7 }}
+              >
+                Untitled
+              </span>
+              {isStreaming && (
+                <span className="flex gap-0.5 items-center">
+                  <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1 h-1 rounded-full bg-[#2244ec] animate-bounce [animation-delay:300ms]" />
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1">
+              {isStreaming && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded px-2 py-0.5 text-xs bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    stopStreaming();
+                  }}
+                >
+                  <X className="w-3 h-3" />
+                  Stop
+                </button>
+              )}
+              {!isEmpty && !isStreaming && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    clearMessages();
+                  }}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Messages ── */}
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2"
+            style={{ maxHeight: MESSAGES_HEIGHT }}
             onPointerDown={(e) => {
-              e.stopPropagation();
-              void sendMessage();
+              const el = scrollContainerRef.current;
+              if (el && el.scrollHeight > el.clientHeight) e.stopPropagation();
             }}
           >
-            <Send className="w-3.5 h-3.5" />
-          </button>
+            {isEmpty ? (
+              <div className="flex-1 flex mono flex-col items-center justify-center gap-2 py-8 select-none">
+                <p
+                  className="text-xs mono mono tracking-tight text-center"
+                  style={{ color: node.style.color, opacity: 0.4 }}
+                >
+                  Ask me anything
+                </p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={[
+                    "flex",
+                    msg.role === "user" ? "justify-end" : "justify-start",
+                  ].join(" ")}
+                >
+                  <div
+                    className={[
+                      "max-w-[85%] rounded px-2 py-2 text-xs  tracking-tight whitespace-pre-wrap break-words",
+                      msg.role === "user"
+                        ? "bg-[#2244ec] text-black rounded "
+                        : " rounded",
+                    ].join(" ")}
+                    style={{
+                      ...textStyle,
+                      color: msg.role === "user" ? "#fff" : node.style.color,
+                    }}
+                  >
+                    {msg.content}
+                    {msg.streaming && (
+                      <span className="inline-block w-1.5 h-3 ml-0.5 bg-current opacity-70 animate-pulse rounded-sm align-middle" />
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ── Input ── */}
+          <div
+            className="shrink-0  px-2 py-1 flex items-end gap-2"
+            style={{ minHeight: INPUT_HEIGHT }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <button className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
+              <ChevronsLeftRightEllipsis className="w-4 h-4" />
+            </button>
+            <textarea
+              ref={inputRef}
+              className="flex-1 resize-none bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)] rounded-2xl px-3 py-2 text-xs outline-none tracking-tight leading-relaxed placeholder:opacity-70"
+              placeholder="Ask a question…"
+              value={input}
+              rows={1}
+              disabled={isStreaming}
+              style={{ ...textStyle, color: node.style.color, maxHeight: 106 }}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onPointerDown={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              disabled={!input.trim() || isStreaming}
+              className={[
+                "shrink-0 flex items-center justify-center w-8 h-8 rounded hidden mono transition-colors mb-0.5",
+                input.trim() && !isStreaming
+                  ? "bg-[#2244ec] mono text-white hover:bg-[#1a35c4]"
+                  : "bg-black/5 text-gray-300 cursor-not-allowed",
+              ].join(" ")}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                void sendMessage();
+              }}
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
