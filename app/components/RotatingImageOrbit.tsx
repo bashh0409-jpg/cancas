@@ -15,6 +15,7 @@ export interface RotatingImageOrbitProps {
   images?: OrbitImage[];
   centerLine1?: string;
   centerLine2?: string;
+  centerLine3?: string;
   /** Seconds for one full clockwise revolution. */
   duration?: number;
   className?: string;
@@ -123,8 +124,9 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
   (
     {
       images = DEFAULT_IMAGES,
-      centerLine1 = "The Universal",
-      centerLine2 = "Font.",
+      centerLine1 = "Start",
+      centerLine2 = "Reflow",
+      centerLine3 = "Now.",
       duration = 40,
       className = "",
     },
@@ -230,8 +232,9 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
 
         {/* Center label sits outside the ring entirely, so it never inherits the spin. */}
         <div className="pointer-events-none relative z-10 text-center font-sans text-[clamp(28px,5vw,56px)] font-medium leading-[1.05] text-white">
-          <div>{centerLine1}</div>
-          <div>{centerLine2}</div>
+          <div className="text-left">{centerLine1}</div>
+          <div className="text-center">{centerLine2}</div>
+          <div className="text-right">{centerLine3}</div>
         </div>
       </section>
     );

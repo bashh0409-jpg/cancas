@@ -62,8 +62,9 @@ const page = async () => {
         </div>
         <div className=" text-white  h-screen w-full flex items-center justify-center">
           <RotatingImageOrbit
-            centerLine1="The Universal"
-            centerLine2="Font."
+            centerLine1="Start"
+            centerLine2="Reflow"
+            centerLine3="Now."
             duration={40}
             images={[
               {
