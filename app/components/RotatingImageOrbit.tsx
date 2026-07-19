@@ -231,7 +231,7 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
         </div>
 
         {/* Center label sits outside the ring entirely, so it never inherits the spin. */}
-        <div className="pointer-events-none relative z-10 text-center font-sans text-[clamp(28px,5vw,56px)] font-medium leading-[1.05] text-white">
+        <div className="pointer-events-none relative z-10 w-60 text-center font-sans text-[clamp(28px,5vw,56px)] font-medium leading-[1.05] text-white">
           <div className="text-left">{centerLine1}</div>
           <div className="text-center">{centerLine2}</div>
           <div className="text-right">{centerLine3}</div>

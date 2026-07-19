@@ -1052,7 +1052,6 @@ export default function CanvasWorkspace({
         }
       }
 
-      setViewport(content.viewport);
       setShowGrid(content.showGrid);
       setBackgroundColor(content.backgroundColor);
       setGridColor(content.gridColor);
@@ -1154,9 +1153,10 @@ export default function CanvasWorkspace({
         return;
       }
 
+      const vp = viewportRef.current;
       const center = {
-        x: (rect.width / 2 - viewport.x) / viewport.zoom,
-        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
       };
       const topZIndex = Math.max(
         0,
@@ -1202,7 +1202,10 @@ export default function CanvasWorkspace({
         handleTextToolActivated,
       );
     };
-  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
+  }, [isClientReady]);
+
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
 
   useEffect(() => {
     function handleAiChatToolActivated() {
@@ -1212,9 +1215,10 @@ export default function CanvasWorkspace({
         return;
       }
 
+      const vp = viewportRef.current;
       const center = {
-        x: (rect.width / 2 - viewport.x) / viewport.zoom,
-        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
       };
       const topZIndex = Math.max(
         0,
@@ -1261,7 +1265,7 @@ export default function CanvasWorkspace({
         handleAiChatToolActivated,
       );
     };
-  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
+  }, [isClientReady]);
 
   useEffect(() => {
     function handleFileImport(event: Event) {
@@ -1280,9 +1284,10 @@ export default function CanvasWorkspace({
         return;
       }
 
+      const vp = viewportRef.current;
       const dropPosition = {
-        x: (rect.width / 2 - viewport.x) / viewport.zoom,
-        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
       };
 
       const topZIndex = Math.max(
@@ -1318,7 +1323,7 @@ export default function CanvasWorkspace({
     return () => {
       window.removeEventListener("canvasai:file-import", handleFileImport);
     };
-  }, [isClientReady, viewport.x, viewport.y, viewport.zoom]);
+  }, [isClientReady]);
 
   useEffect(() => {
     if (!pendingVoiceRecording || !isClientReady) {
@@ -1340,9 +1345,10 @@ export default function CanvasWorkspace({
         setPendingVoiceRecording(null);
         return;
       }
+      const vp = viewportRef.current;
       const center = {
-        x: (rect.width / 2 - viewport.x) / viewport.zoom,
-        y: (rect.height / 2 - viewport.y) / viewport.zoom,
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
       };
       const topZIndex = Math.max(
         0,
@@ -1376,11 +1382,7 @@ export default function CanvasWorkspace({
   }, [
     isClientReady,
     pendingVoiceRecording,
-    viewport.x,
-    viewport.y,
-    viewport.zoom,
   ]);
-
   useEffect(() => {
     if (!isClientReady) {
       return;
