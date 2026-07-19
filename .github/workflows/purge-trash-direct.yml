@@ -1,0 +1,92 @@
+name: Daily Purge Trashed Canvases (Direct)
+
+on:
+  schedule:
+    # Run daily at 23:00 UTC = 01:00 SAST (Africa/Johannesburg)
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  purge-trash-direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Validate secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "SUPABASE_URL secret is not configured." >&2
+            exit 1
+          fi
+
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY secret is not configured." >&2
+            exit 1
+          fi
+
+      - name: Purge canvases deleted more than 30 days ago
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          THIRTY_DAYS_AGO=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%S.000Z)
+          echo "Purging canvases deleted before ${THIRTY_DAYS_AGO}"
+
+          RESPONSE=$(curl --fail --silent --show-error \
+            -X POST "${SUPABASE_URL}/rest/v1/rpc/purge_trashed_canvases" \
+            -H "Content-Type: application/json" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -d "{\"before_date\": \"${THIRTY_DAYS_AGO}\"}" \
+            --retry 3 \
+            --retry-delay 5 \
+            --max-time 60 2>&1) && RC=$? || RC=$?
+
+          if [ $RC -ne 0 ]; then
+            # If RPC doesn't exist, fall back to direct DELETE via REST API
+            echo "RPC not available, falling back to direct DELETE..."
+
+            # First, fetch the IDs of canvases to delete
+            FETCH_RESPONSE=$(curl --fail --silent --show-error \
+              -X GET "${SUPABASE_URL}/rest/v1/canvases?select=id&deleted_at=lt.${THIRTY_DAYS_AGO}&limit=100" \
+              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Accept: application/json" \
+              --max-time 30)
+
+            echo "Found canvases to purge: $(echo "$FETCH_RESPONSE" | jq length)"
+
+            if [ "$(echo "$FETCH_RESPONSE" | jq length)" -gt 0 ]; then
+              # Delete them
+              DELETE_RESPONSE=$(curl --fail --silent --show-error \
+                -X DELETE "${SUPABASE_URL}/rest/v1/canvases?deleted_at=lt.${THIRTY_DAYS_AGO}" \
+                -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "Accept: application/json" \
+                -H "Prefer: return=representation" \
+                --max-time 30)
+
+              PURGED_COUNT=$(echo "$DELETE_RESPONSE" | jq length)
+              echo "Purged ${PURGED_COUNT} canvases"
+              echo "result={\"ok\":true,\"purged\":${PURGED_COUNT}}" >> $GITHUB_OUTPUT
+            else
+              echo "No canvases to purge"
+              echo "result={\"ok\":true,\"purged\":0}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "RPC purge successful"
+            echo "result=${RESPONSE}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::Direct purge trash cron job FAILED"
+          echo "::error::Check logs: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          exit 1
