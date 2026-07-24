@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, X, Bot, RotateCcw, Link, ChevronsLeftRightEllipsis, Plus } from "lucide-react";
+import { Send, X, Bot, RotateCcw, Link, ChevronsLeftRightEllipsis, Plus, ChartBar } from "lucide-react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
@@ -290,44 +290,27 @@ export function CanvasAiChatNode({
     >
       <div
         className={[
-          "flex flex w-full h-full p-2 rounded-xl border shadow-sm overflow-hidden transition",
+          "flex flex w-full h-full p-2 rounded border  overflow-hidden transition",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
         ].join(" ")}
         style={{ backgroundColor: node.style.backgroundColor }}
       >
-        <div className="flex h-full scrollbar-hidden w-[60px] overflow-y-auto shrink-0 flex-col gap-2 rounded-xl border border-black/5 bg-white/90 p-2 shadow-xl">
-          <button
-            type="button"
-            aria-label="Current chat"
-            className="flex aspect-square h-10  cursor-pointer w-full items-center justify-center rounded bg-[#2244ec] p-2 text-white shadow-sm transition hover:brightness-110"
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <CanvasPlaceholderIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="Chat two"
-            className="flex aspect-square h-10 cursor-pointer  w-full items-center justify-center rounded p-2 text-black/50 transition hover:bg-black/[0.04] hover:text-black"
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <CanvasPlaceholderIcon />
-          </button>
-        </div>
         <div className="flex min-w-0 flex-1 flex-col">
           {/* ── Header (drag handle) ── */}
+
           <div
-            className="flex items-center justify-between px-3 shrink-0"
+            className="flex absolute left-0 top-0 w-full px-2 items-center justify-between bg-transparent shrink-0"
             style={{ height: HEADER_HEIGHT }}
           >
             <div className="flex items-center gap-2">
               {" "}
-              <button aria-label="New chat" className="rounded-full p-1 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
-                <Plus className="w-4 h-4" />
+              <button aria-label="New chat" className="rounded h-4 object-contain p-1 cursor-pointer flex items-center bg-white">
+                <CanvasPlaceholderIcon size={14} />
               </button>
               <span
-                className="text-[10px] mono  uppercase font-medium tracking-tight"
+                className="text-xs mono  lime font-medium tracking-tight"
                 style={{ color: node.style.color, opacity: 0.7 }}
               >
                 Untitled
@@ -358,7 +341,7 @@ export function CanvasAiChatNode({
               {!isEmpty && !isStreaming && (
                 <button
                   type="button"
-                  className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="flex tracking-tight items-center lime gap-1 rounded px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     clearMessages();
@@ -370,11 +353,10 @@ export function CanvasAiChatNode({
               )}
             </div>
           </div>
-
           {/* ── Messages ── */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2"
+            className="flex-1 overflow-y-auto scrollbar-hidden mb-6 py-2 flex flex-col gap-2"
             style={{ maxHeight: MESSAGES_HEIGHT }}
             onPointerDown={(e) => {
               const el = scrollContainerRef.current;
@@ -424,7 +406,7 @@ export function CanvasAiChatNode({
 
           {/* ── Input ── */}
           <div
-            className="shrink-0  px-2 py-1 flex items-end gap-2"
+            className="shrink-0 absolute bottom-0 left-0 w-full  px-2 py-1 flex items-end gap-2"
             style={{ minHeight: INPUT_HEIGHT }}
             onPointerDown={(e) => e.stopPropagation()}
           >
