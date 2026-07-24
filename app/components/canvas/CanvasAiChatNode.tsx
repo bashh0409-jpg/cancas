@@ -83,7 +83,9 @@ export function CanvasAiChatNode({
 
   // ── Scroll to bottom when messages update ──────────────────────────────
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   // ── Set node height once on mount ─────────────────────────────────────

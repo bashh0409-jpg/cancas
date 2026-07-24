@@ -163,7 +163,7 @@ export function CanvasTextNode({
     if (!isEditing) return;
     const el = textareaRef.current;
     if (!el) return;
-    el.focus();
+    el.focus({ preventScroll: true });
     el.setSelectionRange(el.value.length, el.value.length);
   }, [isEditing]);
 
