@@ -1230,6 +1230,7 @@ export default function CanvasWorkspace({
       const id = crypto.randomUUID();
       const chatNode: CanvasAiChatNodeData = {
         id,
+        name: "Untitled",
         position: {
           x: center.x - 190,
           y: center.y - 160,
