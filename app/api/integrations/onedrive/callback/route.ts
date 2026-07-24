@@ -69,10 +69,8 @@ export async function GET(req: NextRequest) {
 
     const tokens = await tokenResponse.json();
 
-    // Calculate expiry date
-    const expiresAt = tokens.expires_in
-      ? Date.now() + tokens.expires_in * 1000
-      : undefined;
+    // Calculate expiry date — 21 days from now
+    const expiresAt = Date.now() + 21 * 24 * 60 * 60 * 1000;
 
     // Store the token
     await upsertIntegrationToken({

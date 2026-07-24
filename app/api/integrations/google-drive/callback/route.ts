@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       provider: "google_drive",
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token ?? undefined,
-      expiresAt: tokens.expiry_date ?? undefined,
+      expiresAt: Date.now() + 21 * 24 * 60 * 60 * 1000,
     });
 
     // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }

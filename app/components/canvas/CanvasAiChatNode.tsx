@@ -1,6 +1,11 @@
 "use client";
 
-import { Send, X, Bot, RotateCcw, Link, ChevronsLeftRightEllipsis, Plus, ChartBar } from "lucide-react";
+import {
+  Send,
+  X,
+  RotateCcw,
+  ChevronsLeftRightEllipsis,
+} from "lucide-react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
@@ -8,6 +13,7 @@ import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 
 export type CanvasAiChatNodeData = {
   id: string;
+  name: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
@@ -40,6 +46,7 @@ type CanvasAiChatNodeProps = {
   onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onMessagesChange: (messages: ChatMessage[]) => void;
+  onNameChange: (name: string) => void;
   onSizeChange: (size: { width: number; height: number }) => void;
 };
 
@@ -69,10 +76,12 @@ export function CanvasAiChatNode({
   onPointerMove,
   onPointerUp,
   onMessagesChange,
+  onNameChange,
   onSizeChange,
 }: CanvasAiChatNodeProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [title, setTitle] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -81,7 +90,67 @@ export function CanvasAiChatNode({
 
   const messages = node.messages;
 
-  // ── Scroll to bottom when messages update ──────────────────────────────
+  // ── Auto-detect conversation title ────────────────────────────────────
+  useEffect(() => {
+    // Only generate title if node doesn't have a name yet
+    if (node.name && node.name !== "AI Chat") {
+      setTitle(node.name);
+      return;
+    }
+
+    if (messages.length === 0) {
+      setTitle("");
+      return;
+    }
+
+    // Find first user message to generate title from
+    const firstUserMsg = messages.find((m) => m.role === "user");
+    if (!firstUserMsg) {
+      setTitle("");
+      return;
+    }
+
+    // Generate a concise title from the first message using server-side API
+    const generateTitle = async () => {
+      try {
+        const response = await fetch("/api/ai/generate-title", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: firstUserMsg.content }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.title) {
+            setTitle(data.title);
+            onNameChange(data.title);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Title generation failed:", err);
+      }
+
+      // Fallback: extract first sentence or first few words
+      const text = firstUserMsg.content.trim();
+      const sentenceMatch = text.match(/^[^.!?]*[.!?]/);
+      let fallbackTitle = sentenceMatch
+        ? sentenceMatch[0].replace(/[.!?]$/, "").trim()
+        : text;
+
+      // If first sentence is too long, take first few words instead
+      if (fallbackTitle.length > 60) {
+        fallbackTitle = text.split(/\s+/).slice(0, 5).join(" ");
+      }
+
+      // Truncate to 60 characters max
+      fallbackTitle = fallbackTitle.substring(0, 60).trim();
+      setTitle(fallbackTitle);
+      onNameChange(fallbackTitle);
+    };
+
+    void generateTitle();
+  }, [node.name, messages, onNameChange]);
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -306,14 +375,14 @@ export function CanvasAiChatNode({
           >
             <div className="flex items-center gap-2">
               {" "}
-              <button aria-label="New chat" className="rounded h-4 object-contain p-1 cursor-pointer flex items-center bg-white">
+              <button className="rounded h-4 object-contain select-none flex items-center bg-white">
                 <CanvasPlaceholderIcon size={14} />
               </button>
               <span
-                className="text-xs mono  lime font-medium tracking-tight"
+                className="text-xs mono font-medium  uppercase tracking-tight truncate select-none"
                 style={{ color: node.style.color, opacity: 0.7 }}
               >
-                Untitled
+                {title || "Untitled"}
               </span>
               {isStreaming && (
                 <span className="flex gap-0.5 items-center">
@@ -377,13 +446,13 @@ export function CanvasAiChatNode({
                 <div
                   key={msg.id}
                   className={[
-                    "flex",
+                    "flex ",
                     msg.role === "user" ? "justify-end" : "justify-start",
                   ].join(" ")}
                 >
                   <div
                     className={[
-                      "max-w-[85%] rounded px-2 py-2 text-xs  tracking-tight whitespace-pre-wrap break-words",
+                      "max-w-[85%] rounded px-2  py-2 text-xs  tracking-tight whitespace-pre-wrap break-words",
                       msg.role === "user"
                         ? "bg-[#2244ec] text-black rounded "
                         : " rounded",
@@ -410,17 +479,17 @@ export function CanvasAiChatNode({
             style={{ minHeight: INPUT_HEIGHT }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <button className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
+            <button aria-label="Connect" className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
               <ChevronsLeftRightEllipsis className="w-4 h-4" />
             </button>
             <textarea
               ref={inputRef}
-              className="flex-1 resize-none bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)] rounded-2xl px-3 py-2 text-xs outline-none tracking-tight leading-relaxed placeholder:opacity-70"
+              className="flex-1 resize-none bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)] rounded-xl px-3 py-2 text-xs outline-none tracking-tight leading-relaxed placeholder:opacity-70"
               placeholder="Ask a question…"
               value={input}
               rows={1}
               disabled={isStreaming}
-              style={{ ...textStyle, color: node.style.color, maxHeight: 106 }}
+              style={{ ...textStyle, color: node.style.color, maxHeight: 188 }}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               onPointerDown={(e) => e.stopPropagation()}

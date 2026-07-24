@@ -69,10 +69,7 @@ import {
   blobToDataUrl,
   formatVoiceNoteTitle,
 } from "@/lib/canvas/voiceNoteUtils";
-import {
-  parseCanvasContent,
-  type CanvasContent,
-} from "@/types/canvas";
+import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
 import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
 import {
   CanvasTranscriptionNode,
@@ -506,7 +503,9 @@ export default function CanvasWorkspace({
   const webNodesRef = useRef<WebCanvasNode[]>([]);
   const voiceNodesRef = useRef<VoiceCanvasNode[]>(initialContent.voiceNodes);
   const textNodesRef = useRef<CanvasTextNodeData[]>(initialContent.textNodes);
-  const aiChatNodesRef = useRef<CanvasAiChatNodeData[]>(initialContent.aiChatNodes);
+  const aiChatNodesRef = useRef<CanvasAiChatNodeData[]>(
+    initialContent.aiChatNodes,
+  );
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
@@ -585,9 +584,9 @@ export default function CanvasWorkspace({
   const [aiChatNodes, setAiChatNodes] = useState<CanvasAiChatNodeData[]>(
     initialContent.aiChatNodes,
   );
-  const [transcriptionNodes, setTranscriptionNodes] = useState<CanvasTranscriptionNodeData[]>(
-    initialContent.transcriptionNodes ?? [],
-  );
+  const [transcriptionNodes, setTranscriptionNodes] = useState<
+    CanvasTranscriptionNodeData[]
+  >(initialContent.transcriptionNodes ?? []);
   const [pendingVoiceRecording, setPendingVoiceRecording] =
     useState<VoiceNoteRecordedDetail | null>(null);
   const [openVoiceMenuNodeId, setOpenVoiceMenuNodeId] = useState<string | null>(
@@ -729,7 +728,7 @@ export default function CanvasWorkspace({
         })),
         ...aiChatNodes.map((node) => ({
           id: node.id,
-          name: "AI Chat",
+          name: node.name || "Untitled chat",
           type: "text" as const,
           visible: node.visible ?? true,
           locked: node.locked ?? false,
@@ -1257,7 +1256,10 @@ export default function CanvasWorkspace({
       saveDelayMsRef.current = 0;
     }
 
-    window.addEventListener(CANVAS_AI_CHAT_TOOL_EVENT, handleAiChatToolActivated);
+    window.addEventListener(
+      CANVAS_AI_CHAT_TOOL_EVENT,
+      handleAiChatToolActivated,
+    );
 
     return () => {
       window.removeEventListener(
@@ -1379,10 +1381,7 @@ export default function CanvasWorkspace({
       saveDelayMsRef.current = 0;
       setPendingVoiceRecording(null);
     })();
-  }, [
-    isClientReady,
-    pendingVoiceRecording,
-  ]);
+  }, [isClientReady, pendingVoiceRecording]);
   useEffect(() => {
     if (!isClientReady) {
       return;
@@ -1804,7 +1803,9 @@ export default function CanvasWorkspace({
           );
           if (webNode) {
             event.preventDefault();
-            setWebNodes((current) => current.filter((n) => n.id !== activeWebNodeId));
+            setWebNodes((current) =>
+              current.filter((n) => n.id !== activeWebNodeId),
+            );
             setActiveWebNodeId(null);
             saveDelayMsRef.current = 0;
             handled = true;
@@ -1939,10 +1940,15 @@ export default function CanvasWorkspace({
     }
 
     // Use capture phase to intercept before the browser's default zoom
-    document.addEventListener("wheel", preventBrowserZoom, { passive: false, capture: true });
+    document.addEventListener("wheel", preventBrowserZoom, {
+      passive: false,
+      capture: true,
+    });
 
     return () => {
-      document.removeEventListener("wheel", preventBrowserZoom, { capture: true });
+      document.removeEventListener("wheel", preventBrowserZoom, {
+        capture: true,
+      });
     };
   }, []);
 
@@ -2129,8 +2135,8 @@ export default function CanvasWorkspace({
           ? webNodesRef.current.find((entry) => entry.id === item.id)
           : item.kind === "voice"
             ? voiceNodesRef.current.find((entry) => entry.id === item.id)
-            : textNodesRef.current.find((entry) => entry.id === item.id)
-              ?? aiChatNodesRef.current.find((entry) => entry.id === item.id);
+            : (textNodesRef.current.find((entry) => entry.id === item.id) ??
+              aiChatNodesRef.current.find((entry) => entry.id === item.id));
 
     if (!node) {
       return;
@@ -3456,7 +3462,9 @@ export default function CanvasWorkspace({
             base64Audio = btoa(binary);
           } else {
             // Data URL — extract mime type and base64
-            const dataUrlMatch = audioDataUrl.match(/^data:(audio\/[^;]+);base64,(.+)$/);
+            const dataUrlMatch = audioDataUrl.match(
+              /^data:(audio\/[^;]+);base64,(.+)$/,
+            );
             mimeType = dataUrlMatch ? dataUrlMatch[1] : "audio/webm";
             base64Audio = dataUrlMatch ? dataUrlMatch[2] : audioDataUrl;
           }
@@ -3476,8 +3484,12 @@ export default function CanvasWorkspace({
             }),
           });
 
-          const result = await response.json() as { text?: string; error?: string };
-          const transcribedText = result.text ?? result.error ?? "[Transcription failed]";
+          const result = (await response.json()) as {
+            text?: string;
+            error?: string;
+          };
+          const transcribedText =
+            result.text ?? result.error ?? "[Transcription failed]";
 
           setTranscriptionNodes((current) =>
             current.map((node) =>
@@ -3492,7 +3504,10 @@ export default function CanvasWorkspace({
           setTranscriptionNodes((current) =>
             current.map((node) =>
               node.id === transcriptionId
-                ? { ...node, text: `[Transcription failed: ${err instanceof Error ? err.message : "Unknown error"}]` }
+                ? {
+                    ...node,
+                    text: `[Transcription failed: ${err instanceof Error ? err.message : "Unknown error"}]`,
+                  }
                 : node,
             ),
           );
@@ -3648,7 +3663,10 @@ export default function CanvasWorkspace({
                 event.preventDefault();
                 event.stopPropagation();
                 event.currentTarget.setPointerCapture(event.pointerId);
-                const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+                const point = screenToCanvas({
+                  x: event.clientX,
+                  y: event.clientY,
+                });
                 textDragRef.current = {
                   nodeId: node.id,
                   offset: {
@@ -3670,7 +3688,9 @@ export default function CanvasWorkspace({
                     ...current.map((entry) => entry.zIndex),
                   );
                   return current.map((entry) =>
-                    entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
+                    entry.id === node.id
+                      ? { ...entry, zIndex: topZIndex + 1 }
+                      : entry,
                   );
                 });
               }}
@@ -3680,6 +3700,13 @@ export default function CanvasWorkspace({
                 setAiChatNodes((current) =>
                   current.map((entry) =>
                     entry.id === node.id ? { ...entry, messages } : entry,
+                  ),
+                )
+              }
+              onNameChange={(name) =>
+                setAiChatNodes((current) =>
+                  current.map((entry) =>
+                    entry.id === node.id ? { ...entry, name } : entry,
                   ),
                 )
               }
@@ -3707,7 +3734,10 @@ export default function CanvasWorkspace({
                 event.preventDefault();
                 event.stopPropagation();
                 event.currentTarget.setPointerCapture(event.pointerId);
-                const point = screenToCanvas({ x: event.clientX, y: event.clientY });
+                const point = screenToCanvas({
+                  x: event.clientX,
+                  y: event.clientY,
+                });
                 textDragRef.current = {
                   nodeId: node.id,
                   offset: {
@@ -3730,7 +3760,9 @@ export default function CanvasWorkspace({
                     ...current.map((entry) => entry.zIndex),
                   );
                   return current.map((entry) =>
-                    entry.id === node.id ? { ...entry, zIndex: topZIndex + 1 } : entry,
+                    entry.id === node.id
+                      ? { ...entry, zIndex: topZIndex + 1 }
+                      : entry,
                   );
                 });
               }}
@@ -3742,11 +3774,15 @@ export default function CanvasWorkspace({
         {/* Elbow connectors between voice nodes and transcription nodes */}
         {transcriptionNodes
           .filter((node) => {
-            const sourceVoice = voiceNodesRef.current.find((vn) => vn.id === node.sourceNodeId);
+            const sourceVoice = voiceNodesRef.current.find(
+              (vn) => vn.id === node.sourceNodeId,
+            );
             return sourceVoice && (node.visible ?? true);
           })
           .map((node) => {
-            const sourceVoice = voiceNodesRef.current.find((vn) => vn.id === node.sourceNodeId)!;
+            const sourceVoice = voiceNodesRef.current.find(
+              (vn) => vn.id === node.sourceNodeId,
+            )!;
             return (
               <ElbowConnector
                 key={`connector-${node.id}`}
@@ -3760,7 +3796,7 @@ export default function CanvasWorkspace({
             );
           })}
 
-          {voiceNodes
+        {voiceNodes
           .filter((node) => node.visible ?? true)
           .map((node) => (
             <CanvasVoiceNode

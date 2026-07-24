@@ -71,9 +71,7 @@ export async function GET(req: NextRequest) {
       provider: "dropbox",
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token ?? undefined,
-      expiresAt: tokenData.expires_in
-        ? Date.now() + tokenData.expires_in * 1000
-        : undefined,
+      expiresAt: Date.now() + 21 * 24 * 60 * 60 * 1000,
     });
 
     // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }
