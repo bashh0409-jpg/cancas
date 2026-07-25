@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckIcon, ArrowRightIcon } from "lucide-react";
 import { PlanCard } from "@/app/components/home/PlanCard";
 import { BillingToggle, type BillingCycle } from "@/app/components/home/BillingToggle";
 
@@ -161,10 +161,10 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center">
+    <div className="min-h-screen bg-black text-white scrollbar-hidden overflow-x-hidden">
+      <div className="max-w-7xl scrollbar-hidden mx-auto px-4 py-24 flex flex-col items-center">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-12">
+        <div className="flex flex-col scrollbar-hidden items-center text-center mb-12">
           <h1 className="text-xl tracking-tight uppercase mono text-white">
             Choose your plan
           </h1>
@@ -208,17 +208,53 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
             </span>
           </div>
         )}
+        <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
+          <div className="flex flex-col gap-2 shrink-0">
+            <p className="text-white mono uppercase text-xl tracking-tight">
+              Need more than Ultra?
+            </p>
+            <p className="text-white/50 text-xs leading-relaxed max-w-64">
+              Enterprise is coming soon. Join the waitlist and we&apos;ll reach
+              out as soon as it&apos;s ready.
+            </p>
+            <button
+              onClick={() => console.log("contact sales")}
+              className="mt-1 w-fit flex items-center gap-1 text-xs bg-white/10 hover:bg-white/15 transition text-white px-4 py-2 rounded-md"
+            >
+              Join the waitlist{" "}
+              <span>
+                <ArrowRightIcon className="w-4.5 h-4.5" />
+              </span>
+            </button>
+          </div>
 
-        {/* Footer info */}
-        <div className="text-center mt-8 text-white/40 text-xs mono">
-          <p>
-            All plans include a 14-day free trial. Cancel anytime, no questions
-            asked.
-          </p>
-          <p className="mt-1">
-            Paying from{" "}
-            {userCountry === "ZA" ? "South Africa" : "your country"}
-          </p>
+          <div className="w-px self-stretch bg-white/10 shrink-0" />
+
+          <div className="flex flex-col gap-1.5">
+            <p className="text-white/40 mono text-[11px] uppercase mb-1">
+              Enterprise includes everything in Ultra, plus
+            </p>
+            {[
+              { label: "Custom credit allocation" },
+              { label: "Team training" },
+              { label: "Premium customer support on Slack" },
+              { label: "Your own API keys" },
+              { label: "Run workflows through API", soon: true },
+            ].map(({ label, soon }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 text-xs text-white/70"
+              >
+                <CheckIcon className="w-4.5 h-4.5" />
+                <span>{label}</span>
+                {soon && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/40 leading-none">
+                    coming soon
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
