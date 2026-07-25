@@ -8,25 +8,16 @@ export type TutorialItem = {
 
 const tutorialsData = [
   {
-    playbackId: "eOfyCKGLznhB7xa2IkN1MQWXe3dIn3iJLaRso4zEd4Q",
+    playbackId: "OLe49vn8SvYNowJiHz7RvdDFtlMxmebG9BDovaoNS2Y",
     title: "Getting Started with Canvas",
+    thumbnail: "/images/tutorials/get.png",
   },
   {
-    playbackId: "6rTLOxSKdCGEOKS9DF8exFsyQSZywY02f2OqkOOyTW00o",
-    title: "Design Workflow Basics",
+    playbackId: "OLe49vn8SvYNowJiHz7RvdDFtlMxmebG9BDovaoNS2Y",
+    title: "Uploading and sorting images",
+    thumbnail: "/images/tutorials/sort.png",
   },
-  {
-    playbackId: "LY02cDHe9ChuPa02X2oOIeQl3ohzOpF1Gk18qJEVlk53s",
-    title: "Advanced Canvas Techniques",
-  },
-  {
-    playbackId: "ePie5AMszJOb02fRSa81m02q6RDA2xLQzvuO01XwebilaA",
-    title: "Collaboration and Sharing",
-  },
-  {
-    playbackId: "MvG01we02sEUmWGapHryLGEqfPZ024TRYANKIeatyZl1eE",
-    title: "Customizing Your Workspace",
-  },
+  
 ];
 
 const defaultDescription =
@@ -37,5 +28,5 @@ export const tutorials: TutorialItem[] = tutorialsData.map((tutorial, index) => 
   title: tutorial.title,
   description: defaultDescription,
   playbackId: tutorial.playbackId,
-  thumbnail: `https://image.mux.com/${tutorial.playbackId}/animated.gif`,
+  thumbnail: tutorial.thumbnail,
 }));
