@@ -8,12 +8,12 @@ export type TutorialItem = {
 
 const tutorialsData = [
   {
-    playbackId: "OLe49vn8SvYNowJiHz7RvdDFtlMxmebG9BDovaoNS2Y",
+    playbackId: "00ayzBF01q6Jhq2sKAeAUcR9FEZ901Zm00ZMWI4y0000s008XM",
     title: "Getting Started with Canvas",
     thumbnail: "/images/tutorials/get.png",
   },
   {
-    playbackId: "OLe49vn8SvYNowJiHz7RvdDFtlMxmebG9BDovaoNS2Y",
+    playbackId: "00ayzBF01q6Jhq2sKAeAUcR9FEZ901Zm00ZMWI4y0000s008XM",
     title: "Uploading and sorting images",
     thumbnail: "/images/tutorials/sort.png",
   },
