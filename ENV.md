@@ -11,9 +11,10 @@ NEXT_PUBLIC_SITE_URL=https://www.swipes.site
 GOOGLE_REDIRECT_URI=https://www.swipes.site/api/integrations/google-drive/callback
 DROPBOX_REDIRECT_URI=https://www.swipes.site/api/integrations/dropbox/callback
 ONEDRIVE_REDIRECT_URI=https://www.swipes.site/api/integrations/onedrive/callback
-PAYFAST_RETURN_URL=https://www.swipes.site/billing/success
-PAYFAST_CANCEL_URL=https://www.swipes.site/billing/cancel
-PAYFAST_NOTIFY_URL=https://www.swipes.site/api/billing/webhooks/payfast
+POLAR_CHECKOUT_URL=https://www.swipes.site/billing/checkout
+POLAR_SUCCESS_URL=https://www.swipes.site/billing/success
+POLAR_CANCEL_URL=https://www.swipes.site/billing/cancel
+POLAR_WEBHOOK_URL=https://www.swipes.site/api/billing/webhooks/polar
 ```
 
 Keep the local-development values in `.env.local` pointed at
@@ -32,25 +33,24 @@ In Supabase Dashboard → Authentication → URL Configuration:
 
 Update each provider to use these exact production callback URLs:
 
-| Provider | Callback URL |
-| --- | --- |
-| Google sign-in | `https://www.swipes.site/api/auth/callback` |
-| Azure sign-in | `https://www.swipes.site/api/auth/callback?next=/home` |
-| Google Drive | `https://www.swipes.site/api/integrations/google-drive/callback` |
-| OneDrive | `https://www.swipes.site/api/integrations/onedrive/callback` |
-| Dropbox | `https://www.swipes.site/api/integrations/dropbox/callback` |
+| Provider       | Callback URL                                                     |
+| -------------- | ---------------------------------------------------------------- |
+| Google sign-in | `https://www.swipes.site/api/auth/callback`                      |
+| Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/home`           |
+| Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback` |
+| OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`     |
+| Dropbox        | `https://www.swipes.site/api/integrations/dropbox/callback`      |
 
 ## Billing endpoints
 
-- PayFast return URL: `https://www.swipes.site/billing/success`
-- PayFast cancel URL: `https://www.swipes.site/billing/cancel`
-- PayFast notify URL: `https://www.swipes.site/api/billing/webhooks/payfast`
-- Stripe webhook: `https://www.swipes.site/api/billing/webhooks/stripe`
+- Polar checkout success URL: `https://www.swipes.site/billing/success`
+- Polar checkout cancel URL: `https://www.swipes.site/billing/cancel`
+- Polar webhook: `https://www.swipes.site/api/billing/webhooks/polar`
 
 ## Deployment checklist
 
 1. Attach `www.swipes.site` to the production deployment and set it as the primary domain.
 2. Redirect `swipes.site` to `www.swipes.site` at the hosting/DNS layer.
 3. Set the production environment variables above, then redeploy.
-4. Update Supabase, Google, Azure, Dropbox, PayFast, and Stripe with the listed URLs.
+4. Update Supabase, Google, Azure, Dropbox, and Polar with the listed URLs.
 5. Remove `app.swipes.site` from the deployment domains once its redirect period is no longer needed.

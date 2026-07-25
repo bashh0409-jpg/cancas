@@ -4,8 +4,7 @@ import {
   getPricingForProvider,
   initializePaymentProvider,
 } from "@/lib/billing/provider";
-import { PayFastClient } from "@/lib/billing/payfast";
-import { StripeClient } from "@/lib/billing/stripe";
+import { PolarClient } from "@/lib/billing/polar";
 import {
   createSubscription,
   type SubscriptionPlan,
@@ -63,43 +62,21 @@ export async function createBillingCheckout(
   let checkoutUrl: string;
   let providerCustomerId: string | undefined;
 
-  if (provider === "payfast") {
-    const payfastClient = paymentClient as PayFastClient;
-    const checkoutData = payfastClient.generateRecurringSubscriptionRequest({
-      userId,
-      firstName,
-      lastName,
-      email: userEmail,
-      plan,
-      amount: pricing.amount.toString(),
-      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
-      frequency: billingCycle === "annual" ? "annual" : "monthly",
-      idempotencyKey,
-    });
+  if (provider === "polar") {
+    const polarClient = paymentClient as PolarClient;
 
-    checkoutUrl = payfastClient.createCheckoutUrl({
-      ...checkoutData,
-      return_url: returnUrl ?? `${appUrl}/billing/success`,
-      cancel_url: cancelUrl ?? `${appUrl}/billing/cancel`,
-      notify_url: `${appUrl}/api/billing/webhooks/payfast`,
-    });
-  } else if (provider === "stripe") {
-    const stripeClient = paymentClient as StripeClient;
-
-    providerCustomerId = await stripeClient.getOrCreateCustomer(userEmail, {
-      userId,
-    });
-
-    checkoutUrl = await stripeClient.createCheckoutSession({
+    const result = await polarClient.createCheckoutSession({
       userId,
       userEmail,
-      customerId: providerCustomerId,
       plan,
       billingCycle,
       successUrl: returnUrl ?? `${appUrl}/billing/success`,
       cancelUrl: cancelUrl ?? `${appUrl}/billing/cancel`,
       idempotencyKey,
     });
+
+    checkoutUrl = result.checkoutUrl;
+    providerCustomerId = result.providerCustomerId;
   } else {
     throw new Error(`Unsupported payment provider: ${provider}`);
   }

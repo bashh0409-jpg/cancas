@@ -3,12 +3,11 @@
  */
 
 import type { SubscriptionProvider } from "@/lib/subscriptions/repository";
-import { PayFastClient, initPayFastClient } from "./payfast";
-import { StripeClient, initStripeClient } from "./stripe";
+import { PolarClient, initPolarClient } from "./polar";
 
 export interface ProviderConfig {
   provider: SubscriptionProvider;
-  client: PayFastClient | StripeClient;
+  client: PolarClient;
 }
 
 /**
@@ -17,36 +16,30 @@ export interface ProviderConfig {
 export function getPaymentProviderForCountry(
   countryCode: string,
 ): SubscriptionProvider {
-  // Map countries to providers
   const providerMap: Record<string, SubscriptionProvider> = {
-    // South Africa - PayFast
-    ZA: "payfast",
-    // USA, UK, Canada, Australia - Stripe
-    US: "stripe",
-    GB: "stripe",
-    CA: "stripe",
-    AU: "stripe",
-    // EU countries - Stripe
-    DE: "stripe",
-    FR: "stripe",
-    IT: "stripe",
-    ES: "stripe",
-    NL: "stripe",
-    BE: "stripe",
-    AT: "stripe",
-    SE: "stripe",
-    NO: "stripe",
-    DK: "stripe",
-    FI: "stripe",
-    PL: "stripe",
-    // Asia-Pacific - Stripe
-    SG: "stripe",
-    JP: "stripe",
-    IN: "stripe",
-    // Others - fallback to 2checkout (not implemented yet)
+    ZA: "polar",
+    US: "polar",
+    GB: "polar",
+    CA: "polar",
+    AU: "polar",
+    DE: "polar",
+    FR: "polar",
+    IT: "polar",
+    ES: "polar",
+    NL: "polar",
+    BE: "polar",
+    AT: "polar",
+    SE: "polar",
+    NO: "polar",
+    DK: "polar",
+    FI: "polar",
+    PL: "polar",
+    SG: "polar",
+    JP: "polar",
+    IN: "polar",
   };
 
-  return providerMap[countryCode] || "stripe"; // Default to Stripe as global fallback
+  return providerMap[countryCode] || "polar";
 }
 
 /**
@@ -54,12 +47,10 @@ export function getPaymentProviderForCountry(
  */
 export function initializePaymentProvider(
   provider: SubscriptionProvider,
-): PayFastClient | StripeClient {
+): PolarClient {
   switch (provider) {
-    case "payfast":
-      return initPayFastClient(process.env.PAYFAST_SANDBOX === "true");
-    case "stripe":
-      return initStripeClient();
+    case "polar":
+      return initPolarClient();
     default:
       throw new Error(`Unsupported payment provider: ${provider}`);
   }
@@ -101,23 +92,7 @@ export function getPricingForProvider(
   displayPrice: string;
 } {
   const pricing: Record<string, Record<string, Record<string, any>>> = {
-    payfast: {
-      // ZAR pricing
-      starter: {
-        monthly: { amount: 199, currency: "ZAR", displayPrice: "R199/month" },
-        annual: { amount: 1990, currency: "ZAR", displayPrice: "R1,990/year" },
-      },
-      pro: {
-        monthly: { amount: 499, currency: "ZAR", displayPrice: "R499/month" },
-        annual: { amount: 4990, currency: "ZAR", displayPrice: "R4,990/year" },
-      },
-      ultra: {
-        monthly: { amount: 999, currency: "ZAR", displayPrice: "R999/month" },
-        annual: { amount: 9990, currency: "ZAR", displayPrice: "R9,990/year" },
-      },
-    },
-    stripe: {
-      // USD pricing
+    polar: {
       starter: {
         monthly: { amount: 9.99, currency: "USD", displayPrice: "$9.99/month" },
         annual: {

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initializePaymentProvider } from "@/lib/billing/provider";
-import { StripeClient } from "@/lib/billing/stripe";
+import { PolarClient } from "@/lib/billing/polar";
 import {
   cancelSubscription,
   getUserSubscription,
@@ -18,17 +18,17 @@ export async function cancelBillingSubscription(
   }
 
   if (
-    subscription.provider === "stripe" &&
+    subscription.provider === "polar" &&
     subscription.provider_subscription_id
   ) {
-    const stripeClient = initializePaymentProvider("stripe") as StripeClient;
-    await stripeClient.cancelSubscription(
+    const polarClient = initializePaymentProvider("polar") as PolarClient;
+    await polarClient.cancelSubscription(
       subscription.provider_subscription_id,
       immediate,
     );
   }
 
-  // PayFast cancellations are managed through the PayFast merchant dashboard.
+  // Polar handles cancellations through its customer portal and webhooks.
   // We still mark the local subscription as canceled so the app reflects intent.
 
   return cancelSubscription(supabase, userId, immediate);

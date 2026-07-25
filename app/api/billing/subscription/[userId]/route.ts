@@ -1,3 +1,4 @@
+import { getUserCredits } from "@/lib/credits/repository";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { getUserSubscription } from "@/lib/subscriptions/repository";
 import { NextResponse } from "next/server";
@@ -25,7 +26,12 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(subscription);
+    const credits = await getUserCredits(supabase, userId);
+
+    return NextResponse.json({
+      ...subscription,
+      credits,
+    });
   } catch (error) {
     console.error("Error fetching subscription:", error);
     return NextResponse.json(

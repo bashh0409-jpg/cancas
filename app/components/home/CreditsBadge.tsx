@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, CheckIcon, ArrowRightIcon, CreditCard, Wallet2, WalletMinimal } from "lucide-react";
+import {
+  X,
+  CheckIcon,
+  ArrowRightIcon,
+  CreditCard,
+  Wallet2,
+  WalletMinimal,
+  WalletCards,
+} from "lucide-react";
 import { PlanCard } from "./PlanCard";
 import { BillingToggle, type BillingCycle } from "./BillingToggle";
 import { TrustedBy } from "./TrustedBy";
@@ -100,13 +108,15 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          "flex items-center mono cursor-pointer bg-white/20 border border-white/5 h-6 px-1 rounded text-white uppercase text-xs tracking-tight",
+          "flex items-center mono cursor-pointer lime border border-white/5 h-7 px-2 rounded-xs text-black uppercase text-xs tracking-tight",
           "hover:bg-white/30 transition",
           className ?? "",
         ].join(" ")}
       >
         <Icon />
-        <span className="text-sm h-3 tracking-tigh grotesk leading-none">{credits}</span>
+        <span className="text-sm h-3 tracking-tigh grotesk leading-none">
+          {credits}.00
+        </span>
         <span className="text-white text-xs  hidden leading-none">credits</span>
       </button>
 
@@ -121,13 +131,17 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
           </button>
 
           <div className="grid place-items-center h-full px-4 overflow-y-auto">
-            <div className="flex flex-col items-center mt-30 mb-30 text-center">
-              <h1 className="text-5xl tracking-tight text-white">
-                Choose the best plan for you
+            <div className="flex flex-col items-center mt-30 mb-10 text-center">
+              <h1 className="text-2xl tracking-tight uppercase mono text-white">
+                Choose the plan that&apos;s right for you
               </h1>
+              <p className="text-white/40 max-w-md mono uppercase  text-xs mt-3">
+                Select a plan that fits your needs. No attachments, cancel
+                anytime.
+              </p>
               <BillingToggle value={billingCycle} onChange={setBillingCycle} />
               {loadingCurrency && (
-                <p className="text-white/40 text-xs mt-3">
+                <p className="text-white/40 mono uppercase  text-xs mt-3">
                   Detecting your currency…
                 </p>
               )}
@@ -321,7 +335,5 @@ function formatPrice(
 }
 
 function Icon() {
-  return (
-<WalletMinimal className="h-3.5 mr-1 w-3.5"/>
-  );
+  return <WalletCards className="h-3.5 mr-1 w-3.5" />;
 }

@@ -103,7 +103,7 @@ export function PricingPlans() {
   return (
     <div className="flex flex-col items-center">
       {/* Billing toggle */}
-      <div className="flex items-center gap-0 bg-white/10 border border-white/10 rounded-xl p-1 mb-8">
+      <div className="flex hidden items-center gap-0 bg-white/10 border border-white/10 rounded-xl p-1 mb-8">
         <button
           onClick={() => setBilling("monthly")}
           className={`px-4 py-1.5 rounded-lg text-sm transition-all ${

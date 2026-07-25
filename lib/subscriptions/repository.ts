@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SubscriptionPlan = "free" | "starter" | "pro" | "ultra";
-export type SubscriptionProvider = "local" | "payfast" | "stripe" | "2checkout";
+export type SubscriptionProvider = "local" | "payfast" | "stripe" | "polar" | "2checkout";
 export type SubscriptionStatus =
   | "active"
   | "trialing"

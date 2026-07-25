@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type BillingWebhookProvider = "stripe" | "payfast";
+export type BillingWebhookProvider = "stripe" | "payfast" | "polar";
 
 /**
  * Returns true when this webhook should be processed, false when it is a duplicate.

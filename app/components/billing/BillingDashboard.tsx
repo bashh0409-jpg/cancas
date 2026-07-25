@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, X } from "lucide-react";
 import type { UserSubscription } from "@/lib/subscriptions/repository";
 
 interface BillingDashboardProps {
@@ -12,6 +12,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
   const [subscription, setSubscription] = useState<UserSubscription | null>(
     null,
   );
+  const [credits, setCredits] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +23,9 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
       const response = await fetch(`/api/billing/subscription/${userId}`);
       if (!response.ok) throw new Error("Failed to load subscription");
       const data = await response.json();
-      setSubscription(data);
+      const nextSubscription = data.subscription ?? data;
+      setSubscription(nextSubscription);
+      setCredits(typeof data.credits === "number" ? data.credits : null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load subscription",
@@ -33,7 +36,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
   }, [userId]);
 
   useEffect(() => {
-    loadSubscription();
+    void loadSubscription();
   }, [loadSubscription]);
 
   const handleCancel = async (immediate = false) => {
@@ -108,36 +111,79 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
     subscription.cancel_at_period_end;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mono">
+      <a
+        href="/home"
+        className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+      >
+        
+        <X className="w-4 h-4" />
+      </a>
+      {/* Actions */}
+      <div className="flex gap-2">
+        <a
+          href="/billing/checkout"
+          className="w-fit p-2 px-4 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+        >
+          Change Plan
+        </a>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="w-fit p-2 px-4 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+        >
+          Cancel Subscription
+        </button>
+      </div>
+
       {/* Current Plan */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-semibold mb-4">Current Plan</h3>
+      <div className="bg-white/10 p-6 rounded">
+        <h3 className="text-sm uppercase tracking-tight mb-4">Current Plan</h3>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <div className="text-sm text-gray-400 mb-1">Plan</div>
-            <div className="text-2xl font-bold capitalize">
+            <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
+              Plan
+            </div>
+            <div className="text-md tracking-tight  capitalize">
               {subscription.plan}
             </div>
           </div>
 
           <div>
-            <div className="text-sm text-gray-400 mb-1">Provider</div>
-            <div className="text-lg capitalize">{subscription.provider}</div>
+            <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
+              Provider
+            </div>
+            <div className="text-md tracking-tight  capitalize">
+              {subscription.provider}
+            </div>
           </div>
 
           <div>
-            <div className="text-sm text-gray-400 mb-1">Status</div>
+            <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
+              Status
+            </div>
             <div
-              className={`font-medium ${statusColors[subscription.status] || ""}`}
+              className={`tracking-tight capitalize ${statusColors[subscription.status] || ""}`}
             >
               {subscription.status}
             </div>
           </div>
 
           <div>
-            <div className="text-sm text-gray-400 mb-1">Billing Cycle</div>
+            <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
+              Billing Cycle
+            </div>
             <div className="capitalize">{subscription.billing_cycle}</div>
+          </div>
+
+          <div>
+            <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
+              Credits
+            </div>
+            <div className="tracking-tight">
+              {typeof credits === "number" ? credits.toLocaleString() : "—"}
+            </div>
           </div>
         </div>
       </div>
@@ -159,9 +205,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
             )}
             <div>
               <div className="font-medium mb-1">
-                {showExpiringWarning
-                  ? "Scheduled for cancellation"
-                  : "Active"}
+                {showExpiringWarning ? "Scheduled for cancellation" : "Active"}
               </div>
               <div className="text-gray-300">
                 {currentPeriodEnd.toLocaleDateString("en-US", {
@@ -176,52 +220,35 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <a
-          href="/billing/checkout"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium"
-        >
-          Change Plan
-        </a>
-
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-gray-100 font-medium"
-        >
-          Cancel Subscription
-        </button>
-      </div>
-
       {/* Cancel Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-gray-700">
-            <h3 className="text-xl font-bold mb-4">Cancel Subscription?</h3>
+        <div className="fixed inset-0 bg-black flex items-center justify-center p-4 z-50">
+          <div className="bg-white/10 text-white tracking-tight rounded-lg p-6 max-w-md w-full ">
+            <h3 className="text-lg uppercase mb-4">Cancel Subscription?</h3>
 
-            <p className="text-gray-300 mb-6">
+            <p className="text-gray-300 text-xs uppercase mb-6">
               Your subscription will continue until the end of the current
               billing period. You can reactivate at any time.
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-1">
               <button
                 onClick={() => handleCancel(false)}
-                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white font-medium"
+                className="w-full cursor-pointer  px-4 uppercase text-xs py-2 bg-red-700 rounded text-white "
               >
                 Cancel at End of Period
               </button>
 
               <button
                 onClick={() => handleCancel(true)}
-                className="w-full px-4 py-2 bg-red-900 hover:bg-red-800 rounded text-red-200 font-medium"
+                className="w-full  cursor-pointer px-4 uppercase text-xs py-2 bg-red-700 rounded "
               >
                 Cancel Immediately
               </button>
 
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white font-medium"
+                className="w-full cursor-pointer  px-4 uppercase text-xs py-2 lime text-black rounded"
               >
                 Keep Subscription
               </button>

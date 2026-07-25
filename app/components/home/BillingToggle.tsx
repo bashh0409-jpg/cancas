@@ -25,7 +25,7 @@ export function BillingToggle({ value, onChange }: BillingToggleProps) {
     <div className="mt-6 relative flex items-center bg-white/20 w-fit p-1 rounded-lg overflow-hidden">
       {/* sliding pill — CSS transition instead of GSAP since this is a server component context */}
       <div
-        className="absolute top-1 bottom-1 w-[calc(50%-6px)] rounded-md lime transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="absolute top-1 bottom-1 w-[calc(100%-8px)] rounded-md lime transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
           transform:
             selectedCycle === "annually"
@@ -45,7 +45,7 @@ export function BillingToggle({ value, onChange }: BillingToggleProps) {
 
       <button
         onClick={() => handleSelect("annually")}
-        className="relative z-10 h-8 min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
+        className="relative hidden z-10 h-8 min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
         style={{ color: selectedCycle === "annually" ? "#000" : "#fff" }}
       >
         Annually <span className="ml-1 grotesk">-15%</span>
