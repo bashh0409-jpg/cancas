@@ -1,63 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
+import { PlanCard } from "@/app/components/home/PlanCard";
+import { BillingToggle, type BillingCycle } from "@/app/components/home/BillingToggle";
 
-export type BillingCycle = "monthly" | "annual";
-
-interface PlanOption {
-  id: "starter" | "pro" | "ultra";
-  name: string;
-  credits: number;
-  monthlyPrice: string;
-  annualPrice: string;
-  features: string[];
-}
-
-const PLANS: PlanOption[] = [
-  {
-    id: "starter",
-    name: "Starter",
-    credits: 1000,
-    monthlyPrice: "R199 / $9.99",
-    annualPrice: "R1,990 / $99.99",
-    features: [
-      "1,000 monthly credits",
-      "Basic AI features",
-      "Email support",
-      "5 active canvases",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    credits: 5000,
-    monthlyPrice: "R499 / $24.99",
-    annualPrice: "R4,990 / $249.99",
-    features: [
-      "5,000 monthly credits",
-      "Advanced AI tools",
-      "Priority support",
-      "Unlimited canvases",
-      "Custom templates",
-    ],
-  },
-  {
-    id: "ultra",
-    name: "Ultra",
-    credits: 20000,
-    monthlyPrice: "R999 / $49.99",
-    annualPrice: "R9,990 / $499.99",
-    features: [
-      "20,000 monthly credits",
-      "Premium AI models",
-      "24/7 dedicated support",
-      "Unlimited everything",
-      "API access",
-      "White-label options",
-    ],
-  },
-];
+type CurrencyData = {
+  currency: string;
+  rate: number;
+};
 
 interface CheckoutPageProps {
   userCountry: string;
@@ -65,175 +16,225 @@ interface CheckoutPageProps {
 }
 
 export function CheckoutPage({ userCountry }: CheckoutPageProps) {
-  const [selectedPlan, setSelectedPlan] = useState<"starter" | "pro" | "ultra">(
-    "pro",
-  );
+  const [currencyData, setCurrencyData] = useState<CurrencyData>({
+    currency: "USD",
+    rate: 1,
+  });
+  const [selectedPlan, setSelectedPlan] = useState<"starter" | "pro" | "ultra">("pro");
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pendingCheckoutKeyRef = useRef<string | null>(null);
+  const [loadingCurrency, setLoadingCurrency] = useState(true);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
 
-  const handleCheckout = async () => {
-    if (pendingCheckoutKeyRef.current) {
-      return;
-    }
+  useEffect(() => {
+    fetch("/api/currency")
+      .then((r) => r.json())
+      .then((data: CurrencyData) => setCurrencyData(data))
+      .catch(() => {})
+      .finally(() => setLoadingCurrency(false));
+  }, []);
 
-    pendingCheckoutKeyRef.current = crypto.randomUUID();
-    setIsLoading(true);
-    setError(null);
+  const startCheckout = useCallback(
+    async (plan: "starter" | "pro" | "ultra") => {
+      if (pendingKey) return;
 
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: selectedPlan,
-          billingCycle,
-          countryCode: userCountry,
-          returnUrl: `${window.location.origin}/billing/success`,
-          cancelUrl: `${window.location.origin}/billing/cancel`,
-          idempotencyKey: pendingCheckoutKeyRef.current,
-        }),
-      });
+      const key = crypto.randomUUID();
+      setPendingKey(key);
+      setIsLoading(true);
+      setError(null);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to initiate checkout");
+      try {
+        const response = await fetch("/api/billing/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plan,
+            billingCycle,
+            countryCode: userCountry,
+            returnUrl: `${window.location.origin}/billing/success`,
+            cancelUrl: `${window.location.origin}/billing/cancel`,
+            idempotencyKey: key,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to initiate checkout");
+        }
+
+        const { checkoutUrl } = await response.json();
+        window.location.href = checkoutUrl;
+      } catch (err) {
+        setPendingKey(null);
+        setError(err instanceof Error ? err.message : "Checkout failed");
+        setIsLoading(false);
       }
+    },
+    [billingCycle, userCountry, pendingKey],
+  );
 
-      const { checkoutUrl } = await response.json();
+  const selectPlan = useCallback(
+    (plan: "starter" | "pro" | "ultra") => {
+      setSelectedPlan(plan);
+      startCheckout(plan);
+    },
+    [startCheckout],
+  );
 
-      // Redirect to payment provider
-      window.location.href = checkoutUrl;
-    } catch (err) {
-      pendingCheckoutKeyRef.current = null;
-      setError(err instanceof Error ? err.message : "Checkout failed");
-      setIsLoading(false);
-    }
-  };
+  const fmt = useCallback(
+    (usd: number) => formatPrice(usd, currencyData.currency, currencyData.rate),
+    [currencyData.currency, currencyData.rate],
+  );
+
+  function getPlans() {
+    return [
+      {
+        name: "Starter",
+        price: fmt(15),
+        popular: selectedPlan === "starter",
+        description:
+          "For creators and students building projects with AI every day.",
+        credits: {
+          amount: "1,000 monthly",
+          equivalence: "=1,000 AI actions",
+        },
+        features: [
+          "Access to all standard AI models",
+          "Advanced canvas and editing tools",
+          "Unlimited active workflows",
+          "Full workflow history",
+          "Priority generation speeds",
+          "Import assets from shared workspaces",
+        ],
+        isCurrent: false,
+        onSelect: () => selectPlan("starter"),
+        ctaLabel: "Choose Starter",
+      },
+      {
+        name: "Pro",
+        price: fmt(35),
+        popular: selectedPlan === "pro",
+        description:
+          "Built for advanced creators shipping products, designs, and AI workflows.",
+        credits: {
+          amount: "5,000 monthly",
+          equivalence: "=5,000 AI actions",
+        },
+        features: [
+          "Access to premium reasoning models",
+          "Fastest AI processing speeds",
+          "Unlimited active workflows",
+          "Version history and restore",
+          "Voice, image, and web agents",
+          "Shared asset libraries",
+          "Early access AI features",
+        ],
+        isCurrent: false,
+        onSelect: () => selectPlan("pro"),
+        ctaLabel: "Choose Pro",
+      },
+      {
+        name: "Ultra",
+        price: fmt(79),
+        popular: selectedPlan === "ultra",
+        description:
+          "High-compute plan for heavy AI usage and large creative pipelines.",
+        credits: {
+          amount: "20,000 monthly",
+          equivalence: "=12,000 AI actions",
+        },
+        features: [
+          "Everything in Pro",
+          "Highest priority compute",
+          "Large shared asset storage",
+          "Advanced workflow automations",
+          "Experimental AI systems",
+          "Premium support",
+          "Future collaboration features",
+        ],
+        isCurrent: false,
+        onSelect: () => selectPlan("ultra"),
+        ctaLabel: "Choose Ultra",
+      },
+    ];
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-          <p className="text-gray-400 text-lg">
+        <div className="flex flex-col items-center text-center mb-12">
+          <h1 className="text-xl tracking-tight uppercase mono text-white">
+            Choose your plan
+          </h1>
+          <p className="text-white/40 max-w-md mono uppercase text-xs mt-3">
             Upgrade your account and unlock unlimited AI-powered features
           </p>
+
+          <BillingToggle value={billingCycle} onChange={setBillingCycle} />
+          {loadingCurrency && (
+            <p className="text-white/40 grotesk text-xs mt-3">
+              Detecting your currency…
+            </p>
+          )}
         </div>
 
-        {/* Billing Cycle Toggle */}
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`px-6 py-2 rounded font-medium transition-colors ${
-                billingCycle === "monthly"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle("annual")}
-              className={`px-6 py-2 rounded font-medium transition-colors ${
-                billingCycle === "annual"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Annual
-              <span className="ml-2 text-xs bg-green-600 px-2 py-1 rounded">
-                Save 20%
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              onClick={() => setSelectedPlan(plan.id)}
-              className={`cursor-pointer rounded-lg border-2 transition-all p-6 ${
-                selectedPlan === plan.id
-                  ? "border-blue-600 bg-gray-800"
-                  : "border-gray-700 bg-gray-900 hover:border-gray-600"
-              }`}
-            >
-              <div className="flex items-center mb-4">
-                <input
-                  type="radio"
-                  checked={selectedPlan === plan.id}
-                  onChange={() => setSelectedPlan(plan.id)}
-                  className="w-4 h-4 accent-blue-600"
-                />
-                <h3 className="text-xl font-bold ml-3">{plan.name}</h3>
-              </div>
-
-              <div className="mb-6">
-                <div className="text-2xl font-bold mb-1">
-                  {billingCycle === "monthly"
-                    ? plan.monthlyPrice.split(" / ")[0]
-                    : plan.annualPrice.split(" / ")[0]}
-                </div>
-                <div className="text-gray-400 text-sm">
-                  {billingCycle === "monthly" ? "/month" : "/year"}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mb-6 pb-6 border-b border-gray-700">
-                <span className="text-2xl">⚡</span>
-                <span className="text-lg font-semibold">
-                  {plan.credits.toLocaleString()} credits/month
-                </span>
-              </div>
-
-              <ul className="space-y-3">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-green-500 mt-1">✓</span>
-                    <span className="text-sm text-gray-300">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        {/* Plan cards */}
+        <div className="flex max-w-7xl gap-2 items-stretch text-white w-full flex-wrap md:flex-nowrap justify-center">
+          {getPlans().map((plan) => (
+            <PlanCard
+              key={plan.name}
+              plan={plan}
+              currency={currencyData.currency}
+              annual={billingCycle === "annually"}
+            />
           ))}
         </div>
 
-        {/* Error Message */}
+        {/* Error message */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-6 bg-red-900/30 border border-red-600 rounded-lg p-4 text-red-200">
+          <div className="max-w-2xl mx-auto mt-6 bg-red-900/30 border border-red-600 rounded-lg p-4 text-red-200 text-xs mono">
             {error}
           </div>
         )}
 
-        {/* Checkout Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleCheckout}
-            disabled={isLoading}
-            className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-colors flex items-center gap-2"
-          >
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-            {isLoading ? "Redirecting to payment..." : "Continue to Payment"}
-          </button>
-        </div>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center mt-8">
+            <Loader2 className="w-5 h-5 animate-spin text-white/60" />
+            <span className="ml-2 text-xs mono text-white/60">
+              Redirecting to payment...
+            </span>
+          </div>
+        )}
 
-        {/* Info */}
-        <div className="text-center mt-8 text-gray-400 text-sm">
+        {/* Footer info */}
+        <div className="text-center mt-8 text-white/40 text-xs mono">
           <p>
             All plans include a 14-day free trial. Cancel anytime, no questions
             asked.
           </p>
-          <p className="mt-2">
-            Paying from {userCountry === "ZA" ? "South Africa" : "your country"}
+          <p className="mt-1">
+            Paying from{" "}
+            {userCountry === "ZA" ? "South Africa" : "your country"}
           </p>
         </div>
       </div>
     </div>
   );
+}
+
+function formatPrice(
+  usdAmount: number,
+  currency: string,
+  rate: number,
+): string {
+  const converted = usdAmount * rate;
+
+  return new Intl.NumberFormat("en", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(converted);
 }

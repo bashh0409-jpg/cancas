@@ -107,8 +107,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
     : null;
 
   const showExpiringWarning =
-    subscription.status === "active" &&
-    subscription.cancel_at_period_end;
+    subscription.status === "active" && subscription.cancel_at_period_end;
 
   return (
     <div className="space-y-6 mono">
@@ -116,7 +115,6 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
         href="/home"
         className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
       >
-        
         <X className="w-4 h-4" />
       </a>
       {/* Actions */}
@@ -130,7 +128,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-fit p-2 px-4 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+          className="w-fit p-2 px-4 lime cursor-pointer flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
         >
           Cancel Subscription
         </button>
