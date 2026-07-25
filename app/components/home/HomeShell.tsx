@@ -195,31 +195,27 @@ export function AccountCard({
           </div>
         </div>
       </div>
-      {/* Credits row */}
-      <div className="mb-1 mt-2 flex items-center justify-between px-3 py-2.5">
-        <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
-          <span>Credits</span>
-          <div className="flex items-center gap-1">
-            <Icon />
-            <span>{credits}</span>
-          </div>
-        </div>
-
-        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
-          <span className="cursor-pointer underline">Upgrade for more</span>
-        </button>
-      </div>{" "}
       {/* Plan row */}
-      <div className="flex items-center justify-between px-3 py-2.5">
+      <div className="flex items-center justify-between px-3 py-2">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Plan</span>
           <span>{plan}</span>
         </div>
 
-        <button className="bg-transparent text-xs text-white transition hover:bg-white/10">
-          <span className="cursor-pointer underline">Upgrade</span>
+        <button className="lime p-1 rounded text-xs text-black transition hover:bg-white/10">
+          <span className="cursor-pointer mono ">Upgrade</span>
         </button>
       </div>
+      {/* Credits row */}
+      <div className="mb-1 flex items-center justify-between px-3 py-2.5">
+        <div className="mono flex w-full justify-between gap-1 text-xs tracking-tight text-white">
+          <span>Credits</span>
+          <div className="flex grotesk items-center">
+            <Icon />
+            <span>{credits}</span>.00
+          </div>
+        </div>
+      </div>{" "}
       {/* Region row */}
       <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
