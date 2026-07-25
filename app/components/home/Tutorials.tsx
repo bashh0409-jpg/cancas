@@ -218,7 +218,6 @@ export default function Tutorials() {
                 />
 
                 <div className="pointer-events-none absolute inset-0 z-20" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
               </div>
             </article>
 
