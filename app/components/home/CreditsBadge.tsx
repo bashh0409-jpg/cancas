@@ -160,7 +160,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
 
             <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
               <div className="flex flex-col gap-2 shrink-0">
-                <p className="text-white font-medium text-xl tracking-tight">
+                <p className="text-white mono uppercase text-xl tracking-tight">
                   Need more than Ultra?
                 </p>
                 <p className="text-white/50 text-xs leading-relaxed max-w-64">
@@ -181,7 +181,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
               <div className="w-px self-stretch bg-white/10 shrink-0" />
 
               <div className="flex flex-col gap-1.5">
-                <p className="text-white/40 text-[11px] uppercase mb-1">
+                <p className="text-white/40 mono text-[11px] uppercase mb-1">
                   Enterprise includes everything in Ultra, plus
                 </p>
                 {[
@@ -244,7 +244,7 @@ function buildPlans(
       features: [
         "Access to core AI models",
         "Basic image and website generation",
-        "3 active workflows",
+        "Unlimited active workflows",
         "Limited workflow history",
         "Community asset browsing",
       ],
@@ -263,7 +263,7 @@ function buildPlans(
       features: [
         "Access to all standard AI models",
         "Advanced canvas and editing tools",
-        "20 active workflows",
+        "Unlimited active workflows",
         "Full workflow history",
         "Priority generation speeds",
         "Import assets from shared workspaces",
@@ -284,7 +284,7 @@ function buildPlans(
       features: [
         "Access to premium reasoning models",
         "Fastest AI processing speeds",
-        "Unlimited workflows",
+        "Unlimited active workflows",
         "Version history and restore",
         "Voice, image, and web agents",
         "Shared asset libraries",

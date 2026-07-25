@@ -66,7 +66,7 @@ export function Pricing() {
         {/* Enterprise banner */}
         <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-10 py-10 rounded-md flex items-center justify-between gap-8 flex-wrap">
           <div className="flex flex-col gap-2 shrink-0">
-            <p className="text-white font-medium text-xl tracking-tight">
+            <p className="text-white mono font-medium text-xl tracking-tight">
               Need more than Ultra?
             </p>
             <p className="text-white/50 text-xs leading-relaxed max-w-64">
@@ -141,7 +141,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       features: [
         "Access to core AI models",
         "Basic image and website generation",
-        "3 active workflows",
+        "Unlimited active workflows",
         "Limited workflow history",
         "Community asset browsing",
       ],
@@ -160,7 +160,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       features: [
         "Access to all standard AI models",
         "Advanced canvas and editing tools",
-        "20 active workflows",
+        "Unlimited active workflows",
         "Full workflow history",
         "Priority generation speeds",
         "Import assets from shared workspaces",
@@ -181,7 +181,7 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       features: [
         "Access to premium reasoning models",
         "Fastest AI processing speeds",
-        "Unlimited workflows",
+        "Unlimited active workflows",
         "Version history and restore",
         "Voice, image, and web agents",
         "Shared asset libraries",

@@ -49,13 +49,13 @@ export function PlanCard({
           <h1 className="text-xl uppercase">{name}</h1>
 
           {popular && (
-            <div className="bg-[#F7FFA8]/30 text-[#F7FFA8] rounded p-0.1 px-1 flex items-center gap-1">
+            <div className="bg-[#F7FFA8]/50 text-black rounded-xs p-1 px-1 flex items-center gap-1">
               <span className="mono text-[10px]">Most Popular</span>
             </div>
           )}
         </div>
 
-        <p className="text-sm tracking-tight  text-white/70 mt-4 leading-snug">{description}</p>
+        <p className="text-xs  tracking-tight mono  text-white/70 mt-4 leading-snug">{description}</p>
       </div>
 
       <div className="flex flex-col items-start mb-4">
@@ -63,7 +63,7 @@ export function PlanCard({
           <h2 className="text-4xl grotesk tracking-tight">{price}</h2>
           <p className="text-xs mono uppercase tracking-tight capitalize text-white/70">
             {/* Show currency code alongside /month when it's not obvious from symbol */}
-            {currency !== "USD" ? `${currency} ` : ""}/month
+            {currency !== "" ? `${currency} ` : ""}/month
           </p>
         </div>
         {annual && price !== "$0" && (
@@ -76,14 +76,14 @@ export function PlanCard({
       {isCurrent ? (
         <button
           disabled
-          className="w-full flex text-xs  items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
+          className="w-full flex text-xs mono uppercase tracking-tight  items-center justify-center gap-2 bg-white/10 text-white/60 py-2 rounded-lg cursor-not-allowed"
         >
           Current Plan
         </button>
       ) : (
         <button
           onClick={onSelect}
-          className="w-full cursor-pointer text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
+          className="w-full cursor-pointer mono uppercase tracking-tight text-xs flex items-center justify-center gap-2 lime text-black h-8 rounded-md"
         >
           {ctaLabel ?? `Upgrade to ${name}`}
         </button>

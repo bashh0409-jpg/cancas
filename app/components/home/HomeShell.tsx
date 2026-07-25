@@ -102,6 +102,7 @@ export function AccountCard({
   onSettings: () => void;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const region = useUserRegion();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -202,8 +203,11 @@ export function AccountCard({
           <span>{plan}</span>
         </div>
 
-        <button className="lime p-1 rounded text-xs text-black transition hover:bg-white/10">
-          <span className="cursor-pointer mono ">Upgrade</span>
+        <button
+          onClick={() => router.push("/billing/manage")}
+          className="lime p-1 rounded text-xs text-black transition hover:bg-white/10 cursor-pointer"
+        >
+          <span className="mono">Upgrade</span>
         </button>
       </div>
       {/* Credits row */}
@@ -1390,7 +1394,10 @@ function WorkspaceSettingsTab({
                 </span>
               </div>
 
-              <button className="h-8 mono cursor-pointer uppercase rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90">
+              <button
+                onClick={() => router.push("/billing/manage")}
+                className="h-8 mono cursor-pointer uppercase rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90"
+              >
                 Upgrade
               </button>
             </div>

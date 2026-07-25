@@ -173,7 +173,7 @@ function PlanCard({ plan, price, annual, className = "" }: PlanCardProps) {
       {/* Featured badge */}
       <div className="mb-3 h-6 flex items-center">
         {featured ? (
-          <span className="text-[11px] font-medium bg-blue-400/15 text-blue-300 px-2.5 py-0.5 rounded-full">
+          <span className="text-[11px] font-medium bg-blue-400/15 text-blue-300 px-2.5 py-0.5 ">
             Most popular
           </span>
         ) : null}
