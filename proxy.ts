@@ -124,7 +124,7 @@ export async function proxy(request: NextRequest) {
       return withSecurityHeaders(NextResponse.redirect(new URL("/signin", request.url)));
     }
 
-    return withSecurityHeaders(response);
+    return withSecurityHeaders(response, pathname.startsWith("/canvas"));
   } catch (err: unknown) {
     if (isStaleAuthError(err)) {
       return clearStaleAuthCookiesAndRedirect(request);
@@ -248,11 +248,17 @@ function pruneExpiredRateLimits(now: number): void {
   }
 }
 
-function withSecurityHeaders(response: NextResponse): NextResponse {
+function withSecurityHeaders(
+  response: NextResponse,
+  allowMicrophone = false,
+): NextResponse {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
+  response.headers.set(
+    "Permissions-Policy",
+    `camera=(), geolocation=(), microphone=${allowMicrophone ? "(self)" : "()"}`,
+  );
   response.headers.set("Vary", "Accept-Encoding");
 
   return response;
