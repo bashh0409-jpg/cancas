@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  AudioLines,
-  Bot,
   FileText,
   Folder,
   Hand,
@@ -13,7 +11,6 @@ import {
   Server,
   Square,
   StickyNote,
-  Undo,
   Undo2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -27,6 +24,7 @@ import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 
 function ToolboxButton({
   active = false,
+  disabled = false,
   children,
   label,
   onClick,
@@ -34,6 +32,7 @@ function ToolboxButton({
   textColor,
 }: {
   active?: boolean;
+  disabled?: boolean;
   children: ReactNode;
   label: string;
   onClick: () => void;
@@ -43,11 +42,12 @@ function ToolboxButton({
   return (
     <button
       aria-label={label}
+      disabled={disabled}
       title={label}
       type="button"
       onClick={onClick}
       className={[
-        "flex h-7.5 w-7.5 cursor-pointer items-center justify-center hover:bg-white/10 rounded transition",
+        "flex h-7.5 w-7.5 cursor-pointer items-center justify-center rounded transition disabled:cursor-not-allowed disabled:opacity-50",
         active
           ? " bg-red-500 text-white/60 shadow-[0_0_0_4px_rgba(239,68,68,0.14)]"
           : bgColor && textColor
@@ -62,6 +62,10 @@ function ToolboxButton({
 
 export function FloatingToolbox() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isRequestingMicrophone, setIsRequestingMicrophone] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [showMicrophonePermissionHelp, setShowMicrophonePermissionHelp] =
+    useState(false);
   const [showImportOverlay, setShowImportOverlay] = useState(false);
   const [pageOverlay, setPageOverlay] = useState<
     "google-drive" | "dropbox" | null
@@ -92,13 +96,20 @@ export function FloatingToolbox() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
   const startedAtRef = useRef<number>(0);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     return () => {
-      if (mediaRecorderRef.current?.state === "recording") {
-        mediaRecorderRef.current.stop();
+      isMountedRef.current = false;
+
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        // Do not create a voice node after navigating away from the canvas.
+        recorder.onstop = null;
+        recorder.stop();
       }
 
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -106,53 +117,132 @@ export function FloatingToolbox() {
   }, []);
 
   async function handleToggleRecording() {
-    if (isRecording) {
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
+    const activeRecorder = mediaRecorderRef.current;
+
+    if (activeRecorder && activeRecorder.state !== "inactive") {
+      activeRecorder.stop();
       return;
     }
 
+    setRecordingError(null);
+    setShowMicrophonePermissionHelp(false);
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setRecordingError("This browser does not support microphone recording.");
+      return;
+    }
+
+    if (!window.isSecureContext) {
+      setRecordingError(
+        "Microphone recording requires HTTPS or http://localhost. Open this canvas from a secure URL.",
+      );
+      return;
+    }
+
+    if (typeof MediaRecorder === "undefined") {
+      setRecordingError("This browser does not support saving microphone audio.");
+      return;
+    }
+
+    setIsRequestingMicrophone(true);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
 
-      chunksRef.current = [];
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+
       startedAtRef.current = Date.now();
       mediaStreamRef.current = stream;
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
+          chunks.push(event.data);
         }
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, {
-          type: recorder.mimeType || "audio/webm",
-        });
-        const detail: VoiceNoteRecordedDetail = {
-          id: crypto.randomUUID(),
-          blob,
-          durationMs: Math.max(1, Date.now() - startedAtRef.current),
-        };
+        if (chunks.length > 0 && isMountedRef.current) {
+          const blob = new Blob(chunks, {
+            type: recorder.mimeType || "audio/webm",
+          });
+          const detail: VoiceNoteRecordedDetail = {
+            id: crypto.randomUUID(),
+            blob,
+            durationMs: Math.max(1, Date.now() - startedAtRef.current),
+          };
 
-        window.dispatchEvent(
-          new CustomEvent<VoiceNoteRecordedDetail>(VOICE_NOTE_RECORDED_EVENT, {
-            detail,
-          }),
-        );
+          window.dispatchEvent(
+            new CustomEvent<VoiceNoteRecordedDetail>(VOICE_NOTE_RECORDED_EVENT, {
+              detail,
+            }),
+          );
+        } else if (isMountedRef.current) {
+          setRecordingError("No audio was captured. Please try recording again.");
+        }
 
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
         mediaRecorderRef.current = null;
-        chunksRef.current = [];
+        if (isMountedRef.current) {
+          setIsRecording(false);
+        }
+      };
+
+      recorder.onerror = () => {
+        if (isMountedRef.current) {
+          setRecordingError("Recording stopped unexpectedly. Please try again.");
+        }
       };
 
       recorder.start();
       setIsRecording(true);
-    } catch {
+    } catch (error) {
+      let message = "Unable to start recording. Please try again.";
+
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        let permissionState: PermissionState | null = null;
+
+        try {
+          permissionState = await navigator.permissions
+            .query({ name: "microphone" as PermissionName })
+            .then((permission) => permission.state);
+        } catch {
+          // Some browsers do not expose microphone state through the Permissions API.
+        }
+
+        if (permissionState === "granted") {
+          message =
+            "Chrome is allowed for this site, but macOS is blocking Chrome's microphone access.";
+        } else {
+          message =
+            "Microphone access was denied. Allow it in your browser settings and try again.";
+        }
+        setShowMicrophonePermissionHelp(true);
+      } else if (error instanceof DOMException && error.name === "NotFoundError") {
+        message = "No microphone was found. Connect one and try again.";
+      } else if (
+        error instanceof DOMException &&
+        error.name === "NotReadableError"
+      ) {
+        message = "Your microphone is being used by another application.";
+      }
+
+      setRecordingError(message);
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+      mediaRecorderRef.current = null;
       setIsRecording(false);
+    } finally {
+      if (isMountedRef.current) {
+        setIsRequestingMicrophone(false);
+      }
     }
   }
 
@@ -226,11 +316,34 @@ export function FloatingToolbox() {
         role="toolbar"
       >
         {" "}
-        <ToolboxButton label="Add sticky note" onClick={console.log} bgColor="bg-[#f8ff9a]" textColor="text-black">
+        <ToolboxButton
+          label="Add sticky note"
+          onClick={console.log}
+          bgColor="bg-[#f8ff9a]"
+          textColor="text-black"
+        >
           <Hand className="h-5 w-5 " strokeWidth={1.5} />
         </ToolboxButton>
         <ToolboxButton label="Add sticky note" onClick={activateCanvasTextTool}>
           <StickyNote className="h-5 w-5 rotate-90" strokeWidth={1.5} />
+        </ToolboxButton>
+        <ToolboxButton
+          active={isRecording}
+          label={
+            isRequestingMicrophone
+              ? "Requesting microphone access"
+              : isRecording
+                ? "Stop recording voice note"
+                : "Record voice note"
+          }
+          onClick={handleToggleRecording}
+          disabled={isRequestingMicrophone}
+        >
+          {isRecording ? (
+            <Square className="h-4 w-4 fill-current" strokeWidth={1.5} />
+          ) : (
+            <Mic className="h-5 w-5" strokeWidth={1.5} />
+          )}
         </ToolboxButton>
         <ToolboxButton
           label="Upload files"
@@ -239,19 +352,6 @@ export function FloatingToolbox() {
           <Import className="h-5 w-5 " strokeWidth={1.5} />
         </ToolboxButton>
         <span className="mx-1 h-6 w-[1px] bg-white/10" />
-        <ToolboxButton
-          active={isRecording}
-          label={
-            isRecording ? "Stop recording voice note" : "Record voice note"
-          }
-          onClick={handleToggleRecording}
-        >
-          {isRecording ? (
-            <Square className="h-4 w-4 fill-current" strokeWidth={1.5} />
-          ) : (
-            <Mic className="h-5 w-5" strokeWidth={1.5} />
-          )}
-        </ToolboxButton>
         <ToolboxButton
           label="Reflow Intelligence"
           onClick={activateCanvasAiChatTool}
@@ -271,13 +371,65 @@ export function FloatingToolbox() {
           </svg>
         </ToolboxButton>
         <span className="mx-1 h-6 w-[1px] bg-white/10" />
-        <ToolboxButton label="Undo" onClick={() => document.execCommand("undo")}>
+        <ToolboxButton
+          label="Undo"
+          onClick={() => document.execCommand("undo")}
+        >
           <Undo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
         </ToolboxButton>
-        <ToolboxButton label="Redo" onClick={() => document.execCommand("redo")}>
+        <ToolboxButton
+          label="Redo"
+          onClick={() => document.execCommand("redo")}
+        >
           <Redo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
         </ToolboxButton>
       </div>
+      {recordingError && (
+        <div
+          aria-live="polite"
+          className="fixed bottom-16 left-1/2 z-50 flex w-max max-w-[calc(100vw-2rem)] items-center gap-3 -translate-x-1/2 rounded border border-red-400/30 bg-[#212126] px-3 py-2 text-xs text-red-200 shadow-lg"
+          role="status"
+        >
+          <div className="mono uppercase tracking-tight">
+            <p>{recordingError}</p>
+            {showMicrophonePermissionHelp && (
+              <div className="mt-1 space-y-1 text-red-200/70 normal-case">
+                <p>
+                  In your browser&apos;s address bar, open <strong>Site controls</strong>
+                  {" "}— usually a sliders icon, not a padlock — and set
+                  {" "}Microphone to <strong>Allow</strong>.
+                </p>
+                <p>
+                  On macOS, open System Settings → Privacy &amp; Security →
+                  Microphone, enable <strong>Google Chrome</strong>, then quit
+                  and reopen Chrome.
+                </p>
+              </div>
+            )}
+          </div>
+          {showMicrophonePermissionHelp && (
+            <button
+              className="shrink-0 rounded border border-red-300/30 px-2 py-1 font-medium text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isRequestingMicrophone}
+              onClick={() => void handleToggleRecording()}
+              type="button"
+            >
+              Enable microphone
+            </button>
+          )}
+          <button
+            aria-label="Dismiss recording error"
+            className="shrink-0 text-red-200/70 transition hover:text-red-100"
+            onClick={() => {
+              setRecordingError(null);
+              setShowMicrophonePermissionHelp(false);
+            }}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {showImportOverlay ? (
         <div
