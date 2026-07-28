@@ -76,6 +76,8 @@ import {
   type CanvasTranscriptionNodeData,
 } from "@/app/components/canvas/CanvasTranscriptionNode";
 import { ElbowConnector } from "@/app/components/canvas/ElbowConnector";
+import { CanvasContextMenu } from "@/app/components/canvas/CanvasContextMenu";
+import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 
 type Viewport = {
   x: number;
@@ -613,6 +615,8 @@ export default function CanvasWorkspace({
   >(() => new Set());
   const [isSavingCanvas, setIsSavingCanvas] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
   const initialImageCount = initialImageIdsRef.current.size;
   const activeWebNode =
@@ -3538,6 +3542,12 @@ export default function CanvasWorkspace({
     <div
       ref={canvasRef}
       className="absolute inset-0 overflow-hidden cursor-grab"
+      onContextMenu={(event) => {
+        const rightClickEnabled = useCanvasPreferencesStore.getState().rightClickMenu;
+        if (!rightClickEnabled) return;
+        event.preventDefault();
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -3953,6 +3963,37 @@ export default function CanvasWorkspace({
       )}
 
       <CanvasLoadingOverlay isVisible={!isClientReady || isCanvasLoading} />
+
+      {contextMenu && (
+        <CanvasContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onImportClick={() => fileInputRef.current?.click()}
+        />
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const files = event.currentTarget.files;
+          if (!files || files.length === 0) {
+            event.currentTarget.value = "";
+            return;
+          }
+          const fileArray = Array.from(files);
+          window.dispatchEvent(
+            new CustomEvent("canvasai:file-import", {
+              detail: { files: fileArray },
+            }),
+          );
+          event.currentTarget.value = "";
+        }}
+      />
     </div>
   );
 }

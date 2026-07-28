@@ -1,0 +1,210 @@
+"use client";
+
+import {
+  ArrowLeft,
+  Grid2x2,
+  Minus,
+  Workflow,
+  ChevronRight,
+  MouseRight,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import Link from "next/link";
+
+type WireType = "line" | "elbow" | "bezier";
+
+export default function PreferencesPage() {
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [rightClickMenu, setRightClickMenu] = useState(false);
+  const [wireType, setWireType] = useState<WireType>("elbow");
+
+  return (
+    <div className="min-h-screen bg-black/70 flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded border border-white/10 bg-[#212126] shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <Link
+            href="/home"
+            className="flex items-center gap-1 text-xs mono uppercase tracking-tight text-white/70 transition hover:text-white"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 stroke-[1.5]" />
+            Back
+          </Link>
+          <h1 className="text-xs mono uppercase tracking-tight text-white">
+            Preferences
+          </h1>
+          <div className="w-10" />
+        </div>
+
+        {/* Content */}
+        <div className="divide-y divide-white/10 px-4 py-2">
+          {/* Right-click to open menu */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <MouseRight className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />{" "}
+              <span className="text-xs mono uppercase tracking-tight text-white">
+                Right-click to open menu
+              </span>
+            </div>
+            <button
+              onClick={() => setRightClickMenu((prev) => !prev)}
+              className={`relative w-11 cursor-pointer h-5 rounded-full transition-colors duration-200 shrink-0 ${
+                rightClickMenu ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+                  rightClickMenu
+                    ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Snap to Grid */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <Grid2x2 className="w-4 h-4 text-white/60 stroke-[1.5]" />
+              <span className="text-xs mono uppercase tracking-tight text-white">
+                Snap to Grid
+              </span>
+            </div>
+            <button
+              onClick={() => setSnapToGrid((prev) => !prev)}
+              className={`relative w-11 cursor-pointer h-5 rounded-full transition-colors duration-200 shrink-0 ${
+                snapToGrid ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+                  snapToGrid
+                    ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Wire Type — flyout */}
+          <WireTypeFlyout value={wireType} onChange={setWireType} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WireTypeFlyout({
+  value,
+  onChange,
+}: {
+  value: WireType;
+  onChange: (type: WireType) => void;
+}) {
+  const [showFlyout, setShowFlyout] = useState(false);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowFlyout(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowFlyout(false);
+    }, 150);
+  };
+
+  const wireTypeLabel = {
+    line: "Line",
+    elbow: "Elbow",
+    bezier: "Bezier",
+  };
+
+  const wireTypeIcon = {
+    line: <Minus className="w-3.5 h-3.5" />,
+    elbow: (
+      <svg
+        className="w-3.5 h-3.5"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <polyline points="1,12 6,12 6,4 15,4" />
+      </svg>
+    ),
+    bezier: (
+      <svg
+        className="w-3.5 h-3.5"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M1,12 C5,12 6,4 10,4 C12,4 14,6 15,4" />
+      </svg>
+    ),
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="flex items-center justify-between py-3">
+        <div className="flex items-center gap-2">
+          <Workflow className="w-4 h-4 text-white/60 stroke-[1.5]" />
+          <span className="text-xs mono uppercase tracking-tight text-white">
+            Wire Type
+          </span>
+        </div>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-xs mono uppercase tracking-tight text-white/70 transition hover:text-white cursor-pointer"
+        >
+          {wireTypeIcon[value]}
+          <span>{wireTypeLabel[value]}</span>
+          <ChevronRight className="w-3 h-3 text-white/50 stroke-[1.5]" />
+        </button>
+      </div>
+
+      {showFlyout && (
+        <div
+          className="absolute right-0 top-full mt-1 z-[70] w-[180px] rounded border border-white/10 bg-[#212126] shadow-2xl"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {(Object.entries(wireTypeLabel) as [WireType, string][]).map(
+            ([type, label], index) => (
+              <div key={type}>
+                {index > 0 && <div className="h-px bg-white/10" />}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(type);
+                    setShowFlyout(false);
+                  }}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-xs mono uppercase tracking-tight transition cursor-pointer ${
+                    value === type
+                      ? "text-white"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  {wireTypeIcon[type]}
+                  <span>{label}</span>
+                  {value === type && (
+                    <span className="ml-auto text-white/40">✓</span>
+                  )}
+                </button>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

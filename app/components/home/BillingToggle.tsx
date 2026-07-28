@@ -40,7 +40,7 @@ export function BillingToggle({ value, onChange }: BillingToggleProps) {
         className="relative z-10 h-8 mono min-w-[120px] flex items-center justify-center px-3 rounded-md text-sm transition-colors duration-300"
         style={{ color: selectedCycle === "monthly" ? "#000" : "#fff" }}
       >
-        Monthly
+        Monthly plans
       </button>
 
       <button

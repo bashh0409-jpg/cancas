@@ -15,7 +15,7 @@ import {
   ZoomIn,
   ZoomOut,
   Cable,
-  PlugZap,
+  PlugZap,MouseRight,
   Loader2,
   ChevronsLeftRightEllipsis,
   ArrowLeft,
@@ -30,9 +30,13 @@ import {
   FolderOpen,
   Minus,
   Ellipsis,
+  ChevronsRight,
+  ChevronRight,
+  Workflow,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Image from "next/image";
@@ -282,7 +286,7 @@ const CanvasSwitcherOverlay = ({
                 type="button"
                 onClick={() => setEditing(true)}
                 className="w-full truncate uppercase flex items-center justify-between tracking-tight cursor-pointer text-left text-[11px] font-medium  text-white transition hover:text-white/80"
-                title="CLICK TO RENAME"
+                title="Click to rename"
               >
                 {isSaving ? "Saving…" : canvasName}{" "}
                 <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
@@ -300,16 +304,9 @@ const CanvasSwitcherOverlay = ({
       />
 
       {/* New file shortcut — creates a new canvas */}
-      <div className="border-t border-white/10 px-3 py-1">
-        <form action={createCanvasAction}>
-          <button
-            type="submit"
-            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white/70 transition hover:text-white"
-          >
-            Create new file
-          </button>
-        </form>
-      </div>
+      <form action={createCanvasAction}>
+        <CreateNewFileButton />
+      </form>
       {/* Shortcuts toggle */}
       <div className="border-t border-white/10 px-3 py-1">
         <button
@@ -325,6 +322,8 @@ const CanvasSwitcherOverlay = ({
           Shortcuts
         </button>
       </div>
+      {/* Preferences — hover to open flyout */}
+      <PreferencesFlyout />
       {/* Back to workspace */}
       <div className="border-t w-full border-white/10 px-3 py-1">
         <a
@@ -1872,6 +1871,185 @@ function Toggle({
               : "bg-white/40"
           }`}
         />
+      </button>
+    </div>
+  );
+}
+
+type WireType = "line" | "elbow" | "bezier";
+
+function PreferencesFlyout() {
+  const [showFlyout, setShowFlyout] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [rightClick, rightClickCanvas] = useState(false);
+  const [wireType, setWireType] = useState<WireType>("elbow");
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowFlyout(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowFlyout(false);
+    }, 150);
+  };
+
+  const wireTypeLabel: Record<WireType, string> = {
+    line: "Line",
+    elbow: "Elbow",
+    bezier: "Bezier",
+  };
+
+  const wireTypeIcon: Record<WireType, React.ReactNode> = {
+    line: <Minus className="w-3.5 h-3.5" />,
+    elbow: (
+      <svg
+        className="w-3.5 h-3.5"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <polyline points="1,12 6,12 6,4 15,4" />
+      </svg>
+    ),
+    bezier: (
+      <svg
+        className="w-3.5 h-3.5"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M1,12 C5,12 6,4 10,4 C12,4 14,6 15,4" />
+      </svg>
+    ),
+  };
+
+  return (
+    <div
+      className="relative border-t border-white/10 px-3 py-1"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        className="text-[11px] flex justify-between w-full p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white/70 transition hover:text-white items-center"
+      >
+        Preferences
+      </button>
+
+      {showFlyout && (
+        <div
+          className="absolute left-full ml-2 top-0 z-[70] w-[250px] rounded border border-white/10 bg-[#212126] shadow-2xl"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Snap to Grid */}
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <MouseRight className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />{" "}
+            <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+              Right-click to open menu
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                rightClickCanvas((prev) => !prev);
+              }}
+              className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
+                rightClick ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
+                  rightClick
+                    ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+          <div className="h-px bg-white/10" />
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <Grid2x2 className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+              <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+                Snap to Grid
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSnapToGrid((prev) => !prev);
+              }}
+              className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
+                snapToGrid ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
+                  snapToGrid
+                    ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="h-px bg-white/10" />
+
+          {/* Wire Type */}
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Workflow className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+                <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+                  Wire Type
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {(Object.entries(wireTypeLabel) as [WireType, string][]).map(
+                ([type, label]) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWireType(type);
+                    }}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-xs text-[10px] mono uppercase tracking-tight transition cursor-pointer ${
+                      wireType === type
+                        ? "lime text-black"
+                        : "bg-white/10 text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {wireTypeIcon[type]}
+                    <span>{label}</span>
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateNewFileButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <div className="border-t border-white/10 px-3 py-1">
+      <button
+        type="submit"
+        disabled={pending}
+        className="text-[11px] flex w-full justify-left p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white/70 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {pending ? "Creating new file…" : "Create new file"}
       </button>
     </div>
   );
