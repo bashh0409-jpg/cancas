@@ -429,7 +429,8 @@ const ToolsPanel = ({
   onGridSettingsChange,
 }: {
   gridSettings: GridControlsValue;
-  onClose: () => void;
+    onClose: () => void;
+  
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
 }) => {
   return (
@@ -447,22 +448,20 @@ const ToolsPanel = ({
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Grid Control Section */}
-        <div className="rounded mt-4 space-y-3">
+        <div className="rounded mt-4 space-y-6">
           <div className="flex items-center justify-between">
-            <label className="text-white/60 text-xs  mono uppercase">
-              Grid
-            </label>
-            <input
-              type="checkbox"
+            <Toggle
+              label="show Grid"
+              description="Toggle grid visibility"
               checked={gridSettings.enabled}
-              onChange={(e) =>
-                onGridSettingsChange({ enabled: e.target.checked })
+              onChange={() =>
+                onGridSettingsChange({ enabled: !gridSettings.enabled })
               }
-              className="w-4 h-4 cursor-pointer"
             />
           </div>
+       
 
           {gridSettings.enabled && (
             <>
@@ -498,7 +497,7 @@ const ToolsPanel = ({
               />
 
               {/* Line Type */}
-              <div className="space-y-1 flex justify-between ">
+              <div className="space-y-1 flex items-center justify-between ">
                 <label className="text-white/50 mono text-xs uppercase">
                   Line Style
                 </label>
@@ -857,7 +856,8 @@ export const ConnectPanel = ({
       </div>
       <div className="mb-2">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
-          your Files will remain in your cloud storage unless explicitly imported.
+          your Files will remain in your cloud storage unless explicitly
+          imported.
         </p>
       </div>
       {/* Providers */}
@@ -1832,3 +1832,40 @@ export const Sidebar = ({
     </div>
   );
 };
+
+function Toggle({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <div className="flex w-full justify-between text-xs mono uppercase items-center justify-between py-2">
+      <div>
+        <p className="text-white text-xs">{label}</p>
+
+        <p className="text-white/40 hidde text-xs mt-0.5">{description}</p>
+      </div>
+
+      <button
+        onClick={onChange}
+        className={`relative w-11 cursor-pointer  h-5 rounded-full transition-colors duration-200 shrink-0 ${
+          checked ? "lime" : "bg-white/15"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+            checked
+              ? "translate-x-4 bg-[#e3e3e3] shadow-[0_0_8px_1px_rgba(0,0,0,0.3)] "
+              : "bg-white/40"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
