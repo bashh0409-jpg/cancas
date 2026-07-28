@@ -111,7 +111,7 @@ const CanvasSwitcherFlyout = ({
     >
       <button
         type="button"
-        className="text-[11px] px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white"
+        className="text-[11px] px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white/70 transition hover:text-white"
       >
         Switch canvas
       </button>
@@ -122,7 +122,7 @@ const CanvasSwitcherFlyout = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="  overflow-y-auto">
+          <div className=" max-h-[90vh] scrollbar-hidden overflow-y-auto">
             {canvases.map((canvas, index) => {
               const isActive = canvas.id === activeCanvasId;
 
@@ -137,15 +137,15 @@ const CanvasSwitcherFlyout = ({
                         onSwitchCanvas(canvas.slug);
                       }
                     }}
-                    className={`flex   items-center rounded-xs justify-between gap-2 p-2 text-[11px] mono transition ${
+                    className={`flex tracking-tight  items-center rounded-xs justify-between gap-2 p-2 text-[11px] mono transition ${
                       isActive
                         ? " text-white"
                         : "text-white/60  hover:text-white"
                     }`}
                   >
-                    <span className="truncate uppercase">{canvas.name}</span>
+                    <span className="truncate hover:cursor-disabled uppercase">{canvas.name}</span>
                     {isActive && (
-                      <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
+                      <FolderOpen className="shrink-0 w-3.5 stroke-[1.5] h-3.5 " />
                     )}
                   </a>
                 </React.Fragment>
@@ -161,7 +161,7 @@ const CanvasSwitcherFlyout = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <p className="text-[11px] mono text-white/50">
+          <p className="text-[11px] tracking-tight uppercase mono text-white/50">
             No other canvases yet
           </p>
         </div>
@@ -297,7 +297,7 @@ const CanvasSwitcherOverlay = ({
         <form action={createCanvasAction}>
           <button
             type="submit"
-            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white"
+            className="text-[11px] p-1 rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white/70 transition hover:text-white"
           >
             Create new file
           </button>
@@ -313,7 +313,7 @@ const CanvasSwitcherOverlay = ({
               new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "shortcuts" }),
             );
           }}
-          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white flex items-center gap-2"
+          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white/70 transition hover:text-white flex items-center gap-2"
         >
           Shortcuts
         </button>
@@ -322,7 +322,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t w-full border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight hover:bg-white/10 text-white transition hover:text-white flex items-center gap-2"
+          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white/70 transition hover:text-white flex items-center gap-2"
         >
           Back to files
         </a>
@@ -467,13 +467,13 @@ const ToolsPanel = ({
             <>
               {/* Grid Size */}
               <div className="space-y-1">
-                <label className="text-white/50 mono text-xs uppercase">
+                <label className="text-white/50 tracking-tight mono text-xs uppercase">
                   Size: {gridSettings.size}px
                 </label>
                 <input
                   type="range"
                   min="5"
-                  max="100"
+                  max="150"
                   value={gridSettings.size}
                   onChange={(e) =>
                     onGridSettingsChange({
@@ -499,7 +499,7 @@ const ToolsPanel = ({
               {/* Line Type */}
               <div className="space-y-1 flex items-center justify-between ">
                 <label className="text-white/50 mono text-xs uppercase">
-                  Line Style
+                  grid Line Style
                 </label>
                 <div className="flex gap-2">
                   <button
@@ -1861,7 +1861,7 @@ function Toggle({
         <span
           className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
             checked
-              ? "translate-x-4 bg-[#e3e3e3] shadow-[0_0_8px_1px_rgba(0,0,0,0.3)] "
+              ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)] "
               : "bg-white/40"
           }`}
         />
