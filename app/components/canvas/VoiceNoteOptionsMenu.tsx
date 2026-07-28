@@ -30,7 +30,7 @@ export function VoiceNoteOptionsMenu({
 
       {isOpen ? (
         <div
-          className="absolute right-3 top-9 z-20 w-32 rounded border-2 border-white/10 bg-[#212126] p-1 shadow-lg"
+          className="absolute right-3 top-9 z-20 w-42 rounded border-2 border-white/10 bg-[#212126] p-1 shadow-lg"
           role="menu"
           onPointerDown={(event) => event.stopPropagation()}
         >

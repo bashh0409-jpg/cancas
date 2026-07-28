@@ -3318,6 +3318,17 @@ export default function CanvasWorkspace({
       return;
     }
 
+    // Ignore pointer down on interactive elements (buttons, etc.) so that
+    // click events on controls like the play button work properly.
+    const target = event.target as HTMLElement;
+    if (
+      target.tagName === "BUTTON" ||
+      target.closest("button") ||
+      target.getAttribute("role") === "button"
+    ) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);

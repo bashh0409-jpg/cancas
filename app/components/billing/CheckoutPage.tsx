@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Loader2, CheckIcon, ArrowRightIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, CheckIcon, ArrowRightIcon, X } from "lucide-react";
 import { PlanCard } from "@/app/components/home/PlanCard";
 import { BillingToggle, type BillingCycle } from "@/app/components/home/BillingToggle";
 
@@ -16,6 +17,7 @@ interface CheckoutPageProps {
 }
 
 export function CheckoutPage({ userCountry }: CheckoutPageProps) {
+  const router = useRouter();
   const [currencyData, setCurrencyData] = useState<CurrencyData>({
     currency: "USD",
     rate: 1,
@@ -162,6 +164,13 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
 
   return (
     <div className="min-h-screen bg-black text-white scrollbar-hidden overflow-x-hidden">
+      <a
+        href="/manage"
+        className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+        aria-label="Go back"
+      >
+        <X className="w-4 h-4" />
+      </a>
       <div className="max-w-7xl scrollbar-hidden mx-auto px-4 py-24 flex flex-col items-center">
         {/* Header */}
         <div className="flex flex-col scrollbar-hidden items-center text-center mb-12">
@@ -208,7 +217,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
             </span>
           </div>
         )}
-        <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
+        <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col gap-2 shrink-0">
             <p className="text-white mono uppercase text-xl tracking-tight">
               Need more than Ultra?

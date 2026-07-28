@@ -28,6 +28,8 @@ import {
   Keyboard,
   ExternalLink,
   FolderOpen,
+  Minus,
+  Ellipse,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -496,7 +498,7 @@ const ToolsPanel = ({
               />
 
               {/* Line Type */}
-              <div className="space-y-1">
+              <div className="space-y-1 flex justify-between ">
                 <label className="text-white/50 mono text-xs uppercase">
                   Line Style
                 </label>
@@ -509,7 +511,7 @@ const ToolsPanel = ({
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
                   >
-                    Solid
+                    <Minus className="w-4 h-4" />
                   </button>
 
                   <button
@@ -520,7 +522,7 @@ const ToolsPanel = ({
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
                   >
-                    Dotted
+                    <Ellipse className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -556,10 +558,10 @@ const ColorField = ({ label, value, onChange }: ColorFieldProps) => {
   }, [value]);
 
   return (
-    <label className="block space-y-1.5">
+    <label className="flex w-full justify-between space-y-1.5">
       <span className="text-white/50 mono text-xs uppercase">{label}</span>
-      <div className="group flex h-8 items-center gap-2 rounded-xs border border-white/10 bg-[#17171b] py-1.5 px-1 transition focus-within:border-white/30 focus-within:bg-[#1b1b20]">
-        <span className="relative h-6 w-7 shrink-0 overflow-hidden rounded-xs border border-white/15 bg-black/20 shadow-inner">
+      <div className="group flex h-fit w-fit items-center gap-2 rounded-xs bg-[#17171b] transition  focus-within:bg-[#1b1b20]">
+        <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-xs border border-white/15 bg-black/20 shadow-inner">
           <span
             className="absolute inset-0"
             style={{ backgroundColor: toColorInputValue(value) }}
@@ -573,10 +575,10 @@ const ColorField = ({ label, value, onChange }: ColorFieldProps) => {
           />
         </span>
 
-        <span className="font-mono text-xs text-white/30">#</span>
+      
         <input
           aria-label={`${label} hex`}
-          className="min-w-0 flex-1 bg-transparent p-0 font-mono text-xs uppercase tracking-normal text-white/85 outline-none placeholder:text-white/25"
+          className="min-w-0 hidden flex-1 bg-transparent p-0 font-mono text-xs uppercase tracking-normal text-white/85 outline-none placeholder:text-white/25"
           maxLength={6}
           spellCheck={false}
           type="text"
