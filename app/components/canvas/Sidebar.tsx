@@ -29,7 +29,7 @@ import {
   ExternalLink,
   FolderOpen,
   Minus,
-  Ellipse,
+  Ellipsis,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -522,7 +522,7 @@ const ToolsPanel = ({
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
                   >
-                    <Ellipse className="w-4 h-4" />
+                    <Ellipsis className="w-4 h-4" />
                   </button>
                 </div>
               </div>
