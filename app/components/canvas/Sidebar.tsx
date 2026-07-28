@@ -50,6 +50,7 @@ import type { CanvasGridLineType } from "@/types/canvas";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 import { createCanvasAction } from "@/app/actions/createCanvasAction";
 import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
+import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import ShortcutsPanel from "./ShortcutsPanel";
 
 type PanelType =
@@ -456,11 +457,11 @@ const ToolsPanel = ({
 
       <div className="space-y-5">
         {/* Grid Control Section */}
-        <div className="rounded mt-4 space-y-6">
+        <div className="rounded mt-4 space-y-5">
           <div className="flex items-center justify-between">
             <Toggle
               label="show Grid"
-              description="Toggle grid visibility"
+              description=""
               checked={gridSettings.enabled}
               onChange={() =>
                 onGridSettingsChange({ enabled: !gridSettings.enabled })
@@ -1880,9 +1881,7 @@ type WireType = "line" | "elbow" | "bezier";
 
 function PreferencesFlyout() {
   const [showFlyout, setShowFlyout] = useState(false);
-  const [snapToGrid, setSnapToGrid] = useState(false);
-  const [rightClick, rightClickCanvas] = useState(false);
-  const [wireType, setWireType] = useState<WireType>("elbow");
+  const { rightClickMenu, snapToGrid, wireType, setRightClickMenu, setSnapToGrid, setWireType } = useCanvasPreferencesStore();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
@@ -1956,15 +1955,15 @@ function PreferencesFlyout() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                rightClickCanvas((prev) => !prev);
+                setRightClickMenu(!rightClickMenu);
               }}
               className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
-                rightClick ? "lime" : "bg-white/15"
+                rightClickMenu ? "lime" : "bg-white/15"
               }`}
             >
               <span
                 className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
-                  rightClick
+                  rightClickMenu
                     ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
                     : "bg-white/40"
                 }`}
@@ -1982,7 +1981,7 @@ function PreferencesFlyout() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setSnapToGrid((prev) => !prev);
+                setSnapToGrid(!snapToGrid);
               }}
               className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
                 snapToGrid ? "lime" : "bg-white/15"
