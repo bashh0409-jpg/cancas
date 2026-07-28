@@ -130,22 +130,29 @@ const CanvasSwitcherFlyout = ({
                 <React.Fragment key={canvas.id}>
                   {index > 0 && <div className="  h-px bg-white/10" />}
                   <a
-                    href={`/canvas/${canvas.slug}`}
+                    href={isActive ? undefined : `/canvas/${canvas.slug}`}
                     onClick={(e) => {
+                      if (isActive) {
+                        e.preventDefault();
+                        return;
+                      }
+
                       if (onSwitchCanvas) {
                         e.preventDefault();
                         onSwitchCanvas(canvas.slug);
                       }
                     }}
-                    className={`flex tracking-tight  items-center rounded-xs justify-between gap-2 p-2 text-[11px] mono transition ${
+                    aria-disabled={isActive}
+                    className={`flex items-center justify-between gap-2 rounded-xs p-2 text-[11px] tracking-tight mono transition ${
                       isActive
-                        ? " text-white"
-                        : "text-white/60  hover:text-white"
+                        ? "cursor-not-allowed text-white"
+                        : "text-white/60 hover:text-white cursor-pointer"
                     }`}
                   >
-                    <span className="truncate hover:cursor-disabled uppercase">{canvas.name}</span>
+                    <span className="truncate uppercase">{canvas.name}</span>
+
                     {isActive && (
-                      <FolderOpen className="shrink-0 w-3.5 stroke-[1.5] h-3.5 " />
+                      <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
                     )}
                   </a>
                 </React.Fragment>
