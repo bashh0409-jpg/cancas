@@ -38,7 +38,10 @@ import gsap from "gsap";
 import Image from "next/image";
 import { useLayersStore } from "@/lib/canvas/layersStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
-import { useAiSettingsStore, ELEVENLABS_VOICES } from "@/lib/canvas/aiSettingsStore";
+import {
+  useAiSettingsStore,
+  ELEVENLABS_VOICES,
+} from "@/lib/canvas/aiSettingsStore";
 import type { CanvasGridLineType } from "@/types/canvas";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
 import { createCanvasAction } from "@/app/actions/createCanvasAction";
@@ -125,9 +128,7 @@ const CanvasSwitcherFlyout = ({
 
               return (
                 <React.Fragment key={canvas.id}>
-                  {index > 0 && (
-                    <div className="  h-px bg-white/10" />
-                  )}
+                  {index > 0 && <div className="  h-px bg-white/10" />}
                   <a
                     href={`/canvas/${canvas.slug}`}
                     onClick={(e) => {
@@ -146,7 +147,6 @@ const CanvasSwitcherFlyout = ({
                     {isActive && (
                       <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
                     )}
-                    
                   </a>
                 </React.Fragment>
               );
@@ -575,7 +575,6 @@ const ColorField = ({ label, value, onChange }: ColorFieldProps) => {
           />
         </span>
 
-      
         <input
           aria-label={`${label} hex`}
           className="min-w-0 hidden flex-1 bg-transparent p-0 font-mono text-xs uppercase tracking-normal text-white/85 outline-none placeholder:text-white/25"
@@ -707,9 +706,6 @@ function formatFileSize(size?: number) {
   return `${current.toFixed(1)} ${units[index]}`;
 }
 
-
-
-
 function OneDriveIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -731,13 +727,6 @@ const initialProviders: Provider[] = [
     name: "Dropbox",
     description: "Access cloud storage files",
     icon: SiDropbox,
-    connected: false,
-  },
-  {
-    id: "onedrive",
-    name: "OneDrive",
-    description: "Browse and import files from OneDrive",
-    icon: OneDriveIcon,
     connected: false,
   },
 ];
@@ -807,7 +796,11 @@ export const ConnectPanel = ({
         setProviders((prev) =>
           prev.map((p) => {
             const key = p.id.replace(/-/g, "_");
-            return { ...p, connected: Boolean(connected[key]), expired: Boolean(expired[key]) };
+            return {
+              ...p,
+              connected: Boolean(connected[key]),
+              expired: Boolean(expired[key]),
+            };
           }),
         );
       } catch (err) {
@@ -853,8 +846,7 @@ export const ConnectPanel = ({
       <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
         <h3 className="text-white flex items-center gap-2 text-xs  mono  uppercase tracking-tight">
           <Cable className="w-3.5 h-3.5" strokeWidth={1.25} />
-          External
-          storage
+          External storage
         </h3>
         <button
           onClick={onClose}
@@ -863,7 +855,11 @@ export const ConnectPanel = ({
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
       </div>
-
+      <div className="mb-2">
+        <p className="text-[10px] uppercase tracking-tight mono text-white">
+          your Files will remain in your cloud storage unless explicitly imported.
+        </p>
+      </div>
       {/* Providers */}
       <div className="flex flex-col gap-6 mt-4">
         {providers.map((provider) => {
@@ -883,27 +879,28 @@ export const ConnectPanel = ({
                 {/* Content */}
                 <div className=" w-full min-w-0 ">
                   <div className="flex items-center w-full justify-between ">
-                    <div className="text-sm gap-3 w-full items-center justify-between  text-white mono uppercase tracking-tight truncate">
-                      <p className="text-xs mb-2">{provider.name} </p>
-                      <p>
-                        {provider.connected && !provider.expired && (
-                          <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs tracking-wide">
-                            connected
-                            <ChevronsLeftRightEllipsis className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        {provider.connected && provider.expired && (
-                          <span className="uppercase w-full justify-between flex items-center gap-2 mono text-amber-400 text-xs tracking-wide">
-                            expired
-                            <PlugZap className="w-3.5 h-3.5" />
-                          </span>
-                        )}
+                    <div className="text-sm flex gap-2 w-full items-center justify-between  text-white mono uppercase tracking-tight truncate">
+                      <p className="text-xs flex gap-1 mb-1">
+                        {provider.name}{" "}
+                        <span>
+                          {provider.connected && !provider.expired && (
+                            <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs">
+                              IS connected
+                              <ChevronsLeftRightEllipsis className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          {provider.connected && provider.expired && (
+                            <span className="uppercase w-full justify-between flex items-center gap-2 mono text-red-700 text-xs ">
+                              TOKEN EXPIRED
+                            </span>
+                          )}
+                        </span>{" "}
                       </p>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2 mt-3">
+                  <div className="flex flex-col gap-2 mt-2">
                     <div className="flex items-center gap-2">
                       {provider.connected && !provider.expired ? (
                         <button
@@ -944,7 +941,7 @@ export const ConnectPanel = ({
       </div>
 
       {/* Footer */}
-      <div className="mt-auto pt-4 ">
+      <div className="mt-auto hidden pt-4 ">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
           Secure OAuth connections. Files remain in your cloud storage unless
           explicitly imported.
@@ -1150,7 +1147,7 @@ const ToolsSection = ({
       isActive={activePanel === "search"}
       onClick={() => onPanelChange(activePanel === "search" ? null : "search")}
     />
-    
+
     <IconButton
       icon={Layers}
       tooltip="Layers Panel (l)"
@@ -1359,8 +1356,10 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
 const HelpPanel = ({ onClose }: { onClose: () => void }) => (
   <div className="w-60 h-screen bg-[#212126] p-4 flex flex-col gap-4 scrollbar-hidden overflow-y-auto">
     <div className="flex items-center justify-between pb-2">
-      <h3 className="text-white d
-      flex items-center gap-2 text-xs mono uppercase tracking-tight">
+      <h3
+        className="text-white d
+      flex items-center gap-2 text-xs mono uppercase tracking-tight"
+      >
         <HelpCircle className="w-3.5 h-3.5" strokeWidth={1.25} />
         Help & docs
       </h3>
@@ -1635,7 +1634,10 @@ export const Sidebar = ({
     if (!activePanel) return;
 
     function handleCanvasPointerDown(event: PointerEvent) {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
         setActivePanel(null);
       }
     }
@@ -1651,8 +1653,20 @@ export const Sidebar = ({
   useEffect(() => {
     function handleSidebarPanelEvent(event: Event) {
       const detail = (event as CustomEvent<string>).detail;
-      if (detail && (detail === "search" || detail === "tools" || detail === "export" || detail === "layers" || detail === "connect" || detail === "settings" || detail === "help" || detail === "shortcuts")) {
-        setActivePanel((current) => (current === detail ? null : detail as PanelType));
+      if (
+        detail &&
+        (detail === "search" ||
+          detail === "tools" ||
+          detail === "export" ||
+          detail === "layers" ||
+          detail === "connect" ||
+          detail === "settings" ||
+          detail === "help" ||
+          detail === "shortcuts")
+      ) {
+        setActivePanel((current) =>
+          current === detail ? null : (detail as PanelType),
+        );
       }
     }
 
@@ -1721,7 +1735,13 @@ export const Sidebar = ({
       case "layers":
         return <LayersPanel onClose={handleClose} />;
       case "connect":
-        return <ConnectPanel onClose={handleClose} onImportCloudFile={onImportCloudFile} activeCanvasId={activeCanvasId} />;
+        return (
+          <ConnectPanel
+            onClose={handleClose}
+            onImportCloudFile={onImportCloudFile}
+            activeCanvasId={activeCanvasId}
+          />
+        );
       case "help":
         return <HelpPanel onClose={handleClose} />;
       case "settings":
@@ -1788,11 +1808,10 @@ export const Sidebar = ({
         <ViewSection />
         {/* Divider */}
 
-
         {/* Divider */}
         <div className="w-6 h-px bg-white/10" />
         {/* Spacer */}
-      
+
         {/* Export & Settings Section */}
         <ExportSection
           activePanel={activePanel}

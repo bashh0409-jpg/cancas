@@ -135,21 +135,21 @@ export default function Page() {
                 </p>
               ) : (
                 <form
-                  className="flex w-full flex-col gap-2"
+                  className="flex w-full items-center justify-center flex-col gap-2"
                   onSubmit={handleMagicLink}
                 >
                   <input
                     autoComplete="email"
-                    className="h-[35px] w-full mono rounded border-2 border-black/10 bg-white px-3 text-[16px] text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
+                    className="h-8 max-w-70 tracking-tight w-full mono rounded border-2 border-black/10 bg-white px-3 sm:text-[16px] md:text-sm text-black outline-none placeholder:text-zinc-400 focus:border-zinc-400"
                     disabled={isLoading}
-                    placeholder="you@example.com"
+                    placeholder="you@mail.com"
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                   />
 
                   <button
-                    className="inline-flex h-[35px] mono uppercase w-full items-center justify-center rounded bg-white px-4 text-xs text-black hover:bg-zinc-200 cursor-pointer disabled:opacity-60"
+                    className="inline-flex w-fit h-8 mono uppercase  items-center justify-center rounded lime px-4 font-medium text-xs text-black hover:bg-zinc-200 cursor-pointer disabled:opacity-60"
                     disabled={isLoading}
                     type="submit"
                   >
@@ -169,7 +169,7 @@ export default function Page() {
               )}
 
               <button
-                className="text-sm  mono cursor-pointer uppercase text-zinc-500 hover:text-white/80 transition-colors"
+                className="text-xs  mono cursor-pointer uppercase text-zinc-500 hover:text-white/80 transition-colors"
                 type="button"
                 onClick={() => {
                   setShowEmailForm(false);
@@ -181,7 +181,7 @@ export default function Page() {
               </button>
             </div>
           ) : (
-            <div className="flex w-full flex-col items-center justify-center gap-2">
+            <div className="flex w-ful flex-col items-center justify-cente gap-2">
               {formError && (
                 <p className="w-full text-center mono text-xs text-red-600">
                   {formError}
@@ -190,7 +190,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center cursor-pointer justify-center gap-3 rounded-full bg-white   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
+                className="inline-flex h-8 w-full items-center cursor-pointer  gap-3 rounded lime   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
                 {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
@@ -200,7 +200,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-[40px] w-full items-center cursor-pointer justify-center gap-3 rounded-full bg-white px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
+                className="inline-flex h-8 w-full items-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -210,16 +210,13 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="flex h-[35px] hidden w-full items-center justify-center mono uppercase rounded cursor-pointer bg-white   px-4 text-xs tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
+                className="flex h-8 hidden gap-4 w-full items-center justify mono uppercase rounded cursor-pointer bg-white   px-4 text-xs tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => {
                   setFormError(null);
                   setShowEmailForm(true);
                 }}
               >
-                <AtSign
-                  className="w-4 h-4 text-black/60 mr-2"
-                  strokeWidth={1.5}
-                />
+                <AtSign className="w-4 h-4 text-black/60 " strokeWidth={1.5} />
                 Sign in with email
               </button>
             </div>
@@ -230,7 +227,7 @@ export default function Page() {
           By continuing, you agree to the{" "}
           <a
             href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
-            className="underline underline-offset-2 hover:text-white"
+            className="underline mr-1 underline-offset-2 hover:text-white"
           >
             Terms of service
           </a>
