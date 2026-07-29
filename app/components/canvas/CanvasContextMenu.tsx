@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { StickyNote, ImageIcon, FileText, Import, X, Search, Brain } from "lucide-react";
+import { StickyNote, ImageIcon, FileText, Import, X, Search, Brain, Camera } from "lucide-react";
 import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
 import { CANVAS_AI_CHAT_TOOL_EVENT } from "@/lib/canvas/aiChatToolEvents";
 
@@ -10,6 +10,7 @@ type CanvasContextMenuProps = {
   y: number;
   onClose: () => void;
   onImportClick: () => void;
+  onUnsplashClick?: () => void;
 };
 
 export function CanvasContextMenu({
@@ -17,6 +18,7 @@ export function CanvasContextMenu({
   y,
   onClose,
   onImportClick,
+  onUnsplashClick,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +92,21 @@ export function CanvasContextMenu({
         className="flex w-full items-center gap-2 px-2 py-1 text-[11px] mono uppercase tracking-tight text-white/70 transition hover:bg-white/10 hover:text-white cursor-pointer"
       >
         <Brain className="w-4 h-4" /> New AI Chat
+      </button>
+
+      <div className="h-px w-full bg-white/10 " />
+
+      {/* Unsplash Stock Photos */}
+      <button
+        type="button"
+        onClick={() => {
+          onUnsplashClick?.();
+          onClose();
+        }}
+        className="flex w-full items-center gap-2 px-2 py-1 text-[11px] mono uppercase tracking-tight text-white/70 transition hover:bg-white/10 hover:text-white cursor-pointer"
+      >
+        <Camera className="w-4 h-4" strokeWidth={1.5} />
+        Stock Photos
       </button>
 
       <div className="h-px w-full bg-white/10 " />

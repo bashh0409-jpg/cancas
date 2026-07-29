@@ -77,6 +77,7 @@ import {
 } from "@/app/components/canvas/CanvasTranscriptionNode";
 import { ElbowConnector } from "@/app/components/canvas/ElbowConnector";
 import { CanvasContextMenu } from "@/app/components/canvas/CanvasContextMenu";
+import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 
 type Viewport = {
@@ -615,7 +616,11 @@ export default function CanvasWorkspace({
   >(() => new Set());
   const [isSavingCanvas, setIsSavingCanvas] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [showUnsplash, setShowUnsplash] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
   const initialImageCount = initialImageIdsRef.current.size;
@@ -2940,6 +2945,7 @@ export default function CanvasWorkspace({
 
     setTextNodes(updatePosition);
     setAiChatNodes(updatePosition);
+    setTranscriptionNodes(updatePosition);
   }
 
   function handleTextPointerUp(event: ReactPointerEvent<HTMLElement>) {
@@ -3398,6 +3404,62 @@ export default function CanvasWorkspace({
     }
   }
 
+  const handleUnsplashSelect = useCallback(
+    async (image: { id: string; urls: { regular: string; full: string }; width: number; height: number }) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect || !isClientReady) return;
+
+      const vp = viewportRef.current;
+      const dropPosition = {
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
+      };
+
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+      );
+
+      try {
+        const response = await fetch(image.urls.full);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const fileName = `unsplash-${image.id}.jpg`;
+
+        const nodeId = crypto.randomUUID();
+        pendingUploadFilesRef.current.set(nodeId, { file: new File([blob], fileName, { type: "image/jpeg" }), blobUrl });
+        pendingUploadIdsRef.current.add(nodeId);
+
+        setImageNodes((current) => [
+          ...current,
+          {
+            id: nodeId,
+            fileName,
+            url: blobUrl,
+            position: {
+              x: dropPosition.x - 160,
+              y: dropPosition.y - 120,
+            },
+            size: {
+              width: Math.min(320, image.width),
+              height: Math.min(240, image.height),
+            },
+            zIndex: topZIndex + 1,
+          },
+        ]);
+
+        saveDelayMsRef.current = 0;
+        setShowUnsplash(false);
+      } catch (err) {
+        console.error("Failed to load Unsplash image:", err);
+      }
+    },
+    [isClientReady],
+  );
+
   function handleDeleteVoiceNode(nodeId: string) {
     const node = voiceNodesRef.current.find((entry) => entry.id === nodeId);
 
@@ -3543,7 +3605,8 @@ export default function CanvasWorkspace({
       ref={canvasRef}
       className="absolute inset-0 overflow-hidden cursor-grab"
       onContextMenu={(event) => {
-        const rightClickEnabled = useCanvasPreferencesStore.getState().rightClickMenu;
+        const rightClickEnabled =
+          useCanvasPreferencesStore.getState().rightClickMenu;
         if (!rightClickEnabled) return;
         event.preventDefault();
         setContextMenu({ x: event.clientX, y: event.clientY });
@@ -3970,6 +4033,14 @@ export default function CanvasWorkspace({
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
           onImportClick={() => fileInputRef.current?.click()}
+          onUnsplashClick={() => setShowUnsplash(true)}
+        />
+      )}
+
+      {showUnsplash && (
+        <UnsplashSearchModal
+          onClose={() => setShowUnsplash(false)}
+          onSelectImage={handleUnsplashSelect}
         />
       )}
 
