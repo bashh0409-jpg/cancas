@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  ArrowLeft,
   FileText,
   Folder,
   Hand,
   ImageIcon,
   Import,
+  Loader2,
   Mic,
   Redo2,
   Server,
@@ -414,292 +416,207 @@ export function FloatingToolbox() {
 
       {showImportOverlay ? (
         <div className="fixed inset-0 z-[100] flex">
-          <div className="flex-1 bg-black/40" onClick={() => setShowImportOverlay(false)} />
+          <div className="flex-1 bg-black/40" onClick={() => { setShowImportOverlay(false); setPageOverlay(null); }} />
           <div className="w-72 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
-              <h3 className="text-white flex items-center gap-2 text-xs mono uppercase tracking-tight">
-                <Import className="w-3.5 h-3.5" strokeWidth={1.25} />
-                Import Files
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowImportOverlay(false)}
-                className="text-white/60 cursor-pointer hover:text-white transition"
-              >
-                <X className="w-4 h-4" strokeWidth={1.25} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-3 mt-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
-              >
-                <Server className="h-5 w-5 text-white/60 shrink-0" strokeWidth={1.5} />
-                <div className="text-left">
-                  <p className="text-xs mono uppercase tracking-tight text-white/80">Local storage</p>
-                  <p className="text-[10px] text-white/40 mt-0.5">Import images from your device</p>
+            {!pageOverlay ? (
+              <>
+                <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
+                  <h3 className="text-white flex items-center gap-2 text-xs mono uppercase tracking-tight">
+                    <Import className="w-3.5 h-3.5" strokeWidth={1.25} />
+                    Import Files
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => { setShowImportOverlay(false); setPageOverlay(null); }}
+                    className="text-white/60 cursor-pointer hover:text-white transition"
+                  >
+                    <X className="w-4 h-4" strokeWidth={1.25} />
+                  </button>
                 </div>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setPageOverlay("google-drive");
-                  setShowImportOverlay(false);
-                }}
-                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
-              >
-                <SiGoogledrive className="h-5 w-5 text-white/60 shrink-0" />
-                <div className="text-left">
-                  <p className="text-xs mono uppercase tracking-tight text-white/80">Google Drive</p>
-                  <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Drive</p>
-                </div>
-              </button>
+                <div className="flex flex-col gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                  >
+                    <Server className="h-5 w-5 text-white/60 shrink-0" strokeWidth={1.5} />
+                    <div className="text-left">
+                      <p className="text-xs mono uppercase tracking-tight text-white/80">Local storage</p>
+                      <p className="text-[10px] text-white/40 mt-0.5">Import images from your device</p>
+                    </div>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setPageOverlay("dropbox");
-                  setShowImportOverlay(false);
-                }}
-                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
-              >
-                <SiDropbox className="h-5 w-5 text-white/60 shrink-0" />
-                <div className="text-left">
-                  <p className="text-xs mono uppercase tracking-tight text-white/80">Dropbox</p>
-                  <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Dropbox</p>
-                </div>
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setPageOverlay("google-drive")}
+                    className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                  >
+                    <SiGoogledrive className="h-5 w-5 text-white/60 shrink-0" />
+                    <div className="text-left">
+                      <p className="text-xs mono uppercase tracking-tight text-white/80">Google Drive</p>
+                      <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Drive</p>
+                    </div>
+                  </button>
 
-            <div className="mt-auto pt-3 border-t border-white/10">
-              <p className="text-[9px] text-white/20">
-                Files remain in your cloud storage unless explicitly imported.
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setPageOverlay("dropbox")}
+                    className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                  >
+                    <SiDropbox className="h-5 w-5 text-white/60 shrink-0" />
+                    <div className="text-left">
+                      <p className="text-xs mono uppercase tracking-tight text-white/80">Dropbox</p>
+                      <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Dropbox</p>
+                    </div>
+                  </button>
+                </div>
 
-      {pageOverlay ? (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-2xl rounded border border-white/10 bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-sm mono uppercase tracking-tight text-black">
-                  {pageOverlay === "google-drive" ? "Google Drive" : "Dropbox"}
-                </h2>
-              </div>
-              <input
-                type="text"
-                placeholder="Search..."
-                className="border-b border-black/20 bg-white px-3 py-1 text-sm text-black outline-none focus:ring-2 focus:rounded focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="mt-4 text-sm text-slate-700">
-              {cloudError ? (
-                <div className="rounded border border-red-200 bg-red-50 p-1 mono tracking-tight text-sm text-red-700">
-                  {cloudError}
+                <div className="mt-auto pt-3 border-t border-white/10">
+                  <p className="text-[9px] text-white/20">
+                    Files remain in your cloud storage unless explicitly imported.
+                  </p>
                 </div>
-              ) : loadingCloudItems ? (
-                <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-slate-700">
-                  Loading files…
-                </div>
-              ) : cloudItems.length === 0 ? (
-                <div className="rounded border border-white/10 bg-white/5 p-6 text-center text-sm text-slate-700">
-                  No files found.
-                </div>
-              ) : (
-                <div>
-                  <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      disabled={folderStack.length === 0}
-                      onClick={() => {
-                        const previousFolder =
-                          folderStack[folderStack.length - 1];
-                        if (!previousFolder) {
-                          return;
-                        }
-                        setFolderStack((current) => current.slice(0, -1));
-                        setCurrentFolder(previousFolder);
-                        const controller = new AbortController();
-                        void Promise.resolve().then(() =>
-                          loadCloudItems(
-                            pageOverlay,
-                            controller,
-                            previousFolder.id,
-                          ),
-                        );
-                      }}
-                      className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] uppercase tracking-tight text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={() => { setPageOverlay(null); setSelectedCloudIndex(null); }}
+                      className="text-white/60 cursor-pointer hover:text-white transition flex items-center gap-1 text-xs mono uppercase tracking-tight"
                     >
+                      <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
                       Back
                     </button>
-                    <span className="mono tracking-tight">
-                      {currentFolder?.name ??
-                        (pageOverlay === "dropbox" ? "Dropbox" : "My Drive")}
-                    </span>
+                    <h3 className="text-white text-xs mono uppercase tracking-tight">
+                      {pageOverlay === "google-drive" ? "Google Drive" : "Dropbox"}
+                    </h3>
                   </div>
-                  <div className="grid grid-cols-5 gap-1 text-center text-xs text-slate-500 overflow-y-auto min-h-50">
-                    {cloudItems.map((item, index) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          if (item.fileType === "folder") {
-                            const folder = {
-                              id: item.id,
-                              name: item.name,
-                            };
-                            setFolderStack((current) => [
-                              ...(current || []),
-                              currentFolder ?? {
-                                id: pageOverlay === "dropbox" ? "" : "root",
-                                name:
-                                  pageOverlay === "dropbox"
-                                    ? "Dropbox"
-                                    : "My Drive",
-                              },
-                            ]);
-                            setCurrentFolder(folder);
-                            const controller = new AbortController();
-                            void Promise.resolve().then(() =>
-                              loadCloudItems(
-                                pageOverlay,
-                                controller,
-                                folder.id,
-                              ),
-                            );
-                            return;
-                          }
-
-                          setSelectedCloudIndex(index);
-                        }}
-                        className={`flex h-32 cursor-pointer aspect-square flex-col items-center justify-center rounded border px-2 py-2 text-left transition ${
-                          selectedCloudIndex === index
-                            ? "border-blue-500 bg-blue-50 text-slate-900"
-                            : "border-dashed border-slate-300 bg-white text-slate-600"
-                        }`}
-                      >
-                        {item.fileType === "image" ? (
-                          <span className="mb-2 flex h-20 w-full items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100">
-                            {item.thumbnailUrl ? (
-                              <span
-                                aria-label={`${item.name} thumbnail`}
-                                className="block h-full w-full bg-cover bg-center bg-no-repeat"
-                                role="img"
-                                style={{
-                                  backgroundImage: `url("${item.thumbnailUrl}")`,
-                                }}
-                              />
-                            ) : (
-                              <ImageIcon className="h-6 w-6 text-slate-400" />
-                            )}
-                          </span>
-                        ) : (
-                          <span className="mb-2 flex h-20 w-full flex-col items-center justify-center gap-2 rounded border border-slate-200 bg-slate-50 text-slate-400">
-                            {item.fileType === "folder" ? (
-                              <Folder className="h-7 w-7" strokeWidth={1.5} />
-                            ) : (
-                              <FileText className="h-7 w-7" strokeWidth={1.5} />
-                            )}
-                            <span className="text-[10px] uppercase tracking-[0.18em]">
-                              {item.fileType === "folder" ? "Folder" : "File"}
-                            </span>
-                          </span>
-                        )}
-                        <span className="w-full truncate text-center text-[11px] font-semibold leading-5">
-                          {item.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowImportOverlay(false); setPageOverlay(null); }}
+                    className="text-white/60 cursor-pointer hover:text-white transition"
+                  >
+                    <X className="w-4 h-4" strokeWidth={1.25} />
+                  </button>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center w-full justify-between">
-              <p className="text-xs mono mt-2 ">
-                Current folder:{" "}
-                {currentFolder?.name ??
-                  (pageOverlay === "google-drive" ? "My Drive" : "Dropbox")}
-              </p>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPageOverlay(null)}
-                  className="rounded cursor-pointer bg-black/20 px-3 py-1 text-sm text-black mono tracking-tight hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedCloudIndex === null) {
-                      return;
-                    }
 
-                    const selected = cloudItems[selectedCloudIndex];
-                    if (selected.fileType !== "image") {
-                      return;
-                    }
+                <div className="flex-1 overflow-y-auto scrollbar-hidden">
+                  {cloudError ? (
+                    <div className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-[10px] text-red-400">
+                      {cloudError}
+                    </div>
+                  ) : loadingCloudItems ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+                    </div>
+                  ) : cloudItems.length === 0 ? (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-[10px] text-white/40">No files found.</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-[10px] text-white/50">
+                        <span className="mono tracking-tight">
+                          {currentFolder?.name ?? (pageOverlay === "dropbox" ? "Dropbox" : "My Drive")}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {cloudItems.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              if (item.fileType === "folder") {
+                                const folder = { id: item.id, name: item.name };
+                                setFolderStack((current) => [
+                                  ...(current || []),
+                                  currentFolder ?? { id: pageOverlay === "dropbox" ? "" : "root", name: pageOverlay === "dropbox" ? "Dropbox" : "My Drive" },
+                                ]);
+                                setCurrentFolder(folder);
+                                const controller = new AbortController();
+                                void Promise.resolve().then(() => loadCloudItems(pageOverlay, controller, folder.id));
+                                return;
+                              }
+                              setSelectedCloudIndex(index);
+                            }}
+                            className={`group relative aspect-[4/3] cursor-pointer overflow-hidden rounded border transition ${
+                              selectedCloudIndex === index
+                                ? "border-white/40 bg-white/10"
+                                : "border-white/10 bg-[#1a1a1e] hover:border-white/30"
+                            }`}
+                          >
+                            {item.fileType === "image" ? (
+                              <>
+                                {item.thumbnailUrl ? (
+                                  <img src={item.thumbnailUrl} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center">
+                                    <ImageIcon className="h-6 w-6 text-white/30" strokeWidth={1.5} />
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center gap-1">
+                                {item.fileType === "folder" ? (
+                                  <Folder className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                ) : (
+                                  <FileText className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                )}
+                                <span className="text-[8px] uppercase tracking-wider text-white/30">{item.fileType === "folder" ? "Folder" : "File"}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                              <p className="truncate text-[9px] text-white/80">{item.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                    const queryParam =
-                      pageOverlay === "dropbox"
-                        ? `path=${encodeURIComponent(selected.path ?? selected.id)}`
-                        : `fileId=${encodeURIComponent(selected.id)}`;
+                {selectedCloudIndex !== null && (
+                  <div className="mt-auto pt-3 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const selected = cloudItems[selectedCloudIndex];
+                        if (selected.fileType !== "image") return;
 
-                    void (async () => {
-                      try {
-                        const response = await fetch(
-                          `/api/integrations/${pageOverlay}/download?${queryParam}`,
-                        );
+                        const queryParam = pageOverlay === "dropbox"
+                          ? `path=${encodeURIComponent(selected.path ?? selected.id)}`
+                          : `fileId=${encodeURIComponent(selected.id)}`;
 
-                        if (!response.ok) {
-                          const payload = await response
-                            .json()
-                            .catch(() => null);
-                          setCloudError(
-                            payload?.error || "Unable to download cloud file.",
-                          );
-                          return;
-                        }
-
-                        const blob = await response.blob();
-                        const fileName =
-                          response.headers.get("x-file-name") || selected.name;
-                        const file = new File([blob], fileName, {
-                          type:
-                            blob.type ||
-                            selected.mimeType ||
-                            "application/octet-stream",
-                        });
-
-                        window.dispatchEvent(
-                          new CustomEvent("canvasai:file-import", {
-                            detail: { files: [file] },
-                          }),
-                        );
-                        setPageOverlay(null);
-                      } catch (err) {
-                        setCloudError(
-                          err instanceof Error
-                            ? err.message
-                            : "Unable to download cloud file.",
-                        );
-                      }
-                    })();
-                  }}
-                  disabled={selectedCloudIndex === null}
-                  className="rounded cursor-pointer bg-blue-600 px-3 py-1 text-sm text-white tracking-tight mono hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Import
-                </button>
-              </div>
-            </div>
+                        void (async () => {
+                          try {
+                            const response = await fetch(`/api/integrations/${pageOverlay}/download?${queryParam}`);
+                            if (!response.ok) {
+                              const payload = await response.json().catch(() => null);
+                              setCloudError(payload?.error || "Unable to download cloud file.");
+                              return;
+                            }
+                            const blob = await response.blob();
+                            const fileName = response.headers.get("x-file-name") || selected.name;
+                            const file = new File([blob], fileName, { type: blob.type || selected.mimeType || "application/octet-stream" });
+                            window.dispatchEvent(new CustomEvent("canvasai:file-import", { detail: { files: [file] } }));
+                            setShowImportOverlay(false);
+                            setPageOverlay(null);
+                          } catch (err) {
+                            setCloudError(err instanceof Error ? err.message : "Unable to download cloud file.");
+                          }
+                        })();
+                      }}
+                      className="w-full cursor-pointer rounded border border-white/20 px-3 py-1.5 text-[10px] mono uppercase tracking-tight text-white/70 transition hover:bg-white/10 hover:text-white"
+                    >
+                      Import Selected
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       ) : null}
