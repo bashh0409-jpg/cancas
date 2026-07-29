@@ -12,6 +12,7 @@ import {
   Square,
   StickyNote,
   Undo2,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activateCanvasTextTool } from "@/lib/canvas/textToolEvents";
@@ -407,48 +408,39 @@ export function FloatingToolbox() {
               </div>
             )}
           </div>
-          {showMicrophonePermissionHelp && (
-            <button
-              className="shrink-0 rounded border border-red-300/30 px-2 py-1 font-medium text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isRequestingMicrophone}
-              onClick={() => void handleToggleRecording()}
-              type="button"
-            >
-              Enable microphone
-            </button>
-          )}
-          <button
-            aria-label="Dismiss recording error"
-            className="shrink-0 text-red-200/70 transition hover:text-red-100"
-            onClick={() => {
-              setRecordingError(null);
-              setShowMicrophonePermissionHelp(false);
-            }}
-            type="button"
-          >
-            ×
-          </button>
+
         </div>
       )}
 
       {showImportOverlay ? (
-        <div
-          onClick={() => setShowImportOverlay(false)}
-          className="fixed inset-0 z-[100] flex items-center  justify-center bg-black/50 p-2"
-        >
-          <div
-            onClick={(event) => event.stopPropagation()}
-            className="w-fit max-w-lg rounded border border-white/10  bg-white p-2 shadow-2xl"
-          >
-            <div className="mono uppercase text-sm tracking-tight text-black/70"></div>
-            <div className=" flex items-center gap-3">
+        <div className="fixed inset-0 z-[100] flex">
+          <div className="flex-1 bg-black/40" onClick={() => setShowImportOverlay(false)} />
+          <div className="w-72 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-white/10">
+              <h3 className="text-white flex items-center gap-2 text-xs mono uppercase tracking-tight">
+                <Import className="w-3.5 h-3.5" strokeWidth={1.25} />
+                Import Files
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowImportOverlay(false)}
+                className="text-white/60 cursor-pointer hover:text-white transition"
+              >
+                <X className="w-4 h-4" strokeWidth={1.25} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-2">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded cursor-pointer flex items-center mono uppercase gap-2 text-xs tracking-tight lime px-4 py-2 text-black hover:bg-blue-600"
+                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
               >
-                <Server className="inline-block h-4 w-4 mr-1" />
-                Local storage
+                <Server className="h-5 w-5 text-white/60 shrink-0" strokeWidth={1.5} />
+                <div className="text-left">
+                  <p className="text-xs mono uppercase tracking-tight text-white/80">Local storage</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Import images from your device</p>
+                </div>
               </button>
 
               <button
@@ -457,10 +449,13 @@ export function FloatingToolbox() {
                   setPageOverlay("google-drive");
                   setShowImportOverlay(false);
                 }}
-                className="rounded cursor-pointer flex items-center mono uppercase gap-2 text-xs tracking-tight lime-one px-4 py-2 text-black hover:bg-blue-600"
+                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
               >
-                <SiGoogledrive className="inline-block h-4 w-4 mr-1" />
-                Google Drive
+                <SiGoogledrive className="h-5 w-5 text-white/60 shrink-0" />
+                <div className="text-left">
+                  <p className="text-xs mono uppercase tracking-tight text-white/80">Google Drive</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Drive</p>
+                </div>
               </button>
 
               <button
@@ -469,11 +464,20 @@ export function FloatingToolbox() {
                   setPageOverlay("dropbox");
                   setShowImportOverlay(false);
                 }}
-                className="rounded cursor-pointer flex items-center mono uppercase gap-2 text-xs tracking-tight lime-one px-4 py-2 text-black hover:bg-blue-600"
+                className="flex items-center gap-3 rounded border border-white/10 bg-[#1a1a1e] px-3 py-3 transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
               >
-                <SiDropbox className="inline-block h-4 w-4 mr-1" />
-                Dropbox
+                <SiDropbox className="h-5 w-5 text-white/60 shrink-0" />
+                <div className="text-left">
+                  <p className="text-xs mono uppercase tracking-tight text-white/80">Dropbox</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Browse and import from Dropbox</p>
+                </div>
               </button>
+            </div>
+
+            <div className="mt-auto pt-3 border-t border-white/10">
+              <p className="text-[9px] text-white/20">
+                Files remain in your cloud storage unless explicitly imported.
+              </p>
             </div>
           </div>
         </div>
