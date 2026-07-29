@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface CreditNotifierProps {
@@ -44,7 +45,7 @@ export function CreditNotifier({ message }: CreditNotifierProps) {
           onClick={() => setVisible(false)}
           aria-label="Dismiss notification"
         >
-          ×
+          <X className="w-3.5 h-3.5"/>
         </button>
       </div>
     </div>

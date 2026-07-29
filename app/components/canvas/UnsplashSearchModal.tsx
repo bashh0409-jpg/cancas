@@ -165,7 +165,6 @@ export function UnsplashSearchModal({
         {!hasSearched && !isLoading && (
           <div className="flex flex-1 flex-col items-center justify-center text-center px-2">
             <ImageIcon className="mb-3 h-8 w-8 text-white/20" strokeWidth={1} />
-            
             <p className="text-[10px] mono uppercase tracking-tight text-white/40">
               Search millions of free stock photos
             </p>

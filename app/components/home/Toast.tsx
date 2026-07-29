@@ -119,7 +119,7 @@ export function ToastContainer() {
                   className="px-3 py-1.5 text-xs mono uppercase tracking-tight rounded-xs bg-red-500/80 text-white hover:bg-red-500 transition disabled:opacity-50 cursor-pointer"
                 >
                   {confirming === toast.id
-                    ? "Processing..."
+                    ? "Moving file to trash..."
                     : toast.confirmLabel || "Delete"}
                 </button>
               </div>

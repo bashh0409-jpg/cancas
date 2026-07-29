@@ -3876,7 +3876,7 @@ export default function CanvasWorkspace({
                 fromSize={sourceVoice.size}
                 toSize={node.size}
                 color="rgba(255,255,255,0.2)"
-                strokeWidth={1.5}
+                strokeWidth={1.8}
               />
             );
           })}

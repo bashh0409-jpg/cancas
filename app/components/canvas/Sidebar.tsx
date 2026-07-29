@@ -644,7 +644,7 @@ const ExportPanel = ({ onClose }: { onClose: () => void }) => {
             <option value="WebP">WebP</option>
             <option value="JPEG">JPEG</option>
           </select>
-          <button className="w-fit cursor-pointer px-2 py-1 rounded-xs lime text-black text-xs hover:bg-white/90 transition">
+          <button className="w-fit mono uppercase tracking-tight cursor-pointer px-2 py-1 rounded-xs lime text-black text-xs hover:bg-white/90 transition">
             Export
           </button>
         </div>
@@ -861,7 +861,7 @@ export const ConnectPanel = ({
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
       </div>
-      <div className="mb-2">
+      <div className="mb-2 hidden">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
           your Files will remain in your cloud storage unless explicitly
           imported.
@@ -893,12 +893,11 @@ export const ConnectPanel = ({
                           {provider.connected && !provider.expired && (
                             <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs">
                               IS connected
-                              <ChevronsLeftRightEllipsis className="w-3.5 h-3.5" />
                             </span>
                           )}
                           {provider.connected && provider.expired && (
                             <span className="uppercase w-full justify-between flex items-center gap-2 mono text-red-700 text-xs ">
-                              TOKEN EXPIRED
+                              TOKEN has EXPIRED
                             </span>
                           )}
                         </span>{" "}
@@ -913,12 +912,18 @@ export const ConnectPanel = ({
                         <button
                           onClick={() => void handleDisconnect(provider.id)}
                           disabled={disconnecting === provider.id}
-                          className="h-7 px-3 rounded-xs border border-white/10 bg-white/5 mono uppercase tracking-tight text-xs text-white/60 transition cursor-pointer hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/30 disabled:opacity-50"
+                          className="h-7 px-3 rounded-xs border border-white/10 lime mono uppercase tracking-tight text-xs text-black transition cursor-pointer  disabled:opacity-50"
                         >
                           {disconnecting === provider.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            </span>
                           ) : (
-                            <Unplug className="w-3.5 h-3.5" />
+                            <span>
+                              {" "}
+                              <Unplug className="w-3.5 hidden h-3.5" />
+                              disconnect
+                            </span>
                           )}
                         </button>
                       ) : (
@@ -948,10 +953,10 @@ export const ConnectPanel = ({
       </div>
 
       {/* Footer */}
-      <div className="mt-auto hidden pt-4 ">
+      <div className="mt-auto  pt-4 ">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
-          Secure OAuth connections. Files remain in your cloud storage unless
-          explicitly imported.
+          your Files will remain in your cloud storage unless explicitly
+          imported.
         </p>
       </div>
     </div>

@@ -36,7 +36,7 @@ export function ElbowConnector({
   fromSize,
   toSize,
   color = "rgba(255,255,255,0.3)",
-  strokeWidth = 1.5,
+  strokeWidth = 3,
 }: ElbowConnectorProps) {
   const fromCenter = {
     x: from.x + fromSize.width / 2,
