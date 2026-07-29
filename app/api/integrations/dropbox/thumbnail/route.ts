@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         headers: {
           Authorization: `Bearer ${token.accessToken}`,
           "Dropbox-API-Arg": JSON.stringify({
-            resource: { path },
+            resource: { ".tag": "file", path },
             format: "jpeg",
             size: "w256h256",
             mode: "strict",
