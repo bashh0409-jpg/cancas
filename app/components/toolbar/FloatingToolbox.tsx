@@ -513,7 +513,7 @@ export function FloatingToolbox() {
 
                 <div className="flex-1 overflow-y-auto scrollbar-hidden">
                   {cloudError ? (
-                    <div className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-[10px] text-red-400">
+                    <div className="rounded mono uppercase tracking-tight border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] text-red-400">
                       {cloudError}
                     </div>
                   ) : loadingCloudItems ? (
