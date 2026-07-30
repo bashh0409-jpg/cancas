@@ -12,6 +12,7 @@ import {
   Loader2,
   Mic,
   Redo2,
+  Search,
   Server,
   Square,
   StickyNote,
@@ -98,6 +99,7 @@ export function FloatingToolbox() {
   const [selectedCloudIndices, setSelectedCloudIndices] = useState<Set<number>>(
     new Set(),
   );
+  const [cloudSearchQuery, setCloudSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -523,134 +525,150 @@ export function FloatingToolbox() {
                     <X className="w-4 h-4" strokeWidth={1.25} />
                   </button>
                 </div>
-
-                <div className="flex-1 overflow-y-auto scrollbar-hidden">
-                  {cloudError ? (
-                    <div className="rounded mono uppercase tracking-tight border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] text-red-400">
-                      {cloudError}
-                    </div>
-                  ) : loadingCloudItems ? (
-                    <div className="flex flex-col  mono uppercase tracking-tight  items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-white/40" />{" "}
-                      <span className="text-xs text-white/60 mt-4">Loading files...</span>
-                    </div>
-                  ) : cloudItems.length === 0 ? (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-xs mono uppercase tracking-tight text-white/40">
-                        No files found.
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="mb-2 flex items-center gap-2 text-[10px] text-white/50">
-                        <span className="mono uppercase hidden tracking-tight">
-                          {currentFolder?.name ??
-                            (pageOverlay === "dropbox"
-                              ? "Dropbox"
-                              : "My Drive")}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {cloudItems.map((item, index) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              if (item.fileType === "folder") {
-                                const folder = { id: item.id, name: item.name };
-                                setFolderStack((current) => [
-                                  ...(current || []),
-                                  currentFolder ?? {
-                                    id: pageOverlay === "dropbox" ? "" : "root",
-                                    name:
-                                      pageOverlay === "dropbox"
-                                        ? "Dropbox"
-                                        : "My Drive",
-                                  },
-                                ]);
-                                setCurrentFolder(folder);
-                                const controller = new AbortController();
-                                void Promise.resolve().then(() =>
-                                  loadCloudItems(
-                                    pageOverlay,
-                                    controller,
-                                    folder.id,
-                                  ),
-                                );
-                                return;
-                              }
-                              setSelectedCloudIndices((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(index)) {
-                                  next.delete(index);
-                                } else {
-                                  next.add(index);
-                                }
-                                return next;
-                              });
-                            }}
-                            className={`group relative aspect-[4/3] cursor-pointer overflow-hidden rounded border transition ${
-                              selectedCloudIndices.has(index)
-                                ? "border-white/40 bg-white/10"
-                                : "border-white/10 bg-[#1a1a1e] hover:border-white/30"
-                            }`}
-                          >
-                            {item.fileType === "image" ? (
-                              <>
-                                {item.thumbnailUrl ? (
-                                  <img
-                                    src={item.thumbnailUrl}
-                                    alt={item.name}
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center">
-                                    <ImageIcon
-                                      className="h-6 w-6 text-white/30"
-                                      strokeWidth={1.5}
-                                    />
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div className="flex h-full w-full flex-col items-center justify-center gap-1">
-                                {item.fileType === "folder" ? (
-                                  <FolderOpen
-                                    className="h-6 w-6 text-white/40"
-                                    strokeWidth={1.5}
-                                  />
-                                ) : (
-                                  <FileText
-                                    className="h-6 w-6 text-white/40"
-                                    strokeWidth={1.5}
-                                  />
-                                )}
-                                <span className="text-[10px]  uppercase tracking-tight text-white/70 mono">
-                                  {item.fileType === "folder" ? (
-                                    <span>{item.name}</span>
-                                  ) : (
-                                    "File"
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                            <div className="absolute inset-x-0 mono bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
-                              <p className="truncate mono text-xs text-white/80">
-                                {item.name}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
+                  <Search className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                  <input
+                    type="text"
+                    value={cloudSearchQuery}
+                    onChange={(e) => setCloudSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className=" w-full h-full py-1 font-medium text-xs uppercase text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0 bg-transparent"
+                  />
+                  {cloudSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCloudSearchQuery("")}
+                      className="text-white/40 hover:text-white/70 transition cursor-pointer shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    </button>
                   )}
                 </div>
 
+                <div className="flex-1 overflow-y-auto scrollbar-hidden">
+                  {(() => {
+                    const filteredItems = cloudSearchQuery.trim()
+                      ? cloudItems.filter((item) =>
+                          item.name.toLowerCase().includes(cloudSearchQuery.toLowerCase()),
+                        )
+                      : cloudItems;
+
+                    if (cloudError) {
+                      return (
+                        <div className="rounded mono uppercase tracking-tight border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] text-red-400">
+                          {cloudError}
+                        </div>
+                      );
+                    }
+
+                    if (loadingCloudItems) {
+                      return (
+                        <div className="flex flex-col mono uppercase tracking-tight items-center justify-center py-8">
+                          <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+                          <span className="text-xs text-white/60 mt-4">Loading files...</span>
+                        </div>
+                      );
+                    }
+
+                    if (filteredItems.length === 0) {
+                      return (
+                        <div className="flex items-center justify-center py-8">
+                          <p className="text-xs mono uppercase tracking-tight text-white/40">
+                            {cloudSearchQuery.trim() ? "No matching files found." : "No files found."}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div>
+                        <div className="mb-2 flex items-center gap-2 text-[10px] text-white/50">
+                          <span className="mono uppercase hidden tracking-tight">
+                            {currentFolder?.name ??
+                              (pageOverlay === "dropbox" ? "Dropbox" : "My Drive")}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {filteredItems.map((item, index) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                if (item.fileType === "folder") {
+                                  const folder = { id: item.id, name: item.name };
+                                  setFolderStack((current) => [
+                                    ...(current || []),
+                                    currentFolder ?? {
+                                      id: pageOverlay === "dropbox" ? "" : "root",
+                                      name: pageOverlay === "dropbox" ? "Dropbox" : "My Drive",
+                                    },
+                                  ]);
+                                  setCurrentFolder(folder);
+                                  const controller = new AbortController();
+                                  void Promise.resolve().then(() =>
+                                    loadCloudItems(pageOverlay, controller, folder.id),
+                                  );
+                                  return;
+                                }
+                                setSelectedCloudIndices((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(index)) {
+                                    next.delete(index);
+                                  } else {
+                                    next.add(index);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className={`group relative aspect-[4/3] cursor-pointer overflow-hidden rounded border transition ${
+                                selectedCloudIndices.has(index)
+                                  ? "border-white/40 bg-white/10"
+                                  : "border-white/10 bg-[#1a1a1e] hover:border-white/30"
+                              }`}
+                            >
+                              {item.fileType === "image" ? (
+                                <>
+                                  {item.thumbnailUrl ? (
+                                    <img
+                                      src={item.thumbnailUrl}
+                                      alt={item.name}
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                      <ImageIcon className="h-6 w-6 text-white/30" strokeWidth={1.5} />
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="flex h-full w-full flex-col items-center justify-center gap-1">
+                                  {item.fileType === "folder" ? (
+                                    <FolderOpen className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                  ) : (
+                                    <FileText className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                  )}
+                                  <span className="text-[10px] uppercase tracking-tight text-white/70 mono">
+                                    {item.fileType === "folder" ? <span>{item.name}</span> : "File"}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="absolute inset-x-0 mono bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                <p className="truncate mono text-xs text-white/80">{item.name}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {selectedCloudIndices.size > 0 && (
-                  <div className="mt-auto pt-3 border-t border-white/10 pt-3">
+                  <div className="mt-auto pt-3">
                     <p className="text-[10px] mono uppercase tracking-tight text-white/50 mb-2">
-                      {selectedCloudIndices.size} file{selectedCloudIndices.size > 1 ? "s" : ""} selected
+                      {selectedCloudIndices.size} file
+                      {selectedCloudIndices.size > 1 ? "s" : ""} selected
                     </p>
                     <button
                       type="button"
@@ -717,7 +735,11 @@ export function FloatingToolbox() {
                       }}
                       className="w-full cursor-pointer rounded lime px-3 py-1.5 text-xs mono uppercase tracking-tight text-black transition"
                     >
-                      Import {selectedCloudIndices.size > 1 ? `(${selectedCloudIndices.size})` : ""} Selected
+                      Import{" "}
+                      {selectedCloudIndices.size > 1
+                        ? `(${selectedCloudIndices.size})`
+                        : ""}{" "}
+                      Selected
                     </button>
                   </div>
                 )}

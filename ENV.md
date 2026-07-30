@@ -68,4 +68,3 @@ Figma is a **native Supabase OAuth provider**. Configure it entirely in the Supa
 2. Redirect `swipes.site` to `www.swipes.site` at the hosting/DNS layer.
 3. Set the production environment variables above, then redeploy.
 4. Update Supabase, Google, Azure, Dropbox, and Polar with the listed URLs.
-5. Remove `app.swipes.site` from the deployment domains once its redirect period is no longer needed.

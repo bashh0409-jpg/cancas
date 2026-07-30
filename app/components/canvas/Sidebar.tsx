@@ -52,6 +52,7 @@ import { createCanvasAction } from "@/app/actions/createCanvasAction";
 import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import ShortcutsPanel from "./ShortcutsPanel";
+import { CloudBrowser } from "./CloudBrowser";
 
 type PanelType =
   | "search"
@@ -827,23 +828,13 @@ export const ConnectPanel = ({
     const providerName = provider?.name ?? browsingProvider;
 
     return (
-      <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col overflow-y-auto">
-        <div className="flex items-center justify-between pb-2 mb-2">
-          <button
-            onClick={() => setBrowsingProvider(null)}
-            className="text-white/60 cursor-pointer hover:text-white transition flex items-center gap-1 text-xs mono uppercase tracking-tight"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </button>
-          <button
-            onClick={onClose}
-            className="text-white/60 cursor-pointer hover:text-white transition"
-          >
-            <X className="w-4 h-4" strokeWidth={1.25} />
-          </button>
-        </div>
-      </div>
+      <CloudBrowser
+        providerId={browsingProvider}
+        providerName={providerName}
+        onImportCloudFile={onImportCloudFile}
+        onBack={() => setBrowsingProvider(null)}
+        onClose={onClose}
+      />
     );
   }
 
@@ -909,23 +900,28 @@ export const ConnectPanel = ({
                   <div className="flex flex-col gap-2 mt-2">
                     <div className="flex items-center gap-2">
                       {provider.connected && !provider.expired ? (
-                        <button
-                          onClick={() => void handleDisconnect(provider.id)}
-                          disabled={disconnecting === provider.id}
-                          className="h-7 px-3 rounded-xs border border-white/10 lime mono uppercase tracking-tight text-xs text-black transition cursor-pointer  disabled:opacity-50"
-                        >
-                          {disconnecting === provider.id ? (
-                            <span>
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            </span>
-                          ) : (
-                            <span>
-                              {" "}
-                              <Unplug className="w-3.5 hidden h-3.5" />
-                              disconnect
-                            </span>
-                          )}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => setBrowsingProvider(provider.id)}
+                            className="h-7 px-3 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer lime text-black hover:opacity-90 flex items-center gap-2"
+                          >
+                            <FolderOpen className="w-3 h-3" strokeWidth={1.5} />
+                            Browse
+                          </button>
+                          <button
+                            onClick={() => void handleDisconnect(provider.id)}
+                            disabled={disconnecting === provider.id}
+                            className="h-7 px-3 rounded-xs border border-white/10 text-white/60 mono uppercase tracking-tight text-xs transition cursor-pointer hover:text-white disabled:opacity-50"
+                          >
+                            {disconnecting === provider.id ? (
+                              <span>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              </span>
+                            ) : (
+                              <span>Disconnect</span>
+                            )}
+                          </button>
+                        </>
                       ) : (
                         <button
                           onClick={() => void handleConnect(provider.id)}

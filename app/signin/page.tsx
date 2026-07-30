@@ -105,25 +105,37 @@ export default function Page() {
     <div className="flex h-screen w-full overflow-hidden bg-black text-white">
       {/* LEFT */}
       <div className="flex w-full flex-col  items-center h-full justify-between p-6 lg:max-w-[480px]">
-        <Image
-          src="/images/Reflow.svg"
-          alt="Logo"
-          width={64}
-          height={64}
-          className="object-contain shrink-0"
-        />
-        <div className="flex w-full max-w-[380px] flex-col items-center gap-6 rounded-lg ">
+        <span className="flex items-center gap-1">
+          {" "}
+          <Image
+            src="/images/Reflow.svg"
+            alt="Logo"
+            width={64}
+            height={64}
+            className="object-contain shrink-0"
+          />
+          <span className="mono text-white/60  tracking-tight text-xs ml-2">
+            BETA
+          </span>
+        </span>
+        <div className="flex w-full max-w-[300px] flex-col items-center gap-6 rounded-lg ">
           <div className="flex w-full flex-col  gap-2">
-            <div className="flex justify-center p-4 gap-2 mt-6 items-center">
+            <div className="flex justify-center mb-4 gap-2 mt-6 items-center">
               {" "}
-              <span className="lime text-center  h-2 w-2 "></span>
-              <span className="text-white text-xs tracking-wider  mono uppercase text-center">
+              <span className="lime text-center absolute z-50 p-1 rounded right-2 bottom-2 lime mono text-black uppercase text-xs">
+                Operational
+              </span>
+              <span className="text-white hidden text-xs tracking-wider  mono uppercase text-center">
                 ENTER THE COLLECTION
+              </span>
+              <span className="text-white text-xs tracking-tight mono uppercase text-left">
+                THIS IS A BETA VERSION OF THE APP. YOU MAY ENCOUNTER BUGS OR
+                UNEXPECTED ERRORS.
               </span>
             </div>
 
-            <div className="text-4xl grotesk mb-4 leading-none text-center tracking-tight">
-              Sign in to continue
+            <div className="text-4xl grotesk mb-4 capitaliz leading-none text-left tracking-tight">
+              Sign in to continue using reflow
             </div>
           </div>
 
@@ -181,7 +193,7 @@ export default function Page() {
               </button>
             </div>
           ) : (
-            <div className="flex w-ful flex-col items-center justify-cente gap-2">
+            <div className="flex w-full flex-col items-center justify-center gap-2">
               {formError && (
                 <p className="w-full text-center mono text-xs text-red-600">
                   {formError}
@@ -190,7 +202,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-8 w-full items-center cursor-pointer  gap-3 rounded lime   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
+                className="inline-flex h-8 w-full items-center justify-center cursor-pointer  gap-3 rounded lime   px-4 text-xs mono uppercase tracking-tight text-black/80 transition-all hover:bg-white/80 disabled:opacity-60"
                 onClick={() => handleAuth("google")}
               >
                 {loadingProvider === "google" ? <Spinner /> : <GoogleIcon />}
@@ -200,7 +212,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-8 w-full items-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
+                className="inline-flex h-8 w-full items-center justify-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -209,7 +221,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-8 w-full items-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
+                className="inline-flex h-8 w-full items-center justify-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
                 onClick={() => handleAuth("figma")}
               >
                 {loadingProvider === "figma" ? <Spinner /> : <FigmaIcon />}
@@ -232,7 +244,7 @@ export default function Page() {
           )}
         </div>{" "}
         {/* RESTORED FOOTER TEXT */}
-        <p className="max-w-[320px] mono uppercase tracking-tight text-center text-xs font-medium leading-5 text-zinc-500">
+        <p className="max-w-[320px] mono uppercase tracking-tight text-center text-[10px] leading-snug text-white/80">
           By continuing, you agree to the{" "}
           <a
             href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
