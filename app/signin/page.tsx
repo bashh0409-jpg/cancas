@@ -105,7 +105,7 @@ export default function Page() {
     <div className="flex h-screen w-full overflow-hidden bg-black text-white">
       {/* LEFT */}
       <div className="flex w-full flex-col  items-center h-full justify-between p-6 lg:max-w-[480px]">
-        <span className="flex items-center gap-1">
+        <span className=" gap-1">
           {" "}
           <Image
             src="/images/Reflow.svg"
@@ -114,13 +114,13 @@ export default function Page() {
             height={64}
             className="object-contain shrink-0"
           />
-          <span className="mono text-white/60  tracking-tight text-xs ml-2">
+          <span className="mono text-white/60 hidden  tracking-tight text-xs ml-1">
             BETA
           </span>
         </span>
         <div className="flex w-full max-w-[300px] flex-col items-center gap-6 rounded-lg ">
           <div className="flex w-full flex-col  gap-2">
-            <div className="flex justify-center mb-4 gap-2 mt-6 items-center">
+            <div className="flex justify-center text-center mb-4 gap-2 mt-6 items-center">
               {" "}
               <span className="lime text-center absolute z-50 p-1 rounded right-2 bottom-2 lime mono text-black uppercase text-xs">
                 Operational
@@ -128,13 +128,13 @@ export default function Page() {
               <span className="text-white hidden text-xs tracking-wider  mono uppercase text-center">
                 ENTER THE COLLECTION
               </span>
-              <span className="text-white text-xs tracking-tight mono uppercase text-left">
+              <span className="text-white text-xs tracking-tight mono uppercase text-center">
                 THIS IS A BETA VERSION OF THE APP. YOU MAY ENCOUNTER BUGS OR
                 UNEXPECTED ERRORS.
               </span>
             </div>
 
-            <div className="text-4xl grotesk mb-4 capitaliz leading-none text-left tracking-tight">
+            <div className="text-4xl grotesk mb-4 capitaliz leading-none text-center tracking-tight">
               Sign in to continue using reflow
             </div>
           </div>
