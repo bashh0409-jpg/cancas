@@ -95,8 +95,8 @@ export function FloatingToolbox() {
   const [folderStack, setFolderStack] = useState<CloudFolder[]>([]);
   const [loadingCloudItems, setLoadingCloudItems] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
-  const [selectedCloudIndex, setSelectedCloudIndex] = useState<number | null>(
-    null,
+  const [selectedCloudIndices, setSelectedCloudIndices] = useState<Set<number>>(
+    new Set(),
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -258,7 +258,7 @@ export function FloatingToolbox() {
   ) {
     setCloudError(null);
     setCloudItems([]);
-    setSelectedCloudIndex(null);
+    setSelectedCloudIndices(new Set());
     setLoadingCloudItems(true);
 
     const queryParam =
@@ -499,7 +499,7 @@ export function FloatingToolbox() {
                       type="button"
                       onClick={() => {
                         setPageOverlay(null);
-                        setSelectedCloudIndex(null);
+                        setSelectedCloudIndices(new Set());
                       }}
                       className="text-white/60 cursor-pointer hover:text-white transition flex items-center gap-1 text-xs mono uppercase tracking-tight"
                     >
@@ -579,10 +579,18 @@ export function FloatingToolbox() {
                                 );
                                 return;
                               }
-                              setSelectedCloudIndex(index);
+                              setSelectedCloudIndices((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(index)) {
+                                  next.delete(index);
+                                } else {
+                                  next.add(index);
+                                }
+                                return next;
+                              });
                             }}
                             className={`group relative aspect-[4/3] cursor-pointer overflow-hidden rounded border transition ${
-                              selectedCloudIndex === index
+                              selectedCloudIndices.has(index)
                                 ? "border-white/40 bg-white/10"
                                 : "border-white/10 bg-[#1a1a1e] hover:border-white/30"
                             }`}
@@ -639,20 +647,28 @@ export function FloatingToolbox() {
                   )}
                 </div>
 
-                {selectedCloudIndex !== null && (
-                  <div className="mt-auto pt-3 border-t border-white/10">
+                {selectedCloudIndices.size > 0 && (
+                  <div className="mt-auto pt-3 border-t border-white/10 pt-3">
+                    <p className="text-[10px] mono uppercase tracking-tight text-white/50 mb-2">
+                      {selectedCloudIndices.size} file{selectedCloudIndices.size > 1 ? "s" : ""} selected
+                    </p>
                     <button
                       type="button"
-                      onClick={() => {
-                        const selected = cloudItems[selectedCloudIndex];
-                        if (selected.fileType !== "image") return;
+                      onClick={async () => {
+                        const selectedItems = Array.from(selectedCloudIndices)
+                          .map((i) => cloudItems[i])
+                          .filter((item) => item.fileType !== "folder");
 
-                        const queryParam =
-                          pageOverlay === "dropbox"
-                            ? `path=${encodeURIComponent(selected.path ?? selected.id)}`
-                            : `fileId=${encodeURIComponent(selected.id)}`;
+                        if (selectedItems.length === 0) return;
 
-                        void (async () => {
+                        const files: File[] = [];
+
+                        for (const selected of selectedItems) {
+                          const queryParam =
+                            pageOverlay === "dropbox"
+                              ? `path=${encodeURIComponent(selected.path ?? selected.id)}`
+                              : `fileId=${encodeURIComponent(selected.id)}`;
+
                           try {
                             const response = await fetch(
                               `/api/integrations/${pageOverlay}/download?${queryParam}`,
@@ -671,31 +687,37 @@ export function FloatingToolbox() {
                             const fileName =
                               response.headers.get("x-file-name") ||
                               selected.name;
-                            const file = new File([blob], fileName, {
-                              type:
-                                blob.type ||
-                                selected.mimeType ||
-                                "application/octet-stream",
-                            });
-                            window.dispatchEvent(
-                              new CustomEvent("canvasai:file-import", {
-                                detail: { files: [file] },
+                            files.push(
+                              new File([blob], fileName, {
+                                type:
+                                  blob.type ||
+                                  selected.mimeType ||
+                                  "application/octet-stream",
                               }),
                             );
-                            setShowImportOverlay(false);
-                            setPageOverlay(null);
                           } catch (err) {
                             setCloudError(
                               err instanceof Error
                                 ? err.message
                                 : "Unable to download cloud file.",
                             );
+                            return;
                           }
-                        })();
+                        }
+
+                        if (files.length > 0) {
+                          window.dispatchEvent(
+                            new CustomEvent("canvasai:file-import", {
+                              detail: { files },
+                            }),
+                          );
+                          setShowImportOverlay(false);
+                          setPageOverlay(null);
+                        }
                       }}
-                      className="w-full cursor-pointer rounded border border-white/20 px-3 py-1.5 text-[10px] mono uppercase tracking-tight text-white/70 transition hover:bg-white/10 hover:text-white"
+                      className="w-full cursor-pointer rounded lime px-3 py-1.5 text-xs mono uppercase tracking-tight text-black transition"
                     >
-                      Import Selected
+                      Import {selectedCloudIndices.size > 1 ? `(${selectedCloudIndices.size})` : ""} Selected
                     </button>
                   </div>
                 )}
