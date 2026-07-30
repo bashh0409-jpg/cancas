@@ -6,6 +6,7 @@ import {
   Folder,
   FolderOpen,
   Hand,
+  HardDrive,
   ImageIcon,
   Import,
   Loader2,
@@ -443,31 +444,43 @@ export function FloatingToolbox() {
                   </button>
                 </div>
 
-                <div className="flex  gap-2 mt-2">
+                <div className="flex  flex-col gap-1 mt-2">
+                  <p className="text-xs tracking-tight mb-4  uppercase mono text-white">
+                    SELECT A STORAGE SOURCE TO IMPORT FILES FROM.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center rounded border border-white/10 bg-[#1a1a1e] p-2 px-4  lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                  >
+                    <HardDrive
+                      className="w-4 h-4 text-black shrink-0"
+                      strokeWidth={2}
+                    />
+                    <span className="mono text-xs tracking-tight ml-4">
+                      LOCAL STORAGE
+                    </span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setPageOverlay("google-drive")}
-                    className="flex items-center  rounded border border-white/10 bg-[#1a1a1e] p-2 lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                    className="flex items-center  rounded border border-white/10 bg-[#1a1a1e] p-2 px-4  lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
                   >
                     <SiGoogledrive className="w-4 h-4 text-black shrink-0" />
+                    <span className="mono text-xs tracking-tight ml-4">
+                      GOOGLE DRIVE
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPageOverlay("dropbox")}
-                    className="flex items-center  rounded border lime p-2 lime transition text-black cursor-pointer"
+                    className="flex items-center  rounded border lime p-2  px-4 lime transition text-black cursor-pointer"
                   >
                     <SiDropbox className="w-4 h-4 text-black shrink-0" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center aspect-square  rounded border border-white/10 bg-[#1a1a1e] p-2 lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
-                  >
-                    <Server
-                      className="w-4 h-4 text-black shrink-0"
-                      strokeWidth={2}
-                    />
+                    <span className="mono text-xs tracking-tight ml-4">
+                      DROPBOX
+                    </span>
                   </button>
                 </div>
 
@@ -517,12 +530,13 @@ export function FloatingToolbox() {
                       {cloudError}
                     </div>
                   ) : loadingCloudItems ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+                    <div className="flex flex-col  mono uppercase tracking-tight  items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-white/40" />{" "}
+                      <span className="text-xs text-white/60 mt-4">Loading files...</span>
                     </div>
                   ) : cloudItems.length === 0 ? (
                     <div className="flex items-center justify-center py-8">
-                      <p className="text-[10px] text-white/40">
+                      <p className="text-xs mono uppercase tracking-tight text-white/40">
                         No files found.
                       </p>
                     </div>
@@ -613,8 +627,8 @@ export function FloatingToolbox() {
                                 </span>
                               </div>
                             )}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                              <p className="truncate text-[9px] text-white/80">
+                            <div className="absolute inset-x-0 mono bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
+                              <p className="truncate mono text-xs text-white/80">
                                 {item.name}
                               </p>
                             </div>
