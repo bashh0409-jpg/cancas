@@ -37,9 +37,21 @@ Update each provider to use these exact production callback URLs:
 | -------------- | ---------------------------------------------------------------- |
 | Google sign-in | `https://www.swipes.site/api/auth/callback`                      |
 | Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/home`           |
+| Figma sign-in  | `https://www.swipes.site/api/auth/figma/callback`                |
 | Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback` |
 | OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`     |
 | Dropbox        | `https://www.swipes.site/api/integrations/dropbox/callback`      |
+
+### Figma OAuth Setup
+
+Figma is a **native Supabase OAuth provider**. Configure it entirely in the Supabase dashboard:
+
+1. Go to **Supabase Dashboard → Authentication → Providers → Figma** and enable it.
+2. Go to [Figma Developer Settings](https://www.figma.com/developers/apps) and create a new OAuth app.
+3. Set the Figma OAuth app's callback URL to your Supabase project's auth callback:
+   `https://okgjifzweuehbcxrohmh.supabase.co/auth/v1/callback`
+4. Copy the **Client ID** and **Client Secret** from Figma into the Supabase provider settings.
+5. No environment variables or custom API routes are needed — the flow uses the same pattern as Google and Azure.
 
 ## Billing endpoints
 
