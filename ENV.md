@@ -48,8 +48,11 @@ Figma is a **native Supabase OAuth provider**. Configure it entirely in the Supa
 
 1. Go to **Supabase Dashboard → Authentication → Providers → Figma** and enable it.
 2. Go to [Figma Developer Settings](https://www.figma.com/developers/apps) and create a new OAuth app.
-3. Set the Figma OAuth app's callback URL to your Supabase project's auth callback:
-   `https://okgjifzweuehbcxrohmh.supabase.co/auth/v1/callback`
+3. In the Figma OAuth app config, set the **Redirect URI** to Supabase's auth callback:
+   ```
+   https://okgjifzweuehbcxrohmh.supabase.co/auth/v1/callback
+   ```
+   ⚠️ This is Supabase's endpoint, **not** your app's domain. Figma sends the auth code here, and Supabase handles the exchange.
 4. Copy the **Client ID** and **Client Secret** from Figma into the Supabase provider settings.
 5. No environment variables or custom API routes are needed — the flow uses the same pattern as Google and Azure.
 
