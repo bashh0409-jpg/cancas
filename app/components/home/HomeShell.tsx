@@ -889,10 +889,12 @@ function FilesPage({
   onSearchChange?: (query: string) => void;
   createCanvasAction?: (idempotencyKey: string) => Promise<void>;
 }) {
-  const [localSearch, setLocalSearch] = useState(searchQuery);
-
-  const filteredCanvases = canvases.filter((canvas) =>
-    canvas.name.toLowerCase().includes(localSearch.toLowerCase()),
+  const filteredCanvases = useMemo(
+    () =>
+      canvases.filter((canvas) =>
+        canvas.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    [canvases, searchQuery],
   );
 
   return (
@@ -926,9 +928,8 @@ function FilesPage({
             <input
               type="text"
               placeholder="Search files..."
-              value={localSearch}
+              value={searchQuery}
               onChange={(e) => {
-                setLocalSearch(e.target.value);
                 onSearchChange(e.target.value);
               }}
               className=" w-full   h-full py-1 font-medium uppercase text-xs text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
@@ -954,7 +955,7 @@ function FilesPage({
       <CanvasFileList
         canvases={filteredCanvases}
         createCanvasAction={createCanvasAction}
-        searchQuery={localSearch}
+        searchQuery={searchQuery}
       />
     </div>
   );
