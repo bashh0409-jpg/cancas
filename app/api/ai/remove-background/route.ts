@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const REMOVE_BG_TIMEOUT_MS = 30_000;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -15,9 +17,15 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.REMOVE_BACKGROUND_KEY;
 
     if (!apiKey) {
+      console.error(
+        "[Remove Background] REMOVE_BACKGROUND_KEY is not configured on the server",
+      );
       return NextResponse.json(
-        { error: "Remove background API key is not configured" },
-        { status: 500 },
+        {
+          error:
+            "Remove background is not configured. Please set REMOVE_BACKGROUND_KEY in the server environment.",
+        },
+        { status: 503 },
       );
     }
 
@@ -33,13 +41,22 @@ export async function POST(request: NextRequest) {
     removeBgFormData.append("image_file", imageFile);
     removeBgFormData.append("size", "auto");
 
-    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-      method: "POST",
-      headers: {
-        "X-Api-Key": apiKey,
-      },
-      body: removeBgFormData,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REMOVE_BG_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: {
+          "X-Api-Key": apiKey,
+        },
+        body: removeBgFormData,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -63,12 +80,19 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(
-      "[Remove Background Route Error]",
-      error instanceof Error ? error.message : error,
-    );
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("[Remove Background Route Error]", message);
+
+    if (error instanceof Error && error.name === "AbortError") {
+      return NextResponse.json(
+        { error: "Remove background request timed out. Please try again." },
+        { status: 504 },
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to remove background" },
+      { error: `Failed to remove background: ${message}` },
       { status: 500 },
     );
   }

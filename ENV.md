@@ -15,7 +15,12 @@ POLAR_CHECKOUT_URL=https://www.swipes.site/billing/checkout
 POLAR_SUCCESS_URL=https://www.swipes.site/billing/success
 POLAR_CANCEL_URL=https://www.swipes.site/billing/cancel
 POLAR_WEBHOOK_URL=https://www.swipes.site/api/billing/webhooks/polar
+REMOVE_BACKGROUND_KEY=your-remove-bg-api-key
 ```
+
+`REMOVE_BACKGROUND_KEY` is the remove.bg API key used by
+`/api/ai/remove-background`. Without it the Remove Background action returns
+`503 Remove background is not configured`.
 
 Keep the local-development values in `.env.local` pointed at
 `http://localhost:3000`.

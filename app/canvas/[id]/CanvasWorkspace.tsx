@@ -84,6 +84,7 @@ import {
 } from "@/app/components/canvas/ImageContextMenu";
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
+import { showToast } from "@/app/components/home/Toast";
 
 type Viewport = {
   x: number;
@@ -3570,8 +3571,20 @@ export default function CanvasWorkspace({
           });
 
           if (!bgResponse.ok) {
-            const errorData = await bgResponse.json().catch(() => null);
-            console.error("Remove background failed:", errorData ?? bgResponse.statusText);
+            const errorData = (await bgResponse.json().catch(() => null)) as {
+              error?: string;
+            } | null;
+            console.error(
+              "Remove background failed:",
+              errorData ?? bgResponse.statusText,
+            );
+            showToast({
+              type: "error",
+              title: "Remove Background Failed",
+              message:
+                errorData?.error ??
+                "Something went wrong. Please try again.",
+            });
             setProcessingRemoveBgNodeIds((current) => {
               const next = new Set(current);
               next.delete(nodeId);
@@ -3663,6 +3676,14 @@ export default function CanvasWorkspace({
           saveDelayMsRef.current = 0;
         } catch (error) {
           console.error("Remove background error:", error);
+          showToast({
+            type: "error",
+            title: "Remove Background Failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Something went wrong. Please try again.",
+          });
         } finally {
           setProcessingRemoveBgNodeIds((current) => {
             const next = new Set(current);
