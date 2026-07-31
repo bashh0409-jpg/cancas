@@ -65,6 +65,7 @@ import {
 import { sleep, withTimeout } from "@/lib/canvas/uploadUtils";
 import { createClient } from "@/lib/supabase/client";
 import { useVoiceNotePlayback } from "@/lib/canvas/useVoiceNotePlayback";
+import type { LibraryAsset } from "@/lib/canvas/assetLibrary";
 import {
   blobToDataUrl,
   formatVoiceNoteTitle,
@@ -1334,6 +1335,90 @@ export default function CanvasWorkspace({
 
     return () => {
       window.removeEventListener("canvasai:file-import", handleFileImport);
+    };
+  }, [isClientReady]);
+
+  // Handle library imports — assets come with public URLs already stored in Supabase
+  useEffect(() => {
+    function handleLibraryImport(event: Event) {
+      const customEvent = event as CustomEvent<{ libraryAssets: LibraryAsset[] }>;
+      const assets = customEvent.detail?.libraryAssets ?? [];
+
+      if (!assets.length || !isClientReady) {
+        return;
+      }
+
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect) {
+        return;
+      }
+
+      const vp = viewportRef.current;
+      const dropPosition = {
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
+      };
+
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+      );
+
+      const addedIds: string[] = [];
+
+      for (let index = 0; index < assets.length; index += 1) {
+        const asset = assets[index];
+        const nodeId = crypto.randomUUID();
+        const placeholderSize = fitImageSize(320, 240);
+
+        setImageNodes((current) => [
+          ...current,
+          {
+            id: nodeId,
+            fileName: asset.file_name,
+            url: asset.public_url,
+            storagePath: asset.storage_path,
+            position: {
+              x: dropPosition.x + index * 20,
+              y: dropPosition.y + index * 20,
+            },
+            size: placeholderSize,
+            zIndex: topZIndex + index + 1,
+          },
+        ]);
+
+        addedIds.push(nodeId);
+
+        // Load natural size asynchronously
+        const img = new Image();
+        img.onload = () => {
+          const fittedSize = fitImageSize(img.naturalWidth, img.naturalHeight);
+          setImageNodes((current) =>
+            current.map((node) =>
+              node.id === nodeId
+                ? { ...node, size: fittedSize }
+                : node,
+            ),
+          );
+        };
+        img.src = asset.public_url;
+      }
+
+      if (addedIds.length >= 2) {
+        setSelectedImageIds(addedIds);
+      }
+
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener("canvasai:library-import", handleLibraryImport);
+
+    return () => {
+      window.removeEventListener("canvasai:library-import", handleLibraryImport);
     };
   }, [isClientReady]);
 

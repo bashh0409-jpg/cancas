@@ -9,6 +9,8 @@ import {
   HardDrive,
   ImageIcon,
   Import,
+  Library,
+  LibraryBig,
   Loader2,
   Mic,
   Redo2,
@@ -27,6 +29,8 @@ import {
   type VoiceNoteRecordedDetail,
 } from "@/lib/canvas/voiceNotes";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
+import { AssetLibrary } from "@/app/components/canvas/AssetLibrary";
+import type { LibraryAsset } from "@/lib/canvas/assetLibrary";
 
 function ToolboxButton({
   active = false,
@@ -74,7 +78,7 @@ export function FloatingToolbox() {
     useState(false);
   const [showImportOverlay, setShowImportOverlay] = useState(false);
   const [pageOverlay, setPageOverlay] = useState<
-    "google-drive" | "dropbox" | null
+    "google-drive" | "dropbox" | "library" | null
   >(null);
   type CloudItem = {
     id: string;
@@ -295,7 +299,7 @@ export function FloatingToolbox() {
   }
 
   useEffect(() => {
-    if (!pageOverlay) {
+    if (!pageOverlay || pageOverlay === "library") {
       return;
     }
 
@@ -427,7 +431,25 @@ export function FloatingToolbox() {
             }}
           />
           <div className="w-72 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col overflow-y-auto">
-            {!pageOverlay ? (
+            {pageOverlay === "library" ? (
+              <AssetLibrary
+                onClose={() => {
+                  setShowImportOverlay(false);
+                  setPageOverlay(null);
+                }}
+                onImportToCanvas={(assets: LibraryAsset[]) => {
+                  if (assets.length > 0) {
+                    window.dispatchEvent(
+                      new CustomEvent("canvasai:library-import", {
+                        detail: { libraryAssets: assets },
+                      }),
+                    );
+                    setShowImportOverlay(false);
+                    setPageOverlay(null);
+                  }
+                }}
+              />
+            ) : !pageOverlay ? (
               <>
                 <div className="flex items-center justify-between pb-3 mb-2 ">
                   <h3 className="text-white flex items-center gap-2 text-xs mono uppercase tracking-tight">
@@ -453,7 +475,7 @@ export function FloatingToolbox() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center rounded border border-white/10 bg-[#1a1a1e] p-2 px-4  lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                    className="flex items-center hidden rounded border border-white/10 bg-[#1a1a1e] p-2 px-4  lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
                   >
                     <HardDrive
                       className="w-4 h-4 text-black shrink-0"
@@ -461,6 +483,20 @@ export function FloatingToolbox() {
                     />
                     <span className="mono text-xs tracking-tight ml-4">
                       LOCAL STORAGE
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPageOverlay("library")}
+                    className="flex items-center rounded border border-white/10 bg-[#1a1a1e] p-2 px-4 lime transition hover:border-white/20 hover:bg-white/5 cursor-pointer"
+                  >
+                    <LibraryBig
+                      className="w-4 h-4 text-black shrink-0"
+                      strokeWidth={1.5}
+                    />
+                    <span className="mono text-xs tracking-tight ml-4">
+                      LIBRARY
                     </span>
                   </button>
                   <button
@@ -549,7 +585,9 @@ export function FloatingToolbox() {
                   {(() => {
                     const filteredItems = cloudSearchQuery.trim()
                       ? cloudItems.filter((item) =>
-                          item.name.toLowerCase().includes(cloudSearchQuery.toLowerCase()),
+                          item.name
+                            .toLowerCase()
+                            .includes(cloudSearchQuery.toLowerCase()),
                         )
                       : cloudItems;
 
@@ -565,7 +603,9 @@ export function FloatingToolbox() {
                       return (
                         <div className="flex flex-col mono uppercase tracking-tight items-center justify-center py-8">
                           <Loader2 className="h-5 w-5 animate-spin text-white/40" />
-                          <span className="text-xs text-white/60 mt-4">Loading files...</span>
+                          <span className="text-xs text-white/60 mt-4">
+                            Loading files...
+                          </span>
                         </div>
                       );
                     }
@@ -574,7 +614,9 @@ export function FloatingToolbox() {
                       return (
                         <div className="flex items-center justify-center py-8">
                           <p className="text-xs mono uppercase tracking-tight text-white/40">
-                            {cloudSearchQuery.trim() ? "No matching files found." : "No files found."}
+                            {cloudSearchQuery.trim()
+                              ? "No matching files found."
+                              : "No files found."}
                           </p>
                         </div>
                       );
@@ -585,7 +627,9 @@ export function FloatingToolbox() {
                         <div className="mb-2 flex items-center gap-2 text-[10px] text-white/50">
                           <span className="mono uppercase hidden tracking-tight">
                             {currentFolder?.name ??
-                              (pageOverlay === "dropbox" ? "Dropbox" : "My Drive")}
+                              (pageOverlay === "dropbox"
+                                ? "Dropbox"
+                                : "My Drive")}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -595,18 +639,32 @@ export function FloatingToolbox() {
                               type="button"
                               onClick={() => {
                                 if (item.fileType === "folder") {
-                                  const folder = { id: item.id, name: item.name };
+                                  const folder = {
+                                    id: item.id,
+                                    name: item.name,
+                                  };
                                   setFolderStack((current) => [
                                     ...(current || []),
                                     currentFolder ?? {
-                                      id: pageOverlay === "dropbox" ? "" : "root",
-                                      name: pageOverlay === "dropbox" ? "Dropbox" : "My Drive",
+                                      id:
+                                        pageOverlay === "dropbox" ? "" : "root",
+                                      name:
+                                        pageOverlay === "dropbox"
+                                          ? "Dropbox"
+                                          : "My Drive",
                                     },
                                   ]);
                                   setCurrentFolder(folder);
                                   const controller = new AbortController();
+                                  const provider = pageOverlay as
+                                    | "google-drive"
+                                    | "dropbox";
                                   void Promise.resolve().then(() =>
-                                    loadCloudItems(pageOverlay, controller, folder.id),
+                                    loadCloudItems(
+                                      provider,
+                                      controller,
+                                      folder.id,
+                                    ),
                                   );
                                   return;
                                 }
@@ -637,24 +695,39 @@ export function FloatingToolbox() {
                                     />
                                   ) : (
                                     <div className="flex h-full w-full items-center justify-center">
-                                      <ImageIcon className="h-6 w-6 text-white/30" strokeWidth={1.5} />
+                                      <ImageIcon
+                                        className="h-6 w-6 text-white/30"
+                                        strokeWidth={1.5}
+                                      />
                                     </div>
                                   )}
                                 </>
                               ) : (
                                 <div className="flex h-full w-full flex-col items-center justify-center gap-1">
                                   {item.fileType === "folder" ? (
-                                    <FolderOpen className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                    <FolderOpen
+                                      className="h-6 w-6 text-white/40"
+                                      strokeWidth={1.5}
+                                    />
                                   ) : (
-                                    <FileText className="h-6 w-6 text-white/40" strokeWidth={1.5} />
+                                    <FileText
+                                      className="h-6 w-6 text-white/40"
+                                      strokeWidth={1.5}
+                                    />
                                   )}
                                   <span className="text-[10px] uppercase tracking-tight text-white/70 mono">
-                                    {item.fileType === "folder" ? <span>{item.name}</span> : "File"}
+                                    {item.fileType === "folder" ? (
+                                      <span>{item.name}</span>
+                                    ) : (
+                                      "File"
+                                    )}
                                   </span>
                                 </div>
                               )}
                               <div className="absolute inset-x-0 mono bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                <p className="truncate mono text-xs text-white/80">{item.name}</p>
+                                <p className="truncate mono text-xs text-white/80">
+                                  {item.name}
+                                </p>
                               </div>
                             </button>
                           ))}
@@ -687,9 +760,13 @@ export function FloatingToolbox() {
                               ? `path=${encodeURIComponent(selected.path ?? selected.id)}`
                               : `fileId=${encodeURIComponent(selected.id)}`;
 
+                          const provider = pageOverlay as
+                            | "google-drive"
+                            | "dropbox";
+
                           try {
                             const response = await fetch(
-                              `/api/integrations/${pageOverlay}/download?${queryParam}`,
+                              `/api/integrations/${provider}/download?${queryParam}`,
                             );
                             if (!response.ok) {
                               const payload = await response
