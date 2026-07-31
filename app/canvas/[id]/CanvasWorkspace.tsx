@@ -78,6 +78,10 @@ import {
 } from "@/app/components/canvas/CanvasTranscriptionNode";
 import { ElbowConnector } from "@/app/components/canvas/ElbowConnector";
 import { CanvasContextMenu } from "@/app/components/canvas/CanvasContextMenu";
+import {
+  ImageContextMenu,
+  type ImageMenuAction,
+} from "@/app/components/canvas/ImageContextMenu";
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 
@@ -621,6 +625,14 @@ export default function CanvasWorkspace({
     x: number;
     y: number;
   } | null>(null);
+  const [imageContextMenu, setImageContextMenu] = useState<{
+    nodeId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [processingRemoveBgNodeIds, setProcessingRemoveBgNodeIds] = useState<
+    Set<string>
+  >(new Set());
   const [showUnsplash, setShowUnsplash] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
@@ -3489,6 +3501,187 @@ export default function CanvasWorkspace({
     }
   }
 
+  function handleImageContextMenu(
+    event: React.MouseEvent<HTMLDivElement>,
+    node: ImageCanvasNode,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu(null);
+    setImageContextMenu({
+      nodeId: node.id,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }
+
+  function handleImageMenuAction(action: ImageMenuAction) {
+    if (!imageContextMenu) return;
+
+    const nodeId = imageContextMenu.nodeId;
+    const node = imageNodesRef.current.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    if (action === "delete") {
+      removeImageNodes([nodeId]);
+    } else if (action === "duplicate") {
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((n) => n.zIndex),
+      );
+      const duplicatedNode = {
+        ...node,
+        id: crypto.randomUUID(),
+        position: {
+          x: node.position.x + 20,
+          y: node.position.y + 20,
+        },
+        zIndex: topZIndex + 1,
+      };
+      setImageNodes((current) => [...current, duplicatedNode]);
+      setSelectedImageIds([duplicatedNode.id]);
+    } else if (action === "download") {
+      const link = document.createElement("a");
+      link.href = node.url;
+      link.download = node.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (action === "remove-background") {
+      // Mark node as processing
+      setProcessingRemoveBgNodeIds((current) => new Set(current).add(nodeId));
+
+      void (async () => {
+        try {
+          const keepOriginal = useCanvasPreferencesStore.getState().keepOriginalImageOnRemoveBg;
+
+          // Fetch the image blob
+          const response = await fetch(node.url);
+          const blob = await response.blob();
+
+          // Create form data with the image
+          const formData = new FormData();
+          formData.append("image", blob, node.fileName);
+
+          // Call the remove background API
+          const bgResponse = await fetch("/api/ai/remove-background", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!bgResponse.ok) {
+            const errorData = await bgResponse.json().catch(() => null);
+            console.error("Remove background failed:", errorData ?? bgResponse.statusText);
+            setProcessingRemoveBgNodeIds((current) => {
+              const next = new Set(current);
+              next.delete(nodeId);
+              return next;
+            });
+            return;
+          }
+
+          // Get the processed image as a blob and create a new blob URL
+          const processedBlob = await bgResponse.blob();
+          const processedUrl = URL.createObjectURL(processedBlob);
+          const processedFileName = node.fileName.replace(/\.[^.]+$/, "") + "-no-bg.png";
+          let targetNodeId: string;
+
+          if (keepOriginal) {
+            // Create a new node with the processed image, keeping the original intact
+            const topZIndex = Math.max(
+              0,
+              ...imageNodesRef.current.map((n) => n.zIndex),
+            );
+            targetNodeId = crypto.randomUUID();
+            setImageNodes((current) => [
+              ...current,
+              {
+                id: targetNodeId,
+                fileName: processedFileName,
+                url: processedUrl,
+                position: {
+                  x: node.position.x + node.size.width + 24,
+                  y: node.position.y,
+                },
+                size: { ...node.size },
+                zIndex: topZIndex + 1,
+              },
+            ]);
+            setSelectedImageIds([targetNodeId]);
+          } else {
+            targetNodeId = nodeId;
+
+            // Revoke the old blob URL if it was a blob
+            if (node.url.startsWith("blob:")) {
+              URL.revokeObjectURL(node.url);
+            }
+
+            // Replace the original node with the processed image
+            setImageNodes((current) =>
+              current.map((n) =>
+                n.id === nodeId
+                  ? {
+                      ...n,
+                      url: processedUrl,
+                      fileName: processedFileName,
+                    }
+                  : n,
+              ),
+            );
+
+            // If the original had a storage path, remove it since the processed image needs re-upload
+            if (node.storagePath) {
+              setImageNodes((current) =>
+                current.map((n) =>
+                  n.id === nodeId ? { ...n, storagePath: undefined } : n,
+                ),
+              );
+            }
+          }
+
+          // Upload the processed image to Supabase storage
+          const processedFile = new File([processedBlob], processedFileName, {
+            type: "image/png",
+          });
+
+          pendingUploadFilesRef.current.set(targetNodeId, {
+            file: processedFile,
+            blobUrl: processedUrl,
+          });
+          pendingUploadIdsRef.current.add(targetNodeId);
+
+          try {
+            await savePendingUploadFile(canvasId, targetNodeId, processedFile);
+          } catch {
+            // Upload can still proceed from memory.
+          }
+
+          canvasImageUploadPool.enqueue(() =>
+            syncImageToStorage(targetNodeId, processedFile, processedUrl),
+          );
+
+          saveDelayMsRef.current = 0;
+        } catch (error) {
+          console.error("Remove background error:", error);
+        } finally {
+          setProcessingRemoveBgNodeIds((current) => {
+            const next = new Set(current);
+            next.delete(nodeId);
+            return next;
+          });
+        }
+      })();
+    } else if (action === "edit-with-ai") {
+      // TODO: Open AI edit window / prompt for editing instructions
+      console.log("Edit with AI triggered for node:", nodeId);
+    } else if (action === "upscale") {
+      // TODO: Implement upscale via /api/ai/image/upscale
+      console.log("Upscale triggered for node:", nodeId);
+    }
+
+    setImageContextMenu(null);
+  }
+
   const handleUnsplashSelect = useCallback(
     async (image: { id: string; urls: { regular: string; full: string }; width: number; height: number }) => {
       const rect = canvasRef.current?.getBoundingClientRect();
@@ -3741,7 +3934,9 @@ export default function CanvasWorkspace({
                 isResizing={resizingImageNodeId === node.id}
                 isSelected={isSelected}
                 node={node}
+                processing={processingRemoveBgNodeIds.has(node.id)}
                 showResizeHandles={showResizeHandles}
+                onContextMenu={(event) => handleImageContextMenu(event, node)}
                 onImageSettled={() => handleInitialImageSettled(node.id)}
                 onPointerCancel={handleImagePointerUp}
                 onPointerDown={(event) => handleImagePointerDown(event, node)}
@@ -4119,6 +4314,15 @@ export default function CanvasWorkspace({
           onClose={() => setContextMenu(null)}
           onImportClick={() => fileInputRef.current?.click()}
           onUnsplashClick={() => setShowUnsplash(true)}
+        />
+      )}
+
+      {imageContextMenu && (
+        <ImageContextMenu
+          x={imageContextMenu.x}
+          y={imageContextMenu.y}
+          onAction={handleImageMenuAction}
+          onClose={() => setImageContextMenu(null)}
         />
       )}
 

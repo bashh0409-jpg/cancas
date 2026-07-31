@@ -7,16 +7,47 @@ import {
   Workflow,
   ChevronRight,
   MouseRight,
+  Image,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 
 type WireType = "line" | "elbow" | "bezier";
 
 export default function PreferencesPage() {
-  const [snapToGrid, setSnapToGrid] = useState(false);
-  const [rightClickMenu, setRightClickMenu] = useState(false);
-  const [wireType, setWireType] = useState<WireType>("elbow");
+  const {
+    rightClickMenu,
+    snapToGrid,
+    wireType,
+    keepOriginalImageOnRemoveBg,
+    setRightClickMenu,
+    setSnapToGrid,
+    setWireType,
+    setKeepOriginalImageOnRemoveBg,
+    syncFromServer,
+    syncToServer,
+  } = useCanvasPreferencesStore();
+
+  // Sync from server on mount
+  useEffect(() => {
+    syncFromServer();
+  }, [syncFromServer]);
+
+  const handleToggle = (setting: "rightClickMenu" | "snapToGrid" | "keepOriginalImageOnRemoveBg") => {
+    switch (setting) {
+      case "rightClickMenu":
+        setRightClickMenu(!rightClickMenu);
+        break;
+      case "snapToGrid":
+        setSnapToGrid(!snapToGrid);
+        break;
+      case "keepOriginalImageOnRemoveBg":
+        setKeepOriginalImageOnRemoveBg(!keepOriginalImageOnRemoveBg);
+        syncToServer();
+        break;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black/70 flex items-center justify-center p-4">
@@ -46,20 +77,10 @@ export default function PreferencesPage() {
                 Right-click to open menu
               </span>
             </div>
-            <button
-              onClick={() => setRightClickMenu((prev) => !prev)}
-              className={`relative w-11 cursor-pointer h-5 rounded-full transition-colors duration-200 shrink-0 ${
-                rightClickMenu ? "lime" : "bg-white/15"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
-                  rightClickMenu
-                    ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)]"
-                    : "bg-white/40"
-                }`}
-              />
-            </button>
+            <ToggleSwitch
+              checked={rightClickMenu}
+              onChange={() => handleToggle("rightClickMenu")}
+            />
           </div>
 
           {/* Snap to Grid */}
@@ -70,20 +91,24 @@ export default function PreferencesPage() {
                 Snap to Grid
               </span>
             </div>
-            <button
-              onClick={() => setSnapToGrid((prev) => !prev)}
-              className={`relative w-11 cursor-pointer h-5 rounded-full transition-colors duration-200 shrink-0 ${
-                snapToGrid ? "lime" : "bg-white/15"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
-                  snapToGrid
-                    ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)]"
-                    : "bg-white/40"
-                }`}
-              />
-            </button>
+            <ToggleSwitch
+              checked={snapToGrid}
+              onChange={() => handleToggle("snapToGrid")}
+            />
+          </div>
+
+          {/* Keep original when removing background */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <Image className="w-4 h-4 text-white/60 stroke-[1.5]" />
+              <span className="text-xs mono uppercase tracking-tight text-white">
+                Keep original when removing background
+              </span>
+            </div>
+            <ToggleSwitch
+              checked={keepOriginalImageOnRemoveBg}
+              onChange={() => handleToggle("keepOriginalImageOnRemoveBg")}
+            />
           </div>
 
           {/* Wire Type — flyout */}
@@ -91,6 +116,31 @@ export default function PreferencesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ToggleSwitch({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      onClick={onChange}
+      className={`relative w-11 cursor-pointer h-5 rounded-full transition-colors duration-200 shrink-0 ${
+        checked ? "bg-blue-500" : "bg-white/15"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-6 h-4 rounded-full transition-transform duration-200 ${
+          checked
+            ? "translate-x-4 bg-white shadow-[0_0_8px_1px_rgba(0,0,0,0.3)]"
+            : "bg-white/40"
+        }`}
+      />
+    </button>
   );
 }
 

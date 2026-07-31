@@ -22,11 +22,13 @@ type CanvasImageNodeProps = {
   showResizeHandles: boolean;
   isDragging: boolean;
   isResizing: boolean;
+  processing?: boolean;
   onPointerCancel: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onImageSettled: () => void;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onResizePointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerDown: (
     corner: ResizeCorner,
@@ -43,11 +45,13 @@ export function CanvasImageNode({
   showResizeHandles,
   isDragging,
   isResizing,
+  processing = false,
   onPointerCancel,
   onPointerDown,
   onPointerMove,
   onPointerUp,
   onImageSettled,
+  onContextMenu,
   onResizePointerCancel,
   onResizePointerDown,
   onResizePointerMove,
@@ -60,6 +64,7 @@ export function CanvasImageNode({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onContextMenu={onContextMenu}
       style={{
         cursor: isDragging ? "grabbing" : "grab",
         height: node.size.height,
@@ -88,6 +93,14 @@ export function CanvasImageNode({
           className="flex h-full w-full items-center justify-center bg-white/5"
         >
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+        </div>
+      )}
+      {processing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            <span className="text-[10px] mono uppercase tracking-tight text-white/80">Processing...</span>
+          </div>
         </div>
       )}
       <div

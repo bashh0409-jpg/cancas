@@ -1882,7 +1882,7 @@ type WireType = "line" | "elbow" | "bezier";
 
 function PreferencesFlyout() {
   const [showFlyout, setShowFlyout] = useState(false);
-  const { rightClickMenu, snapToGrid, wireType, setRightClickMenu, setSnapToGrid, setWireType } = useCanvasPreferencesStore();
+  const { rightClickMenu, snapToGrid, wireType, keepOriginalImageOnRemoveBg, setRightClickMenu, setSnapToGrid, setWireType, setKeepOriginalImageOnRemoveBg, syncToServer } = useCanvasPreferencesStore();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
@@ -1991,6 +1991,36 @@ function PreferencesFlyout() {
               <span
                 className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
                   snapToGrid
+                    ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="h-px bg-white/10" />
+
+          {/* Keep original when removing background */}
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+              <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+                Keep original on remove bg
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setKeepOriginalImageOnRemoveBg(!keepOriginalImageOnRemoveBg);
+                syncToServer();
+              }}
+              className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
+                keepOriginalImageOnRemoveBg ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
+                  keepOriginalImageOnRemoveBg
                     ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
                     : "bg-white/40"
                 }`}

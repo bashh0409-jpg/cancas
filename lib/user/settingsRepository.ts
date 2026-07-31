@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type UserSettings = {
   product_updates?: boolean;
   canvas_activity?: boolean;
+  keepOriginalImageOnRemoveBg?: boolean;
   [key: string]: unknown;
 };
 
