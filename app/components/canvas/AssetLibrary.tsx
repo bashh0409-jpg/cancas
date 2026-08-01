@@ -318,7 +318,7 @@ export function AssetLibrary({
         </div>
       )}
       {selectedIndices.size > 0 && (
-        <div className="mb-2">
+        <div className="mt-1">
           <p className="text-[10px] mono uppercase tracking-tight text-white/50">
             {selectedIndices.size} file
             {selectedIndices.size > 1 ? "s" : ""} selected
@@ -327,7 +327,7 @@ export function AssetLibrary({
       )}
       {/* Import selected button */}
       {selectedIndices.size > 0 && (
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-1">
           <button
             type="button"
             onClick={handleImportSelected}
