@@ -16,15 +16,15 @@ export type NoticeConfig = {
  * Dismissed notices are stored in localStorage and won't reappear.
  */
 export const activeNotices: NoticeConfig[] = [
-  {
-    id: "mac-desktop-app",
-    badge: "New",
-    message: "desktop app for Mac comming soon",
-    link: {
-      text: "Update me when available",
-      href: "/#",
-    },
-  },
+ // {
+ //   id: "mac-desktop-app",
+ //   badge: "New update",
+ //   message: "desktop app for Mac coming soon",
+ //   link: {
+ //     text: "Update me when available",
+ //     href: "/#",
+ //   },
+ // },
   // Example — uncomment to show:
   // {
   //   id: "summer-sale",
@@ -35,13 +35,13 @@ export const activeNotices: NoticeConfig[] = [
   //     href: "/billing/checkout",
   //   },
   // },
-  // {
-  //   id: "new-feature",
-  //   badge: "New",
-  //   message: "AI image editing is now live",
-  //   link: {
-  //     text: "Try it",
-  //     href: "/canvas",
-  //   },
-  // },
+   {
+     id: "new-feature",
+     badge: "New update",
+     message: "AI image background removal is here! Try it out.",
+     link: {
+       text: "Learn more",
+       href: "/#",
+     },
+   },
 ];
