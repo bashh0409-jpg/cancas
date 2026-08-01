@@ -317,7 +317,7 @@ export function AccountCard({
         </a>
       </div>
       {/* Bug report */}
-      <div className="flex flex-col px-3 py-2.5">
+      <div className="flex hidden flex-col px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Bug report</span>
           <span>Report any issues you encounter in the app.</span>
