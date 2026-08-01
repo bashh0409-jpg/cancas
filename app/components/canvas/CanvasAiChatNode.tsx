@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Send,
-  X,
-  RotateCcw,
-  ChevronsLeftRightEllipsis,
-} from "lucide-react";
+import { Send, X, RotateCcw, ChevronsLeftRightEllipsis } from "lucide-react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
@@ -13,6 +8,7 @@ import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 
 export type CanvasAiChatNodeData = {
   id: string;
+  sourceNodeId?: string;
   name: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -479,7 +475,10 @@ export function CanvasAiChatNode({
             style={{ minHeight: INPUT_HEIGHT }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <button aria-label="Connect" className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]">
+            <button
+              aria-label="Connect"
+              className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]"
+            >
               <ChevronsLeftRightEllipsis className="w-4 h-4" />
             </button>
             <textarea

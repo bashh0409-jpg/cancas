@@ -36,12 +36,18 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
           const response = await fetch("/api/settings");
           if (!response.ok) return;
           const data = (await response.json()) as {
-            settings?: { keepOriginalImageOnRemoveBg?: boolean };
+            settings?: Partial<CanvasPreferences>;
           };
-          if (data.settings?.keepOriginalImageOnRemoveBg !== undefined) {
+
+          if (data.settings) {
             set({
+              rightClickMenu:
+                data.settings.rightClickMenu ?? get().rightClickMenu,
+              snapToGrid: data.settings.snapToGrid ?? get().snapToGrid,
+              wireType: data.settings.wireType ?? get().wireType,
               keepOriginalImageOnRemoveBg:
-                data.settings.keepOriginalImageOnRemoveBg,
+                data.settings.keepOriginalImageOnRemoveBg ??
+                get().keepOriginalImageOnRemoveBg,
             });
           }
         } catch {
@@ -51,12 +57,23 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
 
       syncToServer: async () => {
         try {
-          const { keepOriginalImageOnRemoveBg } = get();
+          const {
+            rightClickMenu,
+            snapToGrid,
+            wireType,
+            keepOriginalImageOnRemoveBg,
+          } = get();
+
           await fetch("/api/settings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              settings: { keepOriginalImageOnRemoveBg },
+              settings: {
+                rightClickMenu,
+                snapToGrid,
+                wireType,
+                keepOriginalImageOnRemoveBg,
+              },
             }),
           });
         } catch {

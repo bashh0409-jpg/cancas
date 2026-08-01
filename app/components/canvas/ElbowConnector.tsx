@@ -5,29 +5,31 @@ type Point = {
   y: number;
 };
 
+type WireType = "line" | "elbow" | "bezier";
+
 type ElbowConnectorProps = {
   from: Point;
   to: Point;
   fromSize: { width: number; height: number };
   toSize: { width: number; height: number };
+  wireType?: WireType;
   color?: string;
   strokeWidth?: number;
 };
 
 function getElbowPath(from: Point, to: Point): string {
+  const midY = (from.y + to.y) / 2;
+  return `M ${from.x} ${from.y} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${to.y}`;
+}
+
+function getLinePath(from: Point, to: Point): string {
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+}
+
+function getBezierPath(from: Point, to: Point): string {
   const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const absDx = Math.abs(dx);
-  const absDy = Math.abs(dy);
-
-  // Determine if we route right or left from source
-  const fromExitX = from.x;
-  const fromExitY = from.y;
-
-  // Simple vertical-then-horizontal elbow
-  const midY = (fromExitY + to.y) / 2;
-
-  return `M ${fromExitX} ${fromExitY} L ${fromExitX} ${midY} L ${to.x} ${midY} L ${to.x} ${to.y}`;
+  const controlOffsetX = dx * 0.5;
+  return `M ${from.x} ${from.y} C ${from.x + controlOffsetX} ${from.y} ${to.x - controlOffsetX} ${to.y} ${to.x} ${to.y}`;
 }
 
 export function ElbowConnector({
@@ -35,6 +37,7 @@ export function ElbowConnector({
   to,
   fromSize,
   toSize,
+  wireType = "elbow",
   color = "rgba(255,255,255,0.3)",
   strokeWidth = 3,
 }: ElbowConnectorProps) {
@@ -52,10 +55,15 @@ export function ElbowConnector({
     y: from.y + fromSize.height / 2,
   };
 
-  const minX = Math.min(fromCenter.x, toCenter.x) - 160;
-  const minY = Math.min(fromCenter.y, toCenter.y) - 160;
-  const maxX = Math.max(fromCenter.x, toCenter.x) + 160;
-  const maxY = Math.max(fromCenter.y, toCenter.y) + 160;
+  const toEdge = {
+    x: to.x,
+    y: to.y + toSize.height / 2,
+  };
+
+  const minX = Math.min(fromCenter.x, toCenter.x, toEdge.x) - 160;
+  const minY = Math.min(fromCenter.y, toCenter.y, toEdge.y) - 160;
+  const maxX = Math.max(fromCenter.x, toCenter.x, toEdge.x) + 160;
+  const maxY = Math.max(fromCenter.y, toCenter.y, toEdge.y) + 160;
 
   const svgWidth = maxX - minX;
   const svgHeight = maxY - minY;
@@ -64,10 +72,14 @@ export function ElbowConnector({
     return null;
   }
 
-  const path = getElbowPath(
-    { x: fromEdge.x - minX, y: fromEdge.y - minY },
-    { x: toCenter.x - minX, y: to.y - minY },
-  );
+  const sourcePoint = { x: fromEdge.x - minX, y: fromEdge.y - minY };
+  const targetPoint = { x: toEdge.x - minX, y: toEdge.y - minY };
+  const path =
+    wireType === "line"
+      ? getLinePath(sourcePoint, targetPoint)
+      : wireType === "bezier"
+        ? getBezierPath(sourcePoint, targetPoint)
+        : getElbowPath(sourcePoint, targetPoint);
 
   return (
     <svg

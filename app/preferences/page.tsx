@@ -7,7 +7,7 @@ import {
   Workflow,
   ChevronRight,
   MouseRight,
-  Image,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -34,13 +34,17 @@ export default function PreferencesPage() {
     syncFromServer();
   }, [syncFromServer]);
 
-  const handleToggle = (setting: "rightClickMenu" | "snapToGrid" | "keepOriginalImageOnRemoveBg") => {
+  const handleToggle = (
+    setting: "rightClickMenu" | "snapToGrid" | "keepOriginalImageOnRemoveBg",
+  ) => {
     switch (setting) {
       case "rightClickMenu":
         setRightClickMenu(!rightClickMenu);
+        syncToServer();
         break;
       case "snapToGrid":
         setSnapToGrid(!snapToGrid);
+        syncToServer();
         break;
       case "keepOriginalImageOnRemoveBg":
         setKeepOriginalImageOnRemoveBg(!keepOriginalImageOnRemoveBg);
@@ -100,7 +104,7 @@ export default function PreferencesPage() {
           {/* Keep original when removing background */}
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-2">
-              <Image className="w-4 h-4 text-white/60 stroke-[1.5]" />
+              <ImageIcon className="w-4 h-4 text-white/60 stroke-[1.5]" />
               <span className="text-xs mono uppercase tracking-tight text-white">
                 Keep original when removing background
               </span>
@@ -112,7 +116,11 @@ export default function PreferencesPage() {
           </div>
 
           {/* Wire Type — flyout */}
-          <WireTypeFlyout value={wireType} onChange={setWireType} />
+          <WireTypeFlyout
+            value={wireType}
+            onChange={setWireType}
+            syncToServer={syncToServer}
+          />
         </div>
       </div>
     </div>
@@ -147,9 +155,11 @@ function ToggleSwitch({
 function WireTypeFlyout({
   value,
   onChange,
+  syncToServer,
 }: {
   value: WireType;
   onChange: (type: WireType) => void;
+  syncToServer: () => Promise<void>;
 }) {
   const [showFlyout, setShowFlyout] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -236,6 +246,7 @@ function WireTypeFlyout({
                   type="button"
                   onClick={() => {
                     onChange(type);
+                    syncToServer();
                     setShowFlyout(false);
                   }}
                   className={`flex w-full items-center gap-2 px-3 py-2 text-xs mono uppercase tracking-tight transition cursor-pointer ${

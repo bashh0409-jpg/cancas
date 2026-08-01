@@ -4,7 +4,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 export type CanvasTranscriptionNodeData = {
   id: string;
-  sourceNodeId: string;
+  sourceNodeId?: string;
   text: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -23,6 +23,9 @@ type CanvasTranscriptionNodeProps = {
   node: CanvasTranscriptionNodeData;
   isDragging: boolean;
   isSelected: boolean;
+  hasInput: boolean;
+  onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onDisconnectInput: () => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
@@ -33,6 +36,9 @@ export function CanvasTranscriptionNode({
   node,
   isDragging,
   isSelected,
+  hasInput,
+  onContextMenu,
+  onDisconnectInput,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -41,9 +47,9 @@ export function CanvasTranscriptionNode({
   return (
     <div
       className={[
-        "absolute flex flex-col overflow-hidden rounded px-3.5 py-3 shadow-lg select-none",
+        "absolute flex flex-col overflow-visible rounded px-3.5 py-3 shadow-lg select-none",
         isDragging ? "cursor-grabbing" : "cursor-grab",
-        isSelected 
+        isSelected,
       ].join(" ")}
       style={{
         left: node.position.x,
@@ -56,12 +62,24 @@ export function CanvasTranscriptionNode({
         fontFamily: node.style.fontFamily,
         fontSize: node.style.fontSize,
       }}
+      onContextMenu={onContextMenu}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
     >
-      <div className="mb-1.5 text-xs mono tracking-tight opacity-50">
+      {hasInput && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDisconnectInput();
+          }}
+          className="absolute left-[-8px] top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border border-white/30 bg-white/10 transition hover:bg-white/30"
+          aria-label="Disconnect transcription input"
+        />
+      )}
+      <div className="mb-1.5 text-xs mono uppercase tracking-tight font-medium  opacity-40">
         Transcription
       </div>
       <div className="flex-1 overflow-y-auto whitespace-pre-wrap break-words">

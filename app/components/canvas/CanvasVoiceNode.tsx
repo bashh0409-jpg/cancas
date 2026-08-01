@@ -1,9 +1,7 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent } from "react";
-import {
-  VoiceNoteCard,
-} from "./VoiceNoteCard";
+import { VoiceNoteCard } from "./VoiceNoteCard";
 import type { VoiceNoteMenuAction } from "./VoiceNoteOptionsMenu";
 
 type CanvasVoiceNodeData = {
@@ -21,6 +19,8 @@ type CanvasVoiceNodeProps = {
   isDragging: boolean;
   isPlaying: boolean;
   isMenuOpen: boolean;
+  hasOutput: boolean;
+  onDisconnectOutputs: () => void;
   playbackMs: number;
   onPointerCancel: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
@@ -41,6 +41,8 @@ export function CanvasVoiceNode({
   isDragging,
   isPlaying,
   isMenuOpen,
+  hasOutput,
+  onDisconnectOutputs,
   playbackMs,
   onPointerCancel,
   onPointerDown,
@@ -71,6 +73,17 @@ export function CanvasVoiceNode({
         zIndex: node.zIndex,
       }}
     >
+      {hasOutput && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDisconnectOutputs();
+          }}
+          className="absolute right-[-8px] top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border border-white/30 bg-white/10 transition hover:bg-white/30"
+          aria-label="Disconnect voice outputs"
+        />
+      )}
       <VoiceNoteCard
         audioDataUrl={node.audioDataUrl}
         durationMs={node.durationMs}

@@ -231,9 +231,7 @@ export function AssetLibrary({
       {isLoading && (
         <div className="flex flex-col mono uppercase tracking-tight items-center justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-white/40" />
-          <span className="text-xs text-white/60 mt-4">
-            Loading library...
-          </span>
+          <span className="text-xs text-white/60 mt-4">Loading library...</span>
         </div>
       )}
 
@@ -253,14 +251,6 @@ export function AssetLibrary({
       {/* Assets grid */}
       {!isLoading && assets.length > 0 && (
         <div className="flex-1 overflow-y-auto scrollbar-hidden">
-          {selectedIndices.size > 0 && (
-            <div className="mb-2">
-              <p className="text-[10px] mono uppercase tracking-tight text-white/50">
-                {selectedIndices.size} file
-                {selectedIndices.size > 1 ? "s" : ""} selected
-              </p>
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-2">
             {assets.map((asset, index) => (
               <button
@@ -292,7 +282,10 @@ export function AssetLibrary({
                   />
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center gap-1">
-                    <FileText className="h-6 w-6 text-white/30" strokeWidth={1.5} />
+                    <FileText
+                      className="h-6 w-6 text-white/30"
+                      strokeWidth={1.5}
+                    />
                     <span className="text-[10px] uppercase tracking-tight text-white/50 mono">
                       {asset.file_type}
                     </span>
@@ -324,7 +317,14 @@ export function AssetLibrary({
           </div>
         </div>
       )}
-
+      {selectedIndices.size > 0 && (
+        <div className="mb-2">
+          <p className="text-[10px] mono uppercase tracking-tight text-white/50">
+            {selectedIndices.size} file
+            {selectedIndices.size > 1 ? "s" : ""} selected
+          </p>
+        </div>
+      )}
       {/* Import selected button */}
       {selectedIndices.size > 0 && (
         <div className="mt-auto pt-3">

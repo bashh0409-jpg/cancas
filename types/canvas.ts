@@ -66,6 +66,7 @@ export type CanvasAiChatMessage = {
 
 export type CanvasAiChatNode = {
   id: string;
+  sourceNodeId?: string;
   name: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -83,7 +84,7 @@ export type CanvasAiChatNode = {
 
 export type CanvasTranscriptionNode = {
   id: string;
-  sourceNodeId: string; // ID of the voice node this transcription came from
+  sourceNodeId?: string; // ID of the voice node this transcription came from
   text: string;
   position: { x: number; y: number };
   size: { width: number; height: number };

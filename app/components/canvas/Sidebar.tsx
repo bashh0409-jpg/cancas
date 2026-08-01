@@ -15,23 +15,15 @@ import {
   ZoomIn,
   ZoomOut,
   Cable,
-  PlugZap,MouseRight,
+  MouseRight,
   Loader2,
-  ChevronsLeftRightEllipsis,
-  ArrowLeft,
-  Unplug,
-  Plus,
   ImageIcon,
   Globe,
   Volume2,
   FileText,
-  Keyboard,
-  ExternalLink,
   FolderOpen,
   Minus,
   Ellipsis,
-  ChevronsRight,
-  ChevronRight,
   Workflow,
 } from "lucide-react";
 
@@ -117,7 +109,7 @@ const CanvasSwitcherFlyout = ({
     >
       <button
         type="button"
-        className="text-[11px] px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white/70 transition hover:text-white"
+        className="text-[11px] font-medium  px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white transition hover:text-white"
       >
         Switch canvas
       </button>
@@ -319,7 +311,7 @@ const CanvasSwitcherOverlay = ({
               new CustomEvent(SIDEBAR_PANEL_EVENT, { detail: "shortcuts" }),
             );
           }}
-          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white/70 transition hover:text-white flex items-center gap-2"
+          className="text-[11px] w-full font-medium  p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white transition hover:text-white flex items-center gap-2"
         >
           Shortcuts
         </button>
@@ -330,7 +322,7 @@ const CanvasSwitcherOverlay = ({
       <div className="border-t w-full border-white/10 px-3 py-1">
         <a
           href="/home"
-          className="text-[11px] w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white/70 transition hover:text-white flex items-center gap-2"
+          className="text-[11px] font-medium  w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white transition hover:text-white flex items-center gap-2"
         >
           Back to files
         </a>
@@ -437,8 +429,8 @@ const ToolsPanel = ({
   onGridSettingsChange,
 }: {
   gridSettings: GridControlsValue;
-    onClose: () => void;
-  
+  onClose: () => void;
+
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
 }) => {
   return (
@@ -469,7 +461,6 @@ const ToolsPanel = ({
               }
             />
           </div>
-       
 
           {gridSettings.enabled && (
             <>
@@ -1608,6 +1599,12 @@ export const Sidebar = ({
   const prevPanelRef = useRef<PanelType>(null);
   const canvasSwitcherRef = useRef<HTMLDivElement>(null);
 
+  const { syncFromServer } = useCanvasPreferencesStore();
+
+  useEffect(() => {
+    syncFromServer();
+  }, [syncFromServer]);
+
   useEffect(() => {
     if (!showCanvasOverlay) return;
 
@@ -1882,7 +1879,17 @@ type WireType = "line" | "elbow" | "bezier";
 
 function PreferencesFlyout() {
   const [showFlyout, setShowFlyout] = useState(false);
-  const { rightClickMenu, snapToGrid, wireType, keepOriginalImageOnRemoveBg, setRightClickMenu, setSnapToGrid, setWireType, setKeepOriginalImageOnRemoveBg, syncToServer } = useCanvasPreferencesStore();
+  const {
+    rightClickMenu,
+    snapToGrid,
+    wireType,
+    keepOriginalImageOnRemoveBg,
+    setRightClickMenu,
+    setSnapToGrid,
+    setWireType,
+    setKeepOriginalImageOnRemoveBg,
+    syncToServer,
+  } = useCanvasPreferencesStore();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
@@ -1936,7 +1943,7 @@ function PreferencesFlyout() {
     >
       <button
         type="button"
-        className="text-[11px] flex justify-between w-full p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white/70 transition hover:text-white items-center"
+        className="text-[11px] flex justify-between w-full p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white font-medium transition hover:text-white items-center"
       >
         Preferences
       </button>
@@ -1957,6 +1964,7 @@ function PreferencesFlyout() {
               onClick={(e) => {
                 e.stopPropagation();
                 setRightClickMenu(!rightClickMenu);
+                syncToServer();
               }}
               className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
                 rightClickMenu ? "lime" : "bg-white/15"
@@ -1983,6 +1991,7 @@ function PreferencesFlyout() {
               onClick={(e) => {
                 e.stopPropagation();
                 setSnapToGrid(!snapToGrid);
+                syncToServer();
               }}
               className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
                 snapToGrid ? "lime" : "bg-white/15"
@@ -2049,6 +2058,7 @@ function PreferencesFlyout() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setWireType(type);
+                      syncToServer();
                     }}
                     className={`flex items-center gap-1 px-2 py-1 rounded-xs text-[10px] mono uppercase tracking-tight transition cursor-pointer ${
                       wireType === type
@@ -2077,7 +2087,7 @@ function CreateNewFileButton() {
       <button
         type="submit"
         disabled={pending}
-        className="text-[11px] flex w-full justify-left p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white/70 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-[11px] flex w-full justify-left font-medium  p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Creating new file…" : "Create new file"}
       </button>

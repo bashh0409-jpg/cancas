@@ -151,7 +151,7 @@ export function AccountCard({
       {/* User info header */}
       <div className="px-3 py-3">
         <div className="flex items-center gap-2.5">
-          <div className=" flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded">
+          <div className=" flex h-7 mono uppercase w-7 shrink-0 items-center justify-center overflow-hidden rounded">
             {photoUrl ? (
               <Image
                 width={96}
@@ -169,7 +169,7 @@ export function AccountCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate capitalize text-xs font-medium leading-tight text-white">
+            <p className="truncate mono capitalize uppercase text-[11px] leading-tight text-white">
               {lastName && lastName !== "User"
                 ? `${firstName} ${lastName}`
                 : firstName}

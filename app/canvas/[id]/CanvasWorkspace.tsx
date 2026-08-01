@@ -28,6 +28,7 @@ import { ImageSelectionArrangeBar } from "@/app/components/canvas/ImageSelection
 import type { VoiceNoteMenuAction } from "@/app/components/canvas/VoiceNoteOptionsMenu";
 import type { ResizeCorner } from "@/app/components/canvas/NodeResizeHandles";
 import { useLayersStore, type CanvasLayer } from "@/lib/canvas/layersStore";
+import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
 import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
 import {
@@ -78,12 +79,12 @@ import {
 } from "@/app/components/canvas/CanvasTranscriptionNode";
 import { ElbowConnector } from "@/app/components/canvas/ElbowConnector";
 import { CanvasContextMenu } from "@/app/components/canvas/CanvasContextMenu";
+import { TranscriptionContextMenu } from "@/app/components/canvas/TranscriptionContextMenu";
 import {
   ImageContextMenu,
   type ImageMenuAction,
 } from "@/app/components/canvas/ImageContextMenu";
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
-import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import { showToast } from "@/app/components/home/Toast";
 
 type Viewport = {
@@ -515,6 +516,9 @@ export default function CanvasWorkspace({
   const aiChatNodesRef = useRef<CanvasAiChatNodeData[]>(
     initialContent.aiChatNodes,
   );
+  const transcriptionNodesRef = useRef<CanvasTranscriptionNodeData[]>(
+    initialContent.transcriptionNodes ?? [],
+  );
   const imageDragRef = useRef<ImageDragState | null>(null);
   const imageResizeRef = useRef<NodeResizeState | null>(null);
   const webDragRef = useRef<WebDragState | null>(null);
@@ -545,6 +549,7 @@ export default function CanvasWorkspace({
   const [gridColor, setGridColor] = useState(initialContent.gridColor);
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
   const [gridLineType, setGridLineType] = useState(initialContent.gridLineType);
+  const wireType = useCanvasPreferencesStore((state) => state.wireType);
   const handleResetGrid = () => {
     setBackgroundColor(initialContent.backgroundColor);
     setGridColor(initialContent.gridColor);
@@ -596,6 +601,27 @@ export default function CanvasWorkspace({
   const [transcriptionNodes, setTranscriptionNodes] = useState<
     CanvasTranscriptionNodeData[]
   >(initialContent.transcriptionNodes ?? []);
+  const disconnectTranscriptionInput = useCallback(
+    (transcriptionNodeId: string) => {
+      setTranscriptionNodes((current) =>
+        current.map((entry) =>
+          entry.id === transcriptionNodeId
+            ? { ...entry, sourceNodeId: undefined }
+            : entry,
+        ),
+      );
+    },
+    [],
+  );
+  const disconnectVoiceOutputs = useCallback((voiceNodeId: string) => {
+    setTranscriptionNodes((current) =>
+      current.map((entry) =>
+        entry.sourceNodeId === voiceNodeId
+          ? { ...entry, sourceNodeId: undefined }
+          : entry,
+      ),
+    );
+  }, []);
   const [pendingVoiceRecording, setPendingVoiceRecording] =
     useState<VoiceNoteRecordedDetail | null>(null);
   const [openVoiceMenuNodeId, setOpenVoiceMenuNodeId] = useState<string | null>(
@@ -623,6 +649,11 @@ export default function CanvasWorkspace({
   const [isSavingCanvas, setIsSavingCanvas] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [transcriptionContextMenu, setTranscriptionContextMenu] = useState<{
+    nodeId: string;
     x: number;
     y: number;
   } | null>(null);
@@ -1147,6 +1178,10 @@ export default function CanvasWorkspace({
   }, [aiChatNodes]);
 
   useEffect(() => {
+    transcriptionNodesRef.current = transcriptionNodes;
+  }, [transcriptionNodes]);
+
+  useEffect(() => {
     function handleVoiceNoteRecorded(event: Event) {
       const detail = (event as CustomEvent<VoiceNoteRecordedDetail>).detail;
 
@@ -1354,7 +1389,9 @@ export default function CanvasWorkspace({
   // Handle library imports — assets come with public URLs already stored in Supabase
   useEffect(() => {
     function handleLibraryImport(event: Event) {
-      const customEvent = event as CustomEvent<{ libraryAssets: LibraryAsset[] }>;
+      const customEvent = event as CustomEvent<{
+        libraryAssets: LibraryAsset[];
+      }>;
       const assets = customEvent.detail?.libraryAssets ?? [];
 
       if (!assets.length || !isClientReady) {
@@ -1412,9 +1449,7 @@ export default function CanvasWorkspace({
           const fittedSize = fitImageSize(img.naturalWidth, img.naturalHeight);
           setImageNodes((current) =>
             current.map((node) =>
-              node.id === nodeId
-                ? { ...node, size: fittedSize }
-                : node,
+              node.id === nodeId ? { ...node, size: fittedSize } : node,
             ),
           );
         };
@@ -1431,7 +1466,10 @@ export default function CanvasWorkspace({
     window.addEventListener("canvasai:library-import", handleLibraryImport);
 
     return () => {
-      window.removeEventListener("canvasai:library-import", handleLibraryImport);
+      window.removeEventListener(
+        "canvasai:library-import",
+        handleLibraryImport,
+      );
     };
   }, [isClientReady]);
 
@@ -3502,6 +3540,20 @@ export default function CanvasWorkspace({
     }
   }
 
+  function handleTranscriptionContextMenu(
+    event: React.MouseEvent<HTMLDivElement>,
+    node: CanvasTranscriptionNodeData,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu(null);
+    setTranscriptionContextMenu({
+      nodeId: node.id,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }
+
   function handleImageContextMenu(
     event: React.MouseEvent<HTMLDivElement>,
     node: ImageCanvasNode,
@@ -3554,7 +3606,8 @@ export default function CanvasWorkspace({
 
       void (async () => {
         try {
-          const keepOriginal = useCanvasPreferencesStore.getState().keepOriginalImageOnRemoveBg;
+          const keepOriginal =
+            useCanvasPreferencesStore.getState().keepOriginalImageOnRemoveBg;
 
           // Fetch the image blob
           const response = await fetch(node.url);
@@ -3582,8 +3635,7 @@ export default function CanvasWorkspace({
               type: "error",
               title: "Remove Background Failed",
               message:
-                errorData?.error ??
-                "Something went wrong. Please try again.",
+                errorData?.error ?? "Something went wrong. Please try again.",
             });
             setProcessingRemoveBgNodeIds((current) => {
               const next = new Set(current);
@@ -3596,7 +3648,8 @@ export default function CanvasWorkspace({
           // Get the processed image as a blob and create a new blob URL
           const processedBlob = await bgResponse.blob();
           const processedUrl = URL.createObjectURL(processedBlob);
-          const processedFileName = node.fileName.replace(/\.[^.]+$/, "") + "-no-bg.png";
+          const processedFileName =
+            node.fileName.replace(/\.[^.]+$/, "") + "-no-bg.png";
           let targetNodeId: string;
 
           if (keepOriginal) {
@@ -3704,7 +3757,12 @@ export default function CanvasWorkspace({
   }
 
   const handleUnsplashSelect = useCallback(
-    async (image: { id: string; urls: { regular: string; full: string }; width: number; height: number }) => {
+    async (image: {
+      id: string;
+      urls: { regular: string; full: string };
+      width: number;
+      height: number;
+    }) => {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect || !isClientReady) return;
 
@@ -3729,7 +3787,10 @@ export default function CanvasWorkspace({
         const fileName = `unsplash-${image.id}.jpg`;
 
         const nodeId = crypto.randomUUID();
-        pendingUploadFilesRef.current.set(nodeId, { file: new File([blob], fileName, { type: "image/jpeg" }), blobUrl });
+        pendingUploadFilesRef.current.set(nodeId, {
+          file: new File([blob], fileName, { type: "image/jpeg" }),
+          blobUrl,
+        });
         pendingUploadIdsRef.current.add(nodeId);
 
         setImageNodes((current) => [
@@ -3771,22 +3832,97 @@ export default function CanvasWorkspace({
     saveDelayMsRef.current = 0;
   }
 
+  function handleDeleteTranscriptionNode(nodeId: string) {
+    setTranscriptionNodes((current) =>
+      current.filter((node) => node.id !== nodeId),
+    );
+    saveDelayMsRef.current = 0;
+  }
+
+  async function handleTranscriptionMenuAction(
+    nodeId: string,
+    action: "delete" | "ask-ai" | "summarize",
+  ) {
+    const node = transcriptionNodesRef.current.find(
+      (entry) => entry.id === nodeId,
+    );
+    if (!node) {
+      setTranscriptionContextMenu(null);
+      return;
+    }
+
+    if (action === "delete") {
+      handleDeleteTranscriptionNode(nodeId);
+      setTranscriptionContextMenu(null);
+      return;
+    }
+
+    const prompt =
+      action === "summarize"
+        ? `Summarize the following transcription in a concise paragraph:\n\n${node.text}`
+        : `Answer questions about the following transcription. If the user asks for details, be helpful and concise:\n\n${node.text}`;
+
+    const chatId = crypto.randomUUID();
+    const topZIndex = Math.max(
+      0,
+      ...imageNodesRef.current.map((n) => n.zIndex),
+      ...webNodesRef.current.map((n) => n.zIndex),
+      ...voiceNodesRef.current.map((n) => n.zIndex),
+      ...textNodesRef.current.map((n) => n.zIndex),
+      ...aiChatNodesRef.current.map((n) => n.zIndex),
+    );
+
+    const chatNode: CanvasAiChatNodeData = {
+      id: chatId,
+      name:
+        action === "summarize" ? "Transcription Summary" : "Transcription Q&A",
+      position: {
+        x: node.position.x + node.size.width + 24,
+        y: node.position.y,
+      },
+      size: {
+        width: 380,
+        height: 320,
+      },
+      zIndex: topZIndex + 1,
+      style: {
+        backgroundColor: "#ffffff",
+        color: "#171717",
+        fontFamily: "var(--font-helvetica-neue), Arial, sans-serif",
+        fontSize: 13,
+      },
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          content: prompt,
+        },
+      ],
+    };
+
+    setAiChatNodes((current) => [...current, chatNode]);
+    setSelectedImageIds([]);
+    setSelectedTextNodeId(null);
+    setEditingTextNodeId(null);
+    setActiveWebNodeId(null);
+    saveDelayMsRef.current = 0;
+    setTranscriptionContextMenu(null);
+  }
+
   function handleVoiceNodeMenuAction(
     nodeId: string,
     action: VoiceNoteMenuAction,
   ) {
+    const voiceNode = voiceNodesRef.current.find((n) => n.id === nodeId);
+    if (!voiceNode) return;
+
     if (action === "delete") {
       handleDeleteVoiceNode(nodeId);
       setOpenVoiceMenuNodeId(null);
       return;
     }
 
-    setOpenVoiceMenuNodeId(null);
-
     if (action === "transcribe") {
-      const voiceNode = voiceNodesRef.current.find((n) => n.id === nodeId);
-      if (!voiceNode) return;
-
       const topZIndex = Math.max(
         0,
         ...imageNodesRef.current.map((n) => n.zIndex),
@@ -3797,7 +3933,6 @@ export default function CanvasWorkspace({
       );
       const transcriptionId = crypto.randomUUID();
 
-      // Create a placeholder node immediately
       const placeholderNode: CanvasTranscriptionNodeData = {
         id: transcriptionId,
         sourceNodeId: nodeId,
@@ -3819,7 +3954,6 @@ export default function CanvasWorkspace({
       setTranscriptionNodes((current) => [...current, placeholderNode]);
       saveDelayMsRef.current = 0;
 
-      // Send audio to the transcription API
       void (async () => {
         try {
           const audioDataUrl = voiceNode.audioDataUrl;
@@ -3827,7 +3961,6 @@ export default function CanvasWorkspace({
           let mimeType = "audio/webm";
 
           if (audioDataUrl.startsWith("blob:")) {
-            // Blob URL — fetch it and convert to base64
             const blobResponse = await fetch(audioDataUrl);
             const blob = await blobResponse.blob();
             mimeType = blob.type || "audio/webm";
@@ -3838,7 +3971,6 @@ export default function CanvasWorkspace({
               .join("");
             base64Audio = btoa(binary);
           } else {
-            // Data URL — extract mime type and base64
             const dataUrlMatch = audioDataUrl.match(
               /^data:(audio\/[^;]+);base64,(.+)$/,
             );
@@ -3883,7 +4015,9 @@ export default function CanvasWorkspace({
               node.id === transcriptionId
                 ? {
                     ...node,
-                    text: `[Transcription failed: ${err instanceof Error ? err.message : "Unknown error"}]`,
+                    text: `[Transcription failed: ${
+                      err instanceof Error ? err.message : "Unknown error"
+                    }]`,
                   }
                 : node,
             ),
@@ -3892,11 +4026,15 @@ export default function CanvasWorkspace({
         }
       })();
 
+      setOpenVoiceMenuNodeId(null);
       return;
     }
 
-    // "ask-ai" action
-    window.alert("Ask AI for voice notes is coming soon.");
+    if (action === "ask-ai") {
+      window.alert("Ask AI for voice notes is coming soon.");
+      setOpenVoiceMenuNodeId(null);
+      return;
+    }
   }
 
   return (
@@ -4113,7 +4251,12 @@ export default function CanvasWorkspace({
               key={node.id}
               isDragging={draggingTextNodeId === node.id}
               isSelected={selectedTextNodeId === node.id}
+              hasInput={Boolean(node.sourceNodeId)}
               node={node}
+              onContextMenu={(event) =>
+                handleTranscriptionContextMenu(event, node)
+              }
+              onDisconnectInput={() => disconnectTranscriptionInput(node.id)}
               onPointerCancel={handleTextPointerUp}
               onPointerDown={(event) => {
                 if (node.locked ?? false) return;
@@ -4157,6 +4300,30 @@ export default function CanvasWorkspace({
             />
           ))}
 
+        {aiChatNodes
+          .filter((node) => node.sourceNodeId && node.visible !== false)
+          .map((node) => {
+            const sourceTranscription = transcriptionNodesRef.current.find(
+              (entry) => entry.id === node.sourceNodeId,
+            );
+            if (!sourceTranscription) return null;
+            return (
+              <ElbowConnector
+                key={`connector-ai-${node.id}`}
+                from={{
+                  x: sourceTranscription.position.x,
+                  y: sourceTranscription.position.y,
+                }}
+                to={{ x: node.position.x, y: node.position.y }}
+                fromSize={sourceTranscription.size}
+                toSize={node.size}
+                wireType={wireType}
+                color="rgba(255,255,255,0.2)"
+                strokeWidth={1.8}
+              />
+            );
+          })}
+
         {/* Elbow connectors between voice nodes and transcription nodes */}
         {transcriptionNodes
           .filter((node) => {
@@ -4176,6 +4343,7 @@ export default function CanvasWorkspace({
                 to={{ x: node.position.x, y: node.position.y }}
                 fromSize={sourceVoice.size}
                 toSize={node.size}
+                wireType={wireType}
                 color="rgba(255,255,255,0.2)"
                 strokeWidth={1.8}
               />
@@ -4212,6 +4380,10 @@ export default function CanvasWorkspace({
                 )
               }
               onTogglePlayback={() => toggleVoicePlayback(node.id)}
+              hasOutput={transcriptionNodes.some(
+                (entry) => entry.sourceNodeId === node.id,
+              )}
+              onDisconnectOutputs={() => disconnectVoiceOutputs(node.id)}
             />
           ))}
       </div>
@@ -4344,6 +4516,20 @@ export default function CanvasWorkspace({
           y={imageContextMenu.y}
           onAction={handleImageMenuAction}
           onClose={() => setImageContextMenu(null)}
+        />
+      )}
+
+      {transcriptionContextMenu && (
+        <TranscriptionContextMenu
+          x={transcriptionContextMenu.x}
+          y={transcriptionContextMenu.y}
+          onAction={(action) =>
+            handleTranscriptionMenuAction(
+              transcriptionContextMenu.nodeId,
+              action,
+            )
+          }
+          onClose={() => setTranscriptionContextMenu(null)}
         />
       )}
 
