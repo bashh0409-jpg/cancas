@@ -60,11 +60,11 @@ const page = async () => {
             </a>
           </div>
         </div>
-        <div className=" text-white overflow-x-hidden h-screen w-full flex items-center justify-center">
+        <div className=" text-white  overflow-x-hidden h-screen w-full flex items-center justify-center">
           <RotatingImageOrbit
-            centerLine1="Start"
-            centerLine2="Reflow"
-            centerLine3="Now."
+            centerLine1="Start "
+            centerLine2="Using Reflow"
+            centerLine3="Now"
             duration={40}
             images={[
               {

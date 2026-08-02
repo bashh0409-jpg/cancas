@@ -121,15 +121,14 @@ const DEFAULT_IMAGES: OrbitImage[] = [
 ];
 
 const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
-  (
-    {
-      images = DEFAULT_IMAGES,
-      centerLine1 = "Start",
-      centerLine2 = "Reflow",
-      centerLine3 = "Now.",
-      duration = 40,
-      className = "",
-    },
+  ({
+    images = DEFAULT_IMAGES,
+    centerLine1 = "START",
+    centerLine2 = "DESIGNING",
+    centerLine3 = "NOW.",
+    duration = 40,
+    className,
+  },
     ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -231,7 +230,7 @@ const RotatingImageOrbit = forwardRef<HTMLDivElement, RotatingImageOrbitProps>(
         </div>
 
         {/* Center label sits outside the ring entirely, so it never inherits the spin. */}
-        <div className="pointer-events-none relative z-10 w-60 text-center font-sans text-[clamp(28px,5vw,56px)] font-medium leading-[1.05] text-white">
+        <div className="pointer-events-none  grotesk relative z-10 w-80 text-center font-sans tracking-tight text-[clamp(28px,5vw,46px)] font-thin leading-[0.9] text-white/80">
           <div className="text-left">{centerLine1}</div>
           <div className="text-center">{centerLine2}</div>
           <div className="text-right">{centerLine3}</div>
