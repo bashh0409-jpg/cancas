@@ -665,6 +665,12 @@ export default function CanvasWorkspace({
   const [processingRemoveBgNodeIds, setProcessingRemoveBgNodeIds] = useState<
     Set<string>
   >(new Set());
+  const [processingUpscaleNodeIds, setProcessingUpscaleNodeIds] = useState<
+    Set<string>
+  >(new Set());
+  const [upscaleErrorByNodeId, setUpscaleErrorByNodeId] = useState<
+    Record<string, string>
+  >({});
   const [showUnsplash, setShowUnsplash] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
@@ -3749,8 +3755,138 @@ export default function CanvasWorkspace({
       // TODO: Open AI edit window / prompt for editing instructions
       console.log("Edit with AI triggered for node:", nodeId);
     } else if (action === "upscale") {
-      // TODO: Implement upscale via /api/ai/image/upscale
-      console.log("Upscale triggered for node:", nodeId);
+      // Clear any previous error and mark node as processing
+      setUpscaleErrorByNodeId((current) => {
+        const next = { ...current };
+        delete next[nodeId];
+        return next;
+      });
+      setProcessingUpscaleNodeIds((current) => new Set(current).add(nodeId));
+
+      void (async () => {
+        try {
+          // Fetch the image blob
+          const response = await fetch(node.url);
+          const blob = await response.blob();
+
+          // Determine the natural image dimensions to compute output size
+          const naturalSize = await getNaturalImageSize(node.url);
+          const scaleFactor = 2; // 2x upscale
+
+          // Create form data with the image
+          const formData = new FormData();
+          formData.append("image", blob, node.fileName);
+          formData.append(
+            "width",
+            String(naturalSize.width > 0 ? naturalSize.width : 320),
+          );
+          formData.append(
+            "height",
+            String(naturalSize.height > 0 ? naturalSize.height : 240),
+          );
+          formData.append("scale", String(scaleFactor));
+
+          // Call the upscale API
+          const upscaleResponse = await fetch("/api/ai/upscale", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!upscaleResponse.ok) {
+            const errorData = (await upscaleResponse.json().catch(() => null)) as {
+              error?: string;
+            } | null;
+            console.error(
+              "Upscale failed:",
+              errorData ?? upscaleResponse.statusText,
+            );
+            const errorMessage =
+              errorData?.error ?? "Something went wrong. Please try again.";
+            setUpscaleErrorByNodeId((current) => ({
+              ...current,
+              [nodeId]: errorMessage,
+            }));
+            setProcessingUpscaleNodeIds((current) => {
+              const next = new Set(current);
+              next.delete(nodeId);
+              return next;
+            });
+            return;
+          }
+
+          // Get the upscaled image as a blob and create a new blob URL
+          const upscaledBlob = await upscaleResponse.blob();
+          const upscaledUrl = URL.createObjectURL(upscaledBlob);
+          const upscaledFileName =
+            node.fileName.replace(/\.[^.]+$/, "") + "-upscaled.png";
+
+          // Create a new node with the upscaled image, keeping the original intact
+          const topZIndex = Math.max(
+            0,
+            ...imageNodesRef.current.map((n) => n.zIndex),
+          );
+          const targetNodeId = crypto.randomUUID();
+          setImageNodes((current) => [
+            ...current,
+            {
+              id: targetNodeId,
+              fileName: upscaledFileName,
+              url: upscaledUrl,
+              position: {
+                x: node.position.x + node.size.width + 24,
+                y: node.position.y,
+              },
+              size: { ...node.size },
+              zIndex: topZIndex + 1,
+            },
+          ]);
+          setSelectedImageIds([targetNodeId]);
+
+          // Upload the upscaled image to Supabase storage
+          const upscaledFile = new File([upscaledBlob], upscaledFileName, {
+            type: "image/png",
+          });
+
+          pendingUploadFilesRef.current.set(targetNodeId, {
+            file: upscaledFile,
+            blobUrl: upscaledUrl,
+          });
+          pendingUploadIdsRef.current.add(targetNodeId);
+
+          try {
+            await savePendingUploadFile(canvasId, targetNodeId, upscaledFile);
+          } catch {
+            // Upload can still proceed from memory.
+          }
+
+          canvasImageUploadPool.enqueue(() =>
+            syncImageToStorage(targetNodeId, upscaledFile, upscaledUrl),
+          );
+
+          saveDelayMsRef.current = 0;
+          showToast({
+            type: "success",
+            title: "Upscale Complete",
+            message: `Image upscaled ${scaleFactor}x with Topaz Gigapixel.`,
+          });
+        } catch (error) {
+          console.error("Upscale error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Something went wrong. Please try again.";
+          setUpscaleErrorByNodeId((current) => ({
+            ...current,
+            [nodeId]: errorMessage,
+          }));
+        } finally {
+          setProcessingUpscaleNodeIds((current) => {
+            const next = new Set(current);
+            next.delete(nodeId);
+            return next;
+          });
+        }
+      })();
     }
 
     setImageContextMenu(null);
@@ -4093,9 +4229,20 @@ export default function CanvasWorkspace({
                 isResizing={resizingImageNodeId === node.id}
                 isSelected={isSelected}
                 node={node}
-                processing={processingRemoveBgNodeIds.has(node.id)}
+                processing={
+                  processingRemoveBgNodeIds.has(node.id) ||
+                  processingUpscaleNodeIds.has(node.id)
+                }
+                error={upscaleErrorByNodeId[node.id] ?? null}
                 showResizeHandles={showResizeHandles}
                 onContextMenu={(event) => handleImageContextMenu(event, node)}
+                onDismissError={() =>
+                  setUpscaleErrorByNodeId((current) => {
+                    const next = { ...current };
+                    delete next[node.id];
+                    return next;
+                  })
+                }
                 onImageSettled={() => handleInitialImageSettled(node.id)}
                 onPointerCancel={handleImagePointerUp}
                 onPointerDown={(event) => handleImagePointerDown(event, node)}

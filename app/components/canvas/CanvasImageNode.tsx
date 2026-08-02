@@ -23,11 +23,13 @@ type CanvasImageNodeProps = {
   isDragging: boolean;
   isResizing: boolean;
   processing?: boolean;
+  error?: string | null;
   onPointerCancel: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onImageSettled: () => void;
+  onDismissError?: () => void;
   onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onResizePointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onResizePointerDown: (
@@ -46,11 +48,13 @@ export function CanvasImageNode({
   isDragging,
   isResizing,
   processing = false,
+  error = null,
   onPointerCancel,
   onPointerDown,
   onPointerMove,
   onPointerUp,
   onImageSettled,
+  onDismissError,
   onContextMenu,
   onResizePointerCancel,
   onResizePointerDown,
@@ -100,6 +104,22 @@ export function CanvasImageNode({
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
             <span className="text-[10px] mono uppercase tracking-tight text-white/80">Processing...</span>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div
+          className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-black/60"
+          onClick={(event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            onDismissError?.();
+          }}
+        >
+          <div className="flex max-w-[90%] flex-col items-center gap-2 px-3 text-center">
+            <span className="text-[10px] mono uppercase tracking-tight text-red-400">Upscale Failed</span>
+            <span className="text-[10px] mono uppercase tracking-tight text-white/80 leading-snug">{error}</span>
+            <span className="text-[9px] mono uppercase tracking-tight text-white/50">Click to dismiss</span>
           </div>
         </div>
       )}
