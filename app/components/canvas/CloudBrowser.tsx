@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Download,
   ChevronRight,
+  FolderOpen,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -301,7 +302,7 @@ export function CloudBrowser({
               {/* Icon / Thumbnail */}
               <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded border border-white/10 overflow-hidden bg-[#1a1a1e]">
                 {item.isFolder ? (
-                  <Folder className="w-4 h-4 text-white/50" strokeWidth={1.5} />
+                  <FolderOpen className="w-4 h-4 text-white/50" strokeWidth={1.5} />
                 ) : item.thumbnailUrl ? (
                   <img
                     src={item.thumbnailUrl}

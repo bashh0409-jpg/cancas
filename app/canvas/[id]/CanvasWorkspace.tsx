@@ -86,6 +86,7 @@ import {
 } from "@/app/components/canvas/ImageContextMenu";
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { showToast } from "@/app/components/home/Toast";
+import { dispatchUserCreditsUpdated } from "@/lib/credits/events";
 
 type Viewport = {
   x: number;
@@ -3622,8 +3623,8 @@ export default function CanvasWorkspace({
           // Create form data with the image
           const formData = new FormData();
           formData.append("image", blob, node.fileName);
+          formData.append("idempotencyKey", crypto.randomUUID());
 
-          // Call the remove background API
           const bgResponse = await fetch("/api/ai/remove-background", {
             method: "POST",
             body: formData,
@@ -3653,6 +3654,13 @@ export default function CanvasWorkspace({
 
           // Get the processed image as a blob and create a new blob URL
           const processedBlob = await bgResponse.blob();
+          // Update client credits display if the server returned the remaining balance
+          try {
+            const remaining = bgResponse.headers.get("X-Credits-Remaining");
+            if (remaining) dispatchUserCreditsUpdated(Number(remaining));
+          } catch {
+            // ignore
+          }
           const processedUrl = URL.createObjectURL(processedBlob);
           const processedFileName =
             node.fileName.replace(/\.[^.]+$/, "") + "-no-bg.png";
@@ -3776,6 +3784,7 @@ export default function CanvasWorkspace({
           // Create form data with the image
           const formData = new FormData();
           formData.append("image", blob, node.fileName);
+          formData.append("idempotencyKey", crypto.randomUUID());
           formData.append(
             "width",
             String(naturalSize.width > 0 ? naturalSize.width : 320),
@@ -3816,6 +3825,12 @@ export default function CanvasWorkspace({
 
           // Get the upscaled image as a blob and create a new blob URL
           const upscaledBlob = await upscaleResponse.blob();
+          try {
+            const remaining = upscaleResponse.headers.get("X-Credits-Remaining");
+            if (remaining) dispatchUserCreditsUpdated(Number(remaining));
+          } catch {
+            // ignore
+          }
           const upscaledUrl = URL.createObjectURL(upscaledBlob);
           const upscaledFileName =
             node.fileName.replace(/\.[^.]+$/, "") + "-upscaled.png";
