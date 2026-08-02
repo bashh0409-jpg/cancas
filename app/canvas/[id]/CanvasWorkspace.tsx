@@ -2130,21 +2130,33 @@ export default function CanvasWorkspace({
   }, [cleanupAllAudio]);
 
   useEffect(() => {
-    function handleWindowPaste(event: ClipboardEvent) {
-      const pastedText = event.clipboardData?.getData("text/plain") ?? "";
-      const url = getUrlFromText(pastedText);
+    function isEditableTarget(target: EventTarget | null) {
+      if (!(target instanceof Element)) {
+        return false;
+      }
 
-      if (!url) {
+      const tagName = target.tagName.toLowerCase();
+      if (tagName === "input" || tagName === "textarea") {
+        return true;
+      }
+
+      return target.isContentEditable;
+    }
+
+    function handleWindowPaste(event: ClipboardEvent) {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      const pastedText = event.clipboardData?.getData("text/plain")?.trim() ?? "";
+      if (!pastedText) {
         return;
       }
 
       const rect = canvasRef.current?.getBoundingClientRect();
-
       if (!rect) {
         return;
       }
-
-      event.preventDefault();
 
       const center = screenToCanvas({
         x: rect.left + rect.width / 2,
@@ -2155,25 +2167,59 @@ export default function CanvasWorkspace({
         ...imageNodesRef.current.map((node) => node.zIndex),
         ...webNodesRef.current.map((node) => node.zIndex),
         ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
       );
 
-      setWebNodes((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          url,
-          title: getWebsiteTitle(url),
-          position: {
-            x: center.x - 130,
-            y: center.y - 170,
+      const url = getUrlFromText(pastedText);
+      if (url) {
+        event.preventDefault();
+        setWebNodes((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            url,
+            title: getWebsiteTitle(url),
+            position: {
+              x: center.x - 130,
+              y: center.y - 170,
+            },
+            size: {
+              width: 260,
+              height: 340,
+            },
+            zIndex: topZIndex + 1,
           },
-          size: {
-            width: 260,
-            height: 340,
-          },
-          zIndex: topZIndex + 1,
+        ]);
+        return;
+      }
+
+      event.preventDefault();
+      const id = crypto.randomUUID();
+      const note: CanvasTextNodeData = {
+        id,
+        text: pastedText,
+        position: {
+          x: center.x - 175,
+          y: center.y - 120,
         },
-      ]);
+        size: {
+          width: 350,
+          height: 160,
+        },
+        zIndex: topZIndex + 1,
+        style: {
+          backgroundColor: "#f8e36b",
+          color: "#171717",
+          fontFamily: "var(--font-helvetica-neue), Arial, sans-serif",
+          fontSize: 16,
+        },
+      };
+
+      setTextNodes((current) => [...current, note]);
+      setSelectedImageIds([]);
+      setSelectedTextNodeId(id);
+      setEditingTextNodeId(id);
+      setActiveWebNodeId(null);
     }
 
     window.addEventListener("paste", handleWindowPaste);
@@ -2181,7 +2227,7 @@ export default function CanvasWorkspace({
     return () => {
       window.removeEventListener("paste", handleWindowPaste);
     };
-  });
+  }, []);
 
   const gridStyle = useMemo<CSSProperties>(() => {
     const scaledSize = gridSize * viewport.zoom;
