@@ -110,6 +110,13 @@ export function CanvasImageNode({
       {error && (
         <div
           className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-black/60"
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            event.preventDefault();
+          }}
+          onPointerUp={(event) => {
+            event.stopPropagation();
+          }}
           onClick={(event) => {
             event.stopPropagation();
             event.preventDefault();

@@ -69,6 +69,9 @@ export function CloudBrowser({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [importingId, setImportingId] = useState<string | null>(null);
+  const [thumbnailFallbackUrls, setThumbnailFallbackUrls] = useState<
+    Record<string, string>
+  >({});
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -303,12 +306,27 @@ export function CloudBrowser({
               <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded border border-white/10 overflow-hidden bg-[#1a1a1e]">
                 {item.isFolder ? (
                   <FolderOpen className="w-4 h-4 text-white/50" strokeWidth={1.5} />
-                ) : item.thumbnailUrl ? (
+                ) : item.thumbnailUrl || thumbnailFallbackUrls[item.id] ? (
                   <img
-                    src={item.thumbnailUrl}
+                    src={item.thumbnailUrl ?? thumbnailFallbackUrls[item.id]}
                     alt={item.name}
                     className="h-full w-full object-cover"
                     loading="lazy"
+                    onError={() => {
+                      if (item.fileType === "image") {
+                        setThumbnailFallbackUrls((current) => ({
+                          ...current,
+                          [item.id]:
+                            providerId === "dropbox"
+                              ? `/api/integrations/dropbox/download?path=${encodeURIComponent(
+                                  item.path ?? item.name,
+                                )}`
+                              : `/api/integrations/google-drive/download?fileId=${encodeURIComponent(
+                                  item.id,
+                                )}`,
+                        }));
+                      }
+                    }}
                   />
                 ) : item.fileType === "image" ? (
                   <ImageIcon className="w-4 h-4 text-white/50" strokeWidth={1.5} />
