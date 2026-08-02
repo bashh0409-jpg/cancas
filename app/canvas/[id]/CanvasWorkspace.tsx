@@ -2131,7 +2131,7 @@ export default function CanvasWorkspace({
 
   useEffect(() => {
     function isEditableTarget(target: EventTarget | null) {
-      if (!(target instanceof Element)) {
+      if (!(target instanceof HTMLElement)) {
         return false;
       }
 
