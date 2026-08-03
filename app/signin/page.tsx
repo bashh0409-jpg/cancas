@@ -122,7 +122,7 @@ export default function Page() {
           <div className="flex w-full flex-col  gap-2">
             <div className="flex justify-center text-center mb-4 gap-2 mt-6 items-center">
               {" "}
-              <span className="lime text-center absolute z-50 p-1 rounded right-2 bottom-2 lime mono text-black uppercase text-xs">
+              <span className="lime hidden text-center absolute z-50 p-1 rounded right-2 bottom-2 lime mono text-black uppercase text-xs">
                 Operational
               </span>
               <span className="text-white hidden text-xs tracking-wider  mono uppercase text-center">

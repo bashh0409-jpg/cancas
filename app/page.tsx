@@ -99,17 +99,19 @@ export default function Home() {
         <div className="flex h-full scrollbar-hidden flex-col p-4">
           {/* Menu header */}
           <div className="flex hidde items-center justify-between">
-            <div className="flex items-center  gap-1 ">
-              {" "}
+            <a
+              className="flex text-blac mix-blend-difference  items-center  gap-1 "
+              href="https://swipes.site/"
+            >
               <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
                 Join
               </h1>
               <img
                 src="/images/Re.svg"
                 alt=""
-                className="h-6 text-black mix-blend-difference  w-6"
+                className="h-6 text-black mix-blend-difference w-6"
               />{" "}
-            </div>{" "}
+            </a>
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
@@ -140,8 +142,10 @@ export default function Home() {
       {/* Main page */}
       <div className="relative  scrollbar-hidden z-20 flex min-h-screen flex-col">
         <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase mix-blend-difference">
-          <div className="flex text-blac mix-blend-difference  items-center  gap-1 ">
-            {" "}
+          <a
+            className="flex text-blac mix-blend-difference  items-center  gap-1 "
+            href="https://swipes.site/"
+          >
             <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
               Join
             </h1>
@@ -150,7 +154,7 @@ export default function Home() {
               alt=""
               className="h-6 text-black mix-blend-difference w-6"
             />{" "}
-          </div>{" "}
+          </a>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -288,6 +292,44 @@ export default function Home() {
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
           }}
         >
+          {" "}
+          <div className="flex gap-2 hidde flex-wrap justify-center items-center  md:gap-4">
+            <a
+              href="/about"
+              className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+            >
+              <Plus className="w-4 h-4" />
+              ABOUT US
+            </a>
+            <a
+              href="/pricing"
+              className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+            >
+              <Plus className="w-4 h-4" />
+              PRICING
+            </a>
+            <a
+              href="/legal"
+              className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+            >
+              <Plus className="w-4 h-4" />
+              LEGAL
+            </a>
+            <a
+              href="/faq"
+              className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+            >
+              <Plus className="w-4 h-4" />
+              FAQ
+            </a>
+            <a
+              href="/support"
+              className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+            >
+              <Plus className="w-4 h-4" />
+              SUPPORT
+            </a>
+          </div>
           <div className="flex flex-col gap-2 mt-6 items-center justify-center">
             <p className="text-center  p-4 max-w-md text-black  font-mono tracking-tighter">
               Unlock the greater power of{" "}
@@ -295,70 +337,43 @@ export default function Home() {
               <span className="italic font-medium">Human</span> intelligence
               with Reflow.
             </p>
-            <h1 className="text-center text-[200px] md:text-[250px] leading-[1] tracking-[-17%] font-medium  font-mono">
+            <div className="text-center md:hidden flex items-center justify-center w-full -ml-6 text-[140px] md:text-[250px] leading-none tracking-[-0.18em] font-medium font-mono whitespace-nowrap">
               <span className="mix-blend-difference">R</span>
               <span className="mix-blend-difference">ë</span>
               <span className="mix-blend-difference">f</span>
               <span className="mix-blend-difference">l</span>
               <span className="mix-blend-difference">o</span>
-              <span className="mix-blend-difference ml-4">ŵ</span>
-            </h1>
-            <p className="text-center mb-6 p-4 w-full text-lg tracking-tighter max-w-xl text-black font-mon leading-6">
-              The simplest way to bring AI and creativity together. Reflow
-              combines powerful AI with human creativity to redefine how we
-              create.
-            </p>{" "}
-            <div className="flex gap-2 hidden  md:gap-4">
-              <a
-                href="/about"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                ABOUT US
-              </a>
-              <a
-                href="/pricing"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                PRICING
-              </a>
-              <a
-                href="/legal"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                LEGAL
-              </a>
-              <a
-                href="/faq"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                FAQ
-              </a>
-              <a
-                href="/support"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                SUPPORT
-              </a>
+              <span className="mix-blend-difference">ŵ</span>
             </div>
+            <div className="text-center hidden md:flex text-[150px] md:text-[250px] leading-none tracking-[-0.18em] font-medium font-mono whitespace-nowrap">
+              <span className="mix-blend-difference">R</span>
+              <span className="mix-blend-difference">ë</span>
+              <span className="mix-blend-difference">f</span>
+              <span className="mix-blend-difference">l</span>
+              <span className="mix-blend-difference">o</span>
+              <span className="mix-blend-difference">ŵ</span>
+            </div>
+            <p className="text-center w-full p-4 max-w-md text-black  font-mono tracking-tighter">
+              The simplest way to bring <span className="italic ">AI</span> and
+              creativity together.<span className="italic ">R</span>eflow
+              combines powerful AI with{" "}
+              <span className="italic ">human creativity</span> to redefine how
+              we create.
+            </p>{" "}
           </div>
-          <div className="w-full flex flex-wrap  justify-between absolute bottom-4 left-0 p-2">
-            <div className="flex flex-wrap  w-full gap-2 justify-between md:w-fit items-center ">
+          <div className="w-full flex   justify-between absolute bottom-4 left-0 ">
+            <div className="flex   w-full  justify-between md:w-fit items-center ">
               {" "}
               <a
-                href="/privacy-policy"
-                className="bg-transparent  items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                href="/legal"
+                className="bg-transparent  items-center gap-1 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 PRIVACY POLICY
               </a>
               <a
                 href="/offer-agreement"
-                className="bg-transparent  items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                className="bg-transparent  items-center gap-1 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 OFFER AGREEMENT
@@ -372,7 +387,7 @@ export default function Home() {
                 IN: 43091XXXXXX
               </p>{" "}
             </div>
-            <div className="md:flex w-full gap-2 hidden justify-betwee md:w-fit items-center flex-wrap">
+            <div className="md:flex w-full gap-1 hidden justify-betwee md:w-fit items-center flex-wrap">
               <a
                 href="https://discord.gg/vfstVqF3gk"
                 className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
@@ -382,7 +397,7 @@ export default function Home() {
               </a>
               <a
                 href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
-                className="bg-transparent items-center  gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                className="bg-transparent items-center  gap-1 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 YOUTUBE
