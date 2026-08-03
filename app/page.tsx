@@ -1,127 +1,261 @@
-import React from "react";
-import Navbar from "./components/Navbar";
-import { Pricing } from "./components/Pricing";
-import Faq from "./components/Faq";
-import Footer from "./components/Footer";
-import Notice from "./components/home/Notice";
-import Animated from "./components/animated";
-import RotatingImageOrbit from "./components/RotatingImageOrbit";
-import { getAppUrl } from "@/lib/appUrl";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
 
-const page = async () => {
-  const cookieStore = await cookies();
-  // Check for any Supabase auth cookie — lightweight, no server call
-  const hasSession = cookieStore.getAll().some(
-    (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token"
-  );
+import { useEffect, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
+import MouseImageTrail from "./components/MouseImageTrail";
+import ScrollImageTrail from "./components/ScrollImageTrail";
 
-  if (hasSession) {
-    redirect("/home");
-  }
+gsap.registerPlugin(ScrollTrigger);
+import Faq from "./components/Faqn";
+//import Pricing from "./components/Pricing";
+import Hero from "./components/HeroN";
+
+const menuItems = ["Pricing", "Legal", "Support", "Sign in"];
+
+export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const menu = menuRef.current;
+
+    if (!menu) return;
+
+    gsap.to(menu, {
+      clipPath: menuOpen ? "inset(0 0% 0 0%)" : "inset(0 0% 0 100%)",
+      duration: menuOpen ? 0.7 : 0.55,
+      ease: "power4.inOut",
+    });
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      syncTouch: true,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    const scroller = (document.scrollingElement ||
+      document.documentElement) as HTMLElement;
+
+    ScrollTrigger.scrollerProxy(scroller, {
+      scrollTop(value) {
+        if (arguments.length && value != null) {
+          lenis.scrollTo(value, { immediate: true });
+          return;
+        }
+        return lenis.scroll;
+      },
+      getBoundingClientRect() {
+        return {
+          top: 0,
+          left: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        };
+      },
+      pinType: scroller.style.transform ? "transform" : "fixed",
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      ScrollTrigger.update();
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    const onRefresh = () => lenis.resize();
+    ScrollTrigger.addEventListener("refresh", onRefresh);
+
+    const onResize = () => ScrollTrigger.refresh();
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ScrollTrigger.removeEventListener("refresh", onRefresh);
+      lenis.destroy();
+    };
+  }, []);
 
   return (
-    <div className="text-white">
-      <div>
-        <Navbar />
-
-        <div className="relative h-screen bg-white  overflow-hidden"></div>
-        <div>
-          <Animated />
-        </div>
-        <section className="mx-auto hidden flex w-full max-w-[1300px] flex-col items-center gap-5 px-4 lg:flex-row lg:justify-center lg:gap-12 lg:px-0  ">
-          <div className="flex w-full flex-1 justify-end">
-            <h1 className="flex-1 text-center text-[36px]  leading-15 tracking-tight max-lg:mx-auto lg:max-w-[372px] lg:text-right lg:text-[66px] lg:tracking-[-2.64px]">
-              Know what you&apos;re looking at.
+    <main className="relative scrollbar-hidden min-h-screen bg-[#101010] text-white">
+      {/* Full-screen menu */}
+      <aside
+        ref={menuRef}
+        className="fixed inset-0 z-[100] h-screen w-screen bg-white text-black"
+        style={{
+          clipPath: "inset(0 0 0 100%)",
+        }}
+      >
+        <div className="flex h-full scrollbar-hidden flex-col p-4">
+          {/* Menu header */}
+          <div className="flex hidden items-center justify-between">
+            <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
+              Join reflow
             </h1>
-          </div>
 
-          <div className="relative h-[420px] w-full max-w-[360px] overflow-hidden rounded-xl lg:aspect-[420/640] lg:h-auto lg:w-full lg:max-w-[360px] xl:max-w-[420px]">
-            <div className="bg-white h-full w-full rounded" />
-          </div>
-
-          <div className="w-full hidden flex-1">
-            <p className="max-w-[330px] hidden flex-1 text-center text-[26px]  tracking-tight max-lg:mx-auto lg:max-w-[300px] lg:text-left"></p>
-          </div>
-        </section>
-        <div className="mt-10 hidden">
-          <Animated />
-        </div>
-        <Pricing />
-        <Faq />
-        <div className=" text-white  h-screen w-full flex items-center justify-center">
-          <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <a
-              href={getAppUrl("/home")}
-              className="text-xl tracking-tight bg-white text-black rounded p-2 cursor-pointer capitalize hover:bg-white/80"
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="flex tracking-tight font-medium text-sm font-mono uppercase items-center justify-center rounded transition-colors"
+              aria-label="Close menu"
             >
-              Sign up now
-            </a>
+              <X className="h-4 w-4" />
+              close
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="mt-20 flex flex-col">
+            {menuItems.map((item) => (
+              <a
+                key={item}
+                href={item === "Sign in" ? "/signin" : "#"}
+                className="group flex items-center justify-between border-b border-black/10 py-5 font-mono text-2xl uppercase tracking-tight transition-colors hover:bg-black/[0.03] md:text-4xl"
+              >
+                <span>{item}</span>
+              </a>
+            ))}
+          </nav>
+        </div>
+      </aside>
+
+      {/* Main page */}
+      <div className="relative  scrollbar-hidden z-20 flex min-h-screen flex-col">
+        <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase mix-blend-difference">
+          <h1>Join reflow</h1>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="flex items-center gap-2 uppercase md:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Plus className="h-4 w-4" />
+              Menu
+            </button>
+
+            <nav className="hidden gap-4 md:flex">
+              <a
+                href="#"
+                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                Pricing
+              </a>
+
+              <a
+                href="/legal"
+                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                Legal
+              </a>
+
+              <a
+                href="/support"
+                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                Support
+              </a>
+
+              <a
+                href="/signin"
+                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                Sign in
+              </a>
+            </nav>
+          </div>
+        </header>
+
+        {/* Dark grid */}
+        <div
+          className="relative h-screen bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          <Hero />
+          <div className="tracking-tighter hidden gap-6 flex flex-col absolute bottom-18 left-8 max-w-190">
+            <h1 className="tracking-tighter  uppercase font-medium text-5xl">
+              From ux/ui basics to paid tilda websites
+            </h1>
+            <p>
+              Master the most polupar layout plartforms in cis, build a strong
+              portfolio, and start earning monet in an in-demand profession
+            </p>
+            <button className="w-fit cursor-pointer flex items-center gap-3 font-mono  text-sm mix-blend-difference   rounded uppercase">
+              <span>
+                <Plus className="w-4 h-4" />
+              </span>
+              Watch the demo{" "}
+              <span>
+                <Plus className="w-4 h-4" />
+              </span>
+            </button>
           </div>
         </div>
-        <div className=" text-white  overflow-x-hidden h-screen w-full flex items-center justify-center">
-          <RotatingImageOrbit
-            centerLine1="Start "
-            centerLine2="Using Reflow"
-            centerLine3="Now"
-            duration={40}
-            images={[
-              {
-                id: "1",
-                src: "/images/orbit/ob-1.webp",
-                alt: "Nested color frame poster",
-                tilt: -6,
-              },
-              {
-                id: "2",
-                src: "/images/orbit/ob-2.webp",
-                alt: "Green poster with large numerals",
-                tilt: 4,
-              },
-              {
-                id: "3",
-                src: "/images/orbit/ob-3.webp",
-                alt: "White poster with stacked numerals",
-                tilt: -3,
-              },
-              {
-                id: "4",
-                src: "/images/orbit/ob-4.webp",
-                alt: "Four-quadrant stamp grid poster",
-                tilt: 5,
-              },
-              {
-                id: "5",
-                src: "/images/orbit/ob-5.webp",
-                alt: "Sky blue poster with diagonal red text",
-                tilt: -4,
-              },
-              {
-                id: "6",
-                src: "/images/orbit/ob-6.webp",
-                alt: "Striped braille-pattern poster",
-                tilt: 3,
-              },
-              {
-                id: "7",
-                src: "/images/orbit/ob-7.webp",
-                alt: "Grayscale checkerboard poster",
-                tilt: -5,
-              },
-              {
-                id: "8",
-                src: "/images/orbit/ob-8.webp",
-                alt: "Orange duotone architectural poster",
-                tilt: 6,
-              },
-            ]}
-          />
+        {/* White grid */}
+        <div
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        />
+        {/* Dark grid */}
+        <div
+          className="relative min-h-screen opacity bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px] xl:bg-[length:25px]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          <MouseImageTrail />
         </div>
-        <Footer />
-      </div>
-    </div>
-  );
-};
 
-export default page;
+        {/* White grid */}
+        <div
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          {/*  <Pricing />*/}
+        </div>
+
+        {/* Dark grid */}
+        <div
+          className="relative p-2 flex flex-col z-500 md:p-8  py-18 h-fit opacity bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          <div className="h-15"></div>
+          <Faq />
+          <div className="h-15"></div>
+        </div>
+        {/* White grid */}
+        <div
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        ></div>
+      </div>
+    </main>
+  );
+}
