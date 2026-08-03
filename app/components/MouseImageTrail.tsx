@@ -243,7 +243,7 @@ export default function MouseImageTrail() {
           bg-[#101010]
         "
         style={{
-          minHeight: "80svh",
+          minHeight: "100svh",
         }}
       >
         {IMAGES.map((src, index) => (

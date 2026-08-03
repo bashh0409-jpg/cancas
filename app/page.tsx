@@ -99,17 +99,24 @@ export default function Home() {
         <div className="flex h-full scrollbar-hidden flex-col p-4">
           {/* Menu header */}
           <div className="flex hidde items-center justify-between">
-            <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
-              Join reflow
-            </h1>
-
+            <div className="flex items-center  gap-1 ">
+              {" "}
+              <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
+                Join
+              </h1>
+              <img
+                src="/images/Re.svg"
+                alt=""
+                className="h-6 text-black mix-blend-difference  w-6"
+              />{" "}
+            </div>{" "}
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
               className="flex tracking-tight  font-medium text-sm font-mono uppercase items-center justify-center rounded transition-colors"
               aria-label="Close menu"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 hidden w-4" />
               close
             </button>
           </div>
@@ -133,10 +140,16 @@ export default function Home() {
       {/* Main page */}
       <div className="relative  scrollbar-hidden z-20 flex min-h-screen flex-col">
         <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase mix-blend-difference">
-          <div className="flex items-center  gap-1 ">
+          <div className="flex text-blac mix-blend-difference  items-center  gap-1 ">
             {" "}
-            <h1>Join </h1>
-            <img src="/images/Re.svg" alt="" className="h-6 w-6" />{" "}
+            <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
+              Join
+            </h1>
+            <img
+              src="/images/Re.svg"
+              alt=""
+              className="h-6 text-black mix-blend-difference w-6"
+            />{" "}
           </div>{" "}
           <div className="flex items-center gap-3">
             <button
@@ -269,7 +282,7 @@ export default function Home() {
         </div>
         {/* White grid */}
         <div
-          className="relative flex flex-col h-screen items-center justify-center bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative overflow-x-hidden flex flex-col h-screen items-center justify-center bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
@@ -279,8 +292,8 @@ export default function Home() {
             <p className="text-center  p-4 max-w-md text-black  font-mono tracking-tighter">
               Unlock the greater power of{" "}
               <span className="italic font-medium">AI</span> X{" "}
-              <span className="italic font-medium">Human</span> intelligence with
-              Reflow.
+              <span className="italic font-medium">Human</span> intelligence
+              with Reflow.
             </p>
             <h1 className="text-center text-[200px] md:text-[250px] leading-[1] tracking-[-17%] font-medium  font-mono">
               <span className="mix-blend-difference">R</span>
@@ -334,47 +347,32 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full flex flex-wrap  justify-between absolute bottom-4 left-0 p-2">
-            <div className="flex w-full gap-2 justify-between md:w-fit items-center ">
+            <div className="flex flex-wrap  w-full gap-2 justify-between md:w-fit items-center ">
               {" "}
               <a
                 href="/privacy-policy"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                className="bg-transparent  items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 PRIVACY POLICY
               </a>
               <a
                 href="/offer-agreement"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                className="bg-transparent  items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 OFFER AGREEMENT
               </a>{" "}
             </div>
-            <div className="flex w-full gap-2 uppercase justify-between md:w-fit items-center ">
-              {" "}
-              <a
-                href="/company"
-                className="bg-transparent hidden md:flex items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                COMPANY
-              </a>{" "}
-              <p className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
+            <div className="hidden md:flex w-full gap-2 uppercase flex-col md:flex-row justify-between md:w-fit items-center ">
+              <p className="bg-transparent   items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
                 IP: Reflow LLC 2024
               </p>
-              <p className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
+              <p className="bg-transparent  items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
                 IN: 43091XXXXXX
               </p>{" "}
             </div>
-            <div className="flex w-full gap-2 justify-between md:w-fit items-center flex-wrap">
-              <a
-                href="/company"
-                className="bg-transparent md:hidden items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                COMPANY
-              </a>{" "}
+            <div className="md:flex w-full gap-2 hidden justify-betwee md:w-fit items-center flex-wrap">
               <a
                 href="https://discord.gg/vfstVqF3gk"
                 className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
@@ -383,15 +381,8 @@ export default function Home() {
                 DISCORD
               </a>
               <a
-                href="https://www.instagram.com/swiped.ai?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
-              >
-                <Plus className="w-4 h-4" />
-                INSTAGRAM
-              </a>
-              <a
                 href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
-                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+                className="bg-transparent items-center  gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 YOUTUBE
