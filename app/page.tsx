@@ -98,7 +98,7 @@ export default function Home() {
       >
         <div className="flex h-full scrollbar-hidden flex-col p-4">
           {/* Menu header */}
-          <div className="flex hidden items-center justify-between">
+          <div className="flex hidde items-center justify-between">
             <h1 className="font-mono tracking-tight uppercase font-medium text-sm">
               Join reflow
             </h1>
@@ -106,7 +106,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
-              className="flex tracking-tight font-medium text-sm font-mono uppercase items-center justify-center rounded transition-colors"
+              className="flex tracking-tight  font-medium text-sm font-mono uppercase items-center justify-center rounded transition-colors"
               aria-label="Close menu"
             >
               <X className="h-4 w-4" />
@@ -115,6 +115,7 @@ export default function Home() {
           </div>
 
           {/* Navigation */}
+
           <nav className="mt-20 flex flex-col">
             {menuItems.map((item) => (
               <a
@@ -132,8 +133,11 @@ export default function Home() {
       {/* Main page */}
       <div className="relative  scrollbar-hidden z-20 flex min-h-screen flex-col">
         <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase mix-blend-difference">
-          <h1>Join reflow</h1>
-
+          <div className="flex items-center  gap-1 ">
+            {" "}
+            <h1>Join </h1>
+            <img src="/images/Re.svg" alt="" className="h-6 w-6" />{" "}
+          </div>{" "}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -160,6 +164,12 @@ export default function Home() {
                 Legal
               </a>
 
+              <a
+                href="/faq"
+                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                Faq
+              </a>
               <a
                 href="/support"
                 className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
@@ -226,13 +236,23 @@ export default function Home() {
 
         {/* White grid */}
         <div
-          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative h-screen flex flex-col justify-center items-center bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
           }}
         >
-          {/*  <Pricing />*/}
+          {/*  <Pricing />*/}{" "}
+          <img
+            src="/images/Re.svg"
+            alt=""
+            className="h-6 w-6 text-black mix-blend-difference"
+          />{" "}
+          <button className="w-fit  p-0.5 h-fit cursor-pointer flex items-center gap-3 font-mono mix-blend-difference uppercase">
+            <span className="text-2xl">[</span>
+            Watch reflow the demo
+            <span className="text-2xl">]</span>
+          </button>
         </div>
 
         {/* Dark grid */}
@@ -249,12 +269,136 @@ export default function Home() {
         </div>
         {/* White grid */}
         <div
-          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative flex flex-col h-screen items-center justify-center bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
           }}
-        ></div>
+        >
+          <div className="flex flex-col gap-2 mt-6 items-center justify-center">
+            <p className="text-center  p-4 max-w-md text-black  font-mono tracking-tighter">
+              Unlock the greater power of{" "}
+              <span className="italic font-medium">AI</span> X{" "}
+              <span className="italic font-medium">Human</span> intelligence with
+              Reflow.
+            </p>
+            <h1 className="text-center text-[200px] md:text-[250px] leading-[1] tracking-[-17%] font-medium  font-mono">
+              <span className="mix-blend-difference">R</span>
+              <span className="mix-blend-difference">ë</span>
+              <span className="mix-blend-difference">f</span>
+              <span className="mix-blend-difference">l</span>
+              <span className="mix-blend-difference">o</span>
+              <span className="mix-blend-difference ml-4">ŵ</span>
+            </h1>
+            <p className="text-center mb-6 p-4 w-full text-lg tracking-tighter max-w-xl text-black font-mon leading-6">
+              The simplest way to bring AI and creativity together. Reflow
+              combines powerful AI with human creativity to redefine how we
+              create.
+            </p>{" "}
+            <div className="flex gap-2 hidden  md:gap-4">
+              <a
+                href="/about"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                ABOUT US
+              </a>
+              <a
+                href="/pricing"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                PRICING
+              </a>
+              <a
+                href="/legal"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                LEGAL
+              </a>
+              <a
+                href="/faq"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                FAQ
+              </a>
+              <a
+                href="/support"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black text-sm font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                SUPPORT
+              </a>
+            </div>
+          </div>
+          <div className="w-full flex flex-wrap  justify-between absolute bottom-4 left-0 p-2">
+            <div className="flex w-full gap-2 justify-between md:w-fit items-center ">
+              {" "}
+              <a
+                href="/privacy-policy"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                PRIVACY POLICY
+              </a>
+              <a
+                href="/offer-agreement"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                OFFER AGREEMENT
+              </a>{" "}
+            </div>
+            <div className="flex w-full gap-2 uppercase justify-between md:w-fit items-center ">
+              {" "}
+              <a
+                href="/company"
+                className="bg-transparent hidden md:flex items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                COMPANY
+              </a>{" "}
+              <p className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
+                IP: Reflow LLC 2024
+              </p>
+              <p className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md">
+                IN: 43091XXXXXX
+              </p>{" "}
+            </div>
+            <div className="flex w-full gap-2 justify-between md:w-fit items-center flex-wrap">
+              <a
+                href="/company"
+                className="bg-transparent md:hidden items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                COMPANY
+              </a>{" "}
+              <a
+                href="https://discord.gg/vfstVqF3gk"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                DISCORD
+              </a>
+              <a
+                href="https://www.instagram.com/swiped.ai?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                INSTAGRAM
+              </a>
+              <a
+                href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
+                className="bg-transparent items-center gap-2 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
+              >
+                <Plus className="w-4 h-4" />
+                YOUTUBE
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

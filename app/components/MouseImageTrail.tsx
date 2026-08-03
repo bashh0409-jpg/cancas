@@ -19,7 +19,7 @@ const IMAGES = [
 ];
 
 const MOBILE_IMAGE_COUNT = IMAGES.length;
-const THRESHOLD_MS = 120;
+const THRESHOLD_MS = 150;
 
 export default function MouseImageTrail() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ export default function MouseImageTrail() {
 
     const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
 
-    const otherFadeDuration = isDesktop ? 0.5 : 0.5;
+    const otherFadeDuration = isDesktop ? 1.5 : 1.5;
 
     images.forEach((item) => {
       if (!item || item === element) return;
@@ -243,7 +243,7 @@ export default function MouseImageTrail() {
           bg-[#101010]
         "
         style={{
-          minHeight: "100svh",
+          minHeight: "80svh",
         }}
       >
         {IMAGES.map((src, index) => (

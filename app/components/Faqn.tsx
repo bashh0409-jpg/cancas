@@ -103,7 +103,7 @@ function FaqItem({ index, question, answer, isOpen, onToggle }: FaqItemProps) {
 
   return (
     <div className="mb-8 w-full font-mono">
-      <div className="border-b-2 border-dashed border-white/30 pb-2">
+      <div className="border-b-2 mb-4 border-dashed border-white/30 pb-2">
         <button
           type="button"
           onClick={onToggle}
@@ -137,7 +137,7 @@ function FaqItem({ index, question, answer, isOpen, onToggle }: FaqItemProps) {
             </div>
 
             {/* Plus */}
-            <div className="flex items-center justify-center px-3">
+            <div className="flex  items-center justify-center px-3">
               <Plus
                 className={`h-4 w-4 transition-transform duration-300 ${
                   isOpen ? "rotate-45" : ""
