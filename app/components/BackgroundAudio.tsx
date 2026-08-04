@@ -168,7 +168,7 @@ export default function BackgroundAudio() {
       />
 
       {/* Floating controls — bottom-right, above the footer */}
-      <div className="fixed mix-blend-difference bottom-6 right-6 z-[200] flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-md transition-all duration-300">
+      <div className="fixed bottom-6 right-6 z-[200] flex items-center gap-1 rounded-full border border-white/15 bg-black/30 p-1 backdrop-blur-md transition-all duration-300">
         {/* Play / mute button */}
         <button
           type="button"
@@ -177,16 +177,16 @@ export default function BackgroundAudio() {
             isPlaying ? "Mute background audio" : "Play background audio"
           }
           title={isPlaying ? "Mute" : "Play"}
-          className={`flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border backdrop-blur-md transition-all duration-300 ${
+          className={`flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border transition-all duration-300 ${
             isPlaying
-              ? "border-white/20 bg-white text-black"
-              : "border-white/10 bg-white text-black hover:text-black"
+              ? "border-black/10 bg-white text-black"
+              : "border-black/10 bg-white text-black hover:bg-black hover:text-white"
           }`}
         >
           {isPlaying ? (
             <AudioLines className="h-4 w-4" />
           ) : (
-            <Play className="h-4  fill-black w-4" />
+            <Play className="h-4 fill-black w-4" />
           )}
         </button>
 
@@ -196,7 +196,7 @@ export default function BackgroundAudio() {
           onClick={skipTrack}
           aria-label="Next track"
           title="Next track"
-          className="flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white text-black mix-blend-difference transition-all duration-300"
+          className="flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-white text-black transition-all duration-300 hover:bg-black hover:text-white"
         >
           <ChevronLast className="h-4 w-4" />
         </button>
@@ -206,7 +206,7 @@ export default function BackgroundAudio() {
       {isPlaying && (
         <span
           key={beatCount}
-          className="pointer-events-none mix-blend-difference fixed bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/20 animate-ping [animation-duration:400ms]"
+          className="pointer-events-none fixed bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/40 animate-ping [animation-duration:400ms]"
         />
       )}
     </>
