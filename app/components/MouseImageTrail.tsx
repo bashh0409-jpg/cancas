@@ -20,15 +20,29 @@ const IMAGES = [
 
 const MOBILE_IMAGE_COUNT = IMAGES.length;
 const THRESHOLD_MS = 150;
+const POP_SOUND_URL = "/pop.mp3";
 
 export default function MouseImageTrail() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const imageRefs = useRef<HTMLDivElement[]>([]);
+  const popAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const imageIndex = useRef(0);
   const lastMoveTime = useRef(0);
   const lastScrollProgress = useRef(-1);
+
+  // Play a short pop sound every time an image is triggered
+  const playPop = () => {
+    const pop = popAudioRef.current;
+    if (!pop) return;
+
+    // Reset playback so rapid triggers don't skip sounds
+    pop.currentTime = 0;
+    pop.play().catch(() => {
+      // Ignore — browser may block until user interaction
+    });
+  };
 
   const resetTrail = () => {
     imageIndex.current = 0;
@@ -62,6 +76,9 @@ export default function MouseImageTrail() {
     imageIndex.current += 1;
 
     if (!element) return;
+
+    // Play the pop sound when an image is triggered
+    playPop();
 
     const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
 
@@ -111,6 +128,17 @@ export default function MouseImageTrail() {
       });
     }
   };
+
+  // Create the pop audio element on mount
+  useEffect(() => {
+    popAudioRef.current = new Audio(POP_SOUND_URL);
+    popAudioRef.current.volume = 0.8;
+    popAudioRef.current.preload = "auto";
+
+    return () => {
+      popAudioRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const hero = heroRef.current;
