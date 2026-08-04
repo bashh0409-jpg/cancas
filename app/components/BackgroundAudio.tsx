@@ -6,10 +6,8 @@ import {Play, ChevronLast, AudioLines } from "lucide-react";
 /**
  * BackgroundAudio — floating mute/unmute toggle for ambient background audio.
  *
- * Audio files expected at:
- *   /audio/background.mp3
- *   /audio/Reflow.mp3
- *   /audio/background-2.mp3
+ * Audio files are hosted on Supabase Storage:
+ *   https://okgjifzweuehbcxrohmh.supabase.co/storage/v1/object/public/audio/
  *
  * - Tracks alternate automatically when one ends.
  * - A "next track" button lets users skip to the other song.
@@ -18,10 +16,13 @@ import {Play, ChevronLast, AudioLines } from "lucide-react";
  * - State is persisted in localStorage so the choice survives reloads.
  */
 
+const SUPABASE_URL = "https://okgjifzweuehbcxrohmh.supabase.co";
+const STORAGE_PATH = "/storage/v1/object/public/audio";
+
 const TRACKS = [
-  "/audio/background.mp3",
-  "/audio/Reflow.mp3",
-  "/audio/background-2.mp3",
+  `${SUPABASE_URL}${STORAGE_PATH}/background.mp3`,
+  `${SUPABASE_URL}${STORAGE_PATH}/Reflow.mp3`,
+  `${SUPABASE_URL}${STORAGE_PATH}/background-2.mp3`,
 ];
 
 export default function BackgroundAudio() {
@@ -175,9 +176,6 @@ export default function BackgroundAudio() {
 
       {/* Floating controls — bottom-right, above the footer */}
       <div className="fixed mix-blend-difference bottom-6 right-6 z-[200] flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-md transition-all duration-300">
-        {/* Skip track button */}
-
-
         {/* Play / mute button */}
         <button
           type="button"
@@ -197,12 +195,15 @@ export default function BackgroundAudio() {
           ) : (
             <Play className="h-4 w-4" />
           )}
-        </button>        <button
+        </button>
+
+        {/* Skip track button */}
+        <button
           type="button"
           onClick={skipTrack}
           aria-label="Next track"
           title="Next track"
-          className="flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white text-black mix-blend-difference transition-all duration-300 "
+          className="flex cursor-pointer h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white text-black mix-blend-difference transition-all duration-300"
         >
           <ChevronLast className="h-4 w-4" />
         </button>
