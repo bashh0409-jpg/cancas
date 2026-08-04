@@ -19,8 +19,8 @@ const IMAGES = [
 ];
 
 const MOBILE_IMAGE_COUNT = IMAGES.length;
-const THRESHOLD_MS = 150;
-const POP_SOUND_URL = "/pop.mp3";
+const THRESHOLD_MS = 100;
+const POP_SOUND_URL = "/pop.wav";
 
 export default function MouseImageTrail() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -82,7 +82,7 @@ export default function MouseImageTrail() {
 
     const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
 
-    const otherFadeDuration = isDesktop ? 1.5 : 1.5;
+    const otherFadeDuration = isDesktop ? 0.6 : 0.6;
 
     images.forEach((item) => {
       if (!item || item === element) return;
@@ -122,8 +122,8 @@ export default function MouseImageTrail() {
         opacity: 0,
         scale: 0.5,
         rotation: direction * 0,
-        duration: 0.8,
-        delay: 0.8,
+        duration: 0.3,
+        delay: 0.3,
         ease: "power2.in",
       });
     }
@@ -132,7 +132,7 @@ export default function MouseImageTrail() {
   // Create the pop audio element on mount
   useEffect(() => {
     popAudioRef.current = new Audio(POP_SOUND_URL);
-    popAudioRef.current.volume = 0.8;
+    popAudioRef.current.volume = 0.05;
     popAudioRef.current.preload = "auto";
 
     return () => {
