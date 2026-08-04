@@ -31,11 +31,11 @@ const IMAGES = [
   },
   {
     src: "/images/img7.jpeg",
-    className: "left-[28%] bottom-[14%] w-[14%] sm:w-[9%] md:w-[8%]",
+    className: "left-[28%] bottom-[10%] w-[14%] sm:w-[9%] md:w-[15%]",
   },
   {
     src: "/images/img8.webp",
-    className: "right-[10%] bottom-[7%] w-[23%] sm:w-[17%] md:w-[15%]",
+    className: "right-[20%] bottom-[7%] w-[23%] sm:w-[17%] md:w-[15%]",
   },
 ];
 

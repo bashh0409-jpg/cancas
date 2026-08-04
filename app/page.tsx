@@ -169,34 +169,34 @@ export default function Home() {
             <nav className="hidden gap-4 md:flex">
               <a
                 href="#"
-                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Pricing
               </a>
 
               <a
                 href="/legal"
-                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Legal
               </a>
 
               <a
                 href="/faq"
-                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 rounded-full px-4 transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Faq
               </a>
               <a
                 href="/support"
-                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Support
               </a>
 
               <a
                 href="/signin"
-                className="p-1 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Sign in
               </a>
