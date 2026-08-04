@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import {Play, ChevronLast, AudioLines } from "lucide-react";
+import { Play, ChevronLast, AudioLines } from "lucide-react";
 
 /**
  * BackgroundAudio — floating mute/unmute toggle for ambient background audio.
@@ -33,12 +33,12 @@ export default function BackgroundAudio() {
       typeof window !== "undefined" &&
       localStorage.getItem("reflow-bg-audio") === "playing"
   );
-  const [isReady, setIsReady] = useState(false);
   const [beatCount, setBeatCount] = useState(0);
 
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const audioSourceBound = useRef(false);
-  const isPlayingRef = useRef(isPlaying);
+  const isPlayingRef = useRef(false);
 
   // Keep ref in sync with state (called in effect, not render)
   useEffect(() => {
@@ -46,16 +46,16 @@ export default function BackgroundAudio() {
   }, [isPlaying]);
 
   // Set up Web Audio API analyser once (bind source to audio element)
-  const setupAnalyser = useCallback(() => {
-    if (audioSourceBound.current) return;
+  const setupAnalyser = useCallback(async () => {
+    if (audioSourceBound.current) return true;
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) return false;
 
     const AudioCtx =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext;
-    if (!AudioCtx) return;
+    if (!AudioCtx) return true; // No analyser support — audio still plays natively
 
     try {
       const ctx = new AudioCtx();
@@ -66,12 +66,45 @@ export default function BackgroundAudio() {
       source.connect(analyser);
       analyser.connect(ctx.destination);
       analyserRef.current = analyser;
+      audioCtxRef.current = ctx;
       audioSourceBound.current = true;
-      ctx.resume();
+
+      // Resume must complete BEFORE play() — otherwise audio is silent
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      return true;
     } catch {
-      // Source already bound — fall back to static ping
+      // Source already bound or error — audio still plays natively
+      return true;
     }
   }, []);
+
+  // Play/pause whenever isPlaying or trackIndex changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      const play = async () => {
+        await setupAnalyser();
+        try {
+          audio.volume = 0.95;
+          await audio.play();
+        } catch {
+          setIsPlaying(false);
+        }
+      };
+      play();
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, trackIndex, setupAnalyser]);
+
+  // Persist state
+  useEffect(() => {
+    localStorage.setItem("reflow-bg-audio", isPlaying ? "playing" : "muted");
+  }, [isPlaying]);
 
   // Beat detection — track bass energy spikes and trigger ping per beat
   useEffect(() => {
@@ -108,58 +141,17 @@ export default function BackgroundAudio() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Restore playback if user previously enabled audio
-  useEffect(() => {
-    if (isPlaying) {
-      setupAnalyser();
-      audioRef.current?.play().catch(() => {
-        setIsPlaying(false);
-      });
-    }
-  }, [isReady, setupAnalyser]);
-
-  // Persist state
-  useEffect(() => {
-    localStorage.setItem("reflow-bg-audio", isPlaying ? "playing" : "muted");
-  }, [isPlaying]);
-
   // When a track ends, switch to the other one
   const handleTrackEnd = () => {
     setTrackIndex((prev) => (prev + 1) % TRACKS.length);
-    // Play the new track after React updates the src
-    setTimeout(() => {
-      audioRef.current?.play().catch(() => setIsPlaying(false));
-    }, 50);
   };
 
   const toggle = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      // First gesture — browsers allow playback after user interaction
-      setupAnalyser();
-      audio.volume = 0.95;
-      audio.play().catch(() => {
-        setIsPlaying(false);
-      });
-      setIsPlaying(true);
-    }
+    setIsPlaying((prev) => !prev);
   };
 
   const skipTrack = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
     setTrackIndex((prev) => (prev + 1) % TRACKS.length);
-    if (isPlaying) {
-      setTimeout(() => {
-        audioRef.current?.play().catch(() => setIsPlaying(false));
-      }, 50);
-    }
   };
 
   return (
@@ -167,11 +159,12 @@ export default function BackgroundAudio() {
       <audio
         ref={audioRef}
         src={TRACKS[trackIndex]}
-        loop={false}
         preload="auto"
-        onCanPlay={() => setIsReady(true)}
-        onError={() => setIsReady(false)}
+        onCanPlay={() => {
+          // Nothing needed here — play effect handles it
+        }}
         onEnded={handleTrackEnd}
+        crossOrigin="anonymous"
       />
 
       {/* Floating controls — bottom-right, above the footer */}
@@ -193,7 +186,7 @@ export default function BackgroundAudio() {
           {isPlaying ? (
             <AudioLines className="h-4 w-4" />
           ) : (
-            <Play className="h-4 w-4" />
+            <Play className="h-4 fill-black w-4" />
           )}
         </button>
 
