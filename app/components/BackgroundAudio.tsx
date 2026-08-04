@@ -206,8 +206,13 @@ export default function BackgroundAudio() {
       {isPlaying && (
         <span
           key={beatCount}
-          className="pointer-events-none fixed bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/40 animate-ping [animation-duration:400ms]"
+          className="pointer-events-none fixed  mix-blend-difference bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/40 animate-ping [animation-duration:400ms]"
+        >
+           <span
+          key={beatCount}
+          className="pointer-events-none fixed  mix-blend-difference bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/40 animate-ping [animation-duration:400ms]"
         />
+        </span>
       )}
     </>
   );
