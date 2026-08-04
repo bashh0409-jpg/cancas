@@ -12,6 +12,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CookieConsent } from "./components/CookieConsent";
 import { LenisProvider } from "./LenisProvider";
 import { ToastContainer } from "./components/home/Toast";
+import BackgroundAudio from "./components/BackgroundAudio";
 
 const cmGeom = localFont({
   src: [
@@ -95,6 +96,7 @@ export default function RootLayout({
         </PHProvider>
         <CookieConsent />
         <ToastContainer />
+        <BackgroundAudio />
       </body>
     </html>
   );
