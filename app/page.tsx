@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import MouseImageTrail from "./components/MouseImageTrail";
 import ScrollImageTrail from "./components/ScrollImageTrail";
+import ReflowDemoModal from "./components/ReflowDemoModal";
 
 gsap.registerPlugin(ScrollTrigger);
 import Faq from "./components/Faqn";
@@ -17,6 +18,7 @@ const menuItems = ["Pricing", "Legal", "Support", "Sign in"];
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -124,7 +126,6 @@ export default function Home() {
           </div>
 
           {/* Navigation */}
-
           <nav className="mt-20 flex flex-col">
             {menuItems.map((item) => (
               <a
@@ -173,14 +174,12 @@ export default function Home() {
               >
                 Pricing
               </a>
-
               <a
                 href="/legal"
                 className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Legal
               </a>
-
               <a
                 href="/faq"
                 className="p-1 rounded-full px-4 transition-colors hover:bg-[#f8ff9a] hover:text-black"
@@ -193,7 +192,6 @@ export default function Home() {
               >
                 Support
               </a>
-
               <a
                 href="/signin"
                 className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
@@ -221,7 +219,11 @@ export default function Home() {
               Master the most polupar layout plartforms in cis, build a strong
               portfolio, and start earning monet in an in-demand profession
             </p>
-            <button className="w-fit cursor-pointer flex items-center gap-3 font-mono  text-sm mix-blend-difference   rounded uppercase">
+            <button
+              type="button"
+              onClick={() => setDemoOpen(true)}
+              className="w-fit cursor-pointer flex items-center gap-3 font-mono  text-sm mix-blend-difference   rounded uppercase"
+            >
               <span>
                 <Plus className="w-4 h-4" />
               </span>
@@ -265,7 +267,11 @@ export default function Home() {
             alt=""
             className="h-6 w-6 text-black mix-blend-difference"
           />{" "}
-          <button className="w-fit  p-0.5 h-fit cursor-pointer flex items-center gap-3 font-mono mix-blend-difference uppercase">
+          <button
+            type="button"
+            onClick={() => setDemoOpen(true)}
+            className="w-fit  p-0.5 h-fit cursor-pointer flex items-center gap-3 font-mono mix-blend-difference uppercase"
+          >
             <span className="text-2xl">[</span>
             Watch reflow the demo
             <span className="text-2xl">]</span>
@@ -406,6 +412,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Reflow demo modal */}
+      <ReflowDemoModal
+        open={demoOpen}
+        onClose={() => setDemoOpen(false)}
+      />
     </main>
   );
 }
