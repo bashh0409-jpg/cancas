@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Play, ChevronLast, AudioLines } from "lucide-react";
-import gsap from "gsap";
 
 /**
  * BackgroundAudio — floating mute/unmute toggle for ambient background audio.
@@ -12,7 +12,7 @@ import gsap from "gsap";
  *
  * - Tracks alternate automatically when one ends.
  * - A "next track" button lets users skip to the other song.
- * - The pulsing ring fires on every detected bass beat via GSAP.
+ * - The pulsing ring is synced to the music's beat via Web Audio API.
  * - Autoplay is blocked by browsers, so the button acts as the first user gesture.
  * - State is persisted in localStorage so the choice survives reloads.
  */
@@ -26,10 +26,10 @@ const TRACKS = [
   `${SUPABASE_URL}${STORAGE_PATH}/background-2.mp3`,
 ];
 
-/** Minimum gap between two pulses (ms) — avoids over-firing on sustained bass */
-const MIN_BEAT_GAP_MS = 0;
+const HIDDEN_PATHS = ["/", "/signin"];
 
 export default function BackgroundAudio() {
+  const pathname = usePathname();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(
@@ -37,12 +37,12 @@ export default function BackgroundAudio() {
       typeof window !== "undefined" &&
       localStorage.getItem("reflow-bg-audio") === "playing"
   );
+  const [beatCount, setBeatCount] = useState(0);
 
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const audioSourceBound = useRef(false);
   const isPlayingRef = useRef(false);
-  const pulseRef = useRef<HTMLSpanElement | null>(null);
-  const lastBeatTime = useRef(0);
 
   // Keep ref in sync with state (called in effect, not render)
   useEffect(() => {
@@ -70,6 +70,7 @@ export default function BackgroundAudio() {
       source.connect(analyser);
       analyser.connect(ctx.destination);
       analyserRef.current = analyser;
+      audioCtxRef.current = ctx;
       audioSourceBound.current = true;
 
       // Resume must complete BEFORE play() — otherwise audio is silent
@@ -109,10 +110,7 @@ export default function BackgroundAudio() {
     localStorage.setItem("reflow-bg-audio", isPlaying ? "playing" : "muted");
   }, [isPlaying]);
 
-  // Beat detection — fires the pulse ring on energy spikes across the
-  // FULL frequency spectrum (bass, mids, highs) so it tracks the overall
-  // rhythm — kicks, snares, hi-hats, and other instruments.
-  // Uses refs + GSAP directly, so NO React re-renders happen per beat.
+  // Beat detection — track bass energy spikes and trigger ping per beat
   useEffect(() => {
     let raf = 0;
     const history: number[] = [];
@@ -123,55 +121,20 @@ export default function BackgroundAudio() {
       if (analyser && isPlayingRef.current) {
         analyser.getByteFrequencyData(data);
 
-        // Weighted full-spectrum energy:
-        // - Bass (bins 1–15) gets the highest weight (kick drums)
-        // - Mids (bins 16–60) get medium weight (snares, vocals, synths)
-        // - Highs (bins 61–127) get lower weight (hi-hats, cymbals)
-        let weightedEnergy = 0;
-        for (let i = 1; i < 128; i++) {
-          const v = data[i];
-          if (i < 16) {
-            weightedEnergy += v * 1.6; // bass — kick drums
-          } else if (i < 61) {
-            weightedEnergy += v * 1.0; // mids — snares, synths
-          } else {
-            weightedEnergy += v * 0.5; // highs — hats, cymbals
-          }
-        }
-        const energyAvg = weightedEnergy / 127;
+        // Sum low-frequency (bass) energy — bins 1–15 ≈ 20–250 Hz at 44.1 kHz
+        let bassSum = 0;
+        for (let i = 1; i < 15; i++) bassSum += data[i];
+        const bassAvg = bassSum / 14;
 
-        history.push(energyAvg);
+        history.push(bassAvg);
         if (history.length > 43) history.shift(); // ~0.7s of frames
 
         if (history.length >= 10) {
           const baseline =
             history.reduce((a, b) => a + b, 0) / history.length;
-
-          // A beat is a sharp energy spike above the running average
-          if (energyAvg > baseline * 1.25 && energyAvg > 30) {
-            const now = performance.now();
-
-            // Enforce a minimum gap between pulses so sustained energy
-            // doesn't fire multiple pulses for the same beat
-            if (now - lastBeatTime.current >= MIN_BEAT_GAP_MS) {
-              lastBeatTime.current = now;
-
-              // Fire the pulse ring directly via GSAP — follows the beat
-              const pulse = pulseRef.current;
-              if (pulse) {
-                gsap.killTweensOf(pulse);
-                gsap.fromTo(
-                  pulse,
-                  { scale: 0.6, opacity: 0.8 },
-                  {
-                    scale: 2.2,
-                    opacity: 0,
-                    duration: 0.45,
-                    ease: "power2.out",
-                  },
-                );
-              }
-            }
+          // A beat is a bass spike above the running average
+          if (bassAvg > baseline * 1.35 && bassAvg > 40) {
+            setBeatCount((c) => c + 1);
           }
         }
       }
@@ -195,12 +158,18 @@ export default function BackgroundAudio() {
     setTrackIndex((prev) => (prev + 1) % TRACKS.length);
   };
 
+  // Don't render on home or signin pages
+  if (HIDDEN_PATHS.includes(pathname)) return null;
+
   return (
     <>
       <audio
         ref={audioRef}
         src={TRACKS[trackIndex]}
         preload="auto"
+        onCanPlay={() => {
+          // Nothing needed here — play effect handles it
+        }}
         onEnded={handleTrackEnd}
         crossOrigin="anonymous"
       />
@@ -240,12 +209,13 @@ export default function BackgroundAudio() {
         </button>
       </div>
 
-      {/* Pulse ring — triggered directly by GSAP on each detected beat.
-          Static element, positioned with transform so GSAP scale works. */}
-      <span
-        ref={pulseRef}
-        className="pointer-events-none fixed bottom-7 right-8 z-[199] h-6 w-11 -translate-x-0 rounded-full border border-white/40 opacity-0"
-      />
+      {/* Pulsing ring synced to bass beats — remounts on each detected beat */}
+      {isPlaying && (
+        <span
+          key={beatCount}
+          className="pointer-events-none fixed mix-blend-difference bottom-7 right-8 z-[199] h-6 w-11 rounded-full border border-white/40 animate-ping [animation-duration:450ms]"
+        />
+      )}
     </>
   );
 }
