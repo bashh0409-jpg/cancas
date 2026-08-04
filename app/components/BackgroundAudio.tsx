@@ -26,7 +26,7 @@ const TRACKS = [
   `${SUPABASE_URL}${STORAGE_PATH}/background-2.mp3`,
 ];
 
-const HIDDEN_PATHS = ["/", "/signin"];
+const HIDDEN_PATHS = ["/home", "/signin"];
 
 export default function BackgroundAudio() {
   const pathname = usePathname();

@@ -8,11 +8,15 @@ import Lenis from "lenis";
 import MouseImageTrail from "./components/MouseImageTrail";
 import ScrollImageTrail from "./components/ScrollImageTrail";
 import ReflowDemoModal from "./components/ReflowDemoModal";
+import TextScalingAnimation from "./components/TextScalingAnimation";
 
 gsap.registerPlugin(ScrollTrigger);
 import Faq from "./components/Faqn";
 //import Pricing from "./components/Pricing";
 import Hero from "./components/HeroN";
+import BackgroundAudio from "./components/BackgroundAudio";
+import Swirl from "./components/Swirl";
+import BounceInText from "./components/BounceInText";
 
 const menuItems = ["Pricing", "Legal", "Support", "Sign in"];
 
@@ -139,7 +143,6 @@ export default function Home() {
           </nav>
         </div>
       </aside>
-
       {/* Main page */}
       <div className="relative  scrollbar-hidden z-20 flex min-h-screen flex-col">
         <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase mix-blend-difference">
@@ -211,37 +214,17 @@ export default function Home() {
           }}
         >
           <Hero />
-          <div className="tracking-tighter hidden gap-6 flex flex-col absolute bottom-18 left-8 max-w-190">
-            <h1 className="tracking-tighter  uppercase font-medium text-5xl">
-              From ux/ui basics to paid tilda websites
-            </h1>
-            <p>
-              Master the most polupar layout plartforms in cis, build a strong
-              portfolio, and start earning monet in an in-demand profession
-            </p>
-            <button
-              type="button"
-              onClick={() => setDemoOpen(true)}
-              className="w-fit cursor-pointer flex items-center gap-3 font-mono  text-sm mix-blend-difference   rounded uppercase"
-            >
-              <span>
-                <Plus className="w-4 h-4" />
-              </span>
-              Watch the demo{" "}
-              <span>
-                <Plus className="w-4 h-4" />
-              </span>
-            </button>
-          </div>
         </div>
         {/* White grid */}
         <div
-          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative h-fit bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
           }}
-        />
+        >
+          <TextScalingAnimation />
+        </div>
         {/* Dark grid */}
         <div
           className="relative min-h-screen opacity bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px] xl:bg-[length:25px]"
@@ -290,7 +273,31 @@ export default function Home() {
           <Faq />
           <div className="h-15"></div>
         </div>
+
         {/* White grid */}
+        <div
+          className="relative h-fit bg-white bg-repeat-x"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+            backgroundSize: "25px 100%",
+          }}
+        >
+          <BounceInText text="So, ready to create with " />
+        </div>
+
+        {/* Dark grid */}
+        <div
+          className="relative p-2 flex flex-col z-500 md:p-8  py-18 h-fit opacity bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          <Swirl />
+        </div>
+
+        {/* White grid x FOOTER */}
         <div
           className="relative overflow-x-hidden flex flex-col h-screen items-center justify-center bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
@@ -411,13 +418,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
+      <BackgroundAudio />
       {/* Reflow demo modal */}
-      <ReflowDemoModal
-        open={demoOpen}
-        onClose={() => setDemoOpen(false)}
-      />
+      <ReflowDemoModal open={demoOpen} onClose={() => setDemoOpen(false)} />
     </main>
   );
 }

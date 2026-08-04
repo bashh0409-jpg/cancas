@@ -96,7 +96,7 @@ export default function RootLayout({
         </PHProvider>
         <CookieConsent />
         <ToastContainer />
-        <BackgroundAudio />
+        
       </body>
     </html>
   );
