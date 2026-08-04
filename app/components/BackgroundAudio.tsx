@@ -27,7 +27,7 @@ const TRACKS = [
 ];
 
 /** Minimum gap between two pulses (ms) — avoids over-firing on sustained bass */
-const MIN_BEAT_GAP_MS = 300;
+const MIN_BEAT_GAP_MS = 0;
 
 export default function BackgroundAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -109,7 +109,9 @@ export default function BackgroundAudio() {
     localStorage.setItem("reflow-bg-audio", isPlaying ? "playing" : "muted");
   }, [isPlaying]);
 
-  // Beat detection — fires the pulse ring on every detected bass beat.
+  // Beat detection — fires the pulse ring on energy spikes across the
+  // FULL frequency spectrum (bass, mids, highs) so it tracks the overall
+  // rhythm — kicks, snares, hi-hats, and other instruments.
   // Uses refs + GSAP directly, so NO React re-renders happen per beat.
   useEffect(() => {
     let raf = 0;
@@ -121,23 +123,35 @@ export default function BackgroundAudio() {
       if (analyser && isPlayingRef.current) {
         analyser.getByteFrequencyData(data);
 
-        // Sum low-frequency (bass) energy — bins 1–15 ≈ 20–250 Hz at 44.1 kHz
-        let bassSum = 0;
-        for (let i = 1; i < 15; i++) bassSum += data[i];
-        const bassAvg = bassSum / 14;
+        // Weighted full-spectrum energy:
+        // - Bass (bins 1–15) gets the highest weight (kick drums)
+        // - Mids (bins 16–60) get medium weight (snares, vocals, synths)
+        // - Highs (bins 61–127) get lower weight (hi-hats, cymbals)
+        let weightedEnergy = 0;
+        for (let i = 1; i < 128; i++) {
+          const v = data[i];
+          if (i < 16) {
+            weightedEnergy += v * 1.6; // bass — kick drums
+          } else if (i < 61) {
+            weightedEnergy += v * 1.0; // mids — snares, synths
+          } else {
+            weightedEnergy += v * 0.5; // highs — hats, cymbals
+          }
+        }
+        const energyAvg = weightedEnergy / 127;
 
-        history.push(bassAvg);
+        history.push(energyAvg);
         if (history.length > 43) history.shift(); // ~0.7s of frames
 
         if (history.length >= 10) {
           const baseline =
             history.reduce((a, b) => a + b, 0) / history.length;
 
-          // A beat is a sharp bass spike above the running average
-          if (bassAvg > baseline * 1.3 && bassAvg > 40) {
+          // A beat is a sharp energy spike above the running average
+          if (energyAvg > baseline * 1.25 && energyAvg > 30) {
             const now = performance.now();
 
-            // Enforce a minimum gap between pulses so sustained bass
+            // Enforce a minimum gap between pulses so sustained energy
             // doesn't fire multiple pulses for the same beat
             if (now - lastBeatTime.current >= MIN_BEAT_GAP_MS) {
               lastBeatTime.current = now;
