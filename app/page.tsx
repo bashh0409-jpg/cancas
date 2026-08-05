@@ -170,13 +170,13 @@ export default function Home() {
         </div>
         {/* White grid */}
         <div
-          className="relative h-fit bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
           }}
         >
-          <TextScalingAnimation />
+          {/*  <TextScalingAnimation /> */}
         </div>
         {/* Dark grid */}
         <div
