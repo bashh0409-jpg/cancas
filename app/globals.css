@@ -227,3 +227,6 @@ body {
   --media-object-fit: cover;
 }
 
+html {
+  scroll-behavior: smooth;
+}

@@ -16,6 +16,7 @@ import Hero from "./components/HeroN";
 import BackgroundAudio from "./components/BackgroundAudio";
 import Swirl from "./components/Swirl";
 import BounceInText from "./components/BounceInText";
+import ReflowIntro from "./components/ReflowIntro";
 
 const menuItems = ["Pricing", "Legal", "Support", "Sign in"];
 
@@ -46,7 +47,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative scrollbar-hidden min-h-screen bg-[#101010] text-white">
+    <main className="relative scroll-smooth scrollbar-hidden min-h-screen bg-[#101010] text-white">
       {/* Full-screen menu */}
       <aside
         ref={menuRef}
@@ -167,6 +168,34 @@ export default function Home() {
           }}
         >
           <Hero />
+        </div>
+        {/* Dark grid */}
+        <div
+          className="relative h-screen  bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        ></div>
+        {/* White grid */}
+        <div
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          {/*  <TextScalingAnimation /> */}
+        </div>
+        {/* Dark grid */}
+        <div
+          className="relative h- justify-center flex items-center bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          <ReflowIntro />
         </div>
         {/* White grid */}
         <div

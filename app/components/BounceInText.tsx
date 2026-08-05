@@ -29,7 +29,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
 
       // Start characters scattered so they assemble as they enter.
       gsap.set(split.chars, {
-        yPercent: () => gsap.utils.random(-300, 300),
+        yPercent: () => gsap.utils.random(-100, 100),
         rotation: () => gsap.utils.random(-45, 45),
         willChange: "transform",
       });
@@ -82,7 +82,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
             trigger: char,
             containerAnimation: moveTween,
 
-            start: "left 80%",
+            start: "left 90%",
             end: "left 50%",
 
             horizontal: true,
@@ -112,7 +112,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
             font-medium
             leading-none
             tracking-[-0.08em]
-            text-black
+            text-black grotesk
             will-change-transform
             md:text-[20vw] pr-20
             lg:text[12vw]

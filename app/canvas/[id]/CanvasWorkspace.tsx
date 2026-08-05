@@ -112,6 +112,11 @@ type ImageCanvasNode = {
   zIndex: number;
   visible?: boolean;
   locked?: boolean;
+  transform?: {
+    flipH?: boolean;
+    flipV?: boolean;
+    rotation?: number;
+  };
 };
 
 type ImageSyncStats = {
@@ -362,6 +367,7 @@ function serializeImageNodeForSave(node: ImageCanvasNode) {
     zIndex: node.zIndex,
     visible: node.visible,
     locked: node.locked,
+    transform: node.transform,
   };
 }
 
@@ -3593,6 +3599,28 @@ export default function CanvasWorkspace({
     }
   }
 
+  function handleImageTransform(
+    nodeId: string,
+    transform: Partial<NonNullable<ImageCanvasNode["transform"]>>,
+  ) {
+    setImageNodes((current) =>
+      current.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              transform: {
+                flipH: node.transform?.flipH ?? false,
+                flipV: node.transform?.flipV ?? false,
+                rotation: node.transform?.rotation ?? 0,
+                ...transform,
+              },
+            }
+          : node,
+      ),
+    );
+    saveDelayMsRef.current = 0;
+  }
+
   function handleTranscriptionContextMenu(
     event: React.MouseEvent<HTMLDivElement>,
     node: CanvasTranscriptionNodeData,
@@ -4315,6 +4343,9 @@ export default function CanvasWorkspace({
                 }
                 onResizePointerMove={handleImagePointerMove}
                 onResizePointerUp={handleImagePointerUp}
+                onTransform={(transform) =>
+                  handleImageTransform(node.id, transform)
+                }
               />
             );
           })}

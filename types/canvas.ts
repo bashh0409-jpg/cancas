@@ -16,6 +16,11 @@ export type CanvasImageNode = {
   zIndex: number;
   visible?: boolean;
   locked?: boolean;
+  transform?: {
+    flipH?: boolean;
+    flipV?: boolean;
+    rotation?: number;
+  };
 };
 
 export type CanvasWebNode = {
