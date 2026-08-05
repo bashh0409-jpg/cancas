@@ -898,7 +898,7 @@ function FilesPage({
   );
 
   return (
-    <div className="flex flex-col overflow-y-auto scrollbar-hidden  gap-4">
+    <div className="flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hidden  gap-4">
       <div className="flex flex-wrap  items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="mono capitalize text-sm tracking-tight text-white">
