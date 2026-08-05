@@ -92,7 +92,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-        {children}
+       <LenisProvider>{children}</LenisProvider> 
         </PHProvider>
         <CookieConsent />
         <ToastContainer />

@@ -31,6 +31,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
       gsap.set(split.chars, {
         yPercent: () => gsap.utils.random(-300, 300),
         rotation: () => gsap.utils.random(-45, 45),
+        willChange: "transform",
       });
 
       // Start the entire text just outside the right edge.
@@ -75,7 +76,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
           yPercent: 0,
           rotation: 0,
 
-          ease: "back.out(2)",
+          ease: "back.out(1.7)",
 
           scrollTrigger: {
             trigger: char,
@@ -86,7 +87,7 @@ export default function BounceInText({ text }: BounceInTextProps) {
 
             horizontal: true,
 
-            scrub: 0.5,
+            scrub: 0.8,
           },
         });
       });

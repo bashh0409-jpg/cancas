@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "lenis";
 import MouseImageTrail from "./components/MouseImageTrail";
 import ScrollImageTrail from "./components/ScrollImageTrail";
 import ReflowDemoModal from "./components/ReflowDemoModal";
@@ -38,57 +37,11 @@ export default function Home() {
   }, [menuOpen]);
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      syncTouch: true,
-      touchMultiplier: 2,
-      infinite: false,
-    });
-
-    const scroller = (document.scrollingElement ||
-      document.documentElement) as HTMLElement;
-
-    ScrollTrigger.scrollerProxy(scroller, {
-      scrollTop(value) {
-        if (arguments.length && value != null) {
-          lenis.scrollTo(value, { immediate: true });
-          return;
-        }
-        return lenis.scroll;
-      },
-      getBoundingClientRect() {
-        return {
-          top: 0,
-          left: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-        };
-      },
-      pinType: scroller.style.transform ? "transform" : "fixed",
-    });
-
-    function raf(time: number) {
-      lenis.raf(time);
-      ScrollTrigger.update();
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    const onRefresh = () => lenis.resize();
-    ScrollTrigger.addEventListener("refresh", onRefresh);
-
     const onResize = () => ScrollTrigger.refresh();
     window.addEventListener("resize", onResize);
 
     return () => {
       window.removeEventListener("resize", onResize);
-      ScrollTrigger.removeEventListener("refresh", onRefresh);
-      lenis.destroy();
     };
   }, []);
 

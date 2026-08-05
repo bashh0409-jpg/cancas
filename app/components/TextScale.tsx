@@ -4,10 +4,10 @@ const TextScale = () => {
   return (
     <div
       data-container
-      className="absolute  insert-0 flex h-full w-full flex-col justify-between p-8"
+      className="absolute inset-0 flex h-full w-full flex-col justify-between p-8"
     >
       <svg
-        width="80%"
+        width="100%"
         viewBox="0 0 1706 379"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

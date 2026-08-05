@@ -54,8 +54,8 @@ const Swirl = () => {
 
           const quickSetters = texts.map((text) =>
             gsap.quickTo(text, "x", {
-              duration: 0.6,
-              ease: "power4.out",
+              duration: 0.8,
+              ease: "power3.out",
             }),
           );
 
