@@ -7,6 +7,10 @@ const MIME_TO_EXTENSION: Record<string, string> = {
   "image/avif": ".avif",
   "image/heic": ".heic",
   "image/heif": ".heif",
+  "audio/webm": ".webm",
+  "audio/ogg": ".ogg",
+  "audio/mpeg": ".mp3",
+  "audio/wav": ".wav",
 };
 
 export function getStorageFileExtension(file: File) {
@@ -17,6 +21,21 @@ export function getStorageFileExtension(file: File) {
   }
 
   return MIME_TO_EXTENSION[file.type] ?? ".bin";
+}
+
+export function getExtensionForMime(mime: string) {
+  return MIME_TO_EXTENSION[mime] ?? ".bin";
+}
+
+export function buildVoiceNoteStoragePath(
+  userId: string,
+  canvasId: string,
+  nodeId: string,
+  mimeType: string,
+) {
+  const extension = getExtensionForMime(mimeType);
+
+  return `${userId}/${canvasId}/${nodeId}/voice${extension}`;
 }
 
 /** Supabase object keys must not contain spaces or most punctuation in path segments. */

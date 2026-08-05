@@ -57,6 +57,7 @@ import {
   savePendingUploadFile,
 } from "@/lib/canvas/pendingUploads";
 import { deleteCanvasImage, uploadCanvasImage } from "@/lib/canvas/storage";
+import { uploadVoiceNote } from "@/lib/canvas/storage";
 import { canvasImageUploadPool } from "@/lib/canvas/uploadPool";
 import {
   createUploadDebugEntry,
@@ -85,7 +86,7 @@ import {
   type ImageMenuAction,
 } from "@/app/components/canvas/ImageContextMenu";
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
-import { showToast } from "@/app/components/home/Toast";
+import { showToast } from "@/app/components/work/Toast";
 import { dispatchUserCreditsUpdated } from "@/lib/credits/events";
 
 type Viewport = {
@@ -371,6 +372,22 @@ function serializeImageNodeForSave(node: ImageCanvasNode) {
   };
 }
 
+function serializeVoiceNodeForSave(node: VoiceCanvasNode) {
+  return {
+    id: node.id,
+    title: node.title,
+    // When storagePath exists, avoid persisting large data URLs
+    audioDataUrl: node.storagePath ? "" : node.audioDataUrl ?? "",
+    storagePath: node.storagePath,
+    durationMs: node.durationMs,
+    position: node.position,
+    size: node.size,
+    zIndex: node.zIndex,
+    visible: node.visible,
+    locked: node.locked,
+  };
+}
+
 function imageIntersectsRect(
   node: ImageCanvasNode,
   rect: ReturnType<typeof normalizeRect>,
@@ -557,6 +574,9 @@ export default function CanvasWorkspace({
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
   const [gridLineType, setGridLineType] = useState(initialContent.gridLineType);
   const wireType = useCanvasPreferencesStore((state) => state.wireType);
+  const connectorLineStyle = useCanvasPreferencesStore(
+    (state) => state.connectorLineStyle,
+  );
   const handleResetGrid = () => {
     setBackgroundColor(initialContent.backgroundColor);
     setGridColor(initialContent.gridColor);
@@ -927,6 +947,36 @@ export default function CanvasWorkspace({
     }
 
     void resumePendingUploads();
+
+    // Populate signed playback URLs for voice nodes that only have storagePath
+    async function populateVoiceSignedUrls() {
+      const supabase = supabaseClientRef.current;
+
+      for (const node of voiceNodesRef.current) {
+        if (cancelled) return;
+        if (node.storagePath && !(node.audioDataUrl ?? "")) {
+          try {
+            const { data } = await supabase.storage
+              .from("voice-notes")
+              .createSignedUrl(node.storagePath, 60 * 60);
+
+            const url = data?.signedUrl;
+
+            if (url) {
+              setVoiceNodes((current) =>
+                current.map((entry) =>
+                  entry.id === node.id ? { ...entry, audioDataUrl: url } : entry,
+                ),
+              );
+            }
+          } catch {
+            // ignore individual failures; playback will still use whatever is available
+          }
+        }
+      }
+    }
+
+    void populateVoiceSignedUrls();
 
     return () => {
       cancelled = true;
@@ -1499,12 +1549,29 @@ export default function CanvasWorkspace({
     }
 
     void (async () => {
-      let audioDataUrl: string;
+      const supabase = supabaseClientRef.current;
+      let audioDataUrl: string | undefined;
+      let storagePath: string | undefined;
+
       try {
-        audioDataUrl = await blobToDataUrl(pendingVoiceRecording.blob);
-      } catch {
-        setPendingVoiceRecording(null);
-        return;
+        const result = await uploadVoiceNote(
+          supabase,
+          userId,
+          canvasId,
+          pendingVoiceRecording.id,
+          pendingVoiceRecording.blob,
+        );
+
+        audioDataUrl = result.url;
+        storagePath = result.storagePath;
+      } catch (err) {
+        // If upload fails, fallback to data URL so user can still play back
+        try {
+          audioDataUrl = await blobToDataUrl(pendingVoiceRecording.blob);
+        } catch {
+          setPendingVoiceRecording(null);
+          return;
+        }
       }
       const vp = viewportRef.current;
       const center = {
@@ -1524,7 +1591,8 @@ export default function CanvasWorkspace({
         {
           id: pendingVoiceRecording.id,
           title: formatVoiceNoteTitle(pendingVoiceRecording.durationMs),
-          audioDataUrl,
+          audioDataUrl: audioDataUrl ?? "",
+          storagePath,
           durationMs: pendingVoiceRecording.durationMs,
           position: {
             x: center.x - 120,
@@ -1621,7 +1689,7 @@ export default function CanvasWorkspace({
       viewport,
       imageNodes: imageNodes.map(serializeImageNodeForSave),
       webNodes,
-      voiceNodes,
+      voiceNodes: voiceNodes.map(serializeVoiceNodeForSave),
       textNodes,
       aiChatNodes,
       transcriptionNodes,
@@ -2154,7 +2222,8 @@ export default function CanvasWorkspace({
         return;
       }
 
-      const pastedText = event.clipboardData?.getData("text/plain")?.trim() ?? "";
+      const pastedText =
+        event.clipboardData?.getData("text/plain")?.trim() ?? "";
       if (!pastedText) {
         return;
       }
@@ -3876,7 +3945,9 @@ export default function CanvasWorkspace({
           });
 
           if (!upscaleResponse.ok) {
-            const errorData = (await upscaleResponse.json().catch(() => null)) as {
+            const errorData = (await upscaleResponse
+              .json()
+              .catch(() => null)) as {
               error?: string;
             } | null;
             console.error(
@@ -3900,7 +3971,9 @@ export default function CanvasWorkspace({
           // Get the upscaled image as a blob and create a new blob URL
           const upscaledBlob = await upscaleResponse.blob();
           try {
-            const remaining = upscaleResponse.headers.get("X-Credits-Remaining");
+            const remaining = upscaleResponse.headers.get(
+              "X-Credits-Remaining",
+            );
             if (remaining) dispatchUserCreditsUpdated(Number(remaining));
           } catch {
             // ignore
@@ -3976,6 +4049,18 @@ export default function CanvasWorkspace({
           });
         }
       })();
+    } else if (action === "flip-horizontal") {
+      handleImageTransform(nodeId, {
+        flipH: !(node.transform?.flipH ?? false),
+      });
+    } else if (action === "flip-vertical") {
+      handleImageTransform(nodeId, {
+        flipV: !(node.transform?.flipV ?? false),
+      });
+    } else if (action === "rotate") {
+      handleImageTransform(nodeId, {
+        rotation: ((node.transform?.rotation ?? 0) + 90) % 360,
+      });
     }
 
     setImageContextMenu(null);
@@ -4181,12 +4266,21 @@ export default function CanvasWorkspace({
 
       void (async () => {
         try {
-          const audioDataUrl = voiceNode.audioDataUrl;
           let base64Audio: string;
           let mimeType = "audio/webm";
+          const supabase = supabaseClientRef.current;
 
-          if (audioDataUrl.startsWith("blob:")) {
-            const blobResponse = await fetch(audioDataUrl);
+          if (voiceNode.storagePath) {
+            // Create a signed URL and fetch the blob for transcription
+            const { data } = await supabase.storage
+              .from("voice-notes")
+              .createSignedUrl(voiceNode.storagePath, 60 * 60);
+
+            const signedUrl = data?.signedUrl;
+
+            if (!signedUrl) throw new Error("Failed to get signed URL");
+
+            const blobResponse = await fetch(signedUrl);
             const blob = await blobResponse.blob();
             mimeType = blob.type || "audio/webm";
             const arrayBuffer = await blob.arrayBuffer();
@@ -4196,11 +4290,25 @@ export default function CanvasWorkspace({
               .join("");
             base64Audio = btoa(binary);
           } else {
-            const dataUrlMatch = audioDataUrl.match(
-              /^data:(audio\/[^;]+);base64,(.+)$/,
-            );
-            mimeType = dataUrlMatch ? dataUrlMatch[1] : "audio/webm";
-            base64Audio = dataUrlMatch ? dataUrlMatch[2] : audioDataUrl;
+            const audioDataUrl = voiceNode.audioDataUrl ?? "";
+
+            if (audioDataUrl.startsWith("blob:")) {
+              const blobResponse = await fetch(audioDataUrl);
+              const blob = await blobResponse.blob();
+              mimeType = blob.type || "audio/webm";
+              const arrayBuffer = await blob.arrayBuffer();
+              const uint8Array = new Uint8Array(arrayBuffer);
+              const binary = Array.from(uint8Array)
+                .map((b) => String.fromCharCode(b))
+                .join("");
+              base64Audio = btoa(binary);
+            } else {
+              const dataUrlMatch = audioDataUrl.match(
+                /^data:(audio\/[^;]+);base64,(.+)$/,
+              );
+              mimeType = dataUrlMatch ? dataUrlMatch[1] : "audio/webm";
+              base64Audio = dataUrlMatch ? dataUrlMatch[2] : audioDataUrl;
+            }
           }
 
           const response = await fetch("/api/ai/run", {
@@ -4485,19 +4593,29 @@ export default function CanvasWorkspace({
 
         {transcriptionNodes
           .filter((node) => node.visible ?? true)
-          .map((node) => (
-            <CanvasTranscriptionNode
-              key={node.id}
-              isDragging={draggingTextNodeId === node.id}
-              isSelected={selectedTextNodeId === node.id}
-              hasInput={Boolean(node.sourceNodeId)}
-              node={node}
-              onContextMenu={(event) =>
-                handleTranscriptionContextMenu(event, node)
-              }
-              onDisconnectInput={() => disconnectTranscriptionInput(node.id)}
-              onPointerCancel={handleTextPointerUp}
-              onPointerDown={(event) => {
+          .map((node) => {
+            const sourceVoice = node.sourceNodeId
+              ? voiceNodesRef.current.find((vn) => vn.id === node.sourceNodeId)
+              : undefined;
+
+            const label = sourceVoice
+              ? `${formatVoiceNoteTitle(sourceVoice.durationMs)} transcription`
+              : "Transcription";
+
+            return (
+              <CanvasTranscriptionNode
+                key={node.id}
+                label={label}
+                isDragging={draggingTextNodeId === node.id}
+                isSelected={selectedTextNodeId === node.id}
+                hasInput={Boolean(node.sourceNodeId)}
+                node={node}
+                onContextMenu={(event) =>
+                  handleTranscriptionContextMenu(event, node)
+                }
+                onDisconnectInput={() => disconnectTranscriptionInput(node.id)}
+                onPointerCancel={handleTextPointerUp}
+                onPointerDown={(event) => {
                 if (node.locked ?? false) return;
                 event.preventDefault();
                 event.stopPropagation();
@@ -4537,7 +4655,8 @@ export default function CanvasWorkspace({
               onPointerMove={handleTextPointerMove}
               onPointerUp={handleTextPointerUp}
             />
-          ))}
+          );
+        })}
 
         {aiChatNodes
           .filter((node) => node.sourceNodeId && node.visible !== false)
@@ -4557,7 +4676,8 @@ export default function CanvasWorkspace({
                 fromSize={sourceTranscription.size}
                 toSize={node.size}
                 wireType={wireType}
-                color="rgba(255,255,255,0.2)"
+                  connectorLineStyle={connectorLineStyle}
+                color="#6EDDB3"
                 strokeWidth={1.8}
               />
             );
@@ -4583,7 +4703,8 @@ export default function CanvasWorkspace({
                 fromSize={sourceVoice.size}
                 toSize={node.size}
                 wireType={wireType}
-                color="rgba(255,255,255,0.2)"
+                  connectorLineStyle={connectorLineStyle}
+                color="#6EDDB3"
                 strokeWidth={1.8}
               />
             );
