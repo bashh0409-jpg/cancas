@@ -623,7 +623,7 @@ export default function SupportPage() {
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="mono flex w-full lime rounded cursor-pointer items-center justify-center gap-2 bg-lime px-4 py-2 text-xs font-medium uppercase tracking-tight text-black transition hover:opacity-90 disabled:opacity-50"
+                    className="mono flex w-full lime rounded cursor-pointer items-center justify-center gap-2 px-4 py-2 text-xs font-medium uppercase tracking-tight text-black transition hover:opacity-90 disabled:opacity-50"
                   >
                     {formLoading ? "Submitting..." : "Send request"}
                     <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
