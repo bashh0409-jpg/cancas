@@ -1,4 +1,4 @@
-import { Share2 } from "lucide-react";
+import { Loader2, Share2 } from "lucide-react";
 
 type TaskProps = {
   credits: number;
@@ -28,15 +28,23 @@ const TaskView = ({
         </button>
       </div>
 
-      <div className="flex  text-white/50  flex-col w-full items-start gap-1 text-left">
+      <div className="flex text-white/50 flex-col w-full items-start gap-1 text-left">
         {hasTasks ? (
-          <ul className="list-disc pl-4 text-xs tracking-tight font-mono tracking-tight text-white">
-            {taskLabels.map((label) => (
-              <li key={label}>{label}</li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-3 w-3 animate-spin text-lime" />
+            <div className="flex flex-col gap-0.5">
+              {taskLabels.map((label) => (
+                <span
+                  key={label}
+                  className="text-[10px] tracking-tight font-mono text-white"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
         ) : (
-          <span className="text-xs tracking-tight font-mono tracking-tight text-white">
+          <span className="text-xs tracking-tight font-mono text-white/50">
             No task running
           </span>
         )}

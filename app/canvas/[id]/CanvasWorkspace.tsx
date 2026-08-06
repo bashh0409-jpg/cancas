@@ -727,6 +727,13 @@ export default function CanvasWorkspace({
       labels.push("Upscaling image");
     }
 
+    const pendingUploadCount = pendingUploadIdsRef.current.size;
+    if (pendingUploadCount > 0) {
+      labels.push(
+        `Uploading ${pendingUploadCount} image${pendingUploadCount > 1 ? "s" : ""}`,
+      );
+    }
+
     window.dispatchEvent(
       new CustomEvent("canvasai:task-status", {
         detail: { labels: labels.length ? labels : null },
@@ -737,6 +744,7 @@ export default function CanvasWorkspace({
     transcriptionNodes,
     processingRemoveBgNodeIds,
     processingUpscaleNodeIds,
+    imageNodes,
   ]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;

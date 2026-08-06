@@ -218,6 +218,12 @@ export function FloatingToolbox() {
         mediaRecorderRef.current = null;
         if (isMountedRef.current) {
           setIsRecording(false);
+          // Clear the recording task once recording stops
+          window.dispatchEvent(
+            new CustomEvent("canvasai:task-status", {
+              detail: { labels: null },
+            }),
+          );
         }
       };
 
@@ -231,6 +237,13 @@ export function FloatingToolbox() {
 
       recorder.start();
       setIsRecording(true);
+
+      // Show "Recording audio" in the TaskView while recording is in progress
+      window.dispatchEvent(
+        new CustomEvent("canvasai:task-status", {
+          detail: { labels: ["Recording audio"] },
+        }),
+      );
     } catch (error) {
       let message = "Unable to start recording. Please try again.";
 
