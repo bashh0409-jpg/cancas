@@ -1,6 +1,6 @@
 "use client";
 
-import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
+import { ClearLocalDataOnQuery } from "@/app/components/work/ClearLocalDataOnQuery";
 import FloatingToolbar from "@/app/components/FloatingToolbar";
 import type { CanvasContent } from "@/types/canvas";
 import { Suspense, useEffect, useState } from "react";
@@ -13,11 +13,12 @@ const CanvasWorkspace = dynamic(() => import("./CanvasWorkspace"), {
   ssr: false,
 });
 import { SyncIndicator } from "@/app/components/canvas/SyncIndicator";
-import { CreditsBadge } from "@/app/components/home/CreditsBadge";
+import { CreditsBadge } from "@/app/components/work/CreditsBadge";
 import {
   USER_CREDITS_UPDATED_EVENT,
   type UserCreditsUpdatedDetail,
 } from "@/lib/credits/events";
+import TaskView from "@/app/components/TaskView";
 
 type ImageSyncStats = {
   synced: number;
@@ -49,6 +50,7 @@ export default function CanvasPageClient({
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
   const [currentCredits, setCurrentCredits] = useState(credits);
+  const [taskLabels, setTaskLabels] = useState<string[]>(["No task running"]);
   const [userCanvases, setUserCanvases] = useState(canvases);
 
   const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
@@ -70,16 +72,22 @@ export default function CanvasPageClient({
       }
     };
 
-    window.addEventListener(
-      USER_CREDITS_UPDATED_EVENT,
-      handleCreditsUpdated,
-    );
+    const handleTaskStatus = (event: Event) => {
+      const detail = (event as CustomEvent<{ labels: string[] | null }>).detail;
+      setTaskLabels(
+        detail?.labels?.length ? detail.labels : ["No task running"],
+      );
+    };
+
+    window.addEventListener(USER_CREDITS_UPDATED_EVENT, handleCreditsUpdated);
+    window.addEventListener("canvasai:task-status", handleTaskStatus);
 
     return () => {
       window.removeEventListener(
         USER_CREDITS_UPDATED_EVENT,
         handleCreditsUpdated,
       );
+      window.removeEventListener("canvasai:task-status", handleTaskStatus);
     };
   }, []);
 
@@ -93,7 +101,9 @@ export default function CanvasPageClient({
         const supabase = createClient();
         const [loadedCanvases, loadedCredits] = await Promise.all([
           getUserCanvases(supabase, userId),
-          credits <= 0 ? getUserCredits(supabase, userId) : Promise.resolve(credits),
+          credits <= 0
+            ? getUserCredits(supabase, userId)
+            : Promise.resolve(credits),
         ]);
 
         setUserCanvases(loadedCanvases);
@@ -130,11 +140,14 @@ export default function CanvasPageClient({
         <SyncIndicator stats={syncStats} />
       </div>
 
-      <div className="absolute right-4 top-4 z-50 flex items-center">
+      <div className="absolute hidden right-4 top-4 z-50 flex items-center">
         <CreditsBadge
           credits={currentCredits}
           className=" rounded border-white/10 bg-black/75 px-1  shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl hover:bg-black/90"
         />
+      </div>
+      <div className="absolute right-4 top-4 z-50 flex items-center">
+        <TaskView credits={currentCredits} taskLabels={taskLabels} />
       </div>
 
       <FloatingToolbar />

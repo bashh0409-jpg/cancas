@@ -1,4 +1,4 @@
-// app/components/home/buildPlans.ts
+// app/components/work/buildPlans.ts
 
 type CurrencyData = {
   currency: string;

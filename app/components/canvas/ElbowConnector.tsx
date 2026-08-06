@@ -13,13 +13,24 @@ type ElbowConnectorProps = {
   fromSize: { width: number; height: number };
   toSize: { width: number; height: number };
   wireType?: WireType;
+  connectorLineStyle?: "solid" | "dashed";
   color?: string;
   strokeWidth?: number;
 };
 
 function getElbowPath(from: Point, to: Point): string {
   const midY = (from.y + to.y) / 2;
-  return `M ${from.x} ${from.y} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${to.y}`;
+  const dx = to.x - from.x;
+  const direction = dx >= 0 ? 1 : -1;
+  const offset = Math.min(20, Math.abs(dx) / 2);
+  const startX = from.x + direction * offset;
+  const endX = to.x - direction * offset;
+
+  if (Math.abs(dx) <= 4) {
+    return `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${to.y}`;
+  }
+
+  return `M ${from.x} ${from.y} L ${startX} ${from.y} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${to.y} L ${to.x} ${to.y}`;
 }
 
 function getLinePath(from: Point, to: Point): string {
@@ -38,7 +49,8 @@ export function ElbowConnector({
   fromSize,
   toSize,
   wireType = "elbow",
-  color = "rgba(255,255,255,0.3)",
+  connectorLineStyle = "dashed",
+  color = "#6EDDB3",
   strokeWidth = 3,
 }: ElbowConnectorProps) {
   const fromCenter = {
@@ -52,7 +64,7 @@ export function ElbowConnector({
 
   const fromEdge = {
     x: from.x + fromSize.width,
-    y: from.y + fromSize.height / 2,
+    y: from.y + fromSize.height / 5,
   };
 
   const toEdge = {
@@ -92,6 +104,7 @@ export function ElbowConnector({
         pointerEvents: "none",
         zIndex: 0,
         overflow: "visible",
+        borderRadius: "20px",
       }}
     >
       <path
@@ -99,7 +112,7 @@ export function ElbowConnector({
         fill="none"
         stroke={color}
         strokeWidth={strokeWidth}
-        strokeDasharray="4 3"
+        strokeDasharray={connectorLineStyle === "dashed" ? "4 3" : undefined}
       />
     </svg>
   );

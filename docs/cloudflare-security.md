@@ -101,7 +101,7 @@ Keep dynamic and authenticated data private:
 Name: Bypass private app and API routes
 Expression:
 starts_with(http.request.uri.path, "/api/") or
-starts_with(http.request.uri.path, "/home") or
+starts_with(http.request.uri.path, "/work") or
 starts_with(http.request.uri.path, "/canvas")
 Action: Bypass cache
 ```

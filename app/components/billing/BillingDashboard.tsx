@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, AlertCircle, CheckCircle, X, WalletCards } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  X,
+  WalletCards,
+} from "lucide-react";
 import type { UserSubscription } from "@/lib/subscriptions/repository";
 
 interface BillingDashboardProps {
@@ -112,7 +118,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
   return (
     <div className="space-y-6 mono">
       <a
-        href="/home"
+        href="/work"
         className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
       >
         <X className="w-4 h-4" />
@@ -180,7 +186,8 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
               Credits
             </div>
             <div className="tracking-tight flex gap-1 items-center grotesk">
-             <WalletCards className="w-4 h-4"/> {typeof credits === "number" ? credits.toLocaleString() : "—"}
+              <WalletCards className="w-4 h-4" />{" "}
+              {typeof credits === "number" ? credits.toLocaleString() : "—"}
             </div>
           </div>
         </div>

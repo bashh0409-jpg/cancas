@@ -34,6 +34,6 @@ export async function createCanvasAction(idempotencyKey: string) {
   }
 
   if (idempotentResult.insufficientCredits) {
-    redirect("/home?error=no_credits");
+    redirect("/work?error=no_credits");
   }
 }

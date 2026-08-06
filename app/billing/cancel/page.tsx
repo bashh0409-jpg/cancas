@@ -42,7 +42,7 @@ export default function BillingCancel() {
           </Link>
 
           <Link
-            href="/home"
+            href="/work"
             className="block w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
           >
             Go to Dashboard

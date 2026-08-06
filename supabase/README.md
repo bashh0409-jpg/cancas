@@ -13,7 +13,7 @@ This removes all canvas projects from the database and recreates tables, policie
 
 **Clear local cache in each browser** (pick one):
 
-- Visit **`/home?resetLocal=1`** while logged in (easiest — no console).
+- Visit **`/work?resetLocal=1`** while logged in (easiest — no console).
 - Or DevTools → **Application** → **Local Storage** → your site URL → select keys starting with `canvasai:` → Delete (or right‑click → Clear).
 
 ---
@@ -29,5 +29,5 @@ Both are safe to re-run if something already exists.
 
 ## After setup
 
-- **New File** on `/home` creates a project.
+- **New File** on `/work` creates a project.
 - Open the same canvas in two browsers to test live sync (delete, undo, moves).

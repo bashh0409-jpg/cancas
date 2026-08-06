@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "azure",
     options: {
-      redirectTo: `${origin}/api/auth/callback?next=/home`,
+      redirectTo: `${origin}/api/auth/callback?next=/work`,
     },
   });
 

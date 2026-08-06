@@ -9,7 +9,7 @@ type ClearLocalDataOnQueryProps = {
 };
 
 export function ClearLocalDataOnQuery({
-  redirectTo = "/home",
+  redirectTo = "/work",
 }: ClearLocalDataOnQueryProps) {
   const searchParams = useSearchParams();
   const router = useRouter();

@@ -14,16 +14,19 @@ import Link from "next/link";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 
 type WireType = "line" | "elbow" | "bezier";
+type ConnectorLineStyle = "solid" | "dashed";
 
 export default function PreferencesPage() {
   const {
     rightClickMenu,
     snapToGrid,
     wireType,
+    connectorLineStyle,
     keepOriginalImageOnRemoveBg,
     setRightClickMenu,
     setSnapToGrid,
     setWireType,
+    setConnectorLineStyle,
     setKeepOriginalImageOnRemoveBg,
     syncFromServer,
     syncToServer,
@@ -59,7 +62,7 @@ export default function PreferencesPage() {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <Link
-            href="/home"
+            href="/work"
             className="flex items-center gap-1 text-xs mono uppercase tracking-tight text-white/70 transition hover:text-white"
           >
             <ArrowLeft className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -119,6 +122,12 @@ export default function PreferencesPage() {
           <WireTypeFlyout
             value={wireType}
             onChange={setWireType}
+            syncToServer={syncToServer}
+          />
+
+          <ConnectorStyleFlyout
+            value={connectorLineStyle}
+            onChange={setConnectorLineStyle}
             syncToServer={syncToServer}
           />
         </div>
@@ -262,6 +271,92 @@ function WireTypeFlyout({
                   )}
                 </button>
               </div>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConnectorStyleFlyout({
+  value,
+  onChange,
+  syncToServer,
+}: {
+  value: ConnectorLineStyle;
+  onChange: (style: ConnectorLineStyle) => void;
+  syncToServer: () => Promise<void>;
+}) {
+  const [showFlyout, setShowFlyout] = useState(false);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowFlyout(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowFlyout(false);
+    }, 150);
+  };
+
+  const styleLabel: Record<ConnectorLineStyle, string> = {
+    solid: "Solid",
+    dashed: "Dashed",
+  };
+
+  return (
+    <div
+      ref={useRef<HTMLDivElement>(null)}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="flex items-center justify-between py-3">
+        <div className="flex items-center gap-2">
+          <Workflow className="w-4 h-4 text-white/60 stroke-[1.5]" />
+          <span className="text-xs mono uppercase tracking-tight text-white">
+            Connector Style
+          </span>
+        </div>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-xs mono uppercase tracking-tight text-white/70 transition hover:text-white cursor-pointer"
+        >
+          <span>{styleLabel[value]}</span>
+          <ChevronRight className="w-3 h-3 text-white/50 stroke-[1.5]" />
+        </button>
+      </div>
+
+      {showFlyout && (
+        <div
+          className="absolute right-0 top-full mt-1 z-[70] w-[180px] rounded border border-white/10 bg-[#212126] shadow-2xl"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {(Object.entries(styleLabel) as [ConnectorLineStyle, string][]).map(
+            ([style, label], index) => (
+              <button
+                key={style}
+                type="button"
+                onClick={() => {
+                  onChange(style);
+                  syncToServer();
+                  setShowFlyout(false);
+                }}
+                className={`flex w-full items-center justify-between px-3 py-2 text-xs mono uppercase tracking-tight transition cursor-pointer ${
+                  value === style
+                    ? "text-white"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <span>{label}</span>
+                {value === style ? (
+                  <span className="text-white/80">✓</span>
+                ) : null}
+              </button>
             ),
           )}
         </div>

@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }
-    let redirectPath = "/home?dropbox=connected";
+    let redirectPath = "/work?dropbox=connected";
 
     if (state) {
       try {

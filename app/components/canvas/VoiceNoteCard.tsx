@@ -14,7 +14,7 @@ import { VoiceNoteWaveform } from "./VoiceNoteWaveform";
 
 type VoiceNoteCardProps = {
   title: string;
-  audioDataUrl: string;
+  audioDataUrl?: string;
   durationMs: number;
   playbackMs: number;
   isPlaying: boolean;
@@ -37,7 +37,6 @@ type WindowWithAudioContextFallback = Window &
   };
 
 export function VoiceNoteCard({
-  title,
   audioDataUrl,
   durationMs,
   playbackMs,
@@ -58,6 +57,7 @@ export function VoiceNoteCard({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const frequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+
   const [waveformLevels, setWaveformLevels] = useState<number[]>(
     getVoiceWaveformHeights,
   );
@@ -88,17 +88,21 @@ export function VoiceNoteCard({
 
     const audioContext =
       audioContextRef.current ?? new AudioContextConstructor();
+
     audioContextRef.current = audioContext;
 
     const analyser = analyserRef.current ?? audioContext.createAnalyser();
+
     analyser.fftSize = 64;
     analyser.smoothingTimeConstant = 0.72;
     analyserRef.current = analyser;
 
     if (!sourceRef.current) {
       const source = audioContext.createMediaElementSource(audioElement);
+
       source.connect(analyser);
       analyser.connect(audioContext.destination);
+
       sourceRef.current = source;
     }
 
@@ -124,12 +128,14 @@ export function VoiceNoteCard({
           const bucketStart = Math.floor(
             (index / WAVEFORM_BAR_COUNT) * frequencyData.length,
           );
+
           const bucketEnd = Math.max(
             bucketStart + 1,
             Math.floor(
               ((index + 1) / WAVEFORM_BAR_COUNT) * frequencyData.length,
             ),
           );
+
           let total = 0;
 
           for (
@@ -141,11 +147,13 @@ export function VoiceNoteCard({
           }
 
           const average = total / (bucketEnd - bucketStart);
+
           return Math.max(18, Math.min(100, 18 + (average / 255) * 82));
         },
       );
 
       setWaveformLevels(nextLevels);
+
       animationFrameRef.current =
         window.requestAnimationFrame(readFrequencyData);
     }
@@ -156,12 +164,15 @@ export function VoiceNoteCard({
   }, []);
 
   useEffect(() => {
-    if (isPlaying) {
-      startWaveformAnalysis();
+    if (!isPlaying) {
       return;
     }
 
-    stopWaveformAnalysis();
+    startWaveformAnalysis();
+
+    return () => {
+      stopWaveformAnalysis();
+    };
   }, [isPlaying, startWaveformAnalysis, stopWaveformAnalysis]);
 
   useEffect(() => {
@@ -180,55 +191,64 @@ export function VoiceNoteCard({
   );
 
   return (
-    <div
-      className="relative h-fit w-full rounded border border-white/10 bg-white px-3  shadow-[0_10px_24px_rgba(0,0,0,0.35)] "
-      style={{ mixBlendMode: "multiply" }}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="mono truncate text-xs tracking-tight text-black/" title={title}>
-          {title}
-        </span>
-        <VoiceNoteOptionsMenu
-          isOpen={isMenuOpen}
-          onAction={onMenuAction}
-          onToggle={onToggleMenu}
+    <div className="group w-full">
+      {/* Voice note */}
+      <div
+        className="relative h-fit w-full rounded-full border border-white/10 bg-[#212126] p-1 px-2 shadow-[0_10px_24px_rgba(0,0,0,0.35)]"
+        style={{ mixBlendMode: "multiply" }}
+      >
+        <div className="flex items-center">
+          <VoiceNotePlayPauseButton
+            isPlaying={isPlaying}
+            onClick={onTogglePlayback}
+          />
+
+          <VoiceNoteWaveform
+            durationMs={durationMs}
+            isPlaying={isPlaying}
+            levels={waveformLevels}
+            playbackMs={playbackMs}
+          />< VoiceNoteOptionsMenu
+            isOpen={isMenuOpen}
+            onAction={onMenuAction}
+            onToggle={onToggleMenu}
+          />
+        </div>
+       
+
+        <audio
+          ref={handleAudioRef}
+          className="hidden"
+          preload="none"
+          crossOrigin="anonymous"
+          src={audioDataUrl && audioDataUrl.trim() ? audioDataUrl : undefined}
+          onEnded={onAudioEnded}
+          onPause={onAudioPaused}
+          onPlay={onAudioPlaying}
+          onTimeUpdate={(event) => {
+            onAudioTimeUpdate(
+              Math.round(event.currentTarget.currentTime * 1000),
+            );
+          }}
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <VoiceNotePlayPauseButton
-          isPlaying={isPlaying}
-          onClick={onTogglePlayback}
-        />
-        <VoiceNoteWaveform
-          durationMs={durationMs}
-          isPlaying={isPlaying}
-          levels={waveformLevels}
-          playbackMs={playbackMs}
-        />
-      </div>
-
-      <div className=" flex items-center justify-between">
-        <span className="text-[10px] tracking-tight text-black mono">
-          {formatVoiceDuration(playbackMs)}
-        </span>
-        <span className="mono text-[10px] tracking-tight text-black mono">
+      {/* Options appear when hovering the entire voice note */}
+      <div
+        className={[
+          "mt-1 flex items-center justify-between gap-2",
+          "opacity-0 invisible pointer-events-none",
+          "translate-y-[-2px]",
+          "transition-all duration-150 ease-out",
+          "group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto",
+          "group-hover:translate-y-0",
+        ].join(" ")}
+      >
+        <span className="text-[10px] text-white flex w-full justify-between">
+          <span className="mr-1 font-mono uppercase"></span>
           {formatVoiceDuration(durationMs)}
         </span>
       </div>
-
-      <audio
-        className="hidden"
-        preload="metadata"
-        src={audioDataUrl}
-        ref={handleAudioRef}
-        onEnded={onAudioEnded}
-        onPause={onAudioPaused}
-        onPlay={onAudioPlaying}
-        onTimeUpdate={(event) => {
-          onAudioTimeUpdate(Math.round(event.currentTarget.currentTime * 1000));
-        }}
-      />
     </div>
   );
 }

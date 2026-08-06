@@ -7,7 +7,7 @@ import type { VoiceNoteMenuAction } from "./VoiceNoteOptionsMenu";
 type CanvasVoiceNodeData = {
   id: string;
   title: string;
-  audioDataUrl: string;
+  audioDataUrl?: string;
   durationMs: number;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -80,9 +80,11 @@ export function CanvasVoiceNode({
             event.stopPropagation();
             onDisconnectOutputs();
           }}
-          className="absolute right-[-8px] top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border border-white/30 bg-white/10 transition hover:bg-white/30"
+          className="absolute right-[-8px] z-10 top-1/7 -translate-y-1 h-3.5 w-3.5 rounded-full border border-[#6EDDB3] bg-[#6EDDB3] transition hover:bg-[#6EDDB3]/40"
           aria-label="Disconnect voice outputs"
-        />
+        >
+          <span className="absolute left-1/2 top-1/2 h-2 rounded-full border-2 border-[#212126] w-2 -translate-x-1/2 -translate-y-1/2 bg-[#6EDDB3]" />
+        </button>
       )}
       <VoiceNoteCard
         audioDataUrl={node.audioDataUrl}

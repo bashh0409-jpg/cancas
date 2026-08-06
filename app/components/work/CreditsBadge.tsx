@@ -5,9 +5,6 @@ import {
   X,
   CheckIcon,
   ArrowRightIcon,
-  CreditCard,
-  Wallet2,
-  WalletMinimal,
   WalletCards,
 } from "lucide-react";
 import { PlanCard } from "./PlanCard";
@@ -108,13 +105,13 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          "flex items-center mono cursor-pointer lime border border-white/5 h-7 px-2 rounded-xs text-black uppercase text-xs tracking-tight",
+          "flex items-center mono cursor-pointer lime  h-6  rounded text-black uppercase text-[10px] tracking-tight",
           "hover:bg-white/30 transition",
           className ?? "",
         ].join(" ")}
       >
         <Icon />
-        <span className="text-sm h-3 tracking-tigh grotesk leading-none">
+        <span className="text-sm grotesk tracking-tight">
           {credits}.00
         </span>
         <span className="text-white text-xs  hidden leading-none">credits</span>
@@ -335,5 +332,17 @@ function formatPrice(
 }
 
 function Icon() {
-  return <WalletCards className="h-3.5 mr-1 w-3.5" />;
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M12 3.75V20.25" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
 }

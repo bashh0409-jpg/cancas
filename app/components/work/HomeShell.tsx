@@ -24,8 +24,8 @@ import {
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
-import { CreditsBadge } from "@/app/components/home/CreditsBadge";
-import { CanvasFileList } from "@/app/components/home/CanvasFileList";
+import { CreditsBadge } from "@/app/components/work/CreditsBadge";
+import { CanvasFileList } from "@/app/components/work/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import Tutorials from "./Tutorials";
 import MuxPlayer from "@mux/mux-player-react";
@@ -37,7 +37,7 @@ import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
-import { DeleteAccountModal } from "@/app/components/home/DeleteAccountModal";
+import { DeleteAccountModal } from "@/app/components/work/DeleteAccountModal";
 import { useRouter } from "next/navigation";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 
@@ -211,7 +211,7 @@ export function AccountCard({
         </button>
       </div>
       {/* Credits row */}
-      <div className="mb-1 flex items-center justify-between px-3 py-2.5">
+      <div className="mb-1 flex items-center justify-between px-2 py-2.5">
         <div className="mono flex w-full justify-between gap-1 text-xs tracking-tight text-white">
           <span>Credits</span>
           <div className="flex grotesk items-center">

@@ -142,7 +142,9 @@ export function CanvasLeftSidebar({
       case "error":
         return {
           icon: <AlertCircle className="h-3.5 w-3.5 text-red-400" />,
-          label: saveError ? "Save failed" : `${syncStats.failed} upload failed`,
+          label: saveError
+            ? "Save failed"
+            : `${syncStats.failed} upload failed`,
           detail:
             saveError ??
             `${syncStats.synced}/${syncStats.total} files synced successfully`,
@@ -174,7 +176,7 @@ export function CanvasLeftSidebar({
         <Link
           aria-label="Go back"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.08] text-white/70 transition hover:bg-white/[0.12] hover:text-white"
-          href="/home"
+          href="/work"
         >
           <svg
             className="h-4 w-4"
@@ -231,7 +233,11 @@ export function CanvasLeftSidebar({
               {zoomPercent}
             </button>
 
-            <IconButton disabled={!canZoomIn} label="Zoom in" onClick={onZoomIn}>
+            <IconButton
+              disabled={!canZoomIn}
+              label="Zoom in"
+              onClick={onZoomIn}
+            >
               <Plus className="h-3.5 w-3.5" />
             </IconButton>
           </div>

@@ -46,6 +46,10 @@ import {
 } from "@/lib/canvas/voiceNotes";
 import { CANVAS_TEXT_TOOL_EVENT } from "@/lib/canvas/textToolEvents";
 import { CANVAS_AI_CHAT_TOOL_EVENT } from "@/lib/canvas/aiChatToolEvents";
+import {
+  CANVAS_TIDY_UP_TOOL_EVENT,
+  type TidyUpMode,
+} from "@/lib/canvas/tidyUpToolEvent";
 import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
 import {
   IMAGE_DELETE_UNDO_LIMIT,
@@ -377,7 +381,7 @@ function serializeVoiceNodeForSave(node: VoiceCanvasNode) {
     id: node.id,
     title: node.title,
     // When storagePath exists, avoid persisting large data URLs
-    audioDataUrl: node.storagePath ? "" : node.audioDataUrl ?? "",
+    ...(node.storagePath ? {} : { audioDataUrl: node.audioDataUrl ?? "" }),
     storagePath: node.storagePath,
     durationMs: node.durationMs,
     position: node.position,
@@ -610,6 +614,9 @@ export default function CanvasWorkspace({
   const [editingTextNodeId, setEditingTextNodeId] = useState<string | null>(
     null,
   );
+  const [hoveredTranscriptionNodeId, setHoveredTranscriptionNodeId] = useState<
+    string | null
+  >(null);
   const [imageNodes, setImageNodes] = useState<ImageCanvasNode[]>(
     initialContent.imageNodes,
   );
@@ -699,6 +706,37 @@ export default function CanvasWorkspace({
     Record<string, string>
   >({});
   const [showUnsplash, setShowUnsplash] = useState(false);
+
+  useEffect(() => {
+    const labels: string[] = [];
+
+    if (pendingVoiceRecording) {
+      labels.push("Recording audio");
+    }
+
+    if (transcriptionNodes.some((node) => node.text === "Transcribing...")) {
+      labels.push("Transcribing audio");
+    }
+
+    if (processingRemoveBgNodeIds.size > 0) {
+      labels.push("Removing background");
+    }
+
+    if (processingUpscaleNodeIds.size > 0) {
+      labels.push("Upscaling image");
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("canvasai:task-status", {
+        detail: { labels: labels.length ? labels : null },
+      }),
+    );
+  }, [
+    pendingVoiceRecording,
+    transcriptionNodes,
+    processingRemoveBgNodeIds,
+    processingUpscaleNodeIds,
+  ]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const gridSizePercent = ((gridSize - 12) / (80 - 12)) * 100;
   const initialImageCount = initialImageIdsRef.current.size;
@@ -960,12 +998,18 @@ export default function CanvasWorkspace({
               .from("voice-notes")
               .createSignedUrl(node.storagePath, 60 * 60);
 
-            const url = data?.signedUrl;
+            const signedUrl = data?.signedUrl;
 
-            if (url) {
+            if (signedUrl) {
+              const blobResponse = await fetch(signedUrl);
+              const blob = await blobResponse.blob();
+              const objectUrl = URL.createObjectURL(blob);
+
               setVoiceNodes((current) =>
                 current.map((entry) =>
-                  entry.id === node.id ? { ...entry, audioDataUrl: url } : entry,
+                  entry.id === node.id
+                    ? { ...entry, audioDataUrl: objectUrl }
+                    : entry,
                 ),
               );
             }
@@ -1365,7 +1409,7 @@ export default function CanvasWorkspace({
           backgroundColor: "#ffffff",
           color: "#171717",
           fontFamily: "var(--font-helvetica-neue), Arial, sans-serif",
-          fontSize: 13,
+          fontSize: 14,
         },
         messages: [],
       };
@@ -1387,6 +1431,336 @@ export default function CanvasWorkspace({
       window.removeEventListener(
         CANVAS_AI_CHAT_TOOL_EVENT,
         handleAiChatToolActivated,
+      );
+    };
+  }, [isClientReady]);
+
+  useEffect(() => {
+    function handleTidyUpToolActivated(event: Event) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect || !isClientReady) {
+        return;
+      }
+
+      const vp = viewportRef.current;
+      const origin = screenToCanvas({
+        x: rect.left + 40,
+        y: rect.top + 40,
+      });
+      const maxRowWidth = Math.max(600, rect.width / vp.zoom - 120);
+      const gap = 24;
+
+      const customEvent = event as CustomEvent<{ mode?: TidyUpMode }>;
+      const mode = customEvent.detail?.mode ?? "grouped";
+
+      const tidyableNodes = [
+        ...imageNodesRef.current,
+        ...textNodesRef.current,
+        ...voiceNodesRef.current,
+        ...webNodesRef.current,
+        ...transcriptionNodesRef.current,
+        ...aiChatNodesRef.current,
+      ]
+        .filter((node) => (node.visible ?? true) && !(node.locked ?? false))
+        .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+
+      const layouts = new Map<string, { x: number; y: number }>();
+      const placed = new Set<string>();
+
+      function applyLayoutsToState() {
+        setImageNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+        setTextNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+        setVoiceNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+        setWebNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+        setTranscriptionNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+        setAiChatNodes((current) =>
+          current.map((node) =>
+            layouts.has(node.id)
+              ? { ...node, position: layouts.get(node.id)! }
+              : node,
+          ),
+        );
+      }
+
+      if (mode === "grid") {
+        let nextX = origin.x;
+        let nextY = origin.y;
+        let rowHeight = 0;
+
+        for (const node of tidyableNodes) {
+          const width = node.size.width;
+          const height = node.size.height;
+
+          if (nextX !== origin.x && nextX + width > origin.x + maxRowWidth) {
+            nextX = origin.x;
+            nextY += rowHeight + gap;
+            rowHeight = 0;
+          }
+
+          layouts.set(node.id, { x: nextX, y: nextY });
+
+          nextX += width + gap;
+          rowHeight = Math.max(rowHeight, height);
+        }
+
+        if (!layouts.size) {
+          return;
+        }
+
+        applyLayoutsToState();
+        saveDelayMsRef.current = 0;
+        return;
+      }
+
+      const transcriptionBySource = new Map<
+        string,
+        CanvasTranscriptionNodeData[]
+      >();
+      for (const node of transcriptionNodesRef.current) {
+        if (node.sourceNodeId) {
+          const bucket = transcriptionBySource.get(node.sourceNodeId) ?? [];
+          bucket.push(node);
+          transcriptionBySource.set(node.sourceNodeId, bucket);
+        }
+      }
+
+      const aiChatBySource = new Map<string, CanvasAiChatNodeData[]>();
+      for (const node of aiChatNodesRef.current) {
+        if (node.sourceNodeId) {
+          const bucket = aiChatBySource.get(node.sourceNodeId) ?? [];
+          bucket.push(node);
+          aiChatBySource.set(node.sourceNodeId, bucket);
+        }
+      }
+
+      const voiceGroups = voiceNodesRef.current.filter(
+        (voice) => (voice.visible ?? true) && !(voice.locked ?? false),
+      );
+      const orphanTranscriptions = transcriptionNodesRef.current.filter(
+        (node) =>
+          (node.visible ?? true) &&
+          !(node.locked ?? false) &&
+          (!node.sourceNodeId ||
+            !voiceGroups.some((voice) => voice.id === node.sourceNodeId)),
+      );
+      const orphanAiChats = aiChatNodesRef.current.filter(
+        (node) =>
+          (node.visible ?? true) &&
+          !(node.locked ?? false) &&
+          (!node.sourceNodeId ||
+            !transcriptionNodesRef.current.some(
+              (entry) => entry.id === node.sourceNodeId,
+            )),
+      );
+
+      let nextX = origin.x;
+      let nextY = origin.y;
+      let rowHeight = 0;
+      const groupGap = gap;
+      const subgroupGap = 16;
+
+      function advanceRowIfNeeded(width: number) {
+        if (nextX !== origin.x && nextX + width > origin.x + maxRowWidth) {
+          nextX = origin.x;
+          nextY += rowHeight + groupGap;
+          rowHeight = 0;
+        }
+      }
+
+      type TidyGroup = {
+        width: number;
+        height: number;
+        place: (x: number, y: number) => void;
+      };
+
+      const groups: TidyGroup[] = [];
+
+      for (const voice of voiceGroups) {
+        const sourceTranscriptions = transcriptionBySource.get(voice.id) ?? [];
+        const transcriptionRows = sourceTranscriptions.map((transcription) => {
+          const chatNodes = aiChatBySource.get(transcription.id) ?? [];
+          const chatWidth = chatNodes.reduce(
+            (sum, chat, index) =>
+              sum + chat.size.width + (index > 0 ? subgroupGap : 0),
+            0,
+          );
+          const width =
+            transcription.size.width +
+            (chatWidth > 0 ? subgroupGap + chatWidth : 0);
+          const height = Math.max(
+            transcription.size.height,
+            chatNodes.length > 0
+              ? Math.max(...chatNodes.map((chat) => chat.size.height))
+              : 0,
+          );
+
+          return { transcription, chatNodes, width, height };
+        });
+
+        const columnHeight = transcriptionRows.reduce(
+          (sum, row, index) => sum + row.height + (index > 0 ? subgroupGap : 0),
+          0,
+        );
+        const groupHeight = Math.max(voice.size.height, columnHeight);
+        const groupWidth = transcriptionRows.length
+          ? voice.size.width +
+            subgroupGap +
+            Math.max(...transcriptionRows.map((row) => row.width))
+          : voice.size.width;
+
+        groups.push({
+          width: groupWidth,
+          height: groupHeight,
+          place(x, y) {
+            layouts.set(voice.id, { x, y });
+            placed.add(voice.id);
+
+            const transcriptionX = x + voice.size.width + subgroupGap;
+            let currentY = y;
+
+            for (const row of transcriptionRows) {
+              layouts.set(row.transcription.id, {
+                x: transcriptionX,
+                y: currentY,
+              });
+              placed.add(row.transcription.id);
+
+              let chatX =
+                transcriptionX + row.transcription.size.width + subgroupGap;
+              for (const chat of row.chatNodes) {
+                layouts.set(chat.id, { x: chatX, y: currentY });
+                placed.add(chat.id);
+                chatX += chat.size.width + subgroupGap;
+              }
+
+              currentY += row.height + subgroupGap;
+            }
+          },
+        });
+      }
+
+      for (const group of groups) {
+        advanceRowIfNeeded(group.width);
+        group.place(nextX, nextY);
+        nextX += group.width + groupGap;
+        rowHeight = Math.max(rowHeight, group.height);
+      }
+
+      const orphanTranscriptionGroups = orphanTranscriptions.map((node) => {
+        const chatNodes = aiChatBySource.get(node.id) ?? [];
+        const chatWidth = chatNodes.reduce(
+          (sum, chat, index) =>
+            sum + chat.size.width + (index > 0 ? subgroupGap : 0),
+          0,
+        );
+        const width =
+          node.size.width + (chatWidth > 0 ? subgroupGap + chatWidth : 0);
+        const height = Math.max(
+          node.size.height,
+          chatNodes.length > 0
+            ? Math.max(...chatNodes.map((chat) => chat.size.height))
+            : 0,
+        );
+        return { node, chatNodes, width, height };
+      });
+
+      if (orphanTranscriptionGroups.length > 0) {
+        advanceRowIfNeeded(
+          Math.max(...orphanTranscriptionGroups.map((group) => group.width)),
+        );
+        for (const group of orphanTranscriptionGroups) {
+          layouts.set(group.node.id, { x: nextX, y: nextY });
+          placed.add(group.node.id);
+          let chatX = nextX + group.node.size.width + subgroupGap;
+          for (const chat of group.chatNodes) {
+            layouts.set(chat.id, { x: chatX, y: nextY });
+            placed.add(chat.id);
+            chatX += chat.size.width + subgroupGap;
+          }
+          nextX += group.width + groupGap;
+          rowHeight = Math.max(rowHeight, group.height);
+        }
+        nextY += rowHeight + groupGap;
+        nextX = origin.x;
+        rowHeight = 0;
+      }
+
+      if (orphanAiChats.length > 0) {
+        advanceRowIfNeeded(
+          Math.max(...orphanAiChats.map((node) => node.size.width)),
+        );
+        for (const node of orphanAiChats) {
+          layouts.set(node.id, { x: nextX, y: nextY });
+          placed.add(node.id);
+          nextX += node.size.width + groupGap;
+          rowHeight = Math.max(rowHeight, node.size.height);
+        }
+        nextY += rowHeight + groupGap;
+        nextX = origin.x;
+        rowHeight = 0;
+      }
+
+      const remainingNodes = tidyableNodes.filter(
+        (node) => !placed.has(node.id),
+      );
+      for (const node of remainingNodes) {
+        const width = node.size.width;
+        const height = node.size.height;
+
+        advanceRowIfNeeded(width);
+        layouts.set(node.id, { x: nextX, y: nextY });
+        nextX += width + gap;
+        rowHeight = Math.max(rowHeight, height);
+      }
+
+      if (!layouts.size) {
+        return;
+      }
+
+      applyLayoutsToState();
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener(
+      CANVAS_TIDY_UP_TOOL_EVENT,
+      handleTidyUpToolActivated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        CANVAS_TIDY_UP_TOOL_EVENT,
+        handleTidyUpToolActivated,
       );
     };
   }, [isClientReady]);
@@ -1562,7 +1936,7 @@ export default function CanvasWorkspace({
           pendingVoiceRecording.blob,
         );
 
-        audioDataUrl = result.url;
+        audioDataUrl = URL.createObjectURL(pendingVoiceRecording.blob);
         storagePath = result.storagePath;
       } catch (err) {
         // If upload fails, fallback to data URL so user can still play back
@@ -2020,8 +2394,38 @@ export default function CanvasWorkspace({
       if (event.key === "Delete" || event.key === "Backspace") {
         let handled = false;
 
+        const activeElement = document.activeElement;
+        const isTextInputFocused =
+          activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement ||
+          (activeElement instanceof HTMLElement &&
+            activeElement.isContentEditable);
+
+        // Delete hovered transcription node when no input field is focused
+        if (!handled && !isTextInputFocused && hoveredTranscriptionNodeId) {
+          const transcriptionNode = transcriptionNodesRef.current.find(
+            (node) =>
+              node.id === hoveredTranscriptionNodeId &&
+              (node.visible ?? true) &&
+              !(node.locked ?? false),
+          );
+
+          if (transcriptionNode) {
+            event.preventDefault();
+            setTranscriptionNodes((current) =>
+              current.filter((node) => node.id !== hoveredTranscriptionNodeId),
+            );
+            if (selectedTextNodeId === hoveredTranscriptionNodeId) {
+              setSelectedTextNodeId(null);
+            }
+            setHoveredTranscriptionNodeId(null);
+            saveDelayMsRef.current = 0;
+            handled = true;
+          }
+        }
+
         // Delete selected web nodes
-        if (activeWebNodeId) {
+        if (!handled && activeWebNodeId) {
           const webNode = webNodesRef.current.find(
             (node) =>
               node.id === activeWebNodeId &&
@@ -2154,6 +2558,7 @@ export default function CanvasWorkspace({
     undoImageDelete,
     setImageNodes,
     activeWebNodeId,
+    hoveredTranscriptionNodeId,
     resetZoom,
     fitContentToView,
   ]);
@@ -4614,49 +5019,55 @@ export default function CanvasWorkspace({
                   handleTranscriptionContextMenu(event, node)
                 }
                 onDisconnectInput={() => disconnectTranscriptionInput(node.id)}
+                onPointerEnter={() => setHoveredTranscriptionNodeId(node.id)}
+                onPointerLeave={() => {
+                  if (hoveredTranscriptionNodeId === node.id) {
+                    setHoveredTranscriptionNodeId(null);
+                  }
+                }}
                 onPointerCancel={handleTextPointerUp}
                 onPointerDown={(event) => {
-                if (node.locked ?? false) return;
-                event.preventDefault();
-                event.stopPropagation();
-                event.currentTarget.setPointerCapture(event.pointerId);
-                const point = screenToCanvas({
-                  x: event.clientX,
-                  y: event.clientY,
-                });
-                textDragRef.current = {
-                  nodeId: node.id,
-                  offset: {
-                    x: point.x - node.position.x,
-                    y: point.y - node.position.y,
-                  },
-                };
-                setDraggingTextNodeId(node.id);
-                setSelectedImageIds([]);
-                setSelectedTextNodeId(node.id);
-                setActiveWebNodeId(null);
-                setTranscriptionNodes((current) => {
-                  const topZIndex = Math.max(
-                    0,
-                    ...imageNodesRef.current.map((entry) => entry.zIndex),
-                    ...webNodesRef.current.map((entry) => entry.zIndex),
-                    ...voiceNodesRef.current.map((entry) => entry.zIndex),
-                    ...textNodesRef.current.map((entry) => entry.zIndex),
-                    ...aiChatNodesRef.current.map((entry) => entry.zIndex),
-                    ...current.map((entry) => entry.zIndex),
-                  );
-                  return current.map((entry) =>
-                    entry.id === node.id
-                      ? { ...entry, zIndex: topZIndex + 1 }
-                      : entry,
-                  );
-                });
-              }}
-              onPointerMove={handleTextPointerMove}
-              onPointerUp={handleTextPointerUp}
-            />
-          );
-        })}
+                  if (node.locked ?? false) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  const point = screenToCanvas({
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
+                  textDragRef.current = {
+                    nodeId: node.id,
+                    offset: {
+                      x: point.x - node.position.x,
+                      y: point.y - node.position.y,
+                    },
+                  };
+                  setDraggingTextNodeId(node.id);
+                  setSelectedImageIds([]);
+                  setSelectedTextNodeId(node.id);
+                  setActiveWebNodeId(null);
+                  setTranscriptionNodes((current) => {
+                    const topZIndex = Math.max(
+                      0,
+                      ...imageNodesRef.current.map((entry) => entry.zIndex),
+                      ...webNodesRef.current.map((entry) => entry.zIndex),
+                      ...voiceNodesRef.current.map((entry) => entry.zIndex),
+                      ...textNodesRef.current.map((entry) => entry.zIndex),
+                      ...aiChatNodesRef.current.map((entry) => entry.zIndex),
+                      ...current.map((entry) => entry.zIndex),
+                    );
+                    return current.map((entry) =>
+                      entry.id === node.id
+                        ? { ...entry, zIndex: topZIndex + 1 }
+                        : entry,
+                    );
+                  });
+                }}
+                onPointerMove={handleTextPointerMove}
+                onPointerUp={handleTextPointerUp}
+              />
+            );
+          })}
 
         {aiChatNodes
           .filter((node) => node.sourceNodeId && node.visible !== false)
@@ -4676,7 +5087,7 @@ export default function CanvasWorkspace({
                 fromSize={sourceTranscription.size}
                 toSize={node.size}
                 wireType={wireType}
-                  connectorLineStyle={connectorLineStyle}
+                connectorLineStyle={connectorLineStyle}
                 color="#6EDDB3"
                 strokeWidth={1.8}
               />
@@ -4703,7 +5114,7 @@ export default function CanvasWorkspace({
                 fromSize={sourceVoice.size}
                 toSize={node.size}
                 wireType={wireType}
-                  connectorLineStyle={connectorLineStyle}
+                connectorLineStyle={connectorLineStyle}
                 color="#6EDDB3"
                 strokeWidth={1.8}
               />

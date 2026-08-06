@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckIcon, ArrowRightIcon, X } from "lucide-react";
-import { PlanCard } from "@/app/components/home/PlanCard";
-import { BillingToggle, type BillingCycle } from "@/app/components/home/BillingToggle";
+import { PlanCard } from "@/app/components/work/PlanCard";
+import { BillingToggle, type BillingCycle } from "@/app/components/work/BillingToggle";
 
 type CurrencyData = {
   currency: string;

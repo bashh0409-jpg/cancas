@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { ClearLocalDataOnQuery } from "@/app/components/home/ClearLocalDataOnQuery";
-import { CreditNotifier } from "@/app/components/home/CreditNotifier";
-import { createCanvasAction } from "@/app/home/actions";
+import { ClearLocalDataOnQuery } from "@/app/components/work/ClearLocalDataOnQuery";
+import { CreditNotifier } from "@/app/components/work/CreditNotifier";
+import { createCanvasAction } from "@/app/work/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
 import { getUserCredits } from "@/lib/credits/repository";
 import {
@@ -12,13 +12,13 @@ import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import type { CanvasListItem } from "@/types/canvas";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import MobileNotifier from "@/app/components/home/MobileNotifier";
-import { HomeShell } from "@/app/components/home/HomeShell";
+import MobileNotifier from "@/app/components/work/MobileNotifier";
+import { HomeShell } from "@/app/components/work/HomeShell";
 import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
 import { updateSettingsAction } from "@/app/actions/updateSettingsAction";
 import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
-import NewReleaseUpdate from "@/app/components/home/NewReleasUpdate";
-import Notice from "../components/home/Notice";
+import NewReleaseUpdate from "@/app/components/work/NewReleasUpdate";
+import Notice from "../components/work/Notice";
 
 export const metadata: Metadata = {
   title: "REFLOW",

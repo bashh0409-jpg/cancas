@@ -48,7 +48,7 @@ type CanvasAiChatNodeProps = {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const FIXED_WIDTH = 400;
+const FIXED_WIDTH = 340;
 const MIN_HEIGHT = 320;
 const MAX_HEIGHT = 800;
 const HEADER_HEIGHT = 30;
@@ -86,6 +86,25 @@ export function CanvasAiChatNode({
 
   const messages = node.messages;
 
+  const [inputHeight, setInputHeight] = useState(28);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+
+    textarea.style.height = "auto";
+
+    const height = Math.min(textarea.scrollHeight, 120);
+
+    textarea.style.height = `${height}px`;
+    setInputHeight(height);
+    setInput(textarea.value);
+  };
+
+  const inputRadius = Math.max(
+    10,
+    Math.min(24, 24 - (inputHeight - 28) * 0.5),
+  );
+  
   // ── Auto-detect conversation title ────────────────────────────────────
   useEffect(() => {
     // Only generate title if node doesn't have a name yet
@@ -355,7 +374,7 @@ export function CanvasAiChatNode({
     >
       <div
         className={[
-          "flex flex w-full h-full p-2 rounded border  overflow-hidden transition",
+          "flex flex w-full h-full p-2 rounded-lg border  overflow-hidden transition",
           isSelected
             ? "border-[#2244ec]"
             : "border-transparent group-hover:border-[#2244ec]/70",
@@ -421,7 +440,7 @@ export function CanvasAiChatNode({
           {/* ── Messages ── */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto scrollbar-hidden mb-6 py-2 flex flex-col gap-2"
+            className="flex-1 overflow-y-auto  scrollbar-hidden mb-6 py-2 flex flex-col gap-2"
             style={{ maxHeight: MESSAGES_HEIGHT }}
             onPointerDown={(e) => {
               const el = scrollContainerRef.current;
@@ -431,7 +450,7 @@ export function CanvasAiChatNode({
             {isEmpty ? (
               <div className="flex-1 flex mono flex-col items-center justify-center gap-2 py-8 select-none">
                 <p
-                  className="text-xs mono mono tracking-tight text-center"
+                  className="text-xs hidden mono mono tracking-tight text-center"
                   style={{ color: node.style.color, opacity: 0.4 }}
                 >
                   Ask me anything
@@ -471,43 +490,44 @@ export function CanvasAiChatNode({
 
           {/* ── Input ── */}
           <div
-            className="shrink-0 absolute bottom-0 left-0 w-full  px-2 py-1 flex items-end gap-2"
+            className="absolute bottom-0 left-0 mb-1 flex w-full shrink-0 items-end gap-1 px-2 py-1"
             style={{ minHeight: INPUT_HEIGHT }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <button
-              aria-label="Connect"
-              className="rounded-full p-2 cursor-pointer flex items-center bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)]"
-            >
-              <ChevronsLeftRightEllipsis className="w-4 h-4" />
-            </button>
             <textarea
               ref={inputRef}
-              className="flex-1 resize-none bg-white shadow-[0_0_15px_rgba(0,0,0,0.12)] rounded-xl px-3 py-2 text-xs outline-none tracking-tight leading-relaxed placeholder:opacity-70"
-              placeholder="Ask a question…"
-              value={input}
               rows={1}
               disabled={isStreaming}
-              style={{ ...textStyle, color: node.style.color, maxHeight: 188 }}
-              onChange={(e) => setInput(e.target.value)}
+              value={input}
+              placeholder="What are you thinking?"
+              className="min-h-7 flex-1 resize-none overflow-y-auto bg-black/5 px-3 py-1.5 text-xs leading-tight tracking-tight outline-none shadow-[0_2px_18px_rgba(0,0,0,0.28)] placeholder:opacity-70"
+              style={{
+                ...textStyle,
+                color: node.style.color,
+                height: `${inputHeight}px`,
+                maxHeight: 120,
+                borderRadius: `${inputRadius}px`,
+              }}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onPointerDown={(e) => e.stopPropagation()}
             />
+
             <button
               type="button"
               disabled={!input.trim() || isStreaming}
               className={[
-                "shrink-0 flex items-center justify-center w-8 h-8 rounded hidden mono transition-colors mb-0.5",
+                "flex h-7 shrink-0 items-center justify-center rounded-full px-2 text-xs uppercase tracking-tight transition-all duration-200",
                 input.trim() && !isStreaming
-                  ? "bg-[#2244ec] mono text-white hover:bg-[#1a35c4]"
-                  : "bg-black/5 text-gray-300 cursor-not-allowed",
+                  ? "lime text-black shadow-[0_2px_8px_rgba(0,0,0,0.18)] hover:shadow-[0_3px_12px_rgba(0,0,0,0.28)] hover:bg-[#1a35c4]"
+                  : "cursor-not-allowed  bg-black/5 text-gray-300 shadow-none",
               ].join(" ")}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 void sendMessage();
               }}
             >
-              <Send className="w-3.5 h-3.5" />
+              send
             </button>
           </div>
         </div>

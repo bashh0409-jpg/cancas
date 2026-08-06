@@ -35,7 +35,7 @@ export async function uploadVoiceNote(
   canvasId: string,
   nodeId: string,
   blob: Blob,
-): Promise<{ url: string; storagePath: string }> {
+): Promise<{ storagePath: string }> {
   const storagePath = buildVoiceNoteStoragePath(
     userId,
     canvasId,
@@ -43,7 +43,6 @@ export async function uploadVoiceNote(
     (blob as File).type || "audio/webm",
   );
 
-  // Supabase upload expects a File or Blob; pass the blob directly.
   const { error } = await supabase.storage.from("voice-notes").upload(storagePath, blob as File, {
     upsert: true,
     contentType: (blob as File).type || "application/octet-stream",
@@ -54,14 +53,7 @@ export async function uploadVoiceNote(
     throw error;
   }
 
-  // Create a signed URL for playback (1 hour)
-  const { data } = await supabase.storage
-    .from("voice-notes")
-    .createSignedUrl(storagePath, 60 * 60);
-
-  const url = data?.signedUrl ?? "";
-
-  return { url, storagePath };
+  return { storagePath };
 }
 
 export async function deleteCanvasImage(

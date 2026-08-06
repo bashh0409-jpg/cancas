@@ -47,7 +47,7 @@ Update each provider to use these exact production callback URLs:
 | Provider       | Callback URL                                                     |
 | -------------- | ---------------------------------------------------------------- |
 | Google sign-in | `https://www.swipes.site/api/auth/callback`                      |
-| Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/home`           |
+| Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/work`           |
 | Figma sign-in  | `https://www.swipes.site/api/auth/figma/callback`                |
 | Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback` |
 | OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`     |

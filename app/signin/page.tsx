@@ -85,7 +85,7 @@ export default function Page() {
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/home`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/work`,
       },
     });
 

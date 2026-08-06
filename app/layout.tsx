@@ -11,7 +11,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CookieConsent } from "./components/CookieConsent";
 import { LenisProvider } from "./LenisProvider";
-import { ToastContainer } from "./components/home/Toast";
+import { ToastContainer } from "./components/work/Toast";
 import BackgroundAudio from "./components/BackgroundAudio";
 
 const cmGeom = localFont({
@@ -23,6 +23,7 @@ const cmGeom = localFont({
     },
   ],
   variable: "--font-cmgeom",
+  preload: false,
 });
 
 const helveticaNeue = localFont({
@@ -34,6 +35,7 @@ const helveticaNeue = localFont({
     },
   ],
   variable: "--font-helvetica-neue",
+  preload: false,
 });
 
 const rinter = localFont({
@@ -45,12 +47,14 @@ const rinter = localFont({
     },
   ],
   variable: "--font-rinter",
+  preload: false,
 });
 
 const hostGrotesk = Host_Grotesk({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-host-grotesk",
+  preload: false,
 });
 
 const layGrotesk = localFont({
@@ -67,6 +71,7 @@ const layGrotesk = localFont({
     },
   ],
   variable: "--font-lay-grotesk",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -92,11 +97,10 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-       <LenisProvider>{children}</LenisProvider> 
+          <LenisProvider>{children}</LenisProvider>
         </PHProvider>
         <CookieConsent />
         <ToastContainer />
-        
       </body>
     </html>
   );

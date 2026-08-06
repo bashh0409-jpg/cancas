@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Download, Copy, Trash2, Wand2, Scan, Expand } from "lucide-react";
+import { Download, Copy, Trash2, Wand2, Scan, Expand, RotateCwSquare, SquareCenterlineDashedHorizontal, SquareCenterlineDashedVertical } from "lucide-react";
 
 export type ImageMenuAction =
   | "download"
@@ -9,7 +9,10 @@ export type ImageMenuAction =
   | "delete"
   | "remove-background"
   | "edit-with-ai"
-  | "upscale";
+  | "upscale"
+  | "flip-horizontal"
+  | "flip-vertical"
+  | "rotate";
 
 type ImageContextMenuProps = {
   x: number;
@@ -55,10 +58,48 @@ export function ImageContextMenu({
   const adjustedX = Math.min(x, window.innerWidth - 200);
   const adjustedY = Math.min(y, window.innerHeight - 260);
 
-  const items: { action: ImageMenuAction; label: string; icon: React.ReactNode }[] = [
-    { action: "remove-background", label: "Remove Background", icon: <Scan className="h-4 w-4" strokeWidth={1.5} /> },
-    { action: "edit-with-ai", label: "Edit with AI", icon: <Wand2 className="h-4 w-4" strokeWidth={1.5} /> },
-    { action: "upscale", label: "Upscale", icon: <Expand className="h-4 w-4" strokeWidth={1.5} /> },
+  const items: {
+    action: ImageMenuAction;
+    label: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      action: "remove-background",
+      label: "Remove Background",
+      icon: <Scan className="h-4 w-4" strokeWidth={1.5} />,
+    },
+    {
+      action: "edit-with-ai",
+      label: "Edit with AI",
+      icon: <Wand2 className="h-4 w-4" strokeWidth={1.5} />,
+    },
+    {
+      action: "upscale",
+      label: "Upscale",
+      icon: <Expand className="h-4 w-4" strokeWidth={1.5} />,
+    },
+    {
+      action: "flip-horizontal",
+      label: "Flip Horizontal",
+      icon: (
+        <SquareCenterlineDashedHorizontal
+          className="h-4 w-4"
+          strokeWidth={1.5}
+        />
+      ),
+    },
+    {
+      action: "flip-vertical",
+      label: "Flip Vertical",
+      icon: (
+        <SquareCenterlineDashedVertical className="h-4 w-4" strokeWidth={1.5} />
+      ),
+    },
+    {
+      action: "rotate",
+      label: "Rotate",
+      icon: <RotateCwSquare className="h-4 w-4" strokeWidth={1.5} />,
+    },
   ];
 
   const basicItems: { action: ImageMenuAction; label: string; icon: React.ReactNode }[] = [

@@ -22,7 +22,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Knowledge center", href: "#" },
       { label: "Enterprise", href: "#" },
       { label: "Pricing", href: "#" },
-      { label: "Help", href: "#" },
+      { label: "Help", href: "/support" },
       { label: "FAQ", href: "#" },
     ],
   },
@@ -211,7 +211,7 @@ const Footer = () => {
             Support
           </h2>
           <div className="mt-3 flex flex-col gap-2">
-            <a href="#" className={linkClass}>
+            <a href="/support" className={linkClass}>
               Support center
             </a>
             <a href="mailto:hello@swipes.com" className={linkClass}>

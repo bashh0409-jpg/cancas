@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
       }
     } catch {
       // state was just userId, redirect to home
-      redirectTo = `${origin}/home`;
+      redirectTo = `${origin}/work`;
     }
 
     return NextResponse.redirect(redirectTo);

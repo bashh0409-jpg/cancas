@@ -5,6 +5,7 @@ type CanvasPreferences = {
   rightClickMenu: boolean;
   snapToGrid: boolean;
   wireType: "line" | "elbow" | "bezier";
+  connectorLineStyle: "solid" | "dashed";
   keepOriginalImageOnRemoveBg: boolean;
 };
 
@@ -12,6 +13,7 @@ type CanvasPreferencesStore = CanvasPreferences & {
   setRightClickMenu: (enabled: boolean) => void;
   setSnapToGrid: (enabled: boolean) => void;
   setWireType: (type: CanvasPreferences["wireType"]) => void;
+  setConnectorLineStyle: (style: CanvasPreferences["connectorLineStyle"]) => void;
   setKeepOriginalImageOnRemoveBg: (enabled: boolean) => void;
   syncFromServer: () => Promise<void>;
   syncToServer: () => Promise<void>;
@@ -23,11 +25,13 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
       rightClickMenu: false,
       snapToGrid: false,
       wireType: "elbow",
+      connectorLineStyle: "dashed",
       keepOriginalImageOnRemoveBg: false,
 
       setRightClickMenu: (rightClickMenu) => set({ rightClickMenu }),
       setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
       setWireType: (wireType) => set({ wireType }),
+      setConnectorLineStyle: (connectorLineStyle) => set({ connectorLineStyle }),
       setKeepOriginalImageOnRemoveBg: (keepOriginalImageOnRemoveBg) =>
         set({ keepOriginalImageOnRemoveBg }),
 
@@ -45,6 +49,8 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
                 data.settings.rightClickMenu ?? get().rightClickMenu,
               snapToGrid: data.settings.snapToGrid ?? get().snapToGrid,
               wireType: data.settings.wireType ?? get().wireType,
+              connectorLineStyle:
+                data.settings.connectorLineStyle ?? get().connectorLineStyle,
               keepOriginalImageOnRemoveBg:
                 data.settings.keepOriginalImageOnRemoveBg ??
                 get().keepOriginalImageOnRemoveBg,
@@ -61,6 +67,7 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
             rightClickMenu,
             snapToGrid,
             wireType,
+            connectorLineStyle,
             keepOriginalImageOnRemoveBg,
           } = get();
 
@@ -72,6 +79,7 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
                 rightClickMenu,
                 snapToGrid,
                 wireType,
+                connectorLineStyle,
                 keepOriginalImageOnRemoveBg,
               },
             }),

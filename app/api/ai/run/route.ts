@@ -3,6 +3,8 @@ import { AiProviderError } from "@/lib/ai/errors";
 import { runAiProvider } from "@/lib/ai/providers";
 import type { AiProvider, AiRunRequest, AiTask } from "@/lib/ai/types";
 
+export const runtime = "nodejs";
+
 const PROVIDERS = new Set<AiProvider>([
   "claude",
   "openai",

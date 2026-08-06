@@ -13,7 +13,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Only apply Lenis smooth scroll on the marketing page.
-    // The home page (/home) and canvas pages use their own nested
+    // The home page (/work) and canvas pages use their own nested
     // scroll containers, which Lenis would block.
     if (pathname !== "/") return;
 

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { CheckIcon, ArrowRightIcon } from "lucide-react";
-import { PlanCard } from "./home/PlanCard";
-import { BillingToggle, type BillingCycle } from "./home/BillingToggle";
-import { TrustedBy } from "./home/TrustedBy";
+import { PlanCard } from "./work/PlanCard";
+import { BillingToggle, type BillingCycle } from "./work/BillingToggle";
+import { TrustedBy } from "./work/TrustedBy";
 
 type CurrencyData = {
   currency: string;

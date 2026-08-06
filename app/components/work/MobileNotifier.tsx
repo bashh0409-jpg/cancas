@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
-import { User, ChevronDown } from "lucide-react";
+import { User} from "lucide-react";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
-import { AccountCard } from "../home/HomeShell";
+import { AccountCard } from "../work/HomeShell";
 import Notice from "./Notice";
 
 type Props = {

@@ -19,7 +19,7 @@ const NAV_LINKS = [
   },
   {
     label: "HELP",
-    href: "#",
+    href: "/support",
   },
   {
     label: "LEGAL",
@@ -46,7 +46,7 @@ const Navbar = () => {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        window.location.href = getAppUrl("/home");
+        window.location.href = getAppUrl("/work");
       } else {
         window.location.href = getAppUrl("/signin");
       }

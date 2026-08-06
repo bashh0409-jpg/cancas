@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/home/:path*",
+        source: "/work/:path*",
         headers: [
           {
             key: "Cache-Control",

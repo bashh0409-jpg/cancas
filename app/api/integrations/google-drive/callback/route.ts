@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
 
     // Parse state to determine redirect — supports both plain userId and JSON { userId, canvasId }
     const stateParam = req.nextUrl.searchParams.get("state");
-    let redirectPath = "/home?google=connected";
+    let redirectPath = "/work?google=connected";
 
     if (stateParam) {
       try {

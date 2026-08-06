@@ -65,13 +65,24 @@ export async function assertOk(response: Response, providerName: string) {
     return;
   }
 
-  const payload = await readJson(response).catch(() => null);
-  const message = isRecord(payload)
-    ? getString(payload, "error") ?? getString(payload, "message")
-    : undefined;
+  // Read raw response text so we can include helpful debugging information
+  const text = await response.text().catch(() => "");
+  let message: string | undefined;
+
+  if (text) {
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      message = isRecord(parsed)
+        ? getString(parsed, "error") ?? getString(parsed, "message")
+        : undefined;
+    } catch {
+      // Not JSON — include a truncated raw text snippet for diagnostics
+      message = text.length > 200 ? `${text.slice(0, 200)}...` : text;
+    }
+  }
 
   throw new AiProviderError(
-    `${providerName} request failed${message ? `: ${message}` : ""}`,
+    `${providerName} request failed${message ? `: ${message}` : ""} (status: ${response.status})`,
     response.status || 502
   );
 }

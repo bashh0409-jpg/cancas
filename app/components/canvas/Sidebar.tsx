@@ -321,7 +321,7 @@ const CanvasSwitcherOverlay = ({
       {/* Back to workspace */}
       <div className="border-t w-full border-white/10 px-3 py-1">
         <a
-          href="/home"
+          href="/work"
           className="text-[11px] font-medium  w-full p-1 py-1 rounded-xs cursor-pointer mono uppercase tracking-tight  text-white transition hover:text-white flex items-center gap-2"
         >
           Back to files
@@ -498,29 +498,29 @@ const ToolsPanel = ({
               {/* Line Type */}
               <div className="space-y-1 flex items-center justify-between ">
                 <label className="text-white/50 mono text-xs uppercase">
-                  grid Line Style
+                  Line Style
                 </label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => onGridSettingsChange({ lineType: "solid" })}
-                    className={`flex-1 px-2  tracking-tight py-1 rounded-xs text-xs  transition ${
+                    className={`flex-1 px-2 font-mono cursor-pointer tracking-tight py-1 rounded-xs text-xs  transition ${
                       gridSettings.lineType === "solid"
                         ? "lime text-black"
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
                   >
-                    <Minus className="w-4 h-4" />
+                    SOLID
                   </button>
 
                   <button
                     onClick={() => onGridSettingsChange({ lineType: "dotted" })}
-                    className={`flex-1 px-2 py-1 w-fit tracking-tight rounded-xs text-xs  transition ${
+                    className={`flex-1 px-2 font-mono cursor-pointer tracking-tight py-1 rounded-xs text-xs  transition ${
                       gridSettings.lineType === "dotted"
                         ? "lime text-black"
                         : "bg-white/10 text-white/70 hover:bg-white/20"
                     }`}
                   >
-                    <Ellipsis className="w-4 h-4" />
+                    DOTTED
                   </button>
                 </div>
               </div>
@@ -559,7 +559,7 @@ const ColorField = ({ label, value, onChange }: ColorFieldProps) => {
     <label className="flex w-full justify-between space-y-1.5">
       <span className="text-white/50 mono text-xs uppercase">{label}</span>
       <div className="group flex h-fit w-fit items-center gap-2 rounded-xs bg-[#17171b] transition  focus-within:bg-[#1b1b20]">
-        <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-xs border border-white/15 bg-black/20 shadow-inner">
+        <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded border border-white/15 bg-black/20 shadow-inner">
           <span
             className="absolute inset-0"
             style={{ backgroundColor: toColorInputValue(value) }}
@@ -1876,6 +1876,7 @@ function Toggle({
 }
 
 type WireType = "line" | "elbow" | "bezier";
+type ConnectorLineStyle = "solid" | "dashed";
 
 function PreferencesFlyout() {
   const [showFlyout, setShowFlyout] = useState(false);
@@ -1883,10 +1884,12 @@ function PreferencesFlyout() {
     rightClickMenu,
     snapToGrid,
     wireType,
+    connectorLineStyle,
     keepOriginalImageOnRemoveBg,
     setRightClickMenu,
     setSnapToGrid,
     setWireType,
+    setConnectorLineStyle,
     setKeepOriginalImageOnRemoveBg,
     syncToServer,
   } = useCanvasPreferencesStore();
@@ -2071,6 +2074,42 @@ function PreferencesFlyout() {
                   </button>
                 ),
               )}
+            </div>
+          </div>
+
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Workflow className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+                <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+                  Connector Style
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {(
+                Object.entries({ solid: "Solid", dashed: "Dashed" }) as [
+                  ConnectorLineStyle,
+                  string,
+                ][]
+              ).map(([style, label]) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConnectorLineStyle(style);
+                    syncToServer();
+                  }}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-xs text-[10px] mono uppercase tracking-tight transition cursor-pointer ${
+                    connectorLineStyle === style
+                      ? "lime text-black"
+                      : "bg-white/10 text-white/60 hover:text-white"
+                  }`}
+                >
+                  <span>{label}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>

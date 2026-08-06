@@ -7,7 +7,7 @@
 --   Dashboard → Storage → canvas-files → ⋮ → Empty bucket
 --   (or delete the whole bucket; this script recreates it if missing)
 --
--- AFTER running: open /home?resetLocal=1 in each browser (clears canvasai: local drafts)
+-- AFTER running: open /work?resetLocal=1 in each browser (clears canvasai: local drafts)
 --
 -- Run in: Supabase Dashboard → SQL → New query → Run
 -- =============================================================================

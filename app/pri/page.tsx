@@ -3,7 +3,7 @@ import React from "react";
 //import { Pricing } from "./components/Pricing";
 //import Faq from "./components/Faq";
 //import Footer from "./components/Footer";
-//import Notice from "./components/home/Notice";
+//import Notice from "./components/work/Notice";
 //import Animated from "./components/animated";
 //import RotatingImageOrbit from "./components/RotatingImageOrbit";
 import { getAppUrl } from "@/lib/appUrl";
@@ -13,12 +13,12 @@ import { redirect } from "next/navigation";
 const page = async () => {
   const cookieStore = await cookies();
   // Check for any Supabase auth cookie — lightweight, no server call
-  const hasSession = cookieStore.getAll().some(
-    (c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token"
-  );
+  const hasSession = cookieStore
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") || c.name === "supabase-auth-token");
 
   if (hasSession) {
-    redirect("/home");
+    redirect("/work");
   }
 
   return (
@@ -49,7 +49,7 @@ const page = async () => {
         <div className=" text-white  h-screen w-full flex items-center justify-center">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <a
-              href={getAppUrl("/home")}
+              href={getAppUrl("/work")}
               className="text-xl tracking-tight bg-white text-black rounded p-2 cursor-pointer capitalize hover:bg-white/80"
             >
               Sign up now

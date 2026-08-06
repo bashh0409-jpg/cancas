@@ -88,7 +88,15 @@ export default function Home() {
             {menuItems.map((item) => (
               <a
                 key={item}
-                href={item === "Sign in" ? "/signin" : "#"}
+                href={
+                  item === "Sign in"
+                    ? "/signin"
+                    : item === "Support"
+                      ? "/support"
+                      : item === "Legal"
+                        ? "/legal"
+                        : "#"
+                }
                 className="group flex items-center justify-between border-b border-black/10 py-5 font-mono text-2xl uppercase tracking-tight transition-colors hover:bg-black/[0.03] md:text-4xl"
               >
                 <span>{item}</span>

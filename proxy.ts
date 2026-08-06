@@ -67,7 +67,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Only validate protected routes
-  const protectedPaths = ["/home", "/canvas"];
+  const protectedPaths = ["/work", "/canvas"];
   const isProtectedRoute = protectedPaths.some((path) =>
     pathname.startsWith(path),
   );

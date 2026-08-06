@@ -5,8 +5,9 @@ export default function BillingSuccess() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white flex items-center justify-center p-4">
       <div className="text-center max-w-md">
-
-        <h1 className="text-xl uppercase tracking-tight mono mb-2">Payment Successful!</h1>
+        <h1 className="text-xl uppercase tracking-tight mono mb-2">
+          Payment Successful!
+        </h1>
 
         <p className="text-white uppercase tracking-tight text-xs mono ">
           Your subscription has been activated. You now have access to all
@@ -32,11 +33,16 @@ export default function BillingSuccess() {
         </div>
 
         <div className=" flex justify-center items-center mt-4 text-sm mono gap-2 items-center ">
-  
-          <Link href="/home" className="block w-fit p-2 text-xs px-4 uppercase text-black lime rounded  transition-colors">
+          <Link
+            href="/work"
+            className="block w-fit p-2 text-xs px-4 uppercase text-black lime rounded  transition-colors"
+          >
             Home
           </Link>
-          <Link href="/billing/manage" className="block w-fit p-2 text-xs px-4 uppercase text-black lime rounded  transition-colors">
+          <Link
+            href="/billing/manage"
+            className="block w-fit p-2 text-xs px-4 uppercase text-black lime rounded  transition-colors"
+          >
             Manage
           </Link>
         </div>

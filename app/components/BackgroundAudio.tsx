@@ -26,7 +26,7 @@ const TRACKS = [
   `${SUPABASE_URL}${STORAGE_PATH}/background-2.mp3`,
 ];
 
-const HIDDEN_PATHS = ["/home", "/signin"];
+const HIDDEN_PATHS = ["/work", "/signin"];
 
 export default function BackgroundAudio() {
   const pathname = usePathname();
@@ -35,7 +35,7 @@ export default function BackgroundAudio() {
   const [isPlaying, setIsPlaying] = useState(
     () =>
       typeof window !== "undefined" &&
-      localStorage.getItem("reflow-bg-audio") === "playing"
+      localStorage.getItem("reflow-bg-audio") === "playing",
   );
   const [beatCount, setBeatCount] = useState(0);
 
@@ -130,8 +130,7 @@ export default function BackgroundAudio() {
         if (history.length > 43) history.shift(); // ~0.7s of frames
 
         if (history.length >= 10) {
-          const baseline =
-            history.reduce((a, b) => a + b, 0) / history.length;
+          const baseline = history.reduce((a, b) => a + b, 0) / history.length;
           // A beat is a bass spike above the running average
           if (bassAvg > baseline * 1.35 && bassAvg > 40) {
             setBeatCount((c) => c + 1);
