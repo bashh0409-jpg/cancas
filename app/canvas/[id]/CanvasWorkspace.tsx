@@ -186,7 +186,8 @@ type WebDragState = {
 type VoiceCanvasNode = {
   id: string;
   title: string;
-  audioDataUrl: string;
+  audioDataUrl?: string;
+  storagePath?: string;
   durationMs: number;
   position: Point;
   size: {
