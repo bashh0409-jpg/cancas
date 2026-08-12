@@ -317,7 +317,7 @@ export function CanvasAiChatNode({
             m.id === assistantMsg.id
               ? {
                   ...m,
-                  content: "Something went wrong. Please try again.",
+                  content: "Something went wrong. Please try again. If the error persist contact the support team to get help as soon as possible",
                   streaming: false,
                 }
               : m,
@@ -412,26 +412,24 @@ export function CanvasAiChatNode({
               {isStreaming && (
                 <button
                   type="button"
-                  className="flex items-center gap-1 rounded px-2 py-0.5 text-xs bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                  className="flex items-center cursor-pointer gap-1 rounded-full uppercase font-mono px-2 py-0.5 text-xs bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     stopStreaming();
                   }}
                 >
-                  <X className="w-3 h-3" />
                   Stop
                 </button>
               )}
               {!isEmpty && !isStreaming && (
                 <button
                   type="button"
-                  className="flex tracking-tight items-center lime gap-1 rounded px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="flex tracking-tight shadow-[0_2px_8px_rgba(0,0,0,0.18)] items-center lime gap-1 rounded-full px-2 py-0.5 text-xs text-black uppercase font-mono tracking-tight  hover:text-gray-600 hover:bg-gray-100 transition-colors"
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     clearMessages();
                   }}
                 >
-                  <RotateCcw className="w-3 h-3" />
                   Clear
                 </button>
               )}
@@ -440,20 +438,21 @@ export function CanvasAiChatNode({
           {/* ── Messages ── */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto  scrollbar-hidden mb-6 py-2 flex flex-col gap-2"
-            style={{ maxHeight: MESSAGES_HEIGHT }}
+            className="min-h-0 flex-1 overflow-y-auto scrollbar-hidden py-9 flex flex-col gap-2"
             onPointerDown={(e) => {
               const el = scrollContainerRef.current;
-              if (el && el.scrollHeight > el.clientHeight) e.stopPropagation();
+              if (el && el.scrollHeight > el.clientHeight) {
+                e.stopPropagation();
+              }
             }}
           >
             {isEmpty ? (
               <div className="flex-1 flex mono flex-col items-center justify-center gap-2 py-8 select-none">
                 <p
-                  className="text-xs hidden mono mono tracking-tight text-center"
+                  className="text-xs  mono mono tracking-tight text-center"
                   style={{ color: node.style.color, opacity: 0.4 }}
                 >
-                  Ask me anything
+                  <CanvasPlaceholderIcon size={70} />
                 </p>
               </div>
             ) : (
@@ -467,10 +466,10 @@ export function CanvasAiChatNode({
                 >
                   <div
                     className={[
-                      "max-w-[85%] rounded px-2  py-2 text-xs  tracking-tight whitespace-pre-wrap break-words",
+                      " rounded p-2 text-xs tracking-tight whitespace-pre-wrap break-words",
                       msg.role === "user"
-                        ? "bg-[#2244ec] text-black rounded "
-                        : " rounded",
+                        ? "bg-[#2244ec] max-w-[85%] text-black rounded-lg "
+                        : " rounded text-[10px] w-full",
                     ].join(" ")}
                     style={{
                       ...textStyle,
@@ -490,7 +489,7 @@ export function CanvasAiChatNode({
 
           {/* ── Input ── */}
           <div
-            className="absolute bottom-0 left-0 mb-1 flex w-full shrink-0 items-end gap-1 px-2 py-1"
+            className="flex w-full left-0 absolute bottom-2 shrink-0 items-end gap-1 px-2 "
             style={{ minHeight: INPUT_HEIGHT }}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -500,7 +499,7 @@ export function CanvasAiChatNode({
               disabled={isStreaming}
               value={input}
               placeholder="What are you thinking?"
-              className="min-h-7 flex-1 resize-none overflow-y-auto bg-black/5 px-3 py-1.5 text-xs leading-tight tracking-tight outline-none shadow-[0_2px_18px_rgba(0,0,0,0.28)] placeholder:opacity-70"
+              className=" flex-1 resize-none overflow-y-auto bg-white px-3 py-1.5 text-xs leading-tight tracking-tight outline-none shadow-[0_2px_18px_rgba(0,0,0,0.28)] placeholder:opacity-70"
               style={{
                 ...textStyle,
                 color: node.style.color,
@@ -519,8 +518,8 @@ export function CanvasAiChatNode({
               className={[
                 "flex h-7 shrink-0 items-center justify-center rounded-full px-2 text-xs uppercase tracking-tight transition-all duration-200",
                 input.trim() && !isStreaming
-                  ? "lime text-black shadow-[0_2px_8px_rgba(0,0,0,0.18)] hover:shadow-[0_3px_12px_rgba(0,0,0,0.28)] hover:bg-[#1a35c4]"
-                  : "cursor-not-allowed  bg-black/5 text-gray-300 shadow-none",
+                  ? "lime text-black shadow-[0_2px_8px_rgba(0,0,0,0.18)] hover:shadow-[0_3px_12px_rgba(0,0,0,0.28)]"
+                  : "cursor-not-allowed bg-[#dedede] text-black/25 ",
               ].join(" ")}
               onPointerDown={(e) => {
                 e.stopPropagation();

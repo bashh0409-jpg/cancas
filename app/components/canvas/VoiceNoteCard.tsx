@@ -194,7 +194,7 @@ export function VoiceNoteCard({
     <div className="group w-full">
       {/* Voice note */}
       <div
-        className="relative h-fit w-full rounded-full border border-white/10 bg-[#212126] p-1 px-2 shadow-[0_10px_24px_rgba(0,0,0,0.35)]"
+        className="relative h-fit w-full rounded-full border border-white/10 bg-[#212126] p-1  shadow-[0_10px_24px_rgba(0,0,0,0.35)]"
         style={{ mixBlendMode: "multiply" }}
       >
         <div className="flex items-center">

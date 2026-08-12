@@ -48,7 +48,7 @@ Update each provider to use these exact production callback URLs:
 | -------------- | ---------------------------------------------------------------- |
 | Google sign-in | `https://www.swipes.site/api/auth/callback`                      |
 | Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/work`           |
-| Figma sign-in  | `https://www.swipes.site/api/auth/figma/callback`                |
+| Figma sign-in  | `https://www.swipes.site/api/auth/callback?next=/work` (add to Supabase's Redirect URLs allow list as `https://www.swipes.site/api/auth/callback*`) |
 | Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback` |
 | OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`     |
 | Dropbox        | `https://www.swipes.site/api/integrations/dropbox/callback`      |
@@ -66,6 +66,11 @@ Figma is a **native Supabase OAuth provider**. Configure it entirely in the Supa
    ⚠️ This is Supabase's endpoint, **not** your app's domain. Figma sends the auth code here, and Supabase handles the exchange.
 4. Copy the **Client ID** and **Client Secret** from Figma into the Supabase provider settings.
 5. No environment variables or custom API routes are needed — the flow uses the same pattern as Google and Azure.
+6. In **Supabase Dashboard → Authentication → URL Configuration**, make sure the **Redirect URLs allow list** includes
+   `https://www.swipes.site/api/auth/callback*` (and `http://localhost:3000/api/auth/callback*` for local dev). The
+   trailing `*` wildcard is required because the app's `redirectTo` includes a `?next=/work` query string — without it,
+   Supabase silently falls back to the project's **Site URL** and the user lands on the bare domain instead of `/work`.
+   Remove any stale `.../api/auth/figma/callback` entry from the allow list; that route does not exist in this app.
 
 ## Billing endpoints
 

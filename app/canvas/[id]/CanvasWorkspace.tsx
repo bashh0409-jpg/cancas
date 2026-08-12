@@ -4606,7 +4606,7 @@ export default function CanvasWorkspace({
       },
       size: {
         width: 380,
-        height: 320,
+        height: 300,
       },
       zIndex: topZIndex + 1,
       style: {

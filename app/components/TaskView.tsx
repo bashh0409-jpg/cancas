@@ -1,4 +1,4 @@
-import { Loader2, Share2 } from "lucide-react";
+import { Loader, Loader2, LoaderPinwheel, Share2 } from "lucide-react";
 
 type TaskProps = {
   credits: number;
@@ -23,22 +23,23 @@ const TaskView = ({
           <Icon />
           <span className="">{credits.toFixed(2)}</span>
         </span>
-        <button className="flex lime uppercase font-mono p-1 flex items-center cursor-pointer rounded text-black gap-1 text-xs">
-          <Share2 className="w-3 h-3" /> Share
+        <button className="flex lime font-mono p-1 flex items-center cursor-pointer rounded text-black gap-1 text-xs">
+          <Share2 className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="flex text-white/50 flex-col w-full items-start gap-1 text-left">
+      <div className="flex text-white/50 flex-col w-full bg-white-20 items-start gap-1 text-left">
         {hasTasks ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin text-lime" />
+          <div className="flex items-center gap-1 ">
+            
             <div className="flex flex-col gap-0.5">
               {taskLabels.map((label) => (
                 <span
                   key={label}
-                  className="text-[10px] tracking-tight font-mono text-white"
+                  className="text-xs flex gap-1 items-center tracking-tight font-mono text-white"
                 >
-                  {label}
+                  <Loader className="h-3 w-3 animate-spin text-lime" />{" "}
+                  {label}...
                 </span>
               ))}
             </div>

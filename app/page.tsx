@@ -346,7 +346,7 @@ export default function Home() {
               <span className="mix-blend-difference">f</span>
               <span className="mix-blend-difference">l</span>
               <span className="mix-blend-difference">o</span>
-              <span className="mix-blend-difference">ŵ</span>
+              <span className="mix-blend-difference">w</span>
             </div>
             <div className="text-center hidden md:flex text-[150px] md:text-[250px] leading-none tracking-[-0.18em] font-medium font-mono whitespace-nowrap">
               <span className="mix-blend-difference">R</span>
@@ -354,7 +354,7 @@ export default function Home() {
               <span className="mix-blend-difference">f</span>
               <span className="mix-blend-difference">l</span>
               <span className="mix-blend-difference">o</span>
-              <span className="mix-blend-difference">ŵ</span>
+              <span className="mix-blend-difference">w</span>
             </div>
             <p className="text-center w-full p-4 max-w-md text-black  font-mono tracking-tighter">
               The simplest way to bring <span className="italic ">AI</span> and
