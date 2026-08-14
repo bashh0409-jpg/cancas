@@ -66,14 +66,14 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
 
   return (
     <div
-      className="relative"
+      className="relative hidden"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
       <button
         aria-label={config.description}
         className={[
-          "group flex h-9 items-center gap-2 rounded border px-1",
+          "group flex  items-center gap-2 rounded border ",
           "backdrop-blur-xl transition-all duration-200",
           "shadow-[0_10px_28px_rgba(0,0,0,0.10)]",
           config.classes,
@@ -82,7 +82,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
       >
         <div className="flex items-center justify-center">{config.icon}</div>
 
-        <span className="text-xs mono uppercase  tracking-tight">{config.label}</span>
+        <span className="text-xs uppercase  tracking-tight">{config.label}</span>
 
         {status === "syncing" ? (
           <div className="flex items-center gap-[2px]">
@@ -99,7 +99,7 @@ export function SyncIndicator({ stats }: SyncIndicatorProps) {
           showTooltip ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
         ].join(" ")}
       >
-        <div className="pixel text-[10px] tracking-tight text-white/70">
+        <div className="pixel hidden text-[10px] tracking-tight text-white/70">
           {config.description}
         </div>
 

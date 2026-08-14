@@ -26,6 +26,8 @@ import {
   Ellipsis,
   SquareActivity,
   Workflow,
+  ChevronsUpIcon,
+  ChevronRight,
 } from "lucide-react";
 
 import React, {  useCallback, useEffect, useRef, useState } from "react";
@@ -104,15 +106,15 @@ const CanvasSwitcherFlyout = ({
 
   return (
     <div
-      className="relative border-t px-2 py-1 border-white/10"
+      className="relative border-t pl-2 pr-1 py-1 border-white/10"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <button
         type="button"
-        className="text-[11px] font-medium  px-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white transition hover:text-white"
+        className="text-[11px] flex w-full justify-between font-medium  pl-2 py-1  rounded-xs cursor-pointer mono w-full text-left uppercase tracking-tight  text-white transition hover:text-white"
       >
-        Switch canvas
+        Switch canvas <ChevronRight className="w-4 h-4" />
       </button>
 
       {showFlyout && canvases && canvases.length > 0 && (
@@ -261,7 +263,7 @@ const CanvasSwitcherOverlay = ({
       className="absolute left-12 top-0 z-[60] w-[240px] rounded border border-white/5 bg-[#212126] shadow-2xl"
     >
       {/* Current canvas */}
-      <div className=" px-4 py-1">
+      <div className=" pl-4 pr-1 py-1">
         <div className="flex mono tracking-tight  items-center gap-2.5">
           <div className="min-w-0 py-1 flex-1">
             {editing ? (
@@ -289,10 +291,10 @@ const CanvasSwitcherOverlay = ({
                 className="relative flex w-full min-w-0 items-center uppercase tracking-tight cursor-pointer text-left text-[11px] font-medium text-white transition hover:text-white/80"
                 title="Click to rename"
               >
-                <span className="min-w-0 flex-1 truncate pr-8">
+                <span className="min-w-0 flex-1 truncate ">
                   {isSaving ? "Saving…" : canvasName}
                 </span>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-end bg-gradient-to-r from-transparent to-[#212126]">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end bg-gradient-to-r from-transparent to-[#212126]">
                   <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
                 </div>
               </button>
@@ -1953,15 +1955,15 @@ function PreferencesFlyout() {
 
   return (
     <div
-      className="relative border-t border-white/10 px-3 py-1"
+      className="relative border-t border-white/10 pl-3 py-1"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <button
         type="button"
-        className="text-[11px] flex justify-between w-full p-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white font-medium transition hover:text-white items-center"
+        className="text-[11px] flex justify-between w-full py-1 px-1 rounded-xs cursor-pointer mono uppercase tracking-tight text-white font-medium transition hover:text-white items-center"
       >
-        Preferences
+        Preferences <ChevronRight className="w-4 h-4" />
       </button>
 
       {showFlyout && (
