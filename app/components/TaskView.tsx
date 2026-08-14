@@ -1,6 +1,6 @@
-import { Loader, Loader2, LoaderPinwheel, Share2, SquareActivity, SquareUserRound } from "lucide-react";
+import { Loader, SquareActivity, SquareUserRound } from "lucide-react";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
-import { Share } from "next/font/google";
+import { useState } from "react";
 
 type TaskProps = {
   credits: number;
@@ -22,17 +22,23 @@ const TaskView = ({
   const syncToServer = useCanvasPreferencesStore((state) => state.syncToServer);
   const hasTasks = taskLabels.length > 0 && taskLabels[0] !== "No task running";
 
+    const [showNotice, setShowNotice] = useState(false);
+
+    const handleClick = () => {
+      setShowNotice(true);
+      window.setTimeout(() => setShowNotice(false), 2500);
+    };
+  
   return (
     <div className="gap-1 flex flex-col">
-      
       <button
         type="button"
         className={`flex p-2 border-2 border-white/2 gap-2 flex-col cursor-pointer bg-[#212126] h-fit  w-50 rounded-lg text-black  text-[10px] tracking-tight ${className ?? ""}`}
       >
-        <div className="flex w-full justify-between items-center gap-1">
-          <span className="text-xs flex items-center tracking-tight text-white">
+        <div className="flex  w-full justify-between items-center gap-1">
+          <span className="text-xs font-mono uppercase  flex items-center tracking-tight text-white">
             <Icon />
-            <span className="grotesk">{credits.toFixed(2)}</span>
+            <span className="grotesk mr-1">{credits.toFixed(2)}</span>
           </span>
           <div className="flex gap-1">
             <button
@@ -48,9 +54,19 @@ const TaskView = ({
             >
               <SquareActivity className="w-4 text-white stroke-[1.5] h-4" />
             </button>
-            <button className="flex uppercase cursor-pointer text-xs items-center    font-mono h-full flex items-center  rounded-full text-black  text-xs">
-              <SquareUserRound className="w-4 text-white stroke-[1.5] h-4" />
+            <button
+              type="button"
+              onClick={handleClick}
+              aria-label="Share"
+              className="flex h-full cursor-pointer items-center rounded-full text-xs font-mono uppercase text-black"
+            >
+              <SquareUserRound className="h-4 w-4 text-white stroke-[1.5]" />
             </button>
+            {showNotice && (
+              <div className="absolute hidden top-10 bg-[#212126] w-50 flex items-center rounded-lg right-0.5  bottom-6  border-2 border-white/2 h-full px-4 py-2 text-xs  font-mono text-white shadow-lg">
+                Sharing is coming soon.
+              </div>
+            )}
             <button className="flex hidden cursor-pointer uppercase text-xs items-center lime h-6  font-mono h-full px-1 flex items-center  rounded-full text-black  text-xs">
               share
             </button>

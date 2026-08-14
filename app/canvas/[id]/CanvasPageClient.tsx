@@ -148,6 +148,7 @@ export default function CanvasPageClient({
       </div>
       <div className="absolute right-4 top-4 z-50 flex items-center">
         <TaskView credits={currentCredits} taskLabels={taskLabels} />
+        
       </div>
 
       <FloatingToolbar />

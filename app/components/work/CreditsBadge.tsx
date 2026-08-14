@@ -105,7 +105,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          "flex items-center mono cursor-pointer lime  h-6  rounded text-black uppercase text-[10px] tracking-tight",
+          "flex items-center mono cursor-pointer px-1  lime  h-6  rounded text-black uppercase text-[10px] tracking-tight",
           "hover:bg-white/30 transition",
           className ?? "",
         ].join(" ")}
