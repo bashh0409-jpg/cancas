@@ -24,10 +24,11 @@ import {
   FolderOpen,
   Minus,
   Ellipsis,
+  SquareActivity,
   Workflow,
 } from "lucide-react";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {  useCallback, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -119,8 +120,9 @@ const CanvasSwitcherFlyout = ({
           className="absolute left-full ml-2 top-0 z-[70] w-[240px] rounded border border-white/10 bg-[#212126] shadow-2xl "
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onWheel={(event) => event.stopPropagation()}
         >
-          <div className=" max-h-[90vh] scrollbar-hidden overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto overscroll-contain scrollbar-hidden">
             {canvases.map((canvas, index) => {
               const isActive = canvas.id === activeCanvasId;
 
@@ -141,16 +143,20 @@ const CanvasSwitcherFlyout = ({
                       }
                     }}
                     aria-disabled={isActive}
-                    className={`flex items-center justify-between gap-2 rounded-xs p-2 text-[11px] tracking-tight mono transition ${
+                    className={`relative flex items-center gap-2 rounded-xs p-2 text-[11px] tracking-tight mono transition ${
                       isActive
                         ? "cursor-not-allowed text-white"
                         : "text-white/60 hover:text-white cursor-pointer"
                     }`}
                   >
-                    <span className="truncate uppercase">{canvas.name}</span>
+                    <span className="min-w-0 flex-1 truncate pr-5 uppercase">
+                      {canvas.name}
+                    </span>
 
                     {isActive && (
-                      <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
+                      <div className="pointer-events-none absolute inset-y-0 right-2 flex w-10 items-center justify-end bg-gradient-to-r from-transparent to-[#212126]">
+                        <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
+                      </div>
                     )}
                   </a>
                 </React.Fragment>
@@ -165,6 +171,7 @@ const CanvasSwitcherFlyout = ({
           className="absolute left-full top-0 z-[70] w-[200px] rounded border border-white/10 bg-[#212126] shadow-2xl py-3 px-3"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onWheel={(event) => event.stopPropagation()}
         >
           <p className="text-[11px] tracking-tight uppercase mono text-white/50">
             No other canvases yet
@@ -279,11 +286,15 @@ const CanvasSwitcherOverlay = ({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="w-full truncate uppercase flex items-center justify-between tracking-tight cursor-pointer text-left text-[11px] font-medium  text-white transition hover:text-white/80"
+                className="relative flex w-full min-w-0 items-center uppercase tracking-tight cursor-pointer text-left text-[11px] font-medium text-white transition hover:text-white/80"
                 title="Click to rename"
               >
-                {isSaving ? "Saving…" : canvasName}{" "}
-                <FolderOpen className="shrink-0 w-3.5  h-3.5 " />
+                <span className="min-w-0 flex-1 truncate pr-8">
+                  {isSaving ? "Saving…" : canvasName}
+                </span>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-end bg-gradient-to-r from-transparent to-[#212126]">
+                  <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
+                </div>
               </button>
             )}
           </div>
@@ -1886,11 +1897,13 @@ function PreferencesFlyout() {
     wireType,
     connectorLineStyle,
     keepOriginalImageOnRemoveBg,
+    showActivityMonitor,
     setRightClickMenu,
     setSnapToGrid,
     setWireType,
     setConnectorLineStyle,
     setKeepOriginalImageOnRemoveBg,
+    setShowActivityMonitor,
     syncToServer,
   } = useCanvasPreferencesStore();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1953,9 +1966,10 @@ function PreferencesFlyout() {
 
       {showFlyout && (
         <div
-          className="absolute left-full ml-2 top-0 z-[70] w-[250px] rounded border border-white/10 bg-[#212126] shadow-2xl"
+          className="absolute left-full ml-2 top-0 z-[70] max-h-[calc(100vh-1rem)] w-[250px] overflow-y-auto overscroll-contain rounded border border-white/10 bg-[#212126] shadow-2xl"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onWheel={(event) => event.stopPropagation()}
         >
           {/* Snap to Grid */}
           <div className="flex items-center justify-between px-3 py-2.5">
@@ -2041,6 +2055,35 @@ function PreferencesFlyout() {
           </div>
 
           <div className="h-px bg-white/10" />
+          {/* Show the activity monitor */}
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <SquareActivity className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+              <span className="text-[11px] mono uppercase tracking-tight text-white/70">
+                Activity monitor
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowActivityMonitor(!showActivityMonitor);
+                syncToServer();
+              }}
+              className={`relative w-9 cursor-pointer h-[16px] rounded-full transition-colors duration-200 shrink-0 ${
+                showActivityMonitor ? "lime" : "bg-white/15"
+              }`}
+            >
+              <span
+                className={`absolute top-0 left-0 w-[22px] h-[16px] rounded-full transition-transform duration-200 ${
+                  showActivityMonitor
+                    ? "translate-x-3 bg-white shadow-[0_0_6px_1px_rgba(0,0,0,0.3)]"
+                    : "bg-white/40"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="h-px bg-white/10" />
 
           {/* Wire Type */}
           <div className="px-3 py-2">
@@ -2048,7 +2091,7 @@ function PreferencesFlyout() {
               <div className="flex items-center gap-2">
                 <Workflow className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
                 <span className="text-[11px] mono uppercase tracking-tight text-white/70">
-                  Wire Type
+                  Connecting Wire Type
                 </span>
               </div>
             </div>
@@ -2082,7 +2125,7 @@ function PreferencesFlyout() {
               <div className="flex items-center gap-2">
                 <Workflow className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
                 <span className="text-[11px] mono uppercase tracking-tight text-white/70">
-                  Connector Style
+                  Connector wire Style
                 </span>
               </div>
             </div>

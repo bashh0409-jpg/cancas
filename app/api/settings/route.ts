@@ -45,7 +45,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const settings = await upsertUserSettings(supabase, user.id, body.settings);
+    const existingSettings = await getUserSettings(supabase, user.id);
+    const settings = await upsertUserSettings(supabase, user.id, {
+      ...existingSettings,
+      ...body.settings,
+    });
 
     return NextResponse.json({ settings });
   } catch (error) {

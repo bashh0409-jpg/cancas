@@ -2,6 +2,7 @@
 
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import {
+  getUserSettings,
   upsertUserSettings,
   type UserSettings,
 } from "@/lib/user/settingsRepository";
@@ -19,5 +20,9 @@ export async function updateSettingsAction(formData: FormData) {
     canvas_activity: String(formData.get("canvas_activity")) === "true",
   };
 
-  await upsertUserSettings(supabase, user.id, settings);
+  const existingSettings = await getUserSettings(supabase, user.id);
+  await upsertUserSettings(supabase, user.id, {
+    ...existingSettings,
+    ...settings,
+  });
 }

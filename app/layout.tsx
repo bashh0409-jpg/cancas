@@ -75,7 +75,7 @@ const layGrotesk = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "REFLOW",
+  title: "Reflow",
   description:
     "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
 };

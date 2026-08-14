@@ -7,6 +7,7 @@ type CanvasPreferences = {
   wireType: "line" | "elbow" | "bezier";
   connectorLineStyle: "solid" | "dashed";
   keepOriginalImageOnRemoveBg: boolean;
+  showActivityMonitor: boolean;
 };
 
 type CanvasPreferencesStore = CanvasPreferences & {
@@ -15,6 +16,7 @@ type CanvasPreferencesStore = CanvasPreferences & {
   setWireType: (type: CanvasPreferences["wireType"]) => void;
   setConnectorLineStyle: (style: CanvasPreferences["connectorLineStyle"]) => void;
   setKeepOriginalImageOnRemoveBg: (enabled: boolean) => void;
+  setShowActivityMonitor: (enabled: boolean) => void;
   syncFromServer: () => Promise<void>;
   syncToServer: () => Promise<void>;
 };
@@ -27,6 +29,7 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
       wireType: "elbow",
       connectorLineStyle: "dashed",
       keepOriginalImageOnRemoveBg: false,
+      showActivityMonitor: true,
 
       setRightClickMenu: (rightClickMenu) => set({ rightClickMenu }),
       setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
@@ -34,6 +37,8 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
       setConnectorLineStyle: (connectorLineStyle) => set({ connectorLineStyle }),
       setKeepOriginalImageOnRemoveBg: (keepOriginalImageOnRemoveBg) =>
         set({ keepOriginalImageOnRemoveBg }),
+      setShowActivityMonitor: (showActivityMonitor) =>
+        set({ showActivityMonitor }),
 
       syncFromServer: async () => {
         try {
@@ -54,6 +59,8 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
               keepOriginalImageOnRemoveBg:
                 data.settings.keepOriginalImageOnRemoveBg ??
                 get().keepOriginalImageOnRemoveBg,
+              showActivityMonitor:
+                data.settings.showActivityMonitor ?? get().showActivityMonitor,
             });
           }
         } catch {
@@ -69,6 +76,7 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
             wireType,
             connectorLineStyle,
             keepOriginalImageOnRemoveBg,
+            showActivityMonitor,
           } = get();
 
           await fetch("/api/settings", {
@@ -81,6 +89,7 @@ export const useCanvasPreferencesStore = create<CanvasPreferencesStore>()(
                 wireType,
                 connectorLineStyle,
                 keepOriginalImageOnRemoveBg,
+                showActivityMonitor,
               },
             }),
           });

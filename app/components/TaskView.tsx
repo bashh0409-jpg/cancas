@@ -1,4 +1,6 @@
-import { Loader, Loader2, LoaderPinwheel, Share2 } from "lucide-react";
+import { Loader, Loader2, LoaderPinwheel, Share2, SquareActivity, SquareUserRound } from "lucide-react";
+import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
+import { Share } from "next/font/google";
 
 type TaskProps = {
   credits: number;
@@ -11,46 +13,80 @@ const TaskView = ({
   taskLabels = ["No task running"],
   className,
 }: TaskProps) => {
+  const showActivityMonitor = useCanvasPreferencesStore(
+    (state) => state.showActivityMonitor,
+  );
+  const setShowActivityMonitor = useCanvasPreferencesStore(
+    (state) => state.setShowActivityMonitor,
+  );
+  const syncToServer = useCanvasPreferencesStore((state) => state.syncToServer);
   const hasTasks = taskLabels.length > 0 && taskLabels[0] !== "No task running";
 
   return (
-    <button
-      type="button"
-      className={`flex p-2 border border-white/10 gap-2 flex-col cursor-pointer bg-[#212126] h-fit min-h-15 w-50 rounded-md text-black  text-[10px] tracking-tight ${className ?? ""}`}
-    >
-      <div className="flex w-full justify-between items-center gap-1">
-        <span className="text-xs flex items-center font-mono tracking-tight text-white">
-          <Icon />
-          <span className="">{credits.toFixed(2)}</span>
-        </span>
-        <button className="flex lime font-mono p-1 flex items-center cursor-pointer rounded text-black gap-1 text-xs">
-          <Share2 className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="flex text-white/50 flex-col w-full bg-white-20 items-start gap-1 text-left">
-        {hasTasks ? (
-          <div className="flex items-center gap-1 ">
-            
-            <div className="flex flex-col gap-0.5">
-              {taskLabels.map((label) => (
-                <span
-                  key={label}
-                  className="text-xs flex gap-1 items-center tracking-tight font-mono text-white"
-                >
-                  <Loader className="h-3 w-3 animate-spin text-lime" />{" "}
-                  {label}...
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <span className="text-xs tracking-tight font-mono text-white/50">
-            No task running
+    <div className="gap-1 flex flex-col">
+      
+      <button
+        type="button"
+        className={`flex p-2 border-2 border-white/2 gap-2 flex-col cursor-pointer bg-[#212126] h-fit  w-50 rounded-lg text-black  text-[10px] tracking-tight ${className ?? ""}`}
+      >
+        <div className="flex w-full justify-between items-center gap-1">
+          <span className="text-xs flex items-center tracking-tight text-white">
+            <Icon />
+            <span className="grotesk">{credits.toFixed(2)}</span>
           </span>
-        )}
-      </div>
-    </button>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowActivityMonitor(!showActivityMonitor);
+                void syncToServer();
+              }}
+              aria-label="Show activity monitor"
+              title="Show activity monitor"
+              className="flex cursor-pointer items-center rounded-full font-mono text-xs text-black"
+            >
+              <SquareActivity className="w-4 text-white stroke-[1.5] h-4" />
+            </button>
+            <button className="flex uppercase cursor-pointer text-xs items-center    font-mono h-full flex items-center  rounded-full text-black  text-xs">
+              <SquareUserRound className="w-4 text-white stroke-[1.5] h-4" />
+            </button>
+            <button className="flex hidden cursor-pointer uppercase text-xs items-center lime h-6  font-mono h-full px-1 flex items-center  rounded-full text-black  text-xs">
+              share
+            </button>
+          </div>
+        </div>
+      </button>
+      {showActivityMonitor && (
+        <button
+          type="button"
+          className={`flex p-2 border-2 border-white/2 gap-2 flex-col cursor-pointer bg-[#212126] h-fit w-50 rounded-lg text-black text-[10px] tracking-tight ${className ?? ""}`}
+        >
+          {/**Task monotor */}
+          <div className="flex text-white/50 flex-col w-full bg-white-20 items-start gap-1 text-left">
+            {hasTasks ? (
+              <div className="flex items-center gap-2 ">
+                <div className="flex flex-col gap-2">
+                  {taskLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="text-[10px] uppercase flex gap-1 items-center tracking-tight font-mono text-white"
+                    >
+                      <Loader className="h-3 w-3 hidden animate-spin text-lime" />{" "}
+                      {label}...
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <span className="text-xs tracking-tight font-mono text-white/60">
+                No task running
+              </span>
+            )}
+          </div>
+        </button>
+      )}
+    </div>
   );
 };
 

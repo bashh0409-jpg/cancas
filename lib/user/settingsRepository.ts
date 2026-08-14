@@ -4,6 +4,7 @@ export type UserSettings = {
   product_updates?: boolean;
   canvas_activity?: boolean;
   keepOriginalImageOnRemoveBg?: boolean;
+  showActivityMonitor?: boolean;
   [key: string]: unknown;
 };
 

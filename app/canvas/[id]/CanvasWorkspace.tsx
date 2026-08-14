@@ -577,11 +577,16 @@ export default function CanvasWorkspace({
   );
   const [gridColor, setGridColor] = useState(initialContent.gridColor);
   const [gridSize, setGridSize] = useState(initialContent.gridSize);
+  const gridSizeRef = useRef(initialContent.gridSize);
   const [gridLineType, setGridLineType] = useState(initialContent.gridLineType);
   const wireType = useCanvasPreferencesStore((state) => state.wireType);
   const connectorLineStyle = useCanvasPreferencesStore(
     (state) => state.connectorLineStyle,
   );
+
+  useEffect(() => {
+    gridSizeRef.current = gridSize;
+  }, [gridSize]);
   const handleResetGrid = () => {
     setBackgroundColor(initialContent.backgroundColor);
     setGridColor(initialContent.gridColor);
@@ -1342,10 +1347,10 @@ export default function CanvasWorkspace({
       const note: CanvasTextNodeData = {
         id,
         text: "",
-        position: {
+        position: snapCanvasPoint({
           x: center.x - 90,
           y: center.y - 60,
-        },
+        }),
         size: {
           width: 180,
           height: 120,
@@ -1405,10 +1410,10 @@ export default function CanvasWorkspace({
       const chatNode: CanvasAiChatNodeData = {
         id,
         name: "Untitled",
-        position: {
+        position: snapCanvasPoint({
           x: center.x - 190,
           y: center.y - 160,
-        },
+        }),
         size: {
           width: 380,
           height: 320,
@@ -1878,10 +1883,10 @@ export default function CanvasWorkspace({
             fileName: asset.file_name,
             url: asset.public_url,
             storagePath: asset.storage_path,
-            position: {
-              x: dropPosition.x + index * 20,
-              y: dropPosition.y + index * 20,
-            },
+            position: snapCanvasPoint({
+              x: dropPosition.x + index * getNodeStagger(),
+              y: dropPosition.y + index * getNodeStagger(),
+            }),
             size: placeholderSize,
             zIndex: topZIndex + index + 1,
           },
@@ -1977,10 +1982,10 @@ export default function CanvasWorkspace({
           audioDataUrl: audioDataUrl ?? "",
           storagePath,
           durationMs: pendingVoiceRecording.durationMs,
-          position: {
+          position: snapCanvasPoint({
             x: center.x - 120,
             y: center.y - 56,
-          },
+          }),
           size: {
             width: 240,
             height: 112,
@@ -2668,10 +2673,10 @@ export default function CanvasWorkspace({
             id: crypto.randomUUID(),
             url,
             title: getWebsiteTitle(url),
-            position: {
+            position: snapCanvasPoint({
               x: center.x - 130,
               y: center.y - 170,
-            },
+            }),
             size: {
               width: 260,
               height: 340,
@@ -2687,10 +2692,10 @@ export default function CanvasWorkspace({
       const note: CanvasTextNodeData = {
         id,
         text: pastedText,
-        position: {
+        position: snapCanvasPoint({
           x: center.x - 175,
           y: center.y - 120,
-        },
+        }),
         size: {
           width: 350,
           height: 160,
@@ -2774,6 +2779,33 @@ export default function CanvasWorkspace({
       x: (point.x - rect.left - viewport.x) / viewport.zoom,
       y: (point.y - rect.top - viewport.y) / viewport.zoom,
     };
+  }
+
+  function snapCanvasPoint(point: Point): Point {
+    if (!useCanvasPreferencesStore.getState().snapToGrid) {
+      return point;
+    }
+
+    const size = gridSizeRef.current;
+
+    if (!Number.isFinite(size) || size <= 0) {
+      return point;
+    }
+
+    return {
+      x: Math.round(point.x / size) * size,
+      y: Math.round(point.y / size) * size,
+    };
+  }
+
+  function getNodeStagger() {
+    const size = gridSizeRef.current;
+
+    return useCanvasPreferencesStore.getState().snapToGrid &&
+      Number.isFinite(size) &&
+      size > 0
+      ? size
+      : 20;
   }
 
   function getTopZIndex() {
@@ -3359,10 +3391,10 @@ export default function CanvasWorkspace({
         id: nodeId,
         fileName: file.name,
         url: blobUrl,
-        position: {
-          x: dropPosition.x + index * 20,
-          y: dropPosition.y + index * 20,
-        },
+        position: snapCanvasPoint({
+          x: dropPosition.x + index * getNodeStagger(),
+          y: dropPosition.y + index * getNodeStagger(),
+        }),
         size: placeholderSize,
         zIndex: topZIndex + index + 1,
       },
@@ -3409,10 +3441,12 @@ export default function CanvasWorkspace({
       return;
     }
 
-    const dropPosition = screenToCanvas({
-      x: event.clientX,
-      y: event.clientY,
-    });
+    const dropPosition = snapCanvasPoint(
+      screenToCanvas({
+        x: event.clientX,
+        y: event.clientY,
+      }),
+    );
 
     const topZIndex = imageNodesRef.current.reduce(
       (max, node) => Math.max(max, node.zIndex),
@@ -3606,6 +3640,11 @@ export default function CanvasWorkspace({
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
 
+    const position = snapCanvasPoint({
+      x: point.x - dragState.offset.x,
+      y: point.y - dragState.offset.y,
+    });
+
     const updatePosition = <T extends { id: string; position: Point }>(
       current: T[],
     ) =>
@@ -3613,10 +3652,7 @@ export default function CanvasWorkspace({
         node.id === dragState.nodeId
           ? {
               ...node,
-              position: {
-                x: point.x - dragState.offset.x,
-                y: point.y - dragState.offset.y,
-              },
+              position,
             }
           : node,
       );
@@ -3775,10 +3811,10 @@ export default function CanvasWorkspace({
       return;
     }
 
-    const anchorPosition = {
+    const anchorPosition = snapCanvasPoint({
       x: point.x - dragState.offset.x,
       y: point.y - dragState.offset.y,
-    };
+    });
     const delta = {
       x: anchorPosition.x - anchorStart.x,
       y: anchorPosition.y - anchorStart.y,
@@ -3898,10 +3934,10 @@ export default function CanvasWorkspace({
         node.id === dragState.nodeId
           ? {
               ...node,
-              position: {
+              position: snapCanvasPoint({
                 x: point.x - dragState.offset.x,
                 y: point.y - dragState.offset.y,
-              },
+              }),
             }
           : node,
       ),
@@ -4063,10 +4099,10 @@ export default function CanvasWorkspace({
         node.id === dragState.nodeId
           ? {
               ...node,
-              position: {
+              position: snapCanvasPoint({
                 x: point.x - dragState.offset.x,
                 y: point.y - dragState.offset.y,
-              },
+              }),
             }
           : node,
       ),
@@ -4523,10 +4559,10 @@ export default function CanvasWorkspace({
             id: nodeId,
             fileName,
             url: blobUrl,
-            position: {
+            position: snapCanvasPoint({
               x: dropPosition.x - 160,
               y: dropPosition.y - 120,
-            },
+            }),
             size: {
               width: Math.min(320, image.width),
               height: Math.min(240, image.height),
