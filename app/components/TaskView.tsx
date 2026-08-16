@@ -1,6 +1,5 @@
 import { Loader, SquareActivity, SquareUserRound } from "lucide-react";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
-import { useState } from "react";
 
 type TaskProps = {
   credits: number;
@@ -21,13 +20,6 @@ const TaskView = ({
   );
   const syncToServer = useCanvasPreferencesStore((state) => state.syncToServer);
   const hasTasks = taskLabels.length > 0 && taskLabels[0] !== "No task running";
-
-    const [showNotice, setShowNotice] = useState(false);
-
-    const handleClick = () => {
-      setShowNotice(true);
-      window.setTimeout(() => setShowNotice(false), 2500);
-    };
   
   return (
     <div className="gap-1 flex flex-col">
