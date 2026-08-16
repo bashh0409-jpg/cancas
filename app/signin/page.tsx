@@ -244,7 +244,7 @@ export default function Page() {
           )}
         </div>{" "}
         {/* RESTORED FOOTER TEXT */}
-        <p className="max-w-[320px] mono uppercase tracking-tight text-center text-[10px] leading-snug text-white/80">
+        <p className="max-w-[320px] mono uppercase tracking-tight text-center text-[10px] leading-snug text-white">
           By continuing, you agree to the{" "}
           <a
             href="/terms-of-service"
