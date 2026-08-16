@@ -431,7 +431,8 @@ export function FloatingToolbox() {
           )}
         </ToolboxButton>
         <span className="mx-1 h-6 w-[1px] bg-white/10" />
-        <ToolboxButton
+        <span className="hidden">
+          <ToolboxButton
           label="Undo"
           onClick={() => document.execCommand("undo")}
         >
@@ -443,6 +444,8 @@ export function FloatingToolbox() {
         >
           <Redo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
         </ToolboxButton>
+        </span>
+        
       </div>
       {recordingError && (
         <div

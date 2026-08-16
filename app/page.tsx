@@ -18,7 +18,7 @@ import Swirl from "./components/Swirl";
 import BounceInText from "./components/BounceInText";
 import ReflowIntro from "./components/ReflowIntro";
 
-const menuItems = ["Pricing", "Legal", "Support", "Sign in"];
+const menuItems = ["About","Pricing", "Legal", "Support", "Sign in"];
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -91,11 +91,13 @@ export default function Home() {
                 href={
                   item === "Sign in"
                     ? "/signin"
-                    : item === "Support"
-                      ? "/support"
-                      : item === "Legal"
-                        ? "/legal"
-                        : "#"
+                    : item === "About"
+                      ? "/about"
+                      : item === "Support"
+                        ? "/support"
+                        : item === "Legal"
+                          ? "/legal"
+                          : "#"
                 }
                 className="group flex items-center justify-between border-b border-black/10 py-5 font-mono text-2xl uppercase tracking-tight transition-colors hover:bg-black/[0.03] md:text-4xl"
               >
@@ -128,38 +130,44 @@ export default function Home() {
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 hidden w-4" />
               Menu
             </button>
 
             <nav className="hidden gap-4 md:flex">
               <a
+                href="/about"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >
+                About
+              </a>{" "}
+              <a
                 href="#"
-                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Pricing
               </a>
               <a
                 href="/legal"
-                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Legal
               </a>
               <a
                 href="/faq"
-                className="p-1 rounded-full px-4 transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Faq
               </a>
               <a
                 href="/support"
-                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Support
               </a>
               <a
                 href="/signin"
-                className="p-1 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
+                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Sign in
               </a>
