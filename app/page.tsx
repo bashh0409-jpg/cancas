@@ -142,13 +142,13 @@ export default function Home() {
                 About
               </a>{" "}
               <a
-                href="#"
+                href="/about"
                 className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Pricing
               </a>
               <a
-                href="/legal"
+                href="/pricing"
                 className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Legal
@@ -376,18 +376,18 @@ export default function Home() {
             <div className="flex   w-full  justify-between md:w-fit items-center ">
               {" "}
               <a
-                href="/legal"
+                href="/privacy-policy"
                 className="bg-transparent  items-center gap-1 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
                 PRIVACY POLICY
               </a>
               <a
-                href="/offer-agreement"
+                href="/terms-of-service"
                 className="bg-transparent  items-center gap-1 font-mono tracking-tighter flex text-black  font-medium px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4" />
-                OFFER AGREEMENT
+                TERMS OF USE
               </a>{" "}
             </div>
             <div className="hidden md:flex w-full gap-2 uppercase flex-col md:flex-row justify-between md:w-fit items-center ">

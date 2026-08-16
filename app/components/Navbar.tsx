@@ -15,7 +15,7 @@ const NAV_LINKS = [
   },
   {
     label: "PRICING",
-    href: "#",
+    href: "pricing",
   },
   {
     label: "HELP",
@@ -27,7 +27,7 @@ const NAV_LINKS = [
   },
   {
     label: "FAQs",
-    href: "#",
+    href: "faq",
   },
 ];
 

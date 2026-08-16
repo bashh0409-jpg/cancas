@@ -15,8 +15,8 @@ import { ArrowLeft } from "lucide-react";
 const CONFIG = {
   companyName: "[Legal entity / your name, e.g. Wandile Langa]",
   productName: "Reflow",
-  contactEmail: "privacy@reflow.site", // update to your real inbox
-  domain: "reflow.site", // update if this lives elsewhere
+  contactEmail: "privacy@swipes.site", // update to your real inbox
+  domain: "swipes.site", // update if this lives elsewhere
   effectiveDate: "16 August 2026",
   jurisdiction:
     "South Africa, and we comply with the Protection of Personal Information Act (POPIA). If you're outside South Africa, we also apply GDPR-equivalent principles.",
