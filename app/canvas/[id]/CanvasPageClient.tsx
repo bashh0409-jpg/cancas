@@ -150,6 +150,7 @@ export default function CanvasPageClient({
         <TaskView credits={currentCredits} taskLabels={taskLabels} />
         
       </div>
+      <FloatingToolbar />
     </main>
   );
 }

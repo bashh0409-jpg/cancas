@@ -57,21 +57,25 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-      },
-      {
-        protocol: "https",
-        hostname: "image.mux.com",
-      },
-    ],
-  },
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "lh3.googleusercontent.com",
+    },
+    {
+      protocol: "https",
+      hostname: "*.supabase.co",
+    },
+    {
+      protocol: "https",
+      hostname: "image.mux.com",
+    },
+    {
+      protocol: "https",
+      hostname: "s3-alpha.figma.com",
+    },
+  ],
+},
   async rewrites() {
     return [
       {

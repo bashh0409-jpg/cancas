@@ -430,7 +430,7 @@ export function FloatingToolbox() {
             <Network className="w-5 h-5 -rotate-90 stroke-[1.5]" />
           )}
         </ToolboxButton>
-        <span className="mx-1 h-6 w-[1px] bg-white/10" />
+        <span className="mx-1 hidden h-6 w-[1px] bg-white/10" />
         <span className="hidden">
           <ToolboxButton
           label="Undo"
