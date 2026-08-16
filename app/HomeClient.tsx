@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { ArrowDownRight, CircleUserRound, CornerDownRight, Plus, User, X } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { User } from "@supabase/supabase-js";
@@ -172,9 +172,14 @@ export default function HomeClient({ user }: HomeClientProps) {
               </a>
               <a
                 href={accountHref}
-                className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
-              >
+                className="p-1 px-2 gap-2 rounded-full flex items-center transition-colors hover:bg-[#f8ff9a] hover:text-black"
+              >{user && (
+                  <span>
+                    <CircleUserRound className="w-4 h-4" />{" "}
+                  </span>
+                )}
                 {accountLabel}
+                
               </a>
             </nav>
           </div>
