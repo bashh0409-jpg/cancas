@@ -30,7 +30,7 @@ export default function HomeClient({ user }: HomeClientProps) {
 
   // ── Auth-aware nav destination + label ──────────────────────────────
   const accountHref = user ? "/work" : "/signin";
-  const accountLabel = user ? "Open App" : "Sign in";
+  const accountLabel = user ? "Workspace" : "Sign in";
 
   const menuItems = [
     { label: "About", href: "/about" },
