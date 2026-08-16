@@ -212,7 +212,7 @@ export default function Page() {
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex h-8 w-full items-center justify-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
+                className="hidden h-8 w-full items-center justify-center cursor-pointer  gap-3 rounded lime px-4 text-xs mono uppercase tracking-tight text-black transition-all hover:bg-white/70 disabled:opacity-60"
                 onClick={() => handleAuth("azure")}
               >
                 {loadingProvider === "azure" ? <Spinner /> : <MicrosoftIcon />}
@@ -247,14 +247,14 @@ export default function Page() {
         <p className="max-w-[320px] mono uppercase tracking-tight text-center text-[10px] leading-snug text-white/80">
           By continuing, you agree to the{" "}
           <a
-            href="https://app.notion.com/p/Reflow-Terms-of-Service-390e79c73b25801babf6fc7210cf1667?source=copy_link"
+            href="/terms-of-service"
             className="underline mr-1 underline-offset-2 hover:text-white"
           >
             Terms of service
           </a>
           and acknowledge the{" "}
           <a
-            href="https://app.notion.com/p/Reflow-Privacy-Policy-390e79c73b258022ba16d464532fae4f?source=copy_link"
+            href="/privacy-policy"
             className="underline underline-offset-2 hover:text-white"
           >
             Privacy Policy

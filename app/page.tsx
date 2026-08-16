@@ -148,7 +148,7 @@ export default function Home() {
                 Pricing
               </a>
               <a
-                href="/pricing"
+                href="/legal"
                 className="p-1 px-2 rounded-full transition-colors hover:bg-[#f8ff9a] hover:text-black"
               >
                 Legal

@@ -15,7 +15,7 @@ const CONFIG = {
   companyName: "Wandile Langa",
   productName: "Reflow",
   contactEmail: "legal@swipes.site", // update to your real inbox
-  domain: "swipes.site",
+  domain: "www.swipes.site",
   effectiveDate: "16 August 2026",
   jurisdiction: "South Africa",
 };
@@ -34,15 +34,15 @@ const sections = [
     title: "The service",
     body: [
       `${CONFIG.productName} is a visual, AI-assisted workspace for generating, organizing, and refining creative assets. We may add, change, or remove features at any time, and we'll try to give you notice before changes that materially reduce functionality you rely on.`,
-      "We may offer free and paid tiers. Where paid features exist, pricing and billing terms will be shown before you're charged.",
+      "We offer free and paid tiers. Where paid features exist, pricing and billing terms will be shown before you're charged.",
     ],
   },
   {
     id: "account",
     title: "Your account",
     body: [
-      "You're responsible for keeping your login credentials secure and for all activity under your account.",
-      `If you sign in with Google, you authorize ${CONFIG.productName} to verify your identity via your Google profile, and — if you use import/export — to access only the specific Drive files you create with ${CONFIG.productName} or select through Google's file picker (the drive.file scope). We never get blanket access to your Drive.`,
+      "You can sign in with Google, Figma, or email and password. You're responsible for keeping your login credentials secure and for all activity under your account.",
+      `If you sign in with Google or Figma, you authorize ${CONFIG.productName} to verify your identity via your basic profile. If you connect Google Drive, or Dropbox, you authorize us to access only the specific files you create with ${CONFIG.productName} or select through the provider's own file picker — never blanket access to your account.`,
       "Tell us immediately if you suspect unauthorized access to your account.",
     ],
   },
@@ -50,7 +50,7 @@ const sections = [
     id: "content",
     title: "Your content",
     body: [
-      `You keep ownership of the content you create, upload, or generate in ${CONFIG.productName} ("Your Content"). By using the service, you grant us a limited license to host, store, and display Your Content solely to operate and improve the product for you.`,
+      `You keep ownership of the content you create, upload, or generate in ${CONFIG.productName} ("Your Content"). By using the service, you grant us a limited license to host, store, process, and display Your Content — including via our infrastructure providers such as Mux for video — solely to operate and improve the product for you.`,
       "You're responsible for Your Content and for having the rights to anything you upload as a reference or input.",
       "We don't claim ownership of Your Content, and we don't use it to train third-party AI models without your separate, explicit consent.",
     ],
@@ -59,8 +59,16 @@ const sections = [
     id: "ai-output",
     title: "AI-generated output",
     body: [
-      `${CONFIG.productName} uses AI models to generate images, video, and variations based on your prompts and references. Generated output may not be unique — similar prompts from other users can produce similar results, and we can't guarantee any output is free of third-party rights.`,
+      `${CONFIG.productName} uses third-party AI models to generate images, video, background removal, upscaling, and other output based on your prompts and references. Generated output may not be unique — similar prompts from other users can produce similar results, and we can't guarantee any output is free of third-party rights.`,
       "You're responsible for reviewing generated output before using it commercially, including checking it doesn't infringe someone else's intellectual property.",
+    ],
+  },
+  {
+    id: "billing",
+    title: "Billing and payments",
+    body: [
+      "Paid subscriptions are processed through Stripe, Polar, or PayFast, depending on your region. By subscribing, you agree to their applicable terms in addition to ours. We don't store your full card details — our payment processors handle that directly.",
+      "Subscriptions renew automatically unless cancelled before the renewal date. You can cancel at any time from your account settings; cancellation takes effect at the end of the current billing period unless stated otherwise.",
     ],
   },
   {
@@ -121,12 +129,15 @@ export default function TermsOfServicePage() {
       <header className="fixed z-30 flex w-full items-center justify-between p-4 font-mono text-sm font-medium uppercase">
         <Link
           href="/"
-          className="flex items-center gap-2 text-white/70 transition-colors hover:text-white"
+          className="flex items-center gap-2 text-white transition-colors hover:text-white"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back
+          <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-white/40">{CONFIG.productName}</span>
+        <img
+          src="/images/Re.svg"
+          alt=""
+          className="h-6 text-black mix-blend-difference w-6"
+        />{" "}
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pb-32 pt-28 font-mono tracking-tight md:pt-36">
@@ -157,12 +168,6 @@ export default function TermsOfServicePage() {
             </section>
           ))}
         </div>
-
-        <p className="mt-16 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/30">
-          These terms are a starting point, not legal advice — have a lawyer
-          review them before relying on this for a live product, especially the
-          liability and governing-law sections.
-        </p>
       </main>
     </div>
   );
