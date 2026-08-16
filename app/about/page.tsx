@@ -123,9 +123,9 @@ export default function Page() {
           <div className="flex items-center justify-between">
             <a
               className="flex items-center gap-1 text-black mix-blend-difference"
-              href="https://swipes.site/"
+              href="/app"
             >
-              <h1 className="font-mono text-sm font-medium uppercase tracking-tight">
+              <h1 className="font-mono text-white text-sm font-medium uppercase tracking-tight">
                 Join
               </h1>
               <img src="/images/Re.svg" alt="" className="h-6 w-6" />
