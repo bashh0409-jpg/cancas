@@ -13,7 +13,7 @@ import { ArrowLeft } from "lucide-react";
 // ── Fill these in — Google's reviewers check these against your
 // ── Cloud Console branding + actual product behavior. ────────────────
 const CONFIG = {
-  companyName: "[Legal entity / your name, e.g. Wandile Langa]",
+  companyName: "Wandile Langa",
   productName: "Reflow",
   contactEmail: "privacy@swipes.site", // update to your real inbox
   domain: "swipes.site", // update if this lives elsewhere

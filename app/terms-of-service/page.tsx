@@ -12,7 +12,7 @@ import { ArrowLeft } from "lucide-react";
 
 // ── Same CONFIG as the privacy policy — keep these in sync. ──────────
 const CONFIG = {
-  companyName: "[Legal entity / your name, e.g. Wandile Langa]",
+  companyName: "Wandile Langa",
   productName: "Reflow",
   contactEmail: "legal@swipes.site", // update to your real inbox
   domain: "swipes.site",
@@ -158,7 +158,7 @@ export default function TermsOfServicePage() {
           ))}
         </div>
 
-        <p className="mt-16  border-t border-white/10 pt-6 text-xs leading-relaxed text-white/30">
+        <p className="mt-16 border-t border-white/10 pt-6 text-xs leading-relaxed text-white/30">
           These terms are a starting point, not legal advice — have a lawyer
           review them before relying on this for a live product, especially the
           liability and governing-law sections.
