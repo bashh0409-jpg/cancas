@@ -173,6 +173,10 @@ export default function CanvasWorkspace({
     Map<string, { file: File; blobUrl: string }>
   >(new Map());
   const pendingUploadIdsRef = useRef<Set<string>>(new Set());
+  const activeImageUploadIdsRef = useRef<Set<string>>(new Set());
+  const queueImageUploadRef = useRef<
+    (nodeId: string, file: File, blobUrl: string) => void
+  >(() => {});
   const imageDeleteUndoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
   const imageDeleteRedoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
   const selectedImageIdsRef = useRef<string[]>([]);
@@ -567,7 +571,14 @@ export default function CanvasWorkspace({
       const orphans: string[] = [];
 
       for (const node of nodesNeedingSync) {
-        if (cancelled || pendingUploadFilesRef.current.has(node.id)) {
+        if (cancelled || activeImageUploadIdsRef.current.has(node.id)) {
+          continue;
+        }
+
+        const pendingUpload = pendingUploadFilesRef.current.get(node.id);
+
+        if (pendingUpload) {
+          nodesToResume.push({ nodeId: node.id, ...pendingUpload });
           continue;
         }
 
@@ -606,13 +617,23 @@ export default function CanvasWorkspace({
           return;
         }
 
-        canvasImageUploadPool.enqueue(() =>
-          syncImageToStorage(entry.nodeId, entry.file, entry.blobUrl),
-        );
+        queueImageUploadRef.current(entry.nodeId, entry.file, entry.blobUrl);
       }
     }
 
     void resumePendingUploads();
+
+    const retryPendingUploads = () => {
+      void resumePendingUploads();
+    };
+    const retryWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        retryPendingUploads();
+      }
+    };
+
+    window.addEventListener("online", retryPendingUploads);
+    document.addEventListener("visibilitychange", retryWhenVisible);
 
     // Populate signed playback URLs for voice nodes that only have storagePath
     async function populateVoiceSignedUrls() {
@@ -654,6 +675,8 @@ export default function CanvasWorkspace({
 
     return () => {
       cancelled = true;
+      window.removeEventListener("online", retryPendingUploads);
+      document.removeEventListener("visibilitychange", retryWhenVisible);
     };
   }, [canvasId, userId, isClientReady]);
 
@@ -1727,13 +1750,17 @@ export default function CanvasWorkspace({
       return;
     }
 
-    if (imageNodesRef.current.some((node) => isPendingCloudSync(node))) {
-      return;
-    }
-
     const content = buildCanvasContentRef.current();
 
+    // Keep pending nodes in the local draft so their IndexedDB blobs can be
+    // matched and retried after a refresh. The server is only updated once all
+    // image URLs point to cloud storage.
     writeLocalCanvasDraft(canvasId, content, serverUpdatedAtRef.current);
+
+    if (imageNodesRef.current.some((node) => isPendingCloudSync(node))) {
+      setIsSavingCanvas(false);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/canvases/${canvasId}`, {
@@ -3019,6 +3046,23 @@ export default function CanvasWorkspace({
     }
   }
 
+  function queueImageUpload(nodeId: string, file: File, blobUrl: string) {
+    if (activeImageUploadIdsRef.current.has(nodeId)) {
+      return;
+    }
+
+    activeImageUploadIdsRef.current.add(nodeId);
+    canvasImageUploadPool.enqueue(async () => {
+      try {
+        await syncImageToStorage(nodeId, file, blobUrl);
+      } finally {
+        activeImageUploadIdsRef.current.delete(nodeId);
+      }
+    });
+  }
+
+  queueImageUploadRef.current = queueImageUpload;
+
   async function syncImageToStorage(
     nodeId: string,
     file: File,
@@ -3088,7 +3132,7 @@ export default function CanvasWorkspace({
               file,
               signal,
             ),
-          30_000,
+          120_000,
           "Upload timed out",
         );
 
@@ -3108,7 +3152,11 @@ export default function CanvasWorkspace({
 
         URL.revokeObjectURL(blobUrl);
         pendingUploadFilesRef.current.delete(nodeId);
-        await deletePendingUploadFile(canvasId, nodeId);
+        try {
+          await deletePendingUploadFile(canvasId, nodeId);
+        } catch {
+          // The cloud upload succeeded. A stale local retry record is safe.
+        }
 
         stopProgressTimer();
         try {
@@ -3206,16 +3254,14 @@ export default function CanvasWorkspace({
       },
     ]);
 
-    canvasImageUploadPool.enqueue(() =>
-      syncImageToStorage(nodeId, file, blobUrl),
-    );
-
     void (async () => {
       try {
         await savePendingUploadFile(canvasId, nodeId, file);
       } catch {
         // Upload can still proceed from memory.
       }
+
+      queueImageUpload(nodeId, file, blobUrl);
 
       const naturalSize = await getNaturalImageSize(blobUrl);
 
@@ -4135,9 +4181,7 @@ export default function CanvasWorkspace({
             // Upload can still proceed from memory.
           }
 
-          canvasImageUploadPool.enqueue(() =>
-            syncImageToStorage(targetNodeId, processedFile, processedUrl),
-          );
+          queueImageUpload(targetNodeId, processedFile, processedUrl);
 
           saveDelayMsRef.current = 0;
         } catch (error) {
@@ -4277,9 +4321,7 @@ export default function CanvasWorkspace({
             // Upload can still proceed from memory.
           }
 
-          canvasImageUploadPool.enqueue(() =>
-            syncImageToStorage(targetNodeId, upscaledFile, upscaledUrl),
-          );
+          queueImageUpload(targetNodeId, upscaledFile, upscaledUrl);
 
           saveDelayMsRef.current = 0;
           showToast({
@@ -4349,12 +4391,13 @@ export default function CanvasWorkspace({
       try {
         const response = await fetch(image.urls.full);
         const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
         const fileName = `unsplash-${image.id}.jpg`;
+        const file = new File([blob], fileName, { type: "image/jpeg" });
+        const blobUrl = URL.createObjectURL(file);
 
         const nodeId = crypto.randomUUID();
         pendingUploadFilesRef.current.set(nodeId, {
-          file: new File([blob], fileName, { type: "image/jpeg" }),
+          file,
           blobUrl,
         });
         pendingUploadIdsRef.current.add(nodeId);
@@ -4377,13 +4420,23 @@ export default function CanvasWorkspace({
           },
         ]);
 
+        void (async () => {
+          try {
+            await savePendingUploadFile(canvasId, nodeId, file);
+          } catch {
+            // The in-memory upload can still complete when IndexedDB is unavailable.
+          }
+
+          queueImageUploadRef.current(nodeId, file, blobUrl);
+        })();
+
         saveDelayMsRef.current = 0;
         setShowUnsplash(false);
       } catch (err) {
         console.error("Failed to load Unsplash image:", err);
       }
     },
-    [isClientReady],
+    [canvasId, isClientReady],
   );
 
   function handleDeleteVoiceNode(nodeId: string) {
