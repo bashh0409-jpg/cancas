@@ -616,109 +616,21 @@ export default function CanvasWorkspace({
 
     // Populate signed playback URLs for voice nodes that only have storagePath
     async function populateVoiceSignedUrls() {
-
-    // Handle programmatic file imports from other parts of the app or external
-    // drop handlers. This listener accepts a CustomEvent with `detail: { files: File[] }`.
-    // Each file is validated, added to the canvas, and failures are reported
-    // via toast while allowing the rest of the batch to proceed.
-    function handleFileImport(event: Event) {
-      const customEvent = event as CustomEvent<{ files: File[] }>;
-      const files = Array.from(customEvent.detail?.files ?? []).filter((file) =>
-        file.type.startsWith("image/"),
-      );
-
-      if (!files.length || !isClientReady) {
-        return;
-      }
-
-      const rect = canvasRef.current?.getBoundingClientRect();
-
-      if (!rect) {
-        return;
-      }
-
-      const vp = viewportRef.current;
-      const dropPosition = {
-        x: (rect.width / 2 - vp.x) / vp.zoom,
-        y: (rect.height / 2 - vp.y) / vp.zoom,
-      };
-
-      const topZIndex = Math.max(
-        0,
-        ...imageNodesRef.current.map((node) => node.zIndex),
-        ...webNodesRef.current.map((node) => node.zIndex),
-        ...voiceNodesRef.current.map((node) => node.zIndex),
-        ...textNodesRef.current.map((node) => node.zIndex),
-      );
-
-      const addedIds: string[] = [];
-      const failedFiles: { name: string; error: string }[] = [];
-
-      // Optional sanity limit to avoid extremely large client-side imports.
-      const MAX_IMPORT_BYTES = (Number(process.env.NEXT_PUBLIC_MAX_FILE_SIZE_MB) || 50) * 1024 * 1024;
-
-      for (let index = 0; index < files.length; index += 1) {
-        const file = files[index];
-
-        if (file.size > MAX_IMPORT_BYTES) {
-          failedFiles.push({ name: file.name, error: "File too large" });
-          continue;
-        }
-
-        try {
-          const nodeId = addDroppedImageFile(
-            file,
-            index,
-            dropPosition,
-            topZIndex,
-          );
-
-          addedIds.push(nodeId);
-        } catch (error) {
-          failedFiles.push({
-            name: file.name,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-
-      if (addedIds.length >= 2) {
-        setSelectedImageIds(addedIds);
-      }
-
-      if (failedFiles.length > 0) {
-        console.error("[Canvas] Failed to import files:", failedFiles);
-        showToast({
-          type: "error",
-          title: "Some images didn't import",
-          message:
-            failedFiles.length === 1
-              ? `"${failedFiles[0].name}" couldn't be added.`
-              : `${failedFiles.length} of ${files.length} images couldn't be added.`,
-        });
-      }
-
-      saveDelayMsRef.current = 0;
-    }
-
-    window.addEventListener("canvasai:file-import", handleFileImport as EventListener);
-
-    return () => {
-      window.removeEventListener("canvasai:file-import", handleFileImport as EventListener);
-    };
       const supabase = supabaseClientRef.current;
 
       for (const node of voiceNodesRef.current) {
         if (cancelled) return;
-        if (node.storagePath && !(node.audioDataUrl ?? "")) {
+        const storagePath = node.storagePath;
+
+        if (storagePath && !(node.audioDataUrl ?? "")) {
           try {
             const { data } = await supabase.storage
               .from("voice-notes")
-              .createSignedUrl(node.storagePath, 60 * 60);
+              .createSignedUrl(storagePath, 60 * 60);
 
             const signedUrl = data?.signedUrl;
 
-            if (signedUrl) {
+            if (typeof signedUrl === "string") {
               const blobResponse = await fetch(signedUrl);
               const blob = await blobResponse.blob();
               const objectUrl = URL.createObjectURL(blob);

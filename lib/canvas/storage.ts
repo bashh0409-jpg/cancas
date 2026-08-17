@@ -10,6 +10,10 @@ export async function uploadCanvasImage(
   file: File,
   signal?: AbortSignal,
 ): Promise<{ url: string; storagePath: string }> {
+  if (signal?.aborted) {
+    throw new DOMException("Upload aborted", "AbortError");
+  }
+
   const storagePath = buildCanvasImageStoragePath(userId, canvasId, nodeId, file);
 
   const { error } = await supabase.storage.from("canvas-files").upload(
@@ -20,7 +24,6 @@ export async function uploadCanvasImage(
       contentType: file.type || "application/octet-stream",
       cacheControl: "3600",
     },
-    { signal },
   );
 
   if (error) {
@@ -43,6 +46,10 @@ export async function uploadVoiceNote(
   blob: Blob,
   signal?: AbortSignal,
 ): Promise<{ storagePath: string }> {
+  if (signal?.aborted) {
+    throw new DOMException("Upload aborted", "AbortError");
+  }
+
   const storagePath = buildVoiceNoteStoragePath(
     userId,
     canvasId,
@@ -58,7 +65,6 @@ export async function uploadVoiceNote(
       contentType: (blob as File).type || "application/octet-stream",
       cacheControl: "3600",
     },
-    { signal },
   );
 
   if (error) {

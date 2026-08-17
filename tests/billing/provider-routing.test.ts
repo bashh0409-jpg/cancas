@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getPaymentProviderForCountry } from "../../lib/billing/provider.ts";
+import { getPaymentProviderForCountry } from "../../lib/billing/provider";
 
 test("uses Polar for all countries by default", () => {
   assert.equal(getPaymentProviderForCountry("ZA"), "polar");

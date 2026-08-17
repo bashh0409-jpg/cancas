@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { selectPriceIdFromProduct } from "../../lib/billing/polar.ts";
+import { selectPriceIdFromProduct } from "../../lib/billing/polar";
 
 test("selects a monthly or annual price from a Polar product payload", () => {
   const product = {
