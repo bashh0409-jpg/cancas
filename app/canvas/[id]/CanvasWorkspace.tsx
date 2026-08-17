@@ -1,6 +1,45 @@
 "use client";
 
 import type {
+  Viewport,
+  Point,
+  ImageCanvasNode,
+  ImageSyncStats,
+  CanvasWorkspaceProps,
+  LocalCanvasDraft,
+  ImageDragState,
+  MarqueeState,
+  WebCanvasNode,
+  WebDragState,
+  VoiceCanvasNode,
+  VoiceDragState,
+  TextDragState,
+  NodeResizeState,
+} from "./canvasWorkspaceTypes";
+
+import {
+  MIN_ZOOM,
+  MAX_ZOOM,
+  ZOOM_SCALE_FACTOR,
+  clamp,
+  getNaturalImageSize,
+  fitImageSize,
+  getUrlFromText,
+  getWebsiteTitle,
+  normalizeRect,
+  isPendingCloudSync,
+  getImageNodeSrc,
+  serializeImageNodeForSave,
+  serializeVoiceNodeForSave,
+  imageIntersectsRect,
+} from "./canvasWorkspaceUtils";
+
+import {
+  readLocalCanvasDraft,
+  writeLocalCanvasDraft,
+  markLocalCanvasDraftSynced,
+} from "./canvasWorkspaceDraftStorage";
+import type {
   CSSProperties,
   DragEvent as ReactDragEvent,
   PointerEvent as ReactPointerEvent,
@@ -76,7 +115,7 @@ import {
   blobToDataUrl,
   formatVoiceNoteTitle,
 } from "@/lib/canvas/voiceNoteUtils";
-import { parseCanvasContent, type CanvasContent } from "@/types/canvas";
+import type { CanvasContent } from "@/types/canvas";
 import { SIDEBAR_PANEL_EVENT } from "@/lib/canvas/sidebarEvents";
 import {
   CanvasTranscriptionNode,
@@ -92,436 +131,6 @@ import {
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { showToast } from "@/app/components/work/Toast";
 import { dispatchUserCreditsUpdated } from "@/lib/credits/events";
-
-type Viewport = {
-  x: number;
-  y: number;
-  zoom: number;
-};
-
-type Point = {
-  x: number;
-  y: number;
-};
-
-type ImageCanvasNode = {
-  id: string;
-  fileName: string;
-  url: string;
-  storagePath?: string;
-  position: Point;
-  size: {
-    width: number;
-    height: number;
-  };
-  zIndex: number;
-  visible?: boolean;
-  locked?: boolean;
-  transform?: {
-    flipH?: boolean;
-    flipV?: boolean;
-    rotation?: number;
-  };
-};
-
-type ImageSyncStats = {
-  synced: number;
-  total: number;
-  failed: number;
-};
-
-type CanvasWorkspaceProps = {
-  canvasId: string;
-  userId: string;
-  canvasName: string;
-  canvases: { id: string; name: string; slug: string }[];
-  initialContent: CanvasContent;
-  serverUpdatedAt: string;
-  onImageSyncStatsChange?: (stats: ImageSyncStats) => void;
-  onUploadDebugEntry?: (entry: UploadDebugEntry) => void;
-  onRemoteNameChange?: (name: string) => void;
-};
-
-type LocalCanvasDraft = {
-  content: CanvasContent;
-  savedAt: string;
-  serverUpdatedAt: string;
-  syncedAt?: string;
-};
-
-type ImageDragState = {
-  anchorId: string;
-  offset: Point;
-  nodeIds: string[];
-  startPositions: Record<string, Point>;
-};
-
-type MarqueeState = {
-  start: Point;
-  current: Point;
-  additive: boolean;
-};
-
-type WebCanvasNode = {
-  id: string;
-  url: string;
-  title: string;
-  position: Point;
-  size: {
-    width: number;
-    height: number;
-  };
-  zIndex: number;
-  visible?: boolean;
-  locked?: boolean;
-};
-
-type WebDragState = {
-  nodeId: string;
-  offset: Point;
-  startPoint: Point;
-  hasMoved: boolean;
-};
-
-type VoiceCanvasNode = {
-  id: string;
-  title: string;
-  audioDataUrl?: string;
-  storagePath?: string;
-  durationMs: number;
-  position: Point;
-  size: {
-    width: number;
-    height: number;
-  };
-  zIndex: number;
-  visible?: boolean;
-  locked?: boolean;
-};
-
-type VoiceDragState = {
-  nodeId: string;
-  offset: Point;
-};
-
-type TextDragState = {
-  nodeId: string;
-  offset: Point;
-};
-
-type NodeResizeState = {
-  nodeId: string;
-  corner: ResizeCorner;
-  startPoint: Point;
-  startPosition: Point;
-  startSize: {
-    width: number;
-    height: number;
-  };
-  lockAspectRatio: boolean;
-};
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function parseHexColor(value: string) {
-  const match = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-
-  if (!match) {
-    return null;
-  }
-
-  const hex = match[1];
-
-  if (hex.length === 3) {
-    return {
-      r: parseInt(hex[0] + hex[0], 16),
-      g: parseInt(hex[1] + hex[1], 16),
-      b: parseInt(hex[2] + hex[2], 16),
-    };
-  }
-
-  return {
-    r: parseInt(hex.slice(0, 2), 16),
-    g: parseInt(hex.slice(2, 4), 16),
-    b: parseInt(hex.slice(4, 6), 16),
-  };
-}
-
-function parseRgbColor(value: string) {
-  // matches rgb(r,g,b) and rgba(r,g,b,a)
-  const match = value.match(
-    /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/i,
-  );
-
-  if (!match) return null;
-
-  return {
-    r: Number(match[1]),
-    g: Number(match[2]),
-    b: Number(match[3]),
-  };
-}
-
-function parseColor(value: string) {
-  if (!value) return null;
-  const hex = parseHexColor(value);
-  if (hex) return hex;
-  const rgb = parseRgbColor(value);
-  if (rgb) return rgb;
-  return null;
-}
-
-function isLightColor(value: string) {
-  const rgb = parseColor(value);
-
-  if (!rgb) {
-    return false;
-  }
-
-  const luminance = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-
-  return luminance > 180;
-}
-
-const MIN_ZOOM = 0.001;
-const MAX_ZOOM = 100;
-const ZOOM_SCALE_FACTOR = 1.2;
-
-function getNaturalImageSize(url: string) {
-  return new Promise<{ width: number; height: number }>((resolve) => {
-    const image = new Image();
-
-    image.onload = () => {
-      resolve({
-        width: image.naturalWidth,
-        height: image.naturalHeight,
-      });
-    };
-
-    image.onerror = () => {
-      resolve({ width: 260, height: 180 });
-    };
-
-    image.src = url;
-  });
-}
-
-function fitImageSize(width: number, height: number) {
-  const maxWidth = 520;
-  const maxHeight = 380;
-  const scale = Math.min(1, maxWidth / width, maxHeight / height);
-
-  return {
-    width: Math.max(1, Math.round(width * scale)),
-    height: Math.max(1, Math.round(height * scale)),
-  };
-}
-
-function getUrlFromText(text: string) {
-  const match = text.match(/https?:\/\/[^\s"'<>]+/i);
-
-  if (!match) {
-    return null;
-  }
-
-  try {
-    return new URL(match[0]).toString();
-  } catch {
-    return null;
-  }
-}
-
-function getWebsiteTitle(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return "Website";
-  }
-}
-
-function normalizeRect(start: Point, end: Point) {
-  return {
-    x: Math.min(start.x, end.x),
-    y: Math.min(start.y, end.y),
-    width: Math.abs(end.x - start.x),
-    height: Math.abs(end.y - start.y),
-  };
-}
-
-function isPendingCloudSync(node: ImageCanvasNode) {
-  return !node.storagePath;
-}
-
-function getImageNodeSrc(node: ImageCanvasNode) {
-  const url = node.url.trim();
-
-  return url.length > 0 ? url : null;
-}
-
-function serializeImageNodeForSave(node: ImageCanvasNode) {
-  const pending = isPendingCloudSync(node);
-
-  return {
-    id: node.id,
-    fileName: node.fileName,
-    url: pending && node.url.startsWith("blob:") ? "" : node.url,
-    storagePath: node.storagePath,
-    position: node.position,
-    size: node.size,
-    zIndex: node.zIndex,
-    visible: node.visible,
-    locked: node.locked,
-    transform: node.transform,
-  };
-}
-
-function serializeVoiceNodeForSave(node: VoiceCanvasNode) {
-  return {
-    id: node.id,
-    title: node.title,
-    // When storagePath exists, avoid persisting large data URLs
-    ...(node.storagePath ? {} : { audioDataUrl: node.audioDataUrl ?? "" }),
-    storagePath: node.storagePath,
-    durationMs: node.durationMs,
-    position: node.position,
-    size: node.size,
-    zIndex: node.zIndex,
-    visible: node.visible,
-    locked: node.locked,
-  };
-}
-
-function imageIntersectsRect(
-  node: ImageCanvasNode,
-  rect: ReturnType<typeof normalizeRect>,
-) {
-  return (
-    node.position.x < rect.x + rect.width &&
-    node.position.x + node.size.width > rect.x &&
-    node.position.y < rect.y + rect.height &&
-    node.position.y + node.size.height > rect.y
-  );
-}
-
-function getLocalDraftKey(canvasId: string) {
-  return `canvasai:canvas:${canvasId}:draft`;
-}
-
-function readLocalCanvasDraft(
-  canvasId: string,
-  serverUpdatedAt: string,
-): LocalCanvasDraft | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const rawDraft = window.localStorage.getItem(getLocalDraftKey(canvasId));
-
-    if (!rawDraft) {
-      return null;
-    }
-
-    const parsedDraft = JSON.parse(rawDraft) as Record<string, unknown>;
-    const content = parseCanvasContent(parsedDraft.content);
-    const savedAt =
-      typeof parsedDraft.savedAt === "string" ? parsedDraft.savedAt : null;
-    const draftServerUpdatedAt =
-      typeof parsedDraft.serverUpdatedAt === "string"
-        ? parsedDraft.serverUpdatedAt
-        : "";
-    const syncedAt =
-      typeof parsedDraft.syncedAt === "string"
-        ? parsedDraft.syncedAt
-        : undefined;
-
-    if (!content || !savedAt) {
-      return null;
-    }
-
-    const savedTime = Date.parse(savedAt);
-    const syncedTime = syncedAt ? Date.parse(syncedAt) : 0;
-    const serverTime = Date.parse(serverUpdatedAt);
-
-    if (Number.isNaN(savedTime)) {
-      return null;
-    }
-
-    const hasUnsyncedChanges = !syncedAt || savedTime > syncedTime;
-    const isNewerThanServer =
-      Number.isNaN(serverTime) || savedTime > serverTime;
-
-    if (!hasUnsyncedChanges && !isNewerThanServer) {
-      return null;
-    }
-
-    return {
-      content,
-      savedAt,
-      serverUpdatedAt: draftServerUpdatedAt,
-      syncedAt,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalCanvasDraft(
-  canvasId: string,
-  content: CanvasContent,
-  serverUpdatedAt: string,
-  syncedAt?: string,
-) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    const savedAt = new Date().toISOString();
-    const draft: LocalCanvasDraft = {
-      content,
-      savedAt,
-      serverUpdatedAt,
-      syncedAt,
-    };
-
-    window.localStorage.setItem(
-      getLocalDraftKey(canvasId),
-      JSON.stringify(draft),
-    );
-  } catch {
-    // localStorage can be full or unavailable; Supabase autosave still runs.
-  }
-}
-
-function markLocalCanvasDraftSynced(
-  canvasId: string,
-  content: CanvasContent,
-  serverUpdatedAt: string,
-) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    const syncedAt = new Date().toISOString();
-    const draft: LocalCanvasDraft = {
-      content,
-      savedAt: syncedAt,
-      serverUpdatedAt,
-      syncedAt,
-    };
-
-    window.localStorage.setItem(
-      getLocalDraftKey(canvasId),
-      JSON.stringify(draft),
-    );
-  } catch {
-    // Best-effort backup only.
-  }
-}
 
 export default function CanvasWorkspace({
   canvasId,
@@ -569,6 +178,11 @@ export default function CanvasWorkspace({
   const selectedImageIdsRef = useRef<string[]>([]);
   const supabaseClientRef = useRef(createClient());
   const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
+  const viewportRef = useRef<Viewport>(initialContent.viewport);
+
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
   const [showGridControls, setShowGridControls] = useState(false);
   const [showContentsPanel, setShowContentsPanel] = useState(false);
   const [showGrid, setShowGrid] = useState(initialContent.showGrid);
@@ -1002,6 +616,96 @@ export default function CanvasWorkspace({
 
     // Populate signed playback URLs for voice nodes that only have storagePath
     async function populateVoiceSignedUrls() {
+
+    // Handle programmatic file imports from other parts of the app or external
+    // drop handlers. This listener accepts a CustomEvent with `detail: { files: File[] }`.
+    // Each file is validated, added to the canvas, and failures are reported
+    // via toast while allowing the rest of the batch to proceed.
+    function handleFileImport(event: Event) {
+      const customEvent = event as CustomEvent<{ files: File[] }>;
+      const files = Array.from(customEvent.detail?.files ?? []).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+
+      if (!files.length || !isClientReady) {
+        return;
+      }
+
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect) {
+        return;
+      }
+
+      const vp = viewportRef.current;
+      const dropPosition = {
+        x: (rect.width / 2 - vp.x) / vp.zoom,
+        y: (rect.height / 2 - vp.y) / vp.zoom,
+      };
+
+      const topZIndex = Math.max(
+        0,
+        ...imageNodesRef.current.map((node) => node.zIndex),
+        ...webNodesRef.current.map((node) => node.zIndex),
+        ...voiceNodesRef.current.map((node) => node.zIndex),
+        ...textNodesRef.current.map((node) => node.zIndex),
+      );
+
+      const addedIds: string[] = [];
+      const failedFiles: { name: string; error: string }[] = [];
+
+      // Optional sanity limit to avoid extremely large client-side imports.
+      const MAX_IMPORT_BYTES = (Number(process.env.NEXT_PUBLIC_MAX_FILE_SIZE_MB) || 50) * 1024 * 1024;
+
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+
+        if (file.size > MAX_IMPORT_BYTES) {
+          failedFiles.push({ name: file.name, error: "File too large" });
+          continue;
+        }
+
+        try {
+          const nodeId = addDroppedImageFile(
+            file,
+            index,
+            dropPosition,
+            topZIndex,
+          );
+
+          addedIds.push(nodeId);
+        } catch (error) {
+          failedFiles.push({
+            name: file.name,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      if (addedIds.length >= 2) {
+        setSelectedImageIds(addedIds);
+      }
+
+      if (failedFiles.length > 0) {
+        console.error("[Canvas] Failed to import files:", failedFiles);
+        showToast({
+          type: "error",
+          title: "Some images didn't import",
+          message:
+            failedFiles.length === 1
+              ? `"${failedFiles[0].name}" couldn't be added.`
+              : `${failedFiles.length} of ${files.length} images couldn't be added.`,
+        });
+      }
+
+      saveDelayMsRef.current = 0;
+    }
+
+    window.addEventListener("canvasai:file-import", handleFileImport as EventListener);
+
+    return () => {
+      window.removeEventListener("canvasai:file-import", handleFileImport as EventListener);
+    };
       const supabase = supabaseClientRef.current;
 
       for (const node of voiceNodesRef.current) {
@@ -1381,9 +1085,6 @@ export default function CanvasWorkspace({
       );
     };
   }, [isClientReady]);
-
-  const viewportRef = useRef(viewport);
-  viewportRef.current = viewport;
 
   useEffect(() => {
     function handleAiChatToolActivated() {
@@ -2599,6 +2300,48 @@ export default function CanvasWorkspace({
   }, []);
 
   useEffect(() => {
+    // Capture-phase listener that prevents wheel events originating
+    // inside scrollable child elements from reaching the canvas. This
+    // ensures that when a user scrolls inside a sidebar or panel and
+    // reaches the end, further wheel gestures do NOT cause the canvas
+    // to pan (we consume the event at the scrollable element boundary).
+    function stopWheelFromBubbling(event: globalThis.WheelEvent) {
+      let el = event.target as HTMLElement | null;
+
+      while (el && el !== document.documentElement) {
+        if (el === canvasRef.current) break;
+
+        try {
+          const style = window.getComputedStyle(el);
+          const overflowY = style.overflowY;
+          const overflowX = style.overflowX;
+
+          const isScrollableY = (overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight;
+          const isScrollableX = (overflowX === "auto" || overflowX === "scroll") && el.scrollWidth > el.clientWidth;
+
+          if (isScrollableY || isScrollableX) {
+            // Stop propagation so the canvas wheel listener doesn't receive
+            // this event. We do NOT call preventDefault here so native
+            // overscroll/bounce behaviour still works on the element.
+            event.stopPropagation();
+            return;
+          }
+        } catch {
+          // ignore cross-origin or other inspection errors and continue
+        }
+
+        el = el.parentElement;
+      }
+    }
+
+    document.addEventListener("wheel", stopWheelFromBubbling, { passive: false, capture: true });
+
+    return () => {
+      document.removeEventListener("wheel", stopWheelFromBubbling, { capture: true });
+    };
+  }, []);
+
+  useEffect(() => {
     function preventFileNavigation(event: DragEvent) {
       if (!event.dataTransfer?.types.includes("Files")) {
         return;
@@ -2750,7 +2493,40 @@ export default function CanvasWorkspace({
     };
   }, [backgroundColor, gridColor, gridLineType, gridSize, showGrid, viewport]);
 
-  function handleWheel(event: WheelEvent<HTMLDivElement>) {
+  function handleWheel(event: globalThis.WheelEvent) {
+    // If the wheel event originated from a scrollable element (e.g. an
+    // open sidebar, panel, or any element with overflow), allow that
+    // element to scroll instead of panning the canvas. Walk up the DOM
+    // from the event target until the canvas root; if we find a scrollable
+    // element that can scroll in the wheel direction, do nothing.
+    let el = event.target as HTMLElement | null;
+
+    while (el && el !== canvasRef.current) {
+      try {
+        const style = window.getComputedStyle(el);
+        const overflowY = style.overflowY;
+        const overflowX = style.overflowX;
+
+        const canScrollY = (overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight;
+        if (canScrollY) {
+          if (event.deltaY < 0 && el.scrollTop > 0) return; // scrolling up and element can scroll up
+          if (event.deltaY > 0 && el.scrollTop + el.clientHeight < el.scrollHeight) return; // scrolling down and can scroll down
+        }
+
+        const canScrollX = (overflowX === "auto" || overflowX === "scroll") && el.scrollWidth > el.clientWidth;
+        if (canScrollX) {
+          if (event.deltaX < 0 && el.scrollLeft > 0) return;
+          if (event.deltaX > 0 && el.scrollLeft + el.clientWidth < el.scrollWidth) return;
+        }
+      } catch {
+        // ignore cross-origin or other errors and continue walking up
+      }
+
+      el = el.parentElement;
+    }
+
+    // Not over a scrollable child — prevent default page scroll and handle
+    // canvas pan/zoom.
     event.preventDefault();
 
     if (event.ctrlKey || event.metaKey) {
@@ -3198,6 +2974,27 @@ export default function CanvasWorkspace({
     });
   }
 
+  // Attach a non-passive wheel listener to the canvas element so
+  // `event.preventDefault()` inside `handleWheel` is allowed by the browser.
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+
+    const handler = (e: globalThis.WheelEvent) => {
+      try {
+        handleWheel(e);
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    el.addEventListener("wheel", handler, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handler as EventListener);
+    };
+  }, [canvasRef, handleWheel]);
+
   function updateZoomKeepingScreenPoint(
     screenPoint: Point,
     getNextZoom: (currentZoom: number) => number,
@@ -3315,19 +3112,71 @@ export default function CanvasWorkspace({
     file: File,
     blobUrl: string,
   ) {
+    let lastError: unknown = null;
     const maxAttempts = 3;
 
+    // emit a start event so UI components can show upload activity
+    try {
+      window.dispatchEvent(
+        new CustomEvent("canvasai:upload-start", {
+          detail: { nodeId, fileName: file.name, fileSize: file.size },
+        }),
+      );
+    } catch {}
+
+    let progress = 0;
+    let progressTimer: number | null = null;
+
+    function startProgressTimer() {
+      progress = 0;
+      try {
+        window.dispatchEvent(
+          new CustomEvent("canvasai:upload-progress", {
+            detail: { nodeId, percent: 0 },
+          }),
+        );
+      } catch {}
+
+      try {
+        progressTimer = window.setInterval(() => {
+          progress = Math.min(80, progress + Math.random() * 8 + 3);
+          try {
+            window.dispatchEvent(
+              new CustomEvent("canvasai:upload-progress", {
+                detail: { nodeId, percent: Math.floor(progress) },
+              }),
+            );
+          } catch {}
+        }, 500) as unknown as number;
+      } catch {}
+    }
+
+    function stopProgressTimer() {
+      if (progressTimer !== null) {
+        window.clearInterval(progressTimer);
+        progressTimer = null;
+      }
+    }
+
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      // Reset progress to 0 at the start of every attempt — a failed attempt
+      // should not leave the bar sitting at wherever it stalled, since that
+      // makes a fresh retry look like continued progress from the last try.
+      stopProgressTimer();
+      startProgressTimer();
+
       try {
         const uploaded = await withTimeout(
-          uploadCanvasImage(
-            supabaseClientRef.current,
-            userId,
-            canvasId,
-            nodeId,
-            file,
-          ),
-          120_000,
+          (signal) =>
+            uploadCanvasImage(
+              supabaseClientRef.current,
+              userId,
+              canvasId,
+              nodeId,
+              file,
+              signal,
+            ),
+          30_000,
           "Upload timed out",
         );
 
@@ -3348,8 +3197,25 @@ export default function CanvasWorkspace({
         URL.revokeObjectURL(blobUrl);
         pendingUploadFilesRef.current.delete(nodeId);
         await deletePendingUploadFile(canvasId, nodeId);
+
+        stopProgressTimer();
+        try {
+          window.dispatchEvent(
+            new CustomEvent("canvasai:upload-progress", {
+              detail: { nodeId, percent: 100 },
+            }),
+          );
+        } catch {}
+        try {
+          window.dispatchEvent(
+            new CustomEvent("canvasai:upload-success", {
+              detail: { nodeId, fileName: file.name, fileSize: file.size },
+            }),
+          );
+        } catch {}
         return;
       } catch (error) {
+        lastError = error;
         const debugEntry = createUploadDebugEntry(
           nodeId,
           file.name,
@@ -3368,6 +3234,34 @@ export default function CanvasWorkspace({
         }
       }
     }
+
+    stopProgressTimer();
+    try {
+      window.dispatchEvent(
+        new CustomEvent("canvasai:upload-progress", {
+          detail: { nodeId, percent: 0 },
+        }),
+      );
+    } catch {}
+
+    // Emit a failure event after exhausting attempts so UI can surface it.
+    try {
+      window.dispatchEvent(
+        new CustomEvent("canvasai:upload-failed", {
+          detail: {
+            nodeId,
+            fileName: file.name,
+            fileSize: file.size,
+            message: createUploadDebugEntry(
+              nodeId,
+              file.name,
+              maxAttempts,
+              lastError,
+            ).message,
+          },
+        }),
+      );
+    } catch {}
 
     // Keep blob preview + IndexedDB so a later visit can retry the upload.
   }
@@ -4835,9 +4729,10 @@ export default function CanvasWorkspace({
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      onWheel={handleWheel}
       style={gridStyle}
     >
+      {/* Attach a non-passive wheel listener via addEventListener so
+          `preventDefault()` inside `handleWheel` works across browsers. */}
       <div
         className="absolute inset-0"
         onPointerCancel={handleCanvasPointerUp}

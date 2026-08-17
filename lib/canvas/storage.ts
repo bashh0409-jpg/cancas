@@ -7,15 +7,21 @@ export async function uploadCanvasImage(
   userId: string,
   canvasId: string,
   nodeId: string,
-  file: File
+  file: File,
+  signal?: AbortSignal,
 ): Promise<{ url: string; storagePath: string }> {
   const storagePath = buildCanvasImageStoragePath(userId, canvasId, nodeId, file);
 
-  const { error } = await supabase.storage.from("canvas-files").upload(storagePath, file, {
-    upsert: true,
-    contentType: file.type || "application/octet-stream",
-    cacheControl: "3600",
-  });
+  const { error } = await supabase.storage.from("canvas-files").upload(
+    storagePath,
+    file,
+    {
+      upsert: true,
+      contentType: file.type || "application/octet-stream",
+      cacheControl: "3600",
+    },
+    { signal },
+  );
 
   if (error) {
     throw error;
@@ -35,6 +41,7 @@ export async function uploadVoiceNote(
   canvasId: string,
   nodeId: string,
   blob: Blob,
+  signal?: AbortSignal,
 ): Promise<{ storagePath: string }> {
   const storagePath = buildVoiceNoteStoragePath(
     userId,
@@ -43,11 +50,16 @@ export async function uploadVoiceNote(
     (blob as File).type || "audio/webm",
   );
 
-  const { error } = await supabase.storage.from("voice-notes").upload(storagePath, blob as File, {
-    upsert: true,
-    contentType: (blob as File).type || "application/octet-stream",
-    cacheControl: "3600",
-  });
+  const { error } = await supabase.storage.from("voice-notes").upload(
+    storagePath,
+    blob as File,
+    {
+      upsert: true,
+      contentType: (blob as File).type || "application/octet-stream",
+      cacheControl: "3600",
+    },
+    { signal },
+  );
 
   if (error) {
     throw error;

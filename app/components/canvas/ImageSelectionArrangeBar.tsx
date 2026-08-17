@@ -7,7 +7,15 @@ import {
   type LayoutDirection,
   type LayoutKind,
 } from "@/lib/canvas/imageLayouts";
-import { Grid2x2, LayoutPanelTop, PanelsTopLeft, X } from "lucide-react";
+import {
+  Grid2x2,
+  Columns3,
+  Columns2,
+  Rows2,
+  X,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 type ImageSelectionArrangeBarProps = {
@@ -84,7 +92,7 @@ export function ImageSelectionArrangeBar({
       role="toolbar"
     >
       <div className="flex  items-center hi gap-1.5">
-        <div className="flex gap-1 p-0.5 bg-black/10 rounded-full">
+        <div className="flex gap-1 p-[3px] bg-black/10 rounded-full">
           <ToolbarIconButton
             active={kind === "grid"}
             onClick={() => handleKindChange("grid")}
@@ -96,28 +104,28 @@ export function ImageSelectionArrangeBar({
             active={kind === "pinterest"}
             onClick={() => handleKindChange("pinterest")}
           >
-            <PanelsTopLeft className="h-4 stroke-[1.7] w-4" />
+            <Columns3 className="h-4 stroke-[1.7] w-4" />
           </ToolbarIconButton>
         </div>
-    
 
         <div className="mx-1 h-5 w-px bg-black/10" />
-<div className="flex gap-1 p-0.5 bg-black/10 rounded-full">
-        <ToolbarIconButton
-          active={direction === "vertical"}
-          blue
-          onClick={() => handleDirectionChange("vertical")}
-        >
-          <LayoutPanelTop className="h-4 stroke-[1.7] w-4 rotate-90" />
-        </ToolbarIconButton>
+        <div className="flex gap-1 p-[3px] bg-black/10 rounded-full">
+          <ToolbarIconButton
+            active={direction === "vertical"}
+            blue
+            onClick={() => handleDirectionChange("vertical")}
+          >
+            <Columns2 className="h-4 stroke-[1.7] w-4" />
+          </ToolbarIconButton>
 
-        <ToolbarIconButton
-          active={direction === "horizontal"}
-          blue
-          onClick={() => handleDirectionChange("horizontal")}
-        >
-          <LayoutPanelTop className="h-4 stroke-[1.7] w-4" />
-        </ToolbarIconButton></div>
+          <ToolbarIconButton
+            active={direction === "horizontal"}
+            blue
+            onClick={() => handleDirectionChange("horizontal")}
+          >
+            <Rows2 className="h-4 stroke-[1.7] w-4" />
+          </ToolbarIconButton>
+        </div>
 
         <div className="ml-auto tracking-tight flex items-center gap-1">
           <button
@@ -236,18 +244,38 @@ function CompactInput({
   valueSuffix,
   onChange,
 }: CompactInputProps) {
-  return (
-    <label className="flex w-24 items-center justify-between rounded-full bg-black/[0.03] px-2 py-1">
-      <span className="text-[11px] font-mono tracking-tight uppercase font-medium text-black/55">{label}</span>
+  function decrement() {
+    onChange(Math.max(min, value - step));
+  }
 
-      <div className="flex items-center gap-1">
+  function increment() {
+    onChange(Math.min(max, value + step));
+  }
+
+  return (
+    <label className="flex w-fit items-center justify-between rounded-full bg-black/[0.03] px-1 py-1">
+      <span className="text-[11px] font-mono tracking-tight uppercase font-medium text-black/55">
+        {label}
+      </span>
+
+      <div className="flex items-center ml-2">
+        <button
+          type="button"
+          aria-label={`Decrease ${label}`}
+          disabled={value <= min}
+          onClick={decrement}
+          className="flex items-center justify-center rounded-full  transition hover:text-black disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          <Minus className="w-3 h-3" />
+        </button>
+
         <input
           aria-label={label}
-          className="h-5 w-fit ml-1 rounded-full border border-black/10 bg-white  text-right font-mono text-[11px] text-black outline-none transition focus:border-[#2244ec]"
+          type="number"
+          className="h-5 w-8 mx-1  rounded-full border border-black/10 bg-white text-center grotesk text-[11px] text-black outline-none transition focus:border-[#2244ec] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           max={max}
           min={min}
           step={step}
-          type="number"
           value={value}
           onChange={(event) => {
             const nextValue = Number(event.currentTarget.value);
@@ -261,8 +289,20 @@ function CompactInput({
           }}
         />
 
+        <button
+          type="button"
+          aria-label={`Increase ${label}`}
+          disabled={value >= max}
+          onClick={increment}
+          className="flex items-center justify-center rounded-full  transition disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+
         {valueSuffix ? (
-          <span className="text-[11px] hidden font-mono text-black/45">{valueSuffix}</span>
+          <span className="text-[11px] hidden font-mono text-black/45">
+            {valueSuffix}
+          </span>
         ) : null}
       </div>
     </label>
