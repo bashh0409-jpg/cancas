@@ -99,7 +99,8 @@ import {
   getPendingUploadFile,
   savePendingUploadFile,
 } from "@/lib/canvas/pendingUploads";
-import { deleteCanvasImage, uploadCanvasImage } from "@/lib/canvas/storage";
+import { deleteCanvasImage } from "@/lib/canvas/storage";
+import { uploadCanvasImageResumable } from "@/lib/canvas/resumableImageUpload";
 import { uploadVoiceNote } from "@/lib/canvas/storage";
 import { canvasImageUploadPool } from "@/lib/canvas/uploadPool";
 import {
@@ -107,7 +108,7 @@ import {
   logUploadDebug,
   type UploadDebugEntry,
 } from "@/lib/canvas/uploadDebug";
-import { sleep, withTimeout } from "@/lib/canvas/uploadUtils";
+import { sleep } from "@/lib/canvas/uploadUtils";
 import { createClient } from "@/lib/supabase/client";
 import { useVoiceNotePlayback } from "@/lib/canvas/useVoiceNotePlayback";
 import type { LibraryAsset } from "@/lib/canvas/assetLibrary";
@@ -3080,61 +3081,20 @@ export default function CanvasWorkspace({
       );
     } catch {}
 
-    let progress = 0;
-    let progressTimer: number | null = null;
-
-    function startProgressTimer() {
-      progress = 0;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
-        window.dispatchEvent(
-          new CustomEvent("canvasai:upload-progress", {
-            detail: { nodeId, percent: 0 },
-          }),
-        );
-      } catch {}
-
-      try {
-        progressTimer = window.setInterval(() => {
-          progress = Math.min(80, progress + Math.random() * 8 + 3);
-          try {
+        const uploaded = await uploadCanvasImageResumable({
+          canvasId,
+          nodeId,
+          file,
+          onProgress: (percent) => {
             window.dispatchEvent(
               new CustomEvent("canvasai:upload-progress", {
-                detail: { nodeId, percent: Math.floor(progress) },
+                detail: { nodeId, percent },
               }),
             );
-          } catch {}
-        }, 500) as unknown as number;
-      } catch {}
-    }
-
-    function stopProgressTimer() {
-      if (progressTimer !== null) {
-        window.clearInterval(progressTimer);
-        progressTimer = null;
-      }
-    }
-
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      // Reset progress to 0 at the start of every attempt — a failed attempt
-      // should not leave the bar sitting at wherever it stalled, since that
-      // makes a fresh retry look like continued progress from the last try.
-      stopProgressTimer();
-      startProgressTimer();
-
-      try {
-        const uploaded = await withTimeout(
-          (signal) =>
-            uploadCanvasImage(
-              supabaseClientRef.current,
-              userId,
-              canvasId,
-              nodeId,
-              file,
-              signal,
-            ),
-          120_000,
-          "Upload timed out",
-        );
+          },
+        });
 
         pendingUploadIdsRef.current.delete(nodeId);
 
@@ -3158,7 +3118,6 @@ export default function CanvasWorkspace({
           // The cloud upload succeeded. A stale local retry record is safe.
         }
 
-        stopProgressTimer();
         try {
           window.dispatchEvent(
             new CustomEvent("canvasai:upload-progress", {
@@ -3195,7 +3154,6 @@ export default function CanvasWorkspace({
       }
     }
 
-    stopProgressTimer();
     try {
       window.dispatchEvent(
         new CustomEvent("canvasai:upload-progress", {

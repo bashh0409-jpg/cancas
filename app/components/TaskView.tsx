@@ -198,21 +198,21 @@ const TaskView = ({
           <div className="flex text-black font-medium flex-col w-full items-start gap-1 text-left">
             {hasTasks ? (
               <div className="flex items-center gap-2 ">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col w-full  gap-2">
                   {taskLabels.map((label) => (
                     <span
                       key={label}
-                      className="text-[10px] uppercase flex gap-1 items-center tracking-tight font-mono text-black"
+                      className="text-[10px] justify-between w-full uppercase flex gap-1 items-center tracking-tight font-mono text-black"
                     >
-                      <Loader className="h-3 w-3 hidden animate-spin text-lime" />{" "}
-                      {label}
-                      <CountingDots />
+                      
+                     
+                      {label} <TaskIndicator />
                     </span>
                   ))}
                 </div>
               </div>
             ) : (
-              <span className="text-xs tracking-tight font-mono text-black/60">
+              <span className="text-xs tracking-tigh font-mon capitaliz  text-black/50">
                 No task running
               </span>
             )}
@@ -220,33 +220,67 @@ const TaskView = ({
             {/* Uploading files summary */}
             {uploadingFiles.length > 0 && (
               <div className="mt-2 w-full">
-                <div className="text-[10px] font-mono text-black/70 uppercase mb-1">
+                <div className="text-[10px] hidden font-mono text-black/70 uppercase mb-1">
                   Uploading
                 </div>
+
                 <ul className="max-h-40 overflow-auto text-[11px]">
-                  {uploadingFiles.map((f) => (
-                    <li key={f.nodeId} className="flex  flex-col gap-2 mt-1">
-                      <div className="flex justify-between items-center gap-1">
-                        <div className="flex justify-between truncate items-center">
-                          <span className="truncate tracking-tight">
-                            {f.fileName}
-                          </span>
-                          {f.fileSize > BIG_FILE_BYTES && (
-                            <span className="text-xs text-red-600 font-mono">
-                              Large
+                  {uploadingFiles.map((f) => {
+                    const progress = Math.min(100, Math.max(0, f.percent));
+                    const radius = 6;
+                    const circumference = 2 * Math.PI * radius;
+                    const offset =
+                      circumference - (progress / 100) * circumference;
+
+                    return (
+                      <li key={f.nodeId} className="flex flex-col gap-2 mt-1">
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="flex justify-between truncate items-center min-w-0">
+                            <span className="truncate tracking-tight">
+                              {f.fileName}
                             </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-end">
-                          <div className="flex-shrink-0">
-                            <div className=" text-black text-[10px] flex items-center justify-center">
-                              {formatPercent(f.percent)}%
-                            </div>
+
+                            {f.fileSize > BIG_FILE_BYTES && (
+                              <span className="text-xs text-red-600 font-mono ml-2">
+                                Large
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="relative flex-shrink-0 w-4 h-4">
+                            <svg
+                              className="w-4 h-4 -rotate-90"
+                              viewBox="0 0 16 16"
+                              aria-label={`${progress}% uploaded`}
+                            >
+                              <circle
+                                cx="8"
+                                cy="8"
+                                r={radius}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="text-black/10"
+                              />
+
+                              <circle
+                                cx="8"
+                                cy="8"
+                                r={radius}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1"
+                                strokeLinecap="round"
+                                className="text-black transition-[stroke-dashoffset] duration-200"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={offset}
+                              />
+                            </svg>
                           </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -314,6 +348,38 @@ function Icon() {
       <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="2" />
       <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="2" />
     </svg>
+  );
+}
+
+function TaskIndicator() {
+  return (
+    <span
+      className="relative inline-flex h-3 w-3 shrink-0"
+      aria-label="Task running"
+    >
+      <svg
+        className="h-3 w-3 animate-spin"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          cx="8"
+          cy="8"
+          r="6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="text-black/15"
+        />
+        <path
+          d="M8 2a6 6 0 0 1 6 6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          className="text-black"
+        />
+      </svg>
+    </span>
   );
 }
 
