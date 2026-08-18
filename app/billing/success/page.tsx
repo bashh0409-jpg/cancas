@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 export default function BillingSuccess() {

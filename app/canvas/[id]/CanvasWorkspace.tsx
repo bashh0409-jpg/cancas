@@ -49,7 +49,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CanvasContentsItem } from "@/app/components/canvas/CanvasContentsPanel";
 import { CanvasDropOverlay } from "@/app/components/canvas/CanvasDropOverlay";
 import { CanvasImageNode } from "@/app/components/canvas/CanvasImageNode";
-import { CanvasLeftSidebar } from "@/app/components/canvas/CanvasLeftSidebar";
+
 import { CanvasLoadingOverlay } from "@/app/components/canvas/CanvasLoadingOverlay";
 import { CanvasMarqueeSelection } from "@/app/components/canvas/CanvasMarqueeSelection";
 import { Sidebar } from "@/app/components/canvas/Sidebar";
@@ -69,6 +69,7 @@ import type { ResizeCorner } from "@/app/components/canvas/NodeResizeHandles";
 import { useLayersStore, type CanvasLayer } from "@/lib/canvas/layersStore";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import { useViewControlsStore } from "@/lib/canvas/viewControlsStore";
+import { CanvasLeftSidebar } from "@/app/components/canvas/CanvasLeftSidebar";
 import { WebsitePreviewModal } from "@/app/components/website-preview/WebsitePreviewModal";
 import {
   arrangeImagesFromRequest,

@@ -1,4 +1,4 @@
-const DB_NAME = "reflow";
+const DB_NAME = "Reflow";
 const STORE_NAME = "pending-uploads";
 const DB_VERSION = 1;
 
