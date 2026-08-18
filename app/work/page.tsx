@@ -5,6 +5,11 @@ import { createCanvasAction } from "@/app/work/actions";
 import { listUserCanvases } from "@/lib/canvas/repository";
 import { getUserCredits } from "@/lib/credits/repository";
 import {
+  getUserSubscription,
+  type SubscriptionPlan,
+} from "@/lib/subscriptions/repository";
+
+import {
   getUserSettings,
   type UserSettings,
 } from "@/lib/user/settingsRepository";
@@ -60,7 +65,21 @@ export default async function HomePage({
 
   let canvases: CanvasListItem[] = [];
   let projectsError: string | null = null;
+  
   let credits = 0;
+  let plan: SubscriptionPlan = "free";
+
+  if (user) {
+    credits = await getUserCredits(supabase, user.id);
+
+    const subscription = await getUserSubscription(supabase, user.id);
+    if (
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing")
+    ) {
+      plan = subscription.plan;
+    }
+  }
 
   const setActivePage = async (page: string) => {
     "use server";
@@ -96,51 +115,52 @@ export default async function HomePage({
     .eq("id", user.id)
     .single();
 
-  return (
-    <div className="min-h-screen bg-black/70">
-      <MobileNotifier
-        fullName={user?.user_metadata?.full_name}
-        email={user?.email}
-        photoUrl={photoUrl}
-        credits={credits}
-        signOut={signOut}
-        setActivePage={setActivePage}
-      />
-      <div className="hidden md:block">
-        <CreditNotifier message={errorMessage} />
-        <Suspense fallback={null}>
-          <ClearLocalDataOnQuery />
-        </Suspense>
-        <div className="absolute z-50 w-full">
-          <NewReleaseUpdate userId={user.id} />
-        </div>
+   return (
+     <div className="min-h-screen bg-black/70">
+       <MobileNotifier
+         fullName={user?.user_metadata?.full_name}
+         email={user?.email}
+         photoUrl={photoUrl}
+         credits={credits}
+         plan={plan}
+         signOut={signOut}
+         setActivePage={setActivePage}
+       />
+       <div className="hidden md:block">
+         <CreditNotifier message={errorMessage} />
+         <Suspense fallback={null}>
+           <ClearLocalDataOnQuery />
+         </Suspense>
+         <div className="absolute z-50 w-full">
+           <NewReleaseUpdate userId={user.id} />
+         </div>
 
-        <HomeShell
-          firstName={firstName}
-          lastName={lastName}
-          photoUrl={photoUrl}
-          canvases={canvases}
-          credits={credits}
-          projectsError={projectsError}
-          errorMessage={errorMessage}
-          createCanvasAction={createCanvasAction}
-          signOut={signOut}
-          deleteAccountAction={deleteAccountAction}
-          profile={{
-            firstName,
-            lastName,
-            email: user.email ?? "",
-            nickname: profile?.nickname ?? "",
-          }}
-          updateNicknameAction={updateNicknameAction}
-          updateSettingsAction={updateSettingsAction}
-          userSettings={settings}
-        />
-      </div>
-      <div className="absolute bottom-0 left-0 w-full">
+         <HomeShell
+           firstName={firstName}
+           lastName={lastName}
+           photoUrl={photoUrl}
+           canvases={canvases}
+           credits={credits}
+           plan={plan}
+           projectsError={projectsError}
+           errorMessage={errorMessage}
+           createCanvasAction={createCanvasAction}
+           signOut={signOut}
+           deleteAccountAction={deleteAccountAction}
+           profile={{
+             firstName,
+             lastName,
+             email: user.email ?? "",
+             nickname: profile?.nickname ?? "",
+           }}
+           updateNicknameAction={updateNicknameAction}
+           updateSettingsAction={updateSettingsAction}
+           userSettings={settings}
+         />
+       </div>
+       <div className="absolute bottom-0 left-0 w-full">
          <Notice />
-      </div>
-     
-    </div>
-  );
+       </div>
+     </div>
+   );
 }

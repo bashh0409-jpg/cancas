@@ -41,6 +41,10 @@ import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
 import { DeleteAccountModal } from "@/app/components/work/DeleteAccountModal";
 import { useRouter } from "next/navigation";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
+import {
+  type SubscriptionPlan,
+  getPlanDetails,
+} from "@/lib/subscriptions/repository";
 
 type ActivePage =
   | "files"
@@ -53,10 +57,12 @@ interface HomeShellProps {
   firstName: string;
   lastName: string;
   photoUrl?: string;
+  plan: SubscriptionPlan;
   canvases: CanvasListItem[];
   credits: number;
   projectsError: string | null;
   errorMessage: string | undefined;
+
   createCanvasAction: (idempotencyKey: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccountAction: (verificationCode: string) => Promise<void>;
@@ -90,6 +96,7 @@ export function AccountCard({
   firstName,
   lastName,
   credits,
+  plan,
   photoUrl,
   onSignOut,
   onSettings,
@@ -99,6 +106,7 @@ export function AccountCard({
   lastName: string;
   credits: number;
   photoUrl?: string;
+  plan: SubscriptionPlan;
   onSignOut: () => void;
   onSettings: () => void;
   onClose: () => void;
@@ -107,7 +115,7 @@ export function AccountCard({
   const region = useUserRegion();
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const plan = credits > 1000 ? "Pro" : "Free";
+  
 
   // Mount animation
   useEffect(() => {
@@ -181,7 +189,7 @@ export function AccountCard({
           <div className="flex items-center ">
             <button
               onClick={onSettings}
-              className="flex h-7 w-7 items-center justify-center rounded text-white transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded cursor-pointer text-white transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Settings"
             >
               <Settings className="h-4 w-4" />
@@ -189,7 +197,7 @@ export function AccountCard({
 
             <button
               onClick={onSignOut}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              className="flex h-7 w-7 items-center justify-center rounded  cursor-pointer text-white transition-colors hover:bg-rose-500/10 hover:text-rose-400"
               aria-label="Sign out"
             >
               <ArrowRightFromLine className="h-4 w-4" />
@@ -199,9 +207,9 @@ export function AccountCard({
       </div>
       {/* Plan row */}
       <div className="flex items-center justify-between px-2 py-2">
-        <div className="mono uppercase flex  gap-1 text-xs tracking-tight text-white">
-        <span>PRO</span>  <span>Plan</span>
-          
+        <div className="mono flex  gap-1 text-xs tracking-tight text-white">
+          <span className="uppercase">{getPlanDetails(plan).name}</span>{" "}
+          <span>Plan</span>
         </div>
 
         <button
@@ -213,8 +221,8 @@ export function AccountCard({
       </div>
       {/* Credits row */}
       <div className="mb-1 flex items-center justify-between px-2 py-2.5">
-        <div className="mono uppercas flex w-full justify-between gap-1 text-xs tracking-tight text-white">
-          <span>Total Credits</span>
+        <div className="mono uppercase flex w-full justify-between gap-1 text-xs tracking-tight text-white">
+          <span>Balance</span>
           <div className="flex grotesk items-center">
             <Icon />
             <span>{credits}</span>.00
@@ -333,7 +341,6 @@ export function AccountCard({
       <div className="flex flex-col w-full  gap-2 border-y border-white/20 px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Let us know what you think about the app.</span>
-          
         </div>
 
         <a
@@ -380,6 +387,7 @@ export function HomeShell({
   updateNicknameAction,
   updateSettingsAction,
   userSettings,
+  plan,
 }: HomeShellProps) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -606,6 +614,7 @@ export function HomeShell({
             firstName={firstName}
             lastName={lastName}
             credits={credits}
+            plan={plan}
             photoUrl={photoUrl}
             onClose={() => setAccountOpen(false)}
             onSettings={() => {

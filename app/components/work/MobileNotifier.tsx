@@ -6,12 +6,17 @@ import { User} from "lucide-react";
 import { siDiscord, siInstagram, siYoutube } from "simple-icons";
 import { AccountCard } from "../work/HomeShell";
 import Notice from "./Notice";
+import {
+  type SubscriptionPlan,
+  getPlanDetails,
+} from "@/lib/subscriptions/repository";
 
 type Props = {
   fullName?: string;
   email?: string;
   photoUrl?: string;
   credits: number;
+  plan: SubscriptionPlan;
   signOut: () => void;
   setActivePage: (page: string) => void;
 };
@@ -21,6 +26,7 @@ const MobileNotifier: React.FC<Props> = ({
   email,
   photoUrl,
   credits,
+  plan,
   signOut,
   setActivePage,
 }) => {
@@ -90,6 +96,7 @@ const MobileNotifier: React.FC<Props> = ({
             firstName={firstName}
             lastName={lastName}
             credits={credits}
+            plan={plan}
             photoUrl={photoUrl}
             onClose={() => setAccountOpen(false)}
             onSettings={() => {
