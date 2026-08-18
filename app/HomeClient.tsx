@@ -3,12 +3,34 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownRight, CircleUserRound, CornerDownRight, Plus, X } from "lucide-react";
 import { gsap } from "gsap";
+import type { Metadata } from "next";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { User } from "@supabase/supabase-js";
 import MouseImageTrail from "./components/MouseImageTrail";
 import ScrollImageTrail from "./components/ScrollImageTrail";
 import ReflowDemoModal from "./components/ReflowDemoModal";
 import TextScalingAnimation from "./components/TextScalingAnimation";
+
+export const metadata: Metadata = {
+  title: "Reflow",
+  description:
+    "Reflow is an AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Reflow",
+  applicationCategory: "DesignApplication",
+  operatingSystem: "Web",
+  url: "https://swipes.site",
+  description:
+    "Reflow is an AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+  image: "https://swipes.site/og-image.png",
+};
 
 gsap.registerPlugin(ScrollTrigger);
 import Faq from "./components/Faqn";
@@ -24,6 +46,13 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ user }: HomeClientProps) {
+
+  <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(structuredData),
+    }}
+  />;
   const [menuOpen, setMenuOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
