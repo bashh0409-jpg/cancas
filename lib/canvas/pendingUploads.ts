@@ -1,6 +1,13 @@
-const DB_NAME = "canvasai";
+const DB_NAME = "reflow";
 const STORE_NAME = "pending-uploads";
 const DB_VERSION = 1;
+
+export type UploadTicket = {
+  token: string;
+  storagePath: string;
+  url: string;
+  endpoint: string;
+};
 
 type PendingUploadRecord = {
   key: string;
@@ -10,8 +17,17 @@ type PendingUploadRecord = {
   file: File;
 };
 
+type PendingTicketRecord = {
+  key: string;
+  ticket: UploadTicket;
+};
+
 function getPendingUploadKey(canvasId: string, nodeId: string) {
   return `${canvasId}:${nodeId}`;
+}
+
+function getPendingTicketKey(fingerprint: string) {
+  return `ticket:${fingerprint}`;
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -66,6 +82,8 @@ function runTransaction<T>(
   );
 }
 
+// ---- File byte persistence ----
+
 export async function savePendingUploadFile(
   canvasId: string,
   nodeId: string,
@@ -100,5 +118,39 @@ export async function deletePendingUploadFile(
 ) {
   await runTransaction("readwrite", (store) =>
     store.delete(getPendingUploadKey(canvasId, nodeId))
+  );
+}
+
+// ---- Upload ticket persistence ----
+// Cached by file fingerprint so a resumed/retried upload reuses the SAME
+// tus endpoint, token, and storagePath rather than minting a fresh ticket
+// that the original in-progress upload URL won't recognize.
+
+export async function savePendingUploadTicket(
+  fingerprint: string,
+  ticket: UploadTicket
+) {
+  const record: PendingTicketRecord = {
+    key: getPendingTicketKey(fingerprint),
+    ticket,
+  };
+
+  await runTransaction("readwrite", (store) => store.put(record));
+}
+
+export async function getPendingUploadTicket(
+  fingerprint: string
+): Promise<UploadTicket | null> {
+  const record = await runTransaction<PendingTicketRecord | undefined>(
+    "readonly",
+    (store) => store.get(getPendingTicketKey(fingerprint))
+  );
+
+  return record?.ticket ?? null;
+}
+
+export async function deletePendingUploadTicket(fingerprint: string) {
+  await runTransaction("readwrite", (store) =>
+    store.delete(getPendingTicketKey(fingerprint))
   );
 }

@@ -28,6 +28,7 @@ import {
   Workflow,
   ChevronsUpIcon,
   ChevronRight,
+  CirclePower,
 } from "lucide-react";
 
 import React, {  useCallback, useEffect, useRef, useState } from "react";
@@ -863,7 +864,7 @@ export const ConnectPanel = ({
         </p>
       </div>
       {/* Providers */}
-      <div className="flex flex-col gap-6 mt-4">
+      <div className="flex flex-col gap-2 mt-4">
         {providers.map((provider) => {
           const Icon = provider.icon;
 
@@ -872,78 +873,143 @@ export const ConnectPanel = ({
               key={provider.id}
               className="group  rounded w-full  hover:border-white/20 transition"
             >
-              <div className=" flex items-start gap-2">
+              <div className=" flex items-center  gap-2">
                 {/* Icon */}
                 <div className="flex items-center justify-center w-8 h-8 rounded border-white/10 shrink-0">
-                  <Icon className="w-5 h-5 text-white/80" />
+                  <Icon className="w-4 h-4 text-white/80" />
                 </div>
 
                 {/* Content */}
-                <div className=" w-full min-w-0 ">
-                  <div className="flex items-center w-full justify-between ">
-                    <div className="text-sm flex gap-2 w-full items-center justify-between  text-white mono uppercase tracking-tight truncate">
-                      <p className="text-xs flex gap-1 mb-1">
-                        {provider.name}{" "}
-                        <span>
-                          {provider.connected && !provider.expired && (
-                            <span className="uppercase w-full justify-between flex items-center gap-2 mono text-lime-300 text-xs">
-                              IS connected
-                            </span>
-                          )}
-                          {provider.connected && provider.expired && (
-                            <span className="uppercase w-full justify-between flex items-center gap-2 mono text-red-700 text-xs ">
-                              TOKEN has EXPIRED
-                            </span>
-                          )}
-                        </span>{" "}
-                      </p>
+                <div className="flex w-full min-w-0 flex-col gap-3">
+                  {/* Header */}
+                  <div className="flex min-w-0  items-start justify-between gap-3">
+                    <div className="flex w-full justify-between min-w-0">
+                      <p className="truncate mono text-xs uppercase tracking-tight text-white">
+                        {provider.name}
+                      </p>{" "}
+                      <div className="flex px-2 font-mono text-xs">
+                        {provider.connected && !provider.expired ? (
+                          <>
+                            {" "}
+                            <button
+                              onClick={() => setBrowsingProvider(provider.id)}
+                              className="lime cursor-pointer px-2 tracking-tight uppercase p-0.5 rounded-full"
+                            >
+                              Browse
+                            </button>
+                            <button
+                              onClick={() => void handleDisconnect(provider.id)}
+                              disabled={disconnecting === provider.id}
+                              aria-label="disconnect"
+                              className="lime cursor-pointer ml-0.5 tracking-tight uppercase p-0.5 rounded-full"
+                            >
+                              {disconnecting === provider.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <span>
+                                  <CirclePower className=" w-4 h-4" />
+                                </span>
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => void handleConnect(provider.id)}
+                            disabled={provider.loading}
+                            className="lime cursor-pointer px-2 tracking-tight uppercase p-0.5 rounded-full"
+                          >
+                            {provider.loading ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                {provider.connected && provider.expired
+                                  ? "Reconnect"
+                                  : "Connect"}
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-1 hidden flex items-center gap-1.5">
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            provider.connected && !provider.expired
+                              ? "bg-lime-300"
+                              : provider.expired
+                                ? "bg-red-500"
+                                : "bg-white/20"
+                          }`}
+                        />
+
+                        <span
+                          className={`mono text-[10px] uppercase tracking-tight ${
+                            provider.connected && !provider.expired
+                              ? "text-lime-300/80"
+                              : provider.expired
+                                ? "text-red-400/80"
+                                : "text-white/30"
+                          }`}
+                        >
+                          {provider.connected && !provider.expired
+                            ? "Connected"
+                            : provider.expired
+                              ? "Token expired"
+                              : "Not connected"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Provider status indicator */}
+                    <div className="flex h-5 hidden shrink-0 items-center rounded-xs border border-white/5 bg-white/[0.03] px-1.5">
+                      <span className="mono text-[9px] uppercase tracking-tight text-white/25">
+                        {provider.connected && !provider.expired
+                          ? "Active"
+                          : "Offline"}
+                      </span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      {provider.connected && !provider.expired ? (
-                        <>
-                          <button
-                            onClick={() => setBrowsingProvider(provider.id)}
-                            className="h-7 px-3 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer lime text-black hover:opacity-90 flex items-center gap-2"
-                          >
-                            <FolderOpen className="w-3 h-3" strokeWidth={1.5} />
-                            Browse
-                          </button>
-                          <button
-                            onClick={() => void handleDisconnect(provider.id)}
-                            disabled={disconnecting === provider.id}
-                            className="h-7 px-3 rounded-xs border border-white/10 text-white/60 mono uppercase tracking-tight text-xs transition cursor-pointer hover:text-white disabled:opacity-50"
-                          >
-                            {disconnecting === provider.id ? (
-                              <span>
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              </span>
-                            ) : (
-                              <span>Disconnect</span>
-                            )}
-                          </button>
-                        </>
-                      ) : (
+                  <div className="flex hidden items-center gap-1.5">
+                    {provider.connected && !provider.expired ? (
+                      <>
                         <button
-                          onClick={() => void handleConnect(provider.id)}
-                          disabled={provider.loading}
-                          className="h-7 px-3 rounded-xs mono uppercase tracking-tight text-xs font-medium transition cursor-pointer lime text-black hover:opacity-90 flex items-center gap-2"
+                          onClick={() => setBrowsingProvider(provider.id)}
+                          className="flex h-7 items-center gap-1.5 rounded-xs bg-lime-300 px-3 mono text-[10px] font-medium uppercase tracking-tight text-black transition-opacity hover:opacity-90"
                         >
-                          {provider.loading ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
+                          Browse
+                        </button>
+
+                        <button
+                          onClick={() => void handleDisconnect(provider.id)}
+                          disabled={disconnecting === provider.id}
+                          className="flex h-7 items-center justify-center rounded-xs border border-white/10 px-3 mono text-[10px] uppercase tracking-tight text-white/40 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {disconnecting === provider.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <>
-                              {provider.connected && provider.expired
-                                ? "Reconnect"
-                                : "Connect"}
-                            </>
+                            "Disconnect"
                           )}
                         </button>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => void handleConnect(provider.id)}
+                        disabled={provider.loading}
+                        className="flex h-7 items-center gap-1.5 rounded-xs lime px-3 mono text-[10px] font-medium uppercase tracking-tight text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {provider.loading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            {provider.connected && provider.expired
+                              ? "Reconnect"
+                              : "Connect"}
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -989,7 +1055,7 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <div className="w-60 pb-8 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
+    <div className="w-60 pb-6 bg-[#212126] scrollbar-hidden  border-white/10 p-4 flex flex-col gap-4 h-screen overflow-y-auto">
       <div className="flex items-center scrollbar-hidden  justify-between ">
         <h3 className="text-white flex gap-2 items-center text-xs  mono  uppercase tracking-tight">
           <Layers className="w-3.5 h-3.5" strokeWidth={1.25} />
@@ -1004,13 +1070,13 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
       </div>
 
       {layers.length === 0 ? (
-        <div className="">
-          <p className="text-white/60 tracking-tight mono text-sm">
+        <div>
+          <p className="mono text-sm tracking-tight text-white/60">
             No layers yet
           </p>
         </div>
       ) : (
-        <div className="space-y-1 scrollbar-hidden overflow-y-auto">
+        <div className="scrollbar-hidden space-y-1 overflow-y-auto">
           {[...layers].reverse().map((layer) => (
             <div
               key={layer.id}
@@ -1019,48 +1085,32 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                 setEditingId(layer.id);
                 setEditingName(layer.name);
               }}
-              className={`group px-1 py-1 mono flex items-center justify-between gap-2 tracking-tight  rounded-xs cursor-pointer transition ${
+              className={`group flex cursor-pointer items-center justify-between rounded-xs px-1 h-7 mono tracking-tight transition ${
                 selectedLayerId === layer.id
                   ? "bg-white/20"
                   : "hover:bg-white/10"
               }`}
             >
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                {/* Visibility Toggle */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLayerVisibility(layer.id);
-                  }}
-                  className="text-white/60 hover:bg-white/20 h-5 flex items-center justify-center w-5 rounded-xs hover:text-white transition flex-shrink-0"
-                >
-                  {layer.visible ? (
-                    <Eye className="w-3.5 h-3.5" strokeWidth={1.25} />
-                  ) : (
-                    <EyeOff className="w-3 h-3" strokeWidth={1.25} />
-                  )}
-                </button>
-
-                {/* Type Icon */}
+              {/* Layer Info */}
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
                 <span
                   className="flex-shrink-0 text-white/40"
                   title={layer.type}
                 >
                   {layer.type === "image" && (
-                    <ImageIcon className="w-3 h-3" strokeWidth={1.5} />
+                    <ImageIcon className="h-3 w-3" strokeWidth={1.5} />
                   )}
                   {layer.type === "web" && (
-                    <Globe className="w-3 h-3" strokeWidth={1.5} />
+                    <Globe className="h-3 w-3" strokeWidth={1.5} />
                   )}
                   {layer.type === "voice" && (
-                    <Volume2 className="w-3 h-3" strokeWidth={1.5} />
+                    <Volume2 className="h-3 w-3" strokeWidth={1.5} />
                   )}
                   {layer.type === "text" && (
-                    <FileText className="w-3 h-3" strokeWidth={1.5} />
+                    <FileText className="h-3 w-3" strokeWidth={1.5} />
                   )}
                 </span>
 
-                {/* Layer Name / Edit */}
                 {editingId === layer.id ? (
                   <input
                     autoFocus
@@ -1069,15 +1119,19 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                     onChange={(e) => setEditingName(e.target.value)}
                     onBlur={() => handleRename(layer.id, editingName)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter")
+                      if (e.key === "Enter") {
                         handleRename(layer.id, editingName);
-                      if (e.key === "Escape") setEditingId(null);
+                      }
+
+                      if (e.key === "Escape") {
+                        setEditingId(null);
+                      }
                     }}
-                    className="bg-[#1a1a1e] border border-white/20 rounded-xs px-2  text-xs text-white focus:outline-none focus:border-white/40 flex-1 min-w-0"
+                    className="min-w-0 flex-1 rounded-xs border border-white/20 bg-[#1a1a1e] px-2 text-xs text-white focus:border-white/40 focus:outline-none"
                   />
                 ) : (
                   <span
-                    className={`text-xs truncate tracking-tight text-left ${
+                    className={`min-w-0 truncate text-left text-xs tracking-tight ${
                       layer.visible ? "text-white/80" : "text-white/35"
                     }`}
                   >
@@ -1086,58 +1140,66 @@ const LayersPanel = ({ onClose }: { onClose: () => void }) => {
                 )}
               </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingId(layer.id);
-                  setEditingName(layer.name);
-                }}
-                className="text-white/40 hover:bg-white/20 h-5 flex items-center justify-center w-5 rounded-xs hover:text-white/70 transition flex-shrink-0 opacity-0 group-hover:opacity-100"
-                aria-label={`Rename ${layer.name}`}
-              >
-                <Edit2 className="w-3 h-3" strokeWidth={1.25} />
-              </button>
+              {/* Layer Actions */}
+              <div className=" hidden flex-shrink-0 items-center  group-hover:flex">
+                {/* Visibility */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLayerVisibility(layer.id);
+                  }}
+                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-white transition hover:bg-white/20"
+                  aria-label={`${layer.visible ? "Hide" : "Show"} ${layer.name}`}
+                >
+                  {layer.visible ? (
+                    <Eye className="h-3.5 w-3.5" strokeWidth={1.25} />
+                  ) : (
+                    <EyeOff className="h-3 w-3" strokeWidth={1.25} />
+                  )}
+                </button>
 
-              {/* Delete Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteLayer(layer.id);
-                }}
-                disabled={layer.locked}
-                className={`transition flex-shrink-0 hover:bg-white/20 h-5 flex items-center justify-center w-5 rounded-xs opacity-0 group-hover:opacity-100 ${
-                  layer.locked
-                    ? "cursor-not-allowed text-white/20"
-                    : "text-white/40 hover:text-red-400"
-                }`}
-                aria-label={`Delete ${layer.name}`}
-              >
-                <Trash2 className="w-3 h-3" strokeWidth={1.25} />
-              </button>
+                {/* Delete */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteLayer(layer.id);
+                  }}
+                  disabled={layer.locked}
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-xs transition hover:bg-white/20 ${
+                    layer.locked
+                      ? "cursor-not-allowed text-white/20"
+                      : "text-white/40 hover:text-red-400"
+                  }`}
+                  aria-label={`Delete ${layer.name}`}
+                >
+                  <Trash2 className="h-3 w-3" strokeWidth={1.25} />
+                </button>
 
-              {/* Lock Toggle */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleLayerLocked(layer.id);
-                }}
-                className={`transition hover:bg-white/20 h-5 flex items-center justify-center w-5 rounded-xs flex-shrink-0 ${
-                  layer.locked
-                    ? "text-white"
-                    : "text-white/40 hover:text-white/60"
-                }`}
-              >
-                <Lock className="w-3 h-3" strokeWidth={1.25} />
-              </button>
+                {/* Lock */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLayerLocked(layer.id);
+                  }}
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-xs transition hover:bg-white/20 ${
+                    layer.locked
+                      ? "text-white"
+                      : "text-white/40 hover:text-white/60"
+                  }`}
+                  aria-label={`${layer.locked ? "Unlock" : "Lock"} ${layer.name}`}
+                >
+                  <Lock className="h-3 w-3" strokeWidth={1.25} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {/* Layer Info */}
-      <div className="mt-auto absolute bottom-0 bg-[#212126] w-60 -ml-4 p-2 border-t border-white/10">
-        <p className="text-xs mono tracking-tight text-white/50">
-          Total Layers: {layers.length}
+      <div className="mt-auto absolute bottom-0 bg-[#212126] w-60 px-2 left-0 p-1 border-t border-white/10">
+        <p className="text-xs uppercase mono tracking-tight text-white">
+          Total Layers: <span className="grotesk">{layers.length}</span>
         </p>
       </div>
     </div>

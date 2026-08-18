@@ -20,10 +20,10 @@ import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 import NewReleaseUpdate from "@/app/components/work/NewReleasUpdate";
 import Notice from "../components/work/Notice";
 
+// Workspace
 export const metadata: Metadata = {
-  title: "REFLOW",
-  description:
-    "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
+  title: "Workspace | Reflow",
+  description: "Your Reflow workspace for creating, managing, and exploring your projects.",
 };
 
 export default async function HomePage({
@@ -116,25 +116,7 @@ export default async function HomePage({
         </div>
 
         <HomeShell
-          firstName={firstName}
-          lastName={lastName}
-          photoUrl={photoUrl}
-          canvases={canvases}
-          credits={credits}
-          projectsError={projectsError}
-          errorMessage={errorMessage}
-          createCanvasAction={createCanvasAction}
-          signOut={signOut}
-          deleteAccountAction={deleteAccountAction}
-          profile={{
-            firstName,
-            lastName,
-            email: user.email ?? "",
-            nickname: profile?.nickname ?? "",
-          }}
-          updateNicknameAction={updateNicknameAction}
-          updateSettingsAction={updateSettingsAction}
-          userSettings={settings}
+          
         />
       </div>
       <div className="absolute bottom-0 left-0 w-full">

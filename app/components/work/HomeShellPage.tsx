@@ -199,9 +199,8 @@ export function AccountCard({
       </div>
       {/* Plan row */}
       <div className="flex items-center justify-between px-2 py-2">
-        <div className="mono uppercase flex  gap-1 text-xs tracking-tight text-white">
-        <span>PRO</span>  <span>Plan</span>
-          
+        <div className="mono uppercas flex  gap-1 text-xs tracking-tight text-white">
+          <span className="uppercase">{plan}</span> <span>Plan</span>
         </div>
 
         <button
@@ -333,7 +332,6 @@ export function AccountCard({
       <div className="flex flex-col w-full  gap-2 border-y border-white/20 px-3 py-2.5">
         <div className="mono flex flex-col gap-1 text-xs tracking-tight text-white">
           <span>Let us know what you think about the app.</span>
-          
         </div>
 
         <a
@@ -365,7 +363,7 @@ export function AccountCard({
   );
 }
 
-export function HomeShell({
+export function HomeShellPage({
   firstName,
   lastName,
   photoUrl,

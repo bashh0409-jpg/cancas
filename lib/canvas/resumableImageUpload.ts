@@ -1,11 +1,10 @@
 import * as tus from "tus-js-client";
-
-type UploadTicket = {
-  token: string;
-  storagePath: string;
-  url: string;
-  endpoint: string;
-};
+import {
+  getPendingUploadTicket,
+  savePendingUploadTicket,
+  deletePendingUploadTicket,
+  type UploadTicket,
+} from "@/lib/canvas/pendingUploads";
 
 type ResumableImageUploadOptions = {
   canvasId: string;
@@ -14,10 +13,18 @@ type ResumableImageUploadOptions = {
   onProgress: (percent: number) => void;
 };
 
+export function makeUploadFingerprint(
+  canvasId: string,
+  nodeId: string,
+  file: File
+): string {
+  return `canvasai:${canvasId}:${nodeId}:${file.size}:${file.lastModified}`;
+}
+
 async function createUploadTicket(
   canvasId: string,
   nodeId: string,
-  file: File,
+  file: File
 ): Promise<UploadTicket> {
   const response = await fetch(`/api/canvases/${canvasId}/upload-url`, {
     method: "POST",
@@ -31,7 +38,7 @@ async function createUploadTicket(
   });
 
   const body = (await response.json().catch(() => null)) as
-    | Partial<UploadTicket> & { error?: unknown }
+    | (Partial<UploadTicket> & { error?: unknown })
     | null;
 
   if (
@@ -57,6 +64,27 @@ async function createUploadTicket(
   };
 }
 
+// Reuse the ticket for a given fingerprint across retries/resumes so the
+// tus upload URL, storagePath, and x-signature stay consistent. Without
+// this, every resume attempt mints a new token/storagePath and the old
+// in-progress upload on the tus server becomes unreachable.
+async function getOrCreateTicket(
+  canvasId: string,
+  nodeId: string,
+  file: File,
+  fingerprint: string
+): Promise<UploadTicket> {
+  const cached = await getPendingUploadTicket(fingerprint);
+
+  if (cached) {
+    return cached;
+  }
+
+  const ticket = await createUploadTicket(canvasId, nodeId, file);
+  await savePendingUploadTicket(fingerprint, ticket);
+  return ticket;
+}
+
 export async function uploadCanvasImageResumable({
   canvasId,
   nodeId,
@@ -66,7 +94,8 @@ export async function uploadCanvasImageResumable({
   storagePath: string;
   url: string;
 }> {
-  const ticket = await createUploadTicket(canvasId, nodeId, file);
+  const fingerprint = makeUploadFingerprint(canvasId, nodeId, file);
+  const ticket = await getOrCreateTicket(canvasId, nodeId, file, fingerprint);
 
   await new Promise<void>((resolve, reject) => {
     const upload = new tus.Upload(file, {
@@ -85,8 +114,7 @@ export async function uploadCanvasImageResumable({
         contentType: file.type || "application/octet-stream",
         cacheControl: "3600",
       },
-      fingerprint: async (uploadFile) =>
-        `canvasai:${canvasId}:${nodeId}:${uploadFile.size}:${uploadFile.lastModified}`,
+      fingerprint: async () => fingerprint,
       onProgress: (bytesSent, bytesTotal) => {
         const percent = bytesTotal > 0 ? (bytesSent / bytesTotal) * 100 : 0;
         onProgress(Math.min(99, Math.max(0, Math.floor(percent))));
@@ -106,6 +134,14 @@ export async function uploadCanvasImageResumable({
       .catch(() => {
         upload.start();
       });
+  });
+
+  // Upload succeeded — the ticket is spent, drop it so a future re-upload
+  // of the same file (e.g. delete + re-add) mints a fresh one instead of
+  // reusing a completed/expired token.
+  await deletePendingUploadTicket(fingerprint).catch(() => {
+    // Best-effort cleanup; a stale cached ticket is harmless since
+    // getOrCreateTicket only reads it, never assumes validity server-side.
   });
 
   return { storagePath: ticket.storagePath, url: ticket.url };
