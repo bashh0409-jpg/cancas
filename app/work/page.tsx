@@ -116,7 +116,25 @@ export default async function HomePage({
         </div>
 
         <HomeShell
-          
+          firstName={firstName}
+          lastName={lastName}
+          photoUrl={photoUrl}
+          canvases={canvases}
+          credits={credits}
+          projectsError={projectsError}
+          errorMessage={errorMessage}
+          createCanvasAction={createCanvasAction}
+          signOut={signOut}
+          deleteAccountAction={deleteAccountAction}
+          profile={{
+            firstName,
+            lastName,
+            email: user.email ?? "",
+            nickname: profile?.nickname ?? "",
+          }}
+          updateNicknameAction={updateNicknameAction}
+          updateSettingsAction={updateSettingsAction}
+          userSettings={settings}
         />
       </div>
       <div className="absolute bottom-0 left-0 w-full">

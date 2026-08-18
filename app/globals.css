@@ -20,7 +20,7 @@
   --font-geom: var(--font-cmgeom);
   --font-pixel: var(--font-geist-pixel-square);
   --font-lay-grotesk: var(--font-lay-grotesk);
-  --font-host-grotesk: var(--font-host-grotesk);
+ 
 }
 
 .mono {
@@ -35,9 +35,7 @@
   font-family: var(--font-lay-grotesk);
 }
 
-.host-grotesk {
-  font-family: var(--font-host-grotesk);
-}
+
 
 .scrollbar-hide {
   scrollbar-width: none;
