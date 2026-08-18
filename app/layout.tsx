@@ -67,10 +67,52 @@ const layGrotesk = localFont({
   preload: false,
 });
 
+
 export const metadata: Metadata = {
-  title: "Reflow",
+  metadataBase: new URL("https://swipes.site"),
+
+  title: {
+    default: "Reflow",
+    template: "%s | Reflow",
+  },
+
   description:
-    "discover the power of collaborative creativity with Reflow, the ultimate canvas for your ideas.",
+    "Reflow is an AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+
+  alternates: {
+    canonical: "/",
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://swipes.site/",
+    siteName: "Reflow",
+    title: "Reflow",
+    description:
+      "An AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Reflow — AI-powered creative canvas",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Reflow",
+    description:
+      "An AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+    images: ["/og-image.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

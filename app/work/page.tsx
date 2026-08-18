@@ -25,10 +25,15 @@ import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 import NewReleaseUpdate from "@/app/components/work/NewReleasUpdate";
 import Notice from "../components/work/Notice";
 
-// Workspace
+
 export const metadata: Metadata = {
-  title: "Workspace | Reflow",
-  description: "Your Reflow workspace for creating, managing, and exploring your projects.",
+  title: "Workspace",
+  description:
+    "Your Reflow workspace for creating, managing, and exploring your projects.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default async function HomePage({

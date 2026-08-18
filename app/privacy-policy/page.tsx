@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import PrivacyPage from "./PrivacyPage";
 
-// Privacy Policy
 export const metadata: Metadata = {
-  title: "Privacy Policy - Reflow",
-  description: "Read Reflow's Privacy Policy and learn how your data is collected, used, and protected.",
+  title: "Privacy Policy",
+  description:
+    "Learn how Reflow collects, uses, stores, and protects your personal information.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
 };
 
 export default function Page() {
