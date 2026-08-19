@@ -31,7 +31,7 @@ import {
   CirclePower,
 } from "lucide-react";
 
-import React, {  useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -104,6 +104,10 @@ const CanvasSwitcherFlyout = ({
       setShowFlyout(false);
     }, 150);
   };
+
+  const [disconnectHovered, setDisconnectHovered] = useState<string | null>(
+    null,
+  );
 
   return (
     <div
@@ -857,12 +861,7 @@ export const ConnectPanel = ({
           <X className="w-4 h-4" strokeWidth={1.25} />
         </button>
       </div>
-      <div className="mb-2 hidden">
-        <p className="text-[10px] uppercase tracking-tight mono text-white">
-          your Files will remain in your cloud storage unless explicitly
-          imported.
-        </p>
-      </div>
+
       {/* Providers */}
       <div className="flex flex-col gap-2 mt-4">
         {providers.map((provider) => {
@@ -889,127 +888,108 @@ export const ConnectPanel = ({
                       </p>{" "}
                       <div className="flex px-2 font-mono text-xs">
                         {provider.connected && !provider.expired ? (
-                          <>
-                            {" "}
+                          <div className="group/actions flex items-center">
+                            {/* Browse collapses only when Disconnect is hovered */}
                             <button
                               onClick={() => setBrowsingProvider(provider.id)}
-                              className="lime cursor-pointer px-2 tracking-tight uppercase p-0.5 rounded-full"
+                              aria-label="Browse files"
+                              className="
+          lime relative cursor-pointer  overflow-hidden rounded-full p-0.5
+          tracking-tight uppercase
+          transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+          w-auto px-2
+          group-has-[.disconnect-btn:hover]/actions:w-6
+          group-has-[.disconnect-btn:hover]/actions:px-1
+        "
                             >
-                              Browse
+                              <span
+                                className="
+            block transition-all duration-200 ease-out
+            group-has-[.disconnect-btn:hover]/actions:opacity-0
+            group-has-[.disconnect-btn:hover]/actions:-translate-y-1
+            group-has-[.disconnect-btn:hover]/actions:scale-90
+          "
+                              >
+                                Browse
+                              </span>
+                              <span
+                                className="
+            pointer-events-none absolute inset-0 flex items-center justify-center
+            opacity-0 translate-y-1 scale-90
+            transition-all duration-200 delay-0 ease-out
+            group-has-[.disconnect-btn:hover]/actions:opacity-100
+            group-has-[.disconnect-btn:hover]/actions:translate-y-0
+            group-has-[.disconnect-btn:hover]/actions:scale-100
+          "
+                              >
+                                <FolderOpen className="h-4 w-4" />
+                              </span>
                             </button>
+
+                            {/* Disconnect expands from icon to text */}
                             <button
                               onClick={() => void handleDisconnect(provider.id)}
                               disabled={disconnecting === provider.id}
-                              aria-label="disconnect"
-                              className="lime cursor-pointer ml-0.5 tracking-tight uppercase p-0.5 rounded-full"
+                              aria-label="Disconnect"
+                              className="
+          disconnect-btn group/disconnect
+          lime relative ml-0.5 cursor-pointer overflow-hidden rounded-full
+          p-0.5 tracking-tight uppercase
+          transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+          w-6 px-1
+          hover:w-[78px] hover:px-2
+        "
                             >
                               {disconnecting === provider.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                               ) : (
-                                <span>
-                                  <CirclePower className=" w-4 h-4" />
-                                </span>
+                                <>
+                                  {/* Icon shown by default, hidden while hovering */}
+                                  <span
+                                    className="
+                flex items-center justify-center
+                transition-all duration-200 ease-out
+                group-hover/disconnect:opacity-0
+                group-hover/disconnect:scale-90
+                group-hover/disconnect:rotate-45
+              "
+                                  >
+                                    <CirclePower className="h-4 w-4" />
+                                  </span>
+
+                                  {/* Text replaces the icon on hover */}
+                                  <span
+                                    className="
+                pointer-events-none absolute inset-0 flex items-center justify-center
+                whitespace-nowrap opacity-0 scale-95
+                transition-all duration-200 delay-75 ease-out
+                group-hover/disconnect:opacity-100
+                group-hover/disconnect:scale-100
+              "
+                                  >
+                                    Disconnect
+                                  </span>
+                                </>
                               )}
                             </button>
-                          </>
+                          </div>
                         ) : (
                           <button
                             onClick={() => void handleConnect(provider.id)}
                             disabled={provider.loading}
-                            className="lime cursor-pointer px-2 tracking-tight uppercase p-0.5 rounded-full"
+                            className="lime cursor-pointer rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
                           >
                             {provider.loading ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : provider.connected && provider.expired ? (
+                              "Reconnect"
                             ) : (
-                              <>
-                                {provider.connected && provider.expired
-                                  ? "Reconnect"
-                                  : "Connect"}
-                              </>
+                              "Connect"
                             )}
                           </button>
                         )}
                       </div>
-                      <div className="mt-1 hidden flex items-center gap-1.5">
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            provider.connected && !provider.expired
-                              ? "bg-lime-300"
-                              : provider.expired
-                                ? "bg-red-500"
-                                : "bg-white/20"
-                          }`}
-                        />
-
-                        <span
-                          className={`mono text-[10px] uppercase tracking-tight ${
-                            provider.connected && !provider.expired
-                              ? "text-lime-300/80"
-                              : provider.expired
-                                ? "text-red-400/80"
-                                : "text-white/30"
-                          }`}
-                        >
-                          {provider.connected && !provider.expired
-                            ? "Connected"
-                            : provider.expired
-                              ? "Token expired"
-                              : "Not connected"}
-                        </span>
-                      </div>
                     </div>
-
-                    {/* Provider status indicator */}
-                    <div className="flex h-5 hidden shrink-0 items-center rounded-xs border border-white/5 bg-white/[0.03] px-1.5">
-                      <span className="mono text-[9px] uppercase tracking-tight text-white/25">
-                        {provider.connected && !provider.expired
-                          ? "Active"
-                          : "Offline"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex hidden items-center gap-1.5">
-                    {provider.connected && !provider.expired ? (
-                      <>
-                        <button
-                          onClick={() => setBrowsingProvider(provider.id)}
-                          className="flex h-7 items-center gap-1.5 rounded-xs bg-lime-300 px-3 mono text-[10px] font-medium uppercase tracking-tight text-black transition-opacity hover:opacity-90"
-                        >
-                          <FolderOpen className="h-3 w-3" strokeWidth={1.5} />
-                          Browse
-                        </button>
-
-                        <button
-                          onClick={() => void handleDisconnect(provider.id)}
-                          disabled={disconnecting === provider.id}
-                          className="flex h-7 items-center justify-center rounded-xs border border-white/10 px-3 mono text-[10px] uppercase tracking-tight text-white/40 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {disconnecting === provider.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            "Disconnect"
-                          )}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => void handleConnect(provider.id)}
-                        disabled={provider.loading}
-                        className="flex h-7 items-center gap-1.5 rounded-xs lime px-3 mono text-[10px] font-medium uppercase tracking-tight text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {provider.loading ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <>
-                            {provider.connected && provider.expired
-                              ? "Reconnect"
-                              : "Connect"}
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1021,8 +1001,8 @@ export const ConnectPanel = ({
       {/* Footer */}
       <div className="mt-auto  pt-4 ">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
-          your Files will remain in your cloud storage unless explicitly
-          imported.
+          your files stay in your cloud storage. Reflow only imports images you
+          explicitly choose to download.
         </p>
       </div>
     </div>

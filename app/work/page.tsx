@@ -136,7 +136,7 @@ export default async function HomePage({
          <Suspense fallback={null}>
            <ClearLocalDataOnQuery />
          </Suspense>
-         <div className="absolute z-50 w-full">
+         <div className="absolute hidden z-50 w-full">
            <NewReleaseUpdate userId={user.id} />
          </div>
 

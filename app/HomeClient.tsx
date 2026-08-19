@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownRight, CircleUserRound, CornerDownRight, Plus, X } from "lucide-react";
+import { CircleUserRound, Plus, X } from "lucide-react";
 import { gsap } from "gsap";
 import type { Metadata } from "next";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { User } from "@supabase/supabase-js";
 import MouseImageTrail from "./components/MouseImageTrail";
-import ScrollImageTrail from "./components/ScrollImageTrail";
 import ReflowDemoModal from "./components/ReflowDemoModal";
-import TextScalingAnimation from "./components/TextScalingAnimation";
+
 
 export const metadata: Metadata = {
   title: "Reflow",

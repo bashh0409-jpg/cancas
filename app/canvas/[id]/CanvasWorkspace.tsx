@@ -77,10 +77,6 @@ import {
   type LayoutArrangeRequest,
 } from "@/lib/canvas/imageLayouts";
 import {
-  fetchRemoteCanvasUpdate,
-  subscribeToCanvasUpdates,
-} from "@/lib/canvas/canvasRemoteSync";
-import {
   VOICE_NOTE_RECORDED_EVENT,
   type VoiceNoteRecordedDetail,
 } from "@/lib/canvas/voiceNotes";
@@ -90,7 +86,6 @@ import {
   CANVAS_TIDY_UP_TOOL_EVENT,
   type TidyUpMode,
 } from "@/lib/canvas/tidyUpToolEvent";
-import { mergeRemoteImageNodes } from "@/lib/canvas/mergeRemoteCanvas";
 import {
   IMAGE_DELETE_UNDO_LIMIT,
   type ImageDeleteUndoEntry,
@@ -839,69 +834,6 @@ export default function CanvasWorkspace({
     saveDelayMsRef.current = 0;
   }, [applyImageDeleteEntryToCanvas, commitImageDeleteEntry]);
 
-  const applyRemoteCanvasUpdate = useCallback(
-    (content: CanvasContent, updatedAt: string, name: string) => {
-      if (Date.parse(updatedAt) <= Date.parse(lastServerUpdatedAtRef.current)) {
-        return;
-      }
-
-      isApplyingRemoteUpdateRef.current = true;
-      imageDeleteUndoStackRef.current = [];
-      imageDeleteRedoStackRef.current = [];
-
-      const mergedImageNodes = mergeRemoteImageNodes(
-        imageNodesRef.current,
-        content.imageNodes,
-      );
-      const keptBlobUrls = new Set(
-        mergedImageNodes
-          .filter((node) => node.url.startsWith("blob:"))
-          .map((node) => node.url),
-      );
-
-      for (const node of imageNodesRef.current) {
-        if (node.url.startsWith("blob:") && !keptBlobUrls.has(node.url)) {
-          URL.revokeObjectURL(node.url);
-          pendingUploadFilesRef.current.delete(node.id);
-          pendingUploadIdsRef.current.delete(node.id);
-        }
-      }
-
-      setShowGrid(content.showGrid);
-      setBackgroundColor(content.backgroundColor);
-      setGridColor(content.gridColor);
-      setGridSize(content.gridSize);
-      setGridLineType(content.gridLineType);
-      setImageNodes(mergedImageNodes);
-      setWebNodes(content.webNodes);
-      setVoiceNodes(content.voiceNodes);
-      setTextNodes(content.textNodes);
-      setAiChatNodes(content.aiChatNodes);
-      imageNodesRef.current = mergedImageNodes;
-      webNodesRef.current = content.webNodes;
-      voiceNodesRef.current = content.voiceNodes;
-      textNodesRef.current = content.textNodes;
-      aiChatNodesRef.current = content.aiChatNodes;
-      setSelectedImageIds([]);
-      setSelectedTextNodeId(null);
-      setEditingTextNodeId(null);
-      lastServerUpdatedAtRef.current = updatedAt;
-      serverUpdatedAtRef.current = updatedAt;
-      skipSaveRef.current = true;
-      markLocalCanvasDraftSynced(
-        canvasId,
-        { ...content, imageNodes: mergedImageNodes },
-        updatedAt,
-      );
-      onRemoteNameChange?.(name);
-
-      window.requestAnimationFrame(() => {
-        isApplyingRemoteUpdateRef.current = false;
-      });
-    },
-    [canvasId, onRemoteNameChange],
-  );
-
   useEffect(() => {
     selectedImageIdsRef.current = selectedImageIds;
   }, [selectedImageIds]);
@@ -1536,11 +1468,23 @@ export default function CanvasWorkspace({
         const img = new Image();
         img.onload = () => {
           const fittedSize = fitImageSize(img.naturalWidth, img.naturalHeight);
-          setImageNodes((current) =>
-            current.map((node) =>
-              node.id === nodeId ? { ...node, size: fittedSize } : node,
-            ),
-          );
+          setImageNodes((current) => {
+            let changed = false;
+            const next = current.map((node) => {
+              if (
+                node.id !== nodeId ||
+                (node.size.width === fittedSize.width &&
+                  node.size.height === fittedSize.height)
+              ) {
+                return node;
+              }
+
+              changed = true;
+              return { ...node, size: fittedSize };
+            });
+
+            return changed ? next : current;
+          });
         };
         img.src = asset.public_url;
       }
@@ -1860,46 +1804,6 @@ export default function CanvasWorkspace({
       }
     };
   }, [buildCanvasContent, isClientReady, persistCanvasToCloud]);
-
-  useEffect(() => {
-    if (!isClientReady) {
-      return;
-    }
-
-    const supabase = supabaseClientRef.current;
-
-    return subscribeToCanvasUpdates(supabase, canvasId, (update) => {
-      applyRemoteCanvasUpdate(update.content, update.updatedAt, update.name);
-    });
-  }, [applyRemoteCanvasUpdate, canvasId, isClientReady]);
-
-  useEffect(() => {
-    if (!isClientReady) {
-      return;
-    }
-
-    async function pullRemoteIfNewer() {
-      const update = await fetchRemoteCanvasUpdate(canvasId);
-
-      if (!update) {
-        return;
-      }
-
-      applyRemoteCanvasUpdate(update.content, update.updatedAt, update.name);
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        void pullRemoteIfNewer();
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [applyRemoteCanvasUpdate, canvasId, isClientReady]);
 
   useEffect(() => {
     function commitPendingImageDeletes() {
@@ -3223,17 +3127,25 @@ export default function CanvasWorkspace({
       queueImageUpload(nodeId, file, blobUrl);
 
       const naturalSize = await getNaturalImageSize(blobUrl);
+      const fittedSize = fitImageSize(naturalSize.width, naturalSize.height);
 
-      setImageNodes((current) =>
-        current.map((node) =>
-          node.id === nodeId
-            ? {
-                ...node,
-                size: fitImageSize(naturalSize.width, naturalSize.height),
-              }
-            : node,
-        ),
-      );
+      setImageNodes((current) => {
+        let changed = false;
+        const next = current.map((node) => {
+          if (
+            node.id !== nodeId ||
+            (node.size.width === fittedSize.width &&
+              node.size.height === fittedSize.height)
+          ) {
+            return node;
+          }
+
+          changed = true;
+          return { ...node, size: fittedSize };
+        });
+
+        return changed ? next : current;
+      });
     })();
 
     return nodeId;

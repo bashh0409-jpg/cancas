@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FilePlusCorner, Loader2, Plus } from "lucide-react";
+import { FilePlusCorner, Loader2} from "lucide-react";
 
 export function CreateCanvasButton({
   createCanvasAction,
@@ -39,7 +39,7 @@ export function CreateCanvasButton({
       disabled={loading}
       title={collapsed ? label : undefined}
       className={`
-        w-full h-8 lime cursor-pointer rounded-xs flex items-center text-sm
+        w-full h-7 mb-4 lime cursor-pointer rounded-xs flex items-center text-sm
         text-black transition-colors
         hover:bg-white/10
         disabled:opacity-60 disabled:cursor-not-allowed
@@ -62,7 +62,7 @@ export function CreateCanvasButton({
             ${collapsed ? "opacity-0 w-0 overflow-hidden" : ""}
           `}
         >
-          {loading ? "please wait..." : label}
+          {loading ? "creating file..." : label}
         </span>
       </div>
     </button>

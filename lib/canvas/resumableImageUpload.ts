@@ -73,16 +73,34 @@ async function getOrCreateTicket(
   nodeId: string,
   file: File,
   fingerprint: string
-): Promise<UploadTicket> {
+): Promise<{ ticket: UploadTicket; reusedCachedTicket: boolean }> {
   const cached = await getPendingUploadTicket(fingerprint);
 
   if (cached) {
-    return cached;
+    return { ticket: cached, reusedCachedTicket: true };
   }
 
   const ticket = await createUploadTicket(canvasId, nodeId, file);
   await savePendingUploadTicket(fingerprint, ticket);
-  return ticket;
+  return { ticket, reusedCachedTicket: false };
+}
+
+function removeStoredTusUploads(fingerprint: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  // tus-js-client's browser URL store keys uploads by fingerprint. Once a
+  // resumed upload has failed, keeping this pointer makes the next fresh
+  // ticket resume the same broken upload URL instead of starting over.
+  const prefix = `tus::${fingerprint}::`;
+  const keys = Array.from({ length: window.localStorage.length }, (_, index) =>
+    window.localStorage.key(index),
+  ).filter((key): key is string => key?.startsWith(prefix) ?? false);
+
+  for (const key of keys) {
+    window.localStorage.removeItem(key);
+  }
 }
 
 export async function uploadCanvasImageResumable({
@@ -95,46 +113,63 @@ export async function uploadCanvasImageResumable({
   url: string;
 }> {
   const fingerprint = makeUploadFingerprint(canvasId, nodeId, file);
-  const ticket = await getOrCreateTicket(canvasId, nodeId, file, fingerprint);
+  const { ticket, reusedCachedTicket } = await getOrCreateTicket(
+    canvasId,
+    nodeId,
+    file,
+    fingerprint,
+  );
 
-  await new Promise<void>((resolve, reject) => {
-    const upload = new tus.Upload(file, {
-      endpoint: ticket.endpoint,
-      chunkSize: 6 * 1024 * 1024,
-      retryDelays: [0, 3_000, 5_000, 10_000, 20_000],
-      removeFingerprintOnSuccess: true,
-      uploadDataDuringCreation: true,
-      headers: {
-        "x-signature": ticket.token,
-        "x-upsert": "true",
-      },
-      metadata: {
-        bucketName: "canvas-files",
-        objectName: ticket.storagePath,
-        contentType: file.type || "application/octet-stream",
-        cacheControl: "3600",
-      },
-      fingerprint: async () => fingerprint,
-      onProgress: (bytesSent, bytesTotal) => {
-        const percent = bytesTotal > 0 ? (bytesSent / bytesTotal) * 100 : 0;
-        onProgress(Math.min(99, Math.max(0, Math.floor(percent))));
-      },
-      onSuccess: () => resolve(),
-      onError: (error) => reject(error),
-    });
-
-    void upload
-      .findPreviousUploads()
-      .then((previousUploads) => {
-        if (previousUploads.length > 0) {
-          upload.resumeFromPreviousUpload(previousUploads[0]);
-        }
-        upload.start();
-      })
-      .catch(() => {
-        upload.start();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const upload = new tus.Upload(file, {
+        endpoint: ticket.endpoint,
+        chunkSize: 6 * 1024 * 1024,
+        retryDelays: [0, 3_000, 5_000, 10_000, 20_000],
+        removeFingerprintOnSuccess: true,
+        uploadDataDuringCreation: true,
+        headers: {
+          "x-signature": ticket.token,
+          "x-upsert": "true",
+        },
+        metadata: {
+          bucketName: "canvas-files",
+          objectName: ticket.storagePath,
+          contentType: file.type || "application/octet-stream",
+          cacheControl: "3600",
+        },
+        fingerprint: async () => fingerprint,
+        onProgress: (bytesSent, bytesTotal) => {
+          const percent = bytesTotal > 0 ? (bytesSent / bytesTotal) * 100 : 0;
+          onProgress(Math.min(99, Math.max(0, Math.floor(percent))));
+        },
+        onSuccess: () => resolve(),
+        onError: (error) => reject(error),
       });
-  });
+
+      void upload
+        .findPreviousUploads()
+        .then((previousUploads) => {
+          if (previousUploads.length > 0) {
+            upload.resumeFromPreviousUpload(previousUploads[0]);
+          }
+          upload.start();
+        })
+        .catch(() => {
+          upload.start();
+        });
+    });
+  } catch (error) {
+    if (reusedCachedTicket) {
+      // A saved ticket/upload URL can no longer be usable after the tab has
+      // been suspended or closed. Clear both so the workspace's next retry
+      // authorizes a brand-new resumable upload for the persisted file.
+      await deletePendingUploadTicket(fingerprint).catch(() => {});
+      removeStoredTusUploads(fingerprint);
+    }
+
+    throw error;
+  }
 
   // Upload succeeded — the ticket is spent, drop it so a future re-upload
   // of the same file (e.g. delete + re-add) mints a fresh one instead of

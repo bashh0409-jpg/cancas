@@ -632,15 +632,15 @@ export function HomeShell({
         ></div>
 
         {/* ── Nav items ── */}
-        <nav className="flex flex-col gap-2 px-1">
-          <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
-            <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
+        <nav className="flex flex-col gap-0.5 px-1">
+          <div className=" w-full mb-1 gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
+            <Search className="w-5 h-4" strokeWidth={1.5} />{" "}
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className=" w-full   h-full py-1.5 font-medium text-xs uppercase text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
+              className=" w-full   h-full py-1 font-medium text-xs uppercase text-white mono tracking-tight placeholder-white/40 focus:outline-none focus:border-none focus:ring-0 focus:ring-white/0"
             />
           </div>
 
@@ -708,24 +708,8 @@ export function HomeShell({
         </div>
 
         {/* ── Bottom links ── */}
-        <div className="mt-auto flex flex-col gap-0.5 px-1">
-          <SidebarLink
-            href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
-            icon={
-              <svg
-                role="img"
-                viewBox="0 0 24 24"
-                aria-label="Youtube"
-                className="w-4 h-4 shrink-0 fill-current"
-                dangerouslySetInnerHTML={{
-                  __html: `<path d="${siInstagram.path}" />`,
-                }}
-              />
-            }
-            label="INSTAGRAM"
-            collapsed={collapsed}
-            labelRef={addLabelRef}
-          />
+        <div className="mt-auto flex flex-co gap-0.5 px-1">
+         
           <SidebarLink
             href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
             icon={
