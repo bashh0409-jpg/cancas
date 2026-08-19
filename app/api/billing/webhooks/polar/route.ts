@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { grantPlanCredits } from "@/lib/billing/subscription-sync";
+import { claimWebhookEvent } from "@/lib/billing/webhook-events";
 import { updateSubscription } from "@/lib/subscriptions/repository";
+import { WebhookVerificationError, validateEvent } from "@polar-sh/sdk/webhooks";
 import { NextResponse } from "next/server";
 
 function extractValue(value: unknown): string | undefined {
@@ -27,21 +29,57 @@ function extractUserId(payload: Record<string, unknown>): string | undefined {
 
 export async function POST(req: Request) {
   try {
-    const payload = await req.json();
+    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error("POLAR_WEBHOOK_SECRET not configured");
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 500 },
+      );
+    }
+
+    const body = await req.text();
+    const headers = {
+      "webhook-id": req.headers.get("webhook-id") ?? "",
+      "webhook-timestamp": req.headers.get("webhook-timestamp") ?? "",
+      "webhook-signature": req.headers.get("webhook-signature") ?? "",
+    };
+
+    let payload: Record<string, unknown>;
+
+    try {
+      payload = (validateEvent(body, headers, webhookSecret) ?? {}) as Record<
+        string,
+        unknown
+      >;
+    } catch (error) {
+      if (error instanceof WebhookVerificationError) {
+        console.error("Invalid Polar webhook signature");
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+
+      throw error;
+    }
 
     if (!payload || typeof payload !== "object") {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
     const eventId =
-      extractValue((payload as Record<string, unknown>).id) ??
-      `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const eventType = extractValue((payload as Record<string, unknown>).type);
-    const data = ((payload as Record<string, unknown>).data ?? payload) as Record<string, unknown>;
+      extractValue(payload.id) ?? headers["webhook-id"];
+    const eventType = extractValue(payload.type);
+    const data = (payload.data ?? payload) as Record<string, unknown>;
+    const supabase = createServiceRoleClient();
+    const shouldProcess = await claimWebhookEvent(supabase, "polar", eventId);
+
+    if (!shouldProcess) {
+      return NextResponse.json({ received: true, duplicate: true, eventId });
+    }
+
     const userId = extractUserId({ ...payload, ...data } as Record<string, unknown>);
 
     if (userId) {
-      const supabase = createServiceRoleClient();
       const status =
         eventType?.includes("canceled") || data.status === "canceled"
           ? "canceled"

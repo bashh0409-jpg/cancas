@@ -29,6 +29,8 @@ import {
   ChevronsUpIcon,
   ChevronRight,
   CirclePower,
+  HardDrive,
+  ArrowRightLeft,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -73,6 +75,7 @@ type SidebarProps = {
   gridSettings: GridControlsValue;
   onGridSettingsChange: (updates: Partial<GridControlsValue>) => void;
   onImportCloudFile: (file: File) => Promise<void>;
+  onUnsplashClick?: () => void;
   onClosePanel?: () => void;
   canvasName?: string;
   activeCanvasId?: string;
@@ -675,6 +678,9 @@ type Provider = {
   name: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
+  category: "cloud" | "stock" | "local";
+  local?: boolean;
+  browseOnly?: boolean;
   connected?: boolean;
   expired?: boolean;
   loading?: boolean;
@@ -736,6 +742,7 @@ const initialProviders: Provider[] = [
     name: "Google Drive",
     description: "Import and sync canvas files",
     icon: SiGoogledrive,
+    category: "cloud",
     connected: false,
   },
   {
@@ -743,22 +750,53 @@ const initialProviders: Provider[] = [
     name: "Dropbox",
     description: "Access cloud storage files",
     icon: SiDropbox,
+    category: "cloud",
     connected: false,
+  },
+
+  {
+    id: "unsplash",
+    name: "Unsplash",
+    description: "Import free stock photos",
+    icon: ImageIcon,
+    category: "stock",
+    browseOnly: true,
+    connected: true,
+  },
+  {
+    id: "local-storage",
+    name: "Local Storage",
+    description: "Import files from this device",
+    icon: HardDrive,
+    category: "local",
+    local: true,
+    connected: true,
   },
 ];
 
 export const ConnectPanel = ({
   onClose,
   onImportCloudFile,
+  onUnsplashClick,
   activeCanvasId,
 }: {
   onClose: () => void;
   onImportCloudFile: (file: File) => Promise<void>;
+  onUnsplashClick?: () => void;
   activeCanvasId?: string;
 }) => {
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [browsingProvider, setBrowsingProvider] = useState<string | null>(null);
+  const localFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLocalFiles = async (files: FileList | null) => {
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      await onImportCloudFile(file);
+    }
+  };
 
   const handleConnect = async (providerId: string) => {
     try {
@@ -851,8 +889,8 @@ export const ConnectPanel = ({
     <div className="w-60 h-screen bg-[#212126] border-white/10 p-4 flex flex-col">
       <div className="flex items-center scrollbar-hidden   pb-2 justify-between mb-2">
         <h3 className="text-white flex items-center gap-2 text-xs  mono  uppercase tracking-tight">
-          <Cable className="w-3.5 h-3.5" strokeWidth={1.25} />
-          External storage
+          <HardDrive className="w-3.5 h-3.5" strokeWidth={1.25} />
+          files storage
         </h3>
         <button
           onClick={onClose}
@@ -863,146 +901,249 @@ export const ConnectPanel = ({
       </div>
 
       {/* Providers */}
-      <div className="flex flex-col gap-2 mt-4">
-        {providers.map((provider) => {
+      <div className="flex flex-col gap-1 mt-4">
+        {providers.map((provider, index) => {
           const Icon = provider.icon;
+          const previousProvider = providers[index - 1];
+          const categoryLabel =
+            !previousProvider || previousProvider.category !== provider.category
+              ? {
+                  cloud: "Cloud Storage",
+                  stock: "Stock Images",
+                  local: "Local",
+                }[provider.category]
+              : null;
 
-          return (
-            <div
-              key={provider.id}
-              className="group  rounded w-full  hover:border-white/20 transition"
-            >
-              <div className=" flex items-center  gap-2">
-                {/* Icon */}
-                <div className="flex items-center justify-center w-8 h-8 rounded border-white/10 shrink-0">
-                  <Icon className="w-4 h-4 text-white/80" />
-                </div>
-
-                {/* Content */}
-                <div className="flex w-full min-w-0 flex-col gap-3">
-                  {/* Header */}
-                  <div className="flex min-w-0  items-start justify-between gap-3">
-                    <div className="flex w-full justify-between min-w-0">
+          if (provider.local || provider.browseOnly) {
+            return (
+              <div key={provider.id}>
+                {categoryLabel && (
+                  <p className="mb-2 mono mt-6  uppercase tracking-tight border-white/10 text-white text-xs ">
+                    {categoryLabel}
+                  </p>
+                )}
+                <div className="group rounded w-full hover:border-white/20 transition">
+                  <div
+                    onClick={() => {
+                      if (provider.browseOnly) {
+                        onUnsplashClick?.();
+                      } else {
+                        localFileInputRef.current?.click();
+                      }
+                    }}
+                    className="flex cursor-pointer border border-white/20 rounded pr-1 items-center gap-1 -ml-1"
+                  >
+                    <div className="flex items-center justify-center w-8 h-7  rounded border-white/10 shrink-0">
+                      <Icon className="w-4 h-4 text-white/80" />
+                    </div>
+                    <div className="flex w-full min-w-0 items-center justify-between">
                       <p className="truncate mono text-xs uppercase tracking-tight text-white">
                         {provider.name}
-                      </p>{" "}
-                      <div className="flex px-2 font-mono text-xs">
-                        {provider.connected && !provider.expired ? (
-                          <div className="group/actions flex items-center">
-                            {/* Browse collapses only when Disconnect is hovered */}
-                            <button
-                              onClick={() => setBrowsingProvider(provider.id)}
-                              aria-label="Browse files"
-                              className="
-          lime relative cursor-pointer  overflow-hidden rounded-full p-0.5
-          tracking-tight uppercase
-          transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-          w-auto px-2
-          group-has-[.disconnect-btn:hover]/actions:w-6
-          group-has-[.disconnect-btn:hover]/actions:px-1
-        "
-                            >
-                              <span
-                                className="
-            block transition-all duration-200 ease-out
-            group-has-[.disconnect-btn:hover]/actions:opacity-0
-            group-has-[.disconnect-btn:hover]/actions:-translate-y-1
-            group-has-[.disconnect-btn:hover]/actions:scale-90
-          "
-                              >
-                                Browse
-                              </span>
-                              <span
-                                className="
-            pointer-events-none absolute inset-0 flex items-center justify-center
-            opacity-0 translate-y-1 scale-90
-            transition-all duration-200 delay-0 ease-out
-            group-has-[.disconnect-btn:hover]/actions:opacity-100
-            group-has-[.disconnect-btn:hover]/actions:translate-y-0
-            group-has-[.disconnect-btn:hover]/actions:scale-100
-          "
-                              >
-                                <FolderOpen className="h-4 w-4" />
-                              </span>
-                            </button>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (provider.browseOnly) {
+                            onUnsplashClick?.();
+                          } else {
+                            localFileInputRef.current?.click();
+                          }
+                        }}
+                        aria-label={`Browse ${provider.name}`}
+                        className="lime cursor-pointer hidden font-mono text-xs rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
+                      >
+                        Browse
+                      </button>
 
-                            {/* Disconnect expands from icon to text */}
-                            <button
-                              onClick={() => void handleDisconnect(provider.id)}
-                              disabled={disconnecting === provider.id}
-                              aria-label="Disconnect"
-                              className="
-          disconnect-btn group/disconnect
-          lime relative ml-0.5 cursor-pointer overflow-hidden rounded-full
-          p-0.5 tracking-tight uppercase
-          transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-          w-6 px-1
-          hover:w-[78px] hover:px-2
-        "
-                            >
-                              {disconnecting === provider.id ? (
-                                <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  {/* Icon shown by default, hidden while hovering */}
-                                  <span
-                                    className="
-                flex items-center justify-center
-                transition-all duration-200 ease-out
-                group-hover/disconnect:opacity-0
-                group-hover/disconnect:scale-90
-                group-hover/disconnect:rotate-45
-              "
-                                  >
-                                    <CirclePower className="h-4 w-4" />
-                                  </span>
-
-                                  {/* Text replaces the icon on hover */}
-                                  <span
-                                    className="
-                pointer-events-none absolute inset-0 flex items-center justify-center
-                whitespace-nowrap opacity-0 scale-95
-                transition-all duration-200 delay-75 ease-out
-                group-hover/disconnect:opacity-100
-                group-hover/disconnect:scale-100
-              "
-                                  >
-                                    Disconnect
-                                  </span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => void handleConnect(provider.id)}
-                            disabled={provider.loading}
-                            className="lime cursor-pointer rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
-                          >
-                            {provider.loading ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : provider.connected && provider.expired ? (
-                              "Reconnect"
-                            ) : (
-                              "Connect"
-                            )}
-                          </button>
-                        )}
-                      </div>
+                      {provider.local && (
+                        <input
+                          ref={localFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(event) => {
+                            void handleLocalFiles(event.currentTarget.files);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
+            );
+          }
+
+         return (
+           <div key={provider.id}>
+             {categoryLabel && (
+               <p className="mb-2 mono uppercase tracking-tight text-white text-xs pb-1">
+                 {categoryLabel}
+               </p>
+             )}
+             <div
+               onClick={() => setBrowsingProvider(provider.id)}
+               className="group cursor-pointer border px-1 border-white/20 rounded w-full hover:border-white/20 transition"
+             >
+               <div className="flex items-center gap-1 -ml-1">
+                 {/* Icon */}
+                 <div className="flex items-center justify-center w-8 h-7 rounded border-white/10 shrink-0">
+                   <Icon className="w-4 h-4 text-white/80" />
+                 </div>
+
+                 {/* Content */}
+                 <div className="flex w-full min-w-0 flex-col">
+                   {/* Header */}
+                   <div className="flex min-w-0 w-full items-start justify-between">
+                     <div className="flex w-full justify-between min-w-0">
+                       <p className="truncate mono text-xs uppercase tracking-tight text-white">
+                         {provider.name}
+                       </p>{" "}
+                       <div className="flex font-mono text-xs">
+                         {provider.connected && !provider.expired ? (
+                           <div className="group/actions flex items-center">
+                             {/* Browse collapses only when Disconnect is hovered */}
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setBrowsingProvider(provider.id);
+                               }}
+                               aria-label="Browse files"
+                               className="
+        lime relative cursor-pointer hidden flex overflow-hidden rounded-full p-0.5
+        tracking-tight uppercase
+        transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+        w-auto px-2
+        group-has-[.disconnect-btn:hover]/actions:w-6
+        group-has-[.disconnect-btn:hover]/actions:px-1
+      "
+                             >
+                               <span
+                                 className="
+          block transition-all duration-200 ease-out
+          group-has-[.disconnect-btn:hover]/actions:opacity-0
+          group-has-[.disconnect-btn:hover]/actions:-translate-y-1
+          group-has-[.disconnect-btn:hover]/actions:scale-90
+        "
+                               >
+                                 Browse
+                               </span>
+                               <span
+                                 className="
+          pointer-events-none absolute inset-0 flex items-center justify-center
+          opacity-0 translate-y-1 scale-90
+          transition-all duration-200 delay-0 ease-out
+          group-has-[.disconnect-btn:hover]/actions:opacity-100
+          group-has-[.disconnect-btn:hover]/actions:translate-y-0
+          group-has-[.disconnect-btn:hover]/actions:scale-100
+        "
+                               >
+                                 <FolderOpen className="h-4 w-4" />
+                               </span>
+                             </button>
+
+                             {/* Disconnect expands from icon to text */}
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 void handleDisconnect(provider.id);
+                               }}
+                               disabled={disconnecting === provider.id}
+                               aria-label="Disconnect"
+                               className="
+        disconnect-btn group/disconnect
+        lime relative ml-0.5 cursor-pointer overflow-hidden rounded-full
+        p-0.5 tracking-tight uppercase
+        transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+        w-6 px-1
+        hover:w-[78px] hover:px-2
+      "
+                             >
+                               {disconnecting === provider.id ? (
+                                 <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                               ) : (
+                                 <>
+                                   {/* Icon shown by default, hidden while hovering */}
+                                   <span
+                                     className="
+              flex items-center justify-center
+              transition-all duration-200 ease-out
+              group-hover/disconnect:opacity-0
+              group-hover/disconnect:scale-90
+              group-hover/disconnect:rotate-45
+            "
+                                   >
+                                     <CirclePower className="h-4 w-4" />
+                                   </span>
+
+                                   {/* Text replaces the icon on hover */}
+                                   <span
+                                     className="
+              pointer-events-none absolute inset-0 flex items-center justify-center
+              whitespace-nowrap opacity-0 scale-95
+              transition-all duration-200 delay-75 ease-out
+              group-hover/disconnect:opacity-100
+              group-hover/disconnect:scale-100
+            "
+                                   >
+                                     Disconnect
+                                   </span>
+                                 </>
+                               )}
+                             </button>
+                           </div>
+                         ) : (
+                           <button
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               void handleConnect(provider.id);
+                             }}
+                             disabled={provider.loading}
+                             className="lime cursor-pointer rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
+                           >
+                             {provider.loading ? (
+                               <Loader2 className="h-3 w-3 animate-spin" />
+                             ) : provider.connected && provider.expired ? (
+                               "Reconnect"
+                             ) : (
+                               "Connect"
+                             )}
+                           </button>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         );
         })}
       </div>
 
       {/* Footer */}
-      <div className="mt-auto  pt-4 ">
+      <div className="mt-auto pt-4">
         <p className="text-[10px] uppercase tracking-tight mono text-white">
-          your files stay in your cloud storage. Reflow only imports images you
-          explicitly choose to download.
+          Your files stay in your cloud or local storage. See our{" "}
+          <a
+            href="https://reflow.so/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            privacy policy
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://reflow.so/terms-of-service"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            terms of service
+          </a>
+          .
         </p>
       </div>
     </div>
@@ -1605,8 +1746,8 @@ const ExportSection = ({
 }) => (
   <div className="flex flex-col items-center gap-4">
     <IconButton
-      icon={Cable}
-      tooltip="Connect external storage"
+      icon={HardDrive}
+      tooltip="Files storage"
       isActive={activePanel === "connect"}
       onClick={() =>
         onPanelChange(activePanel === "connect" ? null : "connect")
@@ -1639,6 +1780,7 @@ export const Sidebar = ({
   gridSettings,
   onGridSettingsChange,
   onImportCloudFile,
+  onUnsplashClick,
   onClosePanel,
   canvasName,
   activeCanvasId,
@@ -1799,6 +1941,7 @@ export const Sidebar = ({
           <ConnectPanel
             onClose={handleClose}
             onImportCloudFile={onImportCloudFile}
+            onUnsplashClick={onUnsplashClick}
             activeCanvasId={activeCanvasId}
           />
         );

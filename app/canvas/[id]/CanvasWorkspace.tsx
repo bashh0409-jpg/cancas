@@ -162,9 +162,9 @@ export default function CanvasWorkspace({
   const webResizeRef = useRef<NodeResizeState | null>(null);
   const skipSaveRef = useRef(true);
   const [isClientReady, setIsClientReady] = useState(false);
- const [canvasCursorTool, setCanvasCursorTool] = useState<"pointer" | "hand">(
-   "hand",
- );
+  const [canvasCursorTool, setCanvasCursorTool] = useState<"pointer" | "hand">(
+    "hand",
+  );
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveDelayMsRef = useRef(1200);
   const lastServerUpdatedAtRef = useRef(serverUpdatedAt);
@@ -2183,8 +2183,12 @@ export default function CanvasWorkspace({
           const overflowY = style.overflowY;
           const overflowX = style.overflowX;
 
-          const isScrollableY = (overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight;
-          const isScrollableX = (overflowX === "auto" || overflowX === "scroll") && el.scrollWidth > el.clientWidth;
+          const isScrollableY =
+            (overflowY === "auto" || overflowY === "scroll") &&
+            el.scrollHeight > el.clientHeight;
+          const isScrollableX =
+            (overflowX === "auto" || overflowX === "scroll") &&
+            el.scrollWidth > el.clientWidth;
 
           if (isScrollableY || isScrollableX) {
             // Stop propagation so the canvas wheel listener doesn't receive
@@ -2201,10 +2205,15 @@ export default function CanvasWorkspace({
       }
     }
 
-    document.addEventListener("wheel", stopWheelFromBubbling, { passive: false, capture: true });
+    document.addEventListener("wheel", stopWheelFromBubbling, {
+      passive: false,
+      capture: true,
+    });
 
     return () => {
-      document.removeEventListener("wheel", stopWheelFromBubbling, { capture: true });
+      document.removeEventListener("wheel", stopWheelFromBubbling, {
+        capture: true,
+      });
     };
   }, []);
 
@@ -2374,16 +2383,28 @@ export default function CanvasWorkspace({
         const overflowY = style.overflowY;
         const overflowX = style.overflowX;
 
-        const canScrollY = (overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight;
+        const canScrollY =
+          (overflowY === "auto" || overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight;
         if (canScrollY) {
           if (event.deltaY < 0 && el.scrollTop > 0) return; // scrolling up and element can scroll up
-          if (event.deltaY > 0 && el.scrollTop + el.clientHeight < el.scrollHeight) return; // scrolling down and can scroll down
+          if (
+            event.deltaY > 0 &&
+            el.scrollTop + el.clientHeight < el.scrollHeight
+          )
+            return; // scrolling down and can scroll down
         }
 
-        const canScrollX = (overflowX === "auto" || overflowX === "scroll") && el.scrollWidth > el.clientWidth;
+        const canScrollX =
+          (overflowX === "auto" || overflowX === "scroll") &&
+          el.scrollWidth > el.clientWidth;
         if (canScrollX) {
           if (event.deltaX < 0 && el.scrollLeft > 0) return;
-          if (event.deltaX > 0 && el.scrollLeft + el.clientWidth < el.scrollWidth) return;
+          if (
+            event.deltaX > 0 &&
+            el.scrollLeft + el.clientWidth < el.scrollWidth
+          )
+            return;
         }
       } catch {
         // ignore cross-origin or other errors and continue walking up
@@ -4994,6 +5015,7 @@ export default function CanvasWorkspace({
           activeCanvasId={canvasId}
           canvasName={canvasName}
           canvases={canvases}
+          onUnsplashClick={() => setShowUnsplash(true)}
           onRename={renameCanvas}
           onSwitchCanvas={(slug) => {
             window.location.href = `/canvas/${slug}`;

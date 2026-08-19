@@ -15,6 +15,7 @@ POLAR_CHECKOUT_URL=https://www.swipes.site/billing/checkout
 POLAR_SUCCESS_URL=https://www.swipes.site/billing/success
 POLAR_CANCEL_URL=https://www.swipes.site/billing/cancel
 POLAR_WEBHOOK_URL=https://www.swipes.site/api/billing/webhooks/polar
+POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 REMOVE_BACKGROUND_KEY=your-remove-bg-api-key
 TOPAZ_API_KEY=your-topaz-api-key
 ```
@@ -44,14 +45,14 @@ In Supabase Dashboard → Authentication → URL Configuration:
 
 Update each provider to use these exact production callback URLs:
 
-| Provider       | Callback URL                                                     |
-| -------------- | ---------------------------------------------------------------- |
-| Google sign-in | `https://www.swipes.site/api/auth/callback`                      |
-| Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/work`           |
+| Provider       | Callback URL                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google sign-in | `https://www.swipes.site/api/auth/callback`                                                                                                         |
+| Azure sign-in  | `https://www.swipes.site/api/auth/callback?next=/work`                                                                                              |
 | Figma sign-in  | `https://www.swipes.site/api/auth/callback?next=/work` (add to Supabase's Redirect URLs allow list as `https://www.swipes.site/api/auth/callback*`) |
-| Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback` |
-| OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`     |
-| Dropbox        | `https://www.swipes.site/api/integrations/dropbox/callback`      |
+| Google Drive   | `https://www.swipes.site/api/integrations/google-drive/callback`                                                                                    |
+| OneDrive       | `https://www.swipes.site/api/integrations/onedrive/callback`                                                                                        |
+| Dropbox        | `https://www.swipes.site/api/integrations/dropbox/callback`                                                                                         |
 
 ### Figma OAuth Setup
 
@@ -77,6 +78,7 @@ Figma is a **native Supabase OAuth provider**. Configure it entirely in the Supa
 - Polar checkout success URL: `https://www.swipes.site/billing/success`
 - Polar checkout cancel URL: `https://www.swipes.site/billing/cancel`
 - Polar webhook: `https://www.swipes.site/api/billing/webhooks/polar`
+- Polar webhook secret: set `POLAR_WEBHOOK_SECRET` to the signing secret from the Polar webhook endpoint configuration.
 
 ## Deployment checklist
 

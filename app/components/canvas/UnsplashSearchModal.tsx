@@ -116,10 +116,10 @@ export function UnsplashSearchModal({
   return (
     <div className="fixed inset-0 z-[300] flex">
       {/* Backdrop */}
-      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="flex- ml-12 bg-black/40" onClick={onClose} />
 
       {/* Sidebar panel — matches ConnectPanel style */}
-      <div className="w-72 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col overflow-y-auto">
+      <div className="w-60 h-screen bg-[#212126] border-l border-white/10 p-4 flex flex-col overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 mb-2 ">
           <h3 className="text-white flex items-center gap-2 text-xs mono uppercase tracking-tight">
@@ -179,25 +179,21 @@ export function UnsplashSearchModal({
 
         {/* Results grid */}
         <div className="flex-1 overflow-y-auto scrollbar-hidden">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1">
             {results.map((image) => (
               <button
                 key={image.id}
                 type="button"
                 onClick={() => onSelectImage(image)}
-                className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded border border-white/10 bg-[#1a1a1e] transition hover:border-white/30"
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-xs border border-white/10 bg-[#1a1a1e] transition hover:border-white/30"
               >
                 <img
                   src={image.urls.small}
                   alt={image.alt}
-                  className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                  className="h-full w-full object-cover transition duration-200 group-hover:scale-104"
                   loading="lazy"
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="truncate text-[9px] text-white/80">
-                    {image.photographer}
-                  </p>
-                </div>
+               
               </button>
             ))}
           </div>
