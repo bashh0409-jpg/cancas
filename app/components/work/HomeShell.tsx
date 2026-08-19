@@ -23,6 +23,7 @@ import {
   ArrowRightFromLine,
 } from "lucide-react";
 import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
+import type { CreateCanvasResult } from "@/app/work/actions";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { CreditsBadge } from "@/app/components/work/CreditsBadge";
@@ -64,7 +65,7 @@ interface HomeShellProps {
   projectsError: string | null;
   errorMessage: string | undefined;
 
-  createCanvasAction: (idempotencyKey: string) => Promise<void>;
+  createCanvasAction: (idempotencyKey: string) => Promise<CreateCanvasResult>;
   signOut: () => Promise<void>;
   deleteAccountAction: (verificationCode: string) => Promise<void>;
   profile: {
@@ -115,8 +116,6 @@ export function AccountCard({
   const router = useRouter();
   const region = useUserRegion();
   const cardRef = useRef<HTMLDivElement>(null);
-
-  
 
   // Mount animation
   useEffect(() => {
@@ -710,7 +709,6 @@ export function HomeShell({
 
         {/* ── Bottom links ── */}
         <div className="mt-auto flex flex-co gap-0.5 px-1">
-         
           <SidebarLink
             href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
             icon={
@@ -910,7 +908,7 @@ function FilesPage({
   errorMessage: string | undefined;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  createCanvasAction?: (idempotencyKey: string) => Promise<void>;
+  createCanvasAction?: (idempotencyKey: string) => Promise<CreateCanvasResult>;
 }) {
   const filteredCanvases = useMemo(
     () =>

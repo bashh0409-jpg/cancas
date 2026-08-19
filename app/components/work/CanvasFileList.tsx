@@ -1,5 +1,6 @@
 "use client";
 
+import type { CreateCanvasResult } from "@/app/work/actions";
 import type { CanvasListItem } from "@/types/canvas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { showToast } from "./Toast";
 type CanvasFileListProps = {
   canvases: CanvasListItem[];
   isTrash?: boolean;
-  createCanvasAction?: (idempotencyKey: string) => Promise<void>;
+  createCanvasAction?: (idempotencyKey: string) => Promise<CreateCanvasResult>;
   searchQuery?: string;
 };
 
@@ -83,7 +84,14 @@ export function CanvasFileList({
     pendingKeyRef.current = crypto.randomUUID();
     try {
       setCreating(true);
-      await createCanvasAction(pendingKeyRef.current);
+      const result = await createCanvasAction(pendingKeyRef.current);
+      if (result.status === "created") {
+        router.push(`/canvas/${result.slug}`);
+      } else if (result.status === "no_credits") {
+        router.push("/work?error=no_credits");
+      } else {
+        router.push("/signin");
+      }
     } finally {
       pendingKeyRef.current = null;
       setCreating(false);

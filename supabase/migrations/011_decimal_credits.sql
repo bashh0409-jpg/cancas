@@ -1,4 +1,4 @@
--- Canvas creation costs 3.25 credits, so balances and their supporting RPCs
+-- Canvas creation costs 2.25 credits, so balances and their supporting RPCs
 -- need decimal precision. Existing integer balances are preserved as .00.
 
 alter table public.user_credits
@@ -118,7 +118,7 @@ drop function if exists public.create_user_canvas_with_credit_once(uuid, text, i
 create function public.create_user_canvas_with_credit_once(
   p_user_id uuid,
   p_name text default 'Untitled',
-  p_credit_amount numeric(12, 2) default 3.25,
+  p_credit_amount numeric(12, 2) default 2,
   p_idempotency_key text default null
 )
 returns jsonb

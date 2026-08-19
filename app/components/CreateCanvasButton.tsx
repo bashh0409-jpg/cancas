@@ -1,17 +1,37 @@
 "use client";
 
+import type { CreateCanvasResult } from "@/app/work/actions";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FilePlusCorner, Loader2} from "lucide-react";
+
+function navigateAfterCreate(
+  router: ReturnType<typeof useRouter>,
+  result: CreateCanvasResult,
+) {
+  if (result.status === "created") {
+    router.push(`/canvas/${result.slug}`);
+    return;
+  }
+
+  if (result.status === "no_credits") {
+    router.push("/work?error=no_credits");
+    return;
+  }
+
+  router.push("/signin");
+}
 
 export function CreateCanvasButton({
   createCanvasAction,
   collapsed,
   labelRef,
 }: {
-  createCanvasAction: (idempotencyKey: string) => Promise<void>;
+  createCanvasAction: (idempotencyKey: string) => Promise<CreateCanvasResult>;
   collapsed: boolean;
   labelRef: (el: HTMLElement | null) => void;
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const pendingKeyRef = useRef<string | null>(null);
 
@@ -24,7 +44,8 @@ export function CreateCanvasButton({
 
     try {
       setLoading(true);
-      await createCanvasAction(pendingKeyRef.current);
+      const result = await createCanvasAction(pendingKeyRef.current);
+      navigateAfterCreate(router, result);
     } finally {
       pendingKeyRef.current = null;
       setLoading(false);
