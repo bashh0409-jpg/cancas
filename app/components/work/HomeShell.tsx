@@ -62,6 +62,7 @@ interface HomeShellProps {
   plan: SubscriptionPlan;
   canvases: CanvasListItem[];
   credits: number;
+  countryCode?: string;
   projectsError: string | null;
   errorMessage: string | undefined;
 
@@ -935,7 +936,7 @@ function FilesPage({
               {errorMessage}
             </div>
           )}
-          <CreditsBadge credits={credits} />
+          <CreditsBadge credits={credits} countryCode={countryCode} />
         </div>
       </div>
       <div className="">

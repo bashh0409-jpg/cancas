@@ -67,6 +67,7 @@ export default async function HomePage({
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[1] ??
     "User";
   const photoUrl = user.user_metadata?.avatar_url as string | undefined;
+  const countryCode = (user.user_metadata?.country as string | undefined) ?? "ZA";
 
   let canvases: CanvasListItem[] = [];
   let projectsError: string | null = null;
@@ -146,6 +147,7 @@ export default async function HomePage({
            photoUrl={photoUrl}
            canvases={canvases}
            credits={credits}
+           countryCode={countryCode}
            plan={plan}
            projectsError={projectsError}
            errorMessage={errorMessage}

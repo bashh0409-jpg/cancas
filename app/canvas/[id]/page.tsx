@@ -42,6 +42,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     (user.user_metadata?.full_name as string | undefined)?.split(" ")?.[0] ??
     user.email?.split("@")[0] ??
     "User";
+  const countryCode = (user.user_metadata?.country as string | undefined) ?? "ZA";
 
   return (
     <CanvasPageClient
@@ -55,6 +56,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
       serverUpdatedAt={canvas.updated_at}
       signOutAction={signOut}
       userId={user.id}
+      countryCode={countryCode}
     />
   );
 }

@@ -14,9 +14,10 @@ type CurrencyData = {
 type CreditsBadgeProps = {
   credits: number;
   className?: string;
+  countryCode?: string;
 };
 
-export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
+export function CreditsBadge({ credits, className, countryCode }: CreditsBadgeProps) {
   const [open, setOpen] = useState(false);
   const [currencyData, setCurrencyData] = useState<CurrencyData>({
     currency: "USD",
@@ -41,7 +42,10 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
       setLoadingCurrency(true);
 
       try {
-        const response = await fetch("/api/currency");
+        const query = countryCode
+          ? `?country=${encodeURIComponent(countryCode)}`
+          : "";
+        const response = await fetch(`/api/currency${query}`);
         const data: CurrencyData = await response.json();
         setCurrencyData(data);
       } catch {
@@ -52,7 +56,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
     }
 
     loadCurrency();
-  }, [open, currencyData.currency, currencyData.rate]);
+  }, [countryCode, open, currencyData.currency, currencyData.rate]);
 
   async function initiateCheckout(planId: string) {
     if (pendingCheckoutKey) {
