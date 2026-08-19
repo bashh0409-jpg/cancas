@@ -39,6 +39,7 @@ import BackgroundAudio from "./components/BackgroundAudio";
 import Swirl from "./components/Swirl";
 import BounceInText from "./components/BounceInText";
 import ReflowIntro from "./components/ReflowIntro";
+import { TrustedBy } from "./components/work/TrustedBy";
 
 interface HomeClientProps {
   user: User | null;
@@ -201,13 +202,13 @@ export default function HomeClient({ user }: HomeClientProps) {
               <a
                 href={accountHref}
                 className="p-1 px-2 gap-2 rounded-full flex items-center transition-colors hover:bg-[#f8ff9a] hover:text-black"
-              >{user && (
+              >
+                {user && (
                   <span>
                     <CircleUserRound className="w-4 h-4" />{" "}
                   </span>
                 )}
                 {accountLabel}
-                
               </a>
             </nav>
           </div>
@@ -223,14 +224,34 @@ export default function HomeClient({ user }: HomeClientProps) {
         >
           <Hero />
         </div>
+        {/* White grid */}
+        <div
+          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+          }}
+        >
+          {/*  <TextScalingAnimation /> */}
+        </div>
         {/* Dark grid */}
         <div
-          className="relative h-screen  bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative flex h-screen items-center justify-center bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
           }}
-        ></div>
+        >
+          <div className="mx-auto my-auto px-4 text-center tracking-tight text-white/80">
+            <p className="font-mono text-sm uppercase">
+              Brands I&apos;d love to work with in the future:
+            </p>
+
+            <div className="">
+              <TrustedBy />
+            </div>
+          </div>
+        </div>
         {/* White grid */}
         <div
           className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
@@ -252,14 +273,16 @@ export default function HomeClient({ user }: HomeClientProps) {
           <ReflowIntro />
         </div>
         {/* White grid */}
+        {/* White grid */}
         <div
-          className="relative h-screen bg-white bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative h-fit bg-white bg-repeat-x"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(80,80,80,0.1) 0px, rgba(80,80,80,0.1) 1px, transparent 1px, transparent 100%)",
+            backgroundSize: "25px 100%",
           }}
         >
-          {/*  <TextScalingAnimation /> */}
+          
         </div>
         {/* Dark grid */}
         <div

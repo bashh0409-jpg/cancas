@@ -202,7 +202,9 @@ export function CreditsBadge({ credits, className, countryCode }: CreditsBadgePr
             </div>
 
             <div className="max-w-7xl mx-auto tracking-tight mt-20 mb-40 text-white/80 text-center px-4">
-              <p>Empowering production grade creative work at:</p>
+              <p className="font-mono text-sm uppercase">
+                Brands I&apos;d love to work with in the future:
+              </p>
               <div>
                 <TrustedBy />
               </div>

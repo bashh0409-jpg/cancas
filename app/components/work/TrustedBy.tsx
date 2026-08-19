@@ -31,7 +31,6 @@ const LOGOS = [
   siWix,
   siTicketmaster,
   siSpotify,
-  siNotion,
   siStripe,
 
   siPanasonic,
@@ -46,8 +45,8 @@ const LOGOS = [
 
 export function TrustedBy() {
   return (
-    <div className="max-w-7xl mx-auto mt-20 mb-40 text-center px-4">
-      <div className="grid grid-cols-5  gap-x-15 gap-y-8 items-center justify-items-center">
+    <div className=" mx-auto mt-10 text-center px-4">
+      <div className="grid grid-cols-4 md:grid-cols-6  gap-x-15 gap-y-8 items-center justify-items-center">
         {LOGOS.map((icon) => (
           <svg
             key={icon.slug}
