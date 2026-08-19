@@ -379,6 +379,7 @@ export function HomeShell({
   photoUrl,
   canvases,
   credits,
+  countryCode,
   projectsError,
   errorMessage,
   createCanvasAction,
@@ -755,6 +756,7 @@ export function HomeShell({
             lastName={lastName}
             canvases={canvases}
             credits={credits}
+            countryCode={countryCode}
             projectsError={projectsError}
             errorMessage={errorMessage}
             searchQuery={searchQuery}
@@ -895,6 +897,7 @@ function FilesPage({
   lastName,
   canvases,
   credits,
+  countryCode,
   projectsError,
   errorMessage,
   searchQuery = "",
@@ -905,6 +908,7 @@ function FilesPage({
   lastName: string;
   canvases: CanvasListItem[];
   credits: number;
+  countryCode?: string;
   projectsError: string | null;
   errorMessage: string | undefined;
   searchQuery?: string;
