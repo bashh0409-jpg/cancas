@@ -10,6 +10,7 @@ import {
 import { PlanCard } from "./PlanCard";
 import { BillingToggle, type BillingCycle } from "./BillingToggle";
 import { TrustedBy } from "./TrustedBy";
+import { formatCredits } from "@/lib/credits/format";
 
 type CurrencyData = {
   currency: string;
@@ -112,7 +113,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
       >
         <Icon />
         <span className="text-sm grotesk tracking-tight">
-          {credits}.00
+          {formatCredits(credits)}
         </span>
         <span className="text-white text-xs  hidden leading-none">credits</span>
       </button>

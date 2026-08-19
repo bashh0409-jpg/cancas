@@ -133,7 +133,7 @@ export async function createUserCanvasWithCreditOnce(
   userId: string,
   idempotencyKey: string,
   name = "Untitled",
-  creditAmount = 2,
+  creditAmount = 3.25,
 ): Promise<{ slug?: string; insufficientCredits: boolean }> {
   const { data, error } = await supabase.rpc(
     "create_user_canvas_with_credit_once",

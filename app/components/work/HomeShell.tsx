@@ -26,6 +26,7 @@ import { CreateCanvasButton } from "@/app/components/CreateCanvasButton";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { CreditsBadge } from "@/app/components/work/CreditsBadge";
+import { formatCredits } from "@/lib/credits/format";
 import { CanvasFileList } from "@/app/components/work/CanvasFileList";
 import type { CanvasListItem } from "@/types/canvas";
 import Tutorials from "./Tutorials";
@@ -225,7 +226,7 @@ export function AccountCard({
           <span>Balance</span>
           <div className="flex grotesk items-center">
             <Icon />
-            <span>{credits}</span>.00
+            <span>{formatCredits(credits)}</span>
           </div>
         </div>
       </div>{" "}

@@ -162,6 +162,9 @@ export default function CanvasWorkspace({
   const webResizeRef = useRef<NodeResizeState | null>(null);
   const skipSaveRef = useRef(true);
   const [isClientReady, setIsClientReady] = useState(false);
+ const [canvasCursorTool, setCanvasCursorTool] = useState<"pointer" | "hand">(
+   "hand",
+ );
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveDelayMsRef = useRef(1200);
   const lastServerUpdatedAtRef = useRef(serverUpdatedAt);
@@ -184,6 +187,25 @@ export default function CanvasWorkspace({
   useEffect(() => {
     viewportRef.current = viewport;
   }, [viewport]);
+
+  useEffect(() => {
+    function handleCanvasCursorChange(event: Event) {
+      const tool = (event as CustomEvent<unknown>).detail;
+
+      if (tool === "pointer" || tool === "hand") {
+        setCanvasCursorTool(tool);
+      }
+    }
+
+    window.addEventListener("canvasai:canvas-cursor", handleCanvasCursorChange);
+
+    return () => {
+      window.removeEventListener(
+        "canvasai:canvas-cursor",
+        handleCanvasCursorChange,
+      );
+    };
+  }, []);
   const [showGridControls, setShowGridControls] = useState(false);
   const [showContentsPanel, setShowContentsPanel] = useState(false);
   const [showGrid, setShowGrid] = useState(initialContent.showGrid);
@@ -4553,7 +4575,9 @@ export default function CanvasWorkspace({
   return (
     <div
       ref={canvasRef}
-      className="absolute inset-0 overflow-hidden cursor-grab"
+      className={`absolute inset-0 overflow-hidden ${
+        canvasCursorTool === "hand" ? "cursor-grab" : "cursor-default"
+      }`}
       onContextMenu={(event) => {
         const rightClickEnabled =
           useCanvasPreferencesStore.getState().rightClickMenu;

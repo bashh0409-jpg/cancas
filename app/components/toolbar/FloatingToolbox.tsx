@@ -3,22 +3,18 @@
 import {
   ArrowLeft,
   FileText,
-  Folder,
   FolderOpen,
-  Group,
   Hand,
   HardDrive,
   ImageIcon,
   Import,
-  LayoutGrid,
-  Library,
   LibraryBig,
   Loader2,
   Mic,
+  SquareMousePointer,
   Network,
   Redo2,
   Search,
-  Server,
   Square,
   StickyNote,
   Undo2,
@@ -41,6 +37,7 @@ import type { LibraryAsset } from "@/lib/canvas/assetLibrary";
 
 function ToolboxButton({
   active = false,
+  selected = false,
   disabled = false,
   children,
   label,
@@ -49,6 +46,7 @@ function ToolboxButton({
   textColor,
 }: {
   active?: boolean;
+  selected?: boolean;
   disabled?: boolean;
   children: ReactNode;
   label: string;
@@ -59,12 +57,14 @@ function ToolboxButton({
   return (
     <button
       aria-label={label}
+      aria-pressed={selected}
       disabled={disabled}
       title={label}
       type="button"
       onClick={onClick}
       className={[
         "flex h-7.5 w-7.5 cursor-pointer items-center justify-center rounded transition disabled:cursor-not-allowed disabled:opacity-50",
+        selected && "lime text-black",
         active
           ? " bg-red-500 text-white/60 shadow-[0_0_0_4px_rgba(239,68,68,0.14)]"
           : bgColor && textColor
@@ -79,6 +79,9 @@ function ToolboxButton({
 
 export function FloatingToolbox() {
   const [isRecording, setIsRecording] = useState(false);
+  const [canvasCursorTool, setCanvasCursorTool] = useState<"pointer" | "hand">(
+    "hand",
+  );
   const [isRequestingMicrophone, setIsRequestingMicrophone] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [showMicrophonePermissionHelp, setShowMicrophonePermissionHelp] =
@@ -117,6 +120,13 @@ export function FloatingToolbox() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef<number>(0);
   const isMountedRef = useRef(true);
+
+  function setCanvasCursor(tool: "pointer" | "hand") {
+    setCanvasCursorTool(tool);
+    window.dispatchEvent(
+      new CustomEvent("canvasai:canvas-cursor", { detail: tool }),
+    );
+  }
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -359,15 +369,30 @@ export function FloatingToolbox() {
         className="fixed bottom-5 gap-0.5 left-1/2 z-50 flex -translate-x-1/2 items-center  rounded-lg border border-white/5 bg-[#212126] p-1  shadow-[0_12px_32px_rgba(0,0,0,0.24)] backdrop-blur-xl"
         role="toolbar"
       >
-        {" "}
         <ToolboxButton
-          label="Add sticky note"
-          onClick={console.log}
-          bgColor="bg-[#f8ff9a]"
-          textColor="text-black"
+          selected
+          label={
+            canvasCursorTool === "pointer"
+              ? "Use hand cursor"
+              : "Use pointer cursor"
+          }
+          onClick={() =>
+            setCanvasCursor(canvasCursorTool === "pointer" ? "hand" : "pointer")
+          }
+          bgColor={canvasCursorTool === "hand" ? "bg-[#f8ff9a]" : undefined}
+          textColor={canvasCursorTool === "hand" ? "text-black" : undefined}
         >
-          <Hand className="h-5 w-5 " strokeWidth={1.5} />
+          {canvasCursorTool === "pointer" ? (
+            <SquareMousePointer
+              className="h-5 text-black w-5"
+              strokeWidth={1.5}
+            />
+          ) : (
+            <Hand className="h-5 w-5" strokeWidth={1.5} />
+          )}
         </ToolboxButton>
+
+        <span className="mx-1 h-6 w-[1px] bg-white/10" />
         <ToolboxButton label="Add sticky note" onClick={activateCanvasTextTool}>
           <StickyNote className="h-5 w-5 rotate-90" strokeWidth={1.5} />
         </ToolboxButton>
@@ -416,13 +441,15 @@ export function FloatingToolbox() {
         </ToolboxButton>
         <ToolboxButton
           label={`Tidy up ${tidyMode === "grouped" ? "horizontally" : "vertically"}`}
-          onClick={() =>
-            setTidyMode((current) => {
-              const next = current === "grouped" ? "grid" : "grouped";
-              activateCanvasTidyUpTool(next);
-              return next;
-            })
-          }
+          onClick={() => {
+            const next = tidyMode === "grouped" ? "grid" : "grouped";
+
+            // State updater functions may be evaluated while React renders.
+            // Dispatching from one would synchronously update CanvasWorkspace
+            // during that render.
+            activateCanvasTidyUpTool(next);
+            setTidyMode(next);
+          }}
         >
           {tidyMode === "grouped" ? (
             <Network className="w-5 h-5 stroke-[1.5]" />
@@ -433,19 +460,18 @@ export function FloatingToolbox() {
         <span className="mx-1 hidden h-6 w-[1px] bg-white/10" />
         <span className="hidden">
           <ToolboxButton
-          label="Undo"
-          onClick={() => document.execCommand("undo")}
-        >
-          <Undo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
-        </ToolboxButton>
-        <ToolboxButton
-          label="Redo"
-          onClick={() => document.execCommand("redo")}
-        >
-          <Redo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
-        </ToolboxButton>
+            label="Undo"
+            onClick={() => document.execCommand("undo")}
+          >
+            <Undo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
+          </ToolboxButton>
+          <ToolboxButton
+            label="Redo"
+            onClick={() => document.execCommand("redo")}
+          >
+            <Redo2 className="h-5 w-5 text-white/40" strokeWidth={1.5} />
+          </ToolboxButton>
         </span>
-        
       </div>
       {recordingError && (
         <div

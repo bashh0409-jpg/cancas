@@ -1,5 +1,4 @@
 import { getUserCanvas, getUserCanvases } from "@/lib/canvas/repository";
-import { getUserCredits } from "@/lib/credits/repository";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { EMPTY_CANVAS_CONTENT, parseCanvasContent } from "@/types/canvas";
 import { notFound, redirect } from "next/navigation";

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader, SquareActivity, SquareUserRound } from "lucide-react";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
+import { formatCredits } from "@/lib/credits/format";
 
 type TaskProps = {
   credits: number;
@@ -163,7 +164,7 @@ const TaskView = ({
         <div className="flex  w-full justify-between items-center gap-1">
           <span className="text-xs cursor-pointer font-mono uppercase  flex items-center tracking-tight text-white">
             <Icon />
-            <span className="grotesk mr-1">{credits.toFixed(2)}</span>
+            <span className="grotesk mr-1">{formatCredits(credits)}</span>
           </span>
           <div className="flex gap-1">
             <button
