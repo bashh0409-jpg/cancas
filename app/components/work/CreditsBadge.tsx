@@ -1,14 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  X,
-  CheckIcon,
-  ArrowRightIcon,
-  WalletCards,
-} from "lucide-react";
+import { X, CheckIcon, ArrowRightIcon, WalletCards } from "lucide-react";
 import { PlanCard } from "./PlanCard";
-import { BillingToggle, type BillingCycle } from "./BillingToggle";
 import { TrustedBy } from "./TrustedBy";
 import { formatCredits } from "@/lib/credits/format";
 
@@ -28,7 +22,6 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
     currency: "USD",
     rate: 1,
   });
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [loadingCurrency, setLoadingCurrency] = useState(false);
   const [pendingCheckoutKey, setPendingCheckoutKey] = useState<string | null>(
     null,
@@ -76,7 +69,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan: planId,
-          billingCycle,
+          billingCycle: "monthly",
           countryCode,
           returnUrl: `${window.location.origin}/billing/success`,
           cancelUrl: `${window.location.origin}/billing/cancel`,
@@ -98,7 +91,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
     }
   }
 
-  const plans = buildPlans(currencyData, billingCycle, initiateCheckout);
+  const plans = buildPlans(currencyData, initiateCheckout);
 
   return (
     <>
@@ -137,7 +130,6 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
                 Select a plan that fits your needs. No attachments, cancel
                 anytime.
               </p>
-              <BillingToggle value={billingCycle} onChange={setBillingCycle} />
               {loadingCurrency && (
                 <p className="text-white/40 mono uppercase  text-xs mt-3">
                   Detecting your currency…
@@ -151,7 +143,7 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
                   key={plan.name}
                   plan={plan}
                   currency={currencyData.currency}
-                  annual={billingCycle === "annually"}
+                  annual={false}
                 />
               ))}
             </div>
@@ -221,12 +213,10 @@ export function CreditsBadge({ credits, className }: CreditsBadgeProps) {
 // Keeps plan data co-located and reactive to currency changes
 function buildPlans(
   currency: CurrencyData,
-  billingCycle: BillingCycle,
   initiateCheckout: (planId: string) => Promise<void>,
 ) {
-  const discount = billingCycle === "annually" ? 0.15 : 0;
   const fmt = (usd: number) =>
-    formatPrice(usd * (1 - discount), currency.currency, currency.rate);
+    formatPrice(usd, currency.currency, currency.rate);
 
   return [
     {
@@ -276,8 +266,8 @@ function buildPlans(
       description:
         "Built for advanced creators shipping products, designs, and AI workflows.",
       credits: {
-        amount: "5,000 monthly credits",
-        equivalence: "=5,000 AI actions",
+        amount: "2,500 monthly credits",
+        equivalence: "=2,500 AI actions",
       },
       features: [
         "Access to premium reasoning models",
@@ -294,12 +284,12 @@ function buildPlans(
     {
       name: "Ultra",
       popular: false,
-      price: fmt(79),
+      price: fmt(65),
       description:
         "High-compute plan for heavy AI usage and large creative pipelines.",
       credits: {
-        amount: "20,000 monthly credits",
-        equivalence: "=12,000 AI actions",
+        amount: "5,000 monthly credits",
+        equivalence: "=5,000 AI actions",
       },
       features: [
         "Everything in Pro",

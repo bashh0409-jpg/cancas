@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    if (!["monthly", "annual"].includes(normalizedBillingCycle)) {
+    if (normalizedBillingCycle !== "monthly") {
       return NextResponse.json(
         { error: "Invalid billing cycle" },
         { status: 400 },

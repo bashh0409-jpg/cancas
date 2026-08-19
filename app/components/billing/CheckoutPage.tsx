@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckIcon, ArrowRightIcon, X } from "lucide-react";
 import { PlanCard } from "@/app/components/work/PlanCard";
-import { BillingToggle, type BillingCycle } from "@/app/components/work/BillingToggle";
 
 type CurrencyData = {
   currency: string;
@@ -22,8 +21,9 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
     currency: "USD",
     rate: 1,
   });
-  const [selectedPlan, setSelectedPlan] = useState<"starter" | "pro" | "ultra">("pro");
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<"starter" | "pro" | "ultra">(
+    "pro",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingCurrency, setLoadingCurrency] = useState(true);
@@ -52,7 +52,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             plan,
-            billingCycle,
+            billingCycle: "monthly",
             countryCode: userCountry,
             returnUrl: `${window.location.origin}/billing/success`,
             cancelUrl: `${window.location.origin}/billing/cancel`,
@@ -73,7 +73,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
         setIsLoading(false);
       }
     },
-    [billingCycle, userCountry, pendingKey],
+    [userCountry, pendingKey],
   );
 
   const selectPlan = useCallback(
@@ -120,8 +120,8 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
         description:
           "Built for advanced creators shipping products, designs, and AI workflows.",
         credits: {
-          amount: "5,000 monthly",
-          equivalence: "=5,000 AI actions",
+          amount: "2,500 monthly",
+          equivalence: "=2,500 AI actions",
         },
         features: [
           "Access to premium reasoning models",
@@ -138,13 +138,13 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
       },
       {
         name: "Ultra",
-        price: fmt(79),
+        price: fmt(65),
         popular: selectedPlan === "ultra",
         description:
           "High-compute plan for heavy AI usage and large creative pipelines.",
         credits: {
-          amount: "20,000 monthly",
-          equivalence: "=12,000 AI actions",
+          amount: "5,000 monthly",
+          equivalence: "=5,000 AI actions",
         },
         features: [
           "Everything in Pro",
@@ -181,7 +181,6 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
             Upgrade your account and unlock unlimited AI-powered features
           </p>
 
-          <BillingToggle value={billingCycle} onChange={setBillingCycle} />
           {loadingCurrency && (
             <p className="text-white/40 grotesk text-xs mt-3">
               Detecting your currency…
@@ -196,7 +195,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
               key={plan.name}
               plan={plan}
               currency={currencyData.currency}
-              annual={billingCycle === "annually"}
+              annual={false}
             />
           ))}
         </div>

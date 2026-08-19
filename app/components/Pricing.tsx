@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, ArrowRightIcon } from "lucide-react";
 import { PlanCard } from "./work/PlanCard";
-import { BillingToggle, type BillingCycle } from "./work/BillingToggle";
 import { TrustedBy } from "./work/TrustedBy";
 
 type CurrencyData = {
@@ -11,14 +10,11 @@ type CurrencyData = {
   rate: number;
 };
 
-const ANNUAL_DISCOUNT = 0.15;
-
 export function Pricing() {
   const [currencyData, setCurrencyData] = useState<CurrencyData>({
     currency: "USD",
     rate: 1,
   });
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [loadingCurrency, setLoadingCurrency] = useState(true);
 
   useEffect(() => {
@@ -29,7 +25,7 @@ export function Pricing() {
       .finally(() => setLoadingCurrency(false));
   }, []);
 
-  const plans = buildPlans(currencyData, billingCycle);
+  const plans = buildPlans(currencyData);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -43,7 +39,6 @@ export function Pricing() {
             Select a plan that fits your needs. No attachments, cancel anytime.
           </p>
 
-          <BillingToggle value={billingCycle} onChange={setBillingCycle} />
           {loadingCurrency && (
             <p className="text-white/40 grotesk text-xs mt-3">
               Detecting your currency…
@@ -58,7 +53,7 @@ export function Pricing() {
               key={plan.name}
               plan={plan}
               currency={currencyData.currency}
-              annual={billingCycle === "annually"}
+              annual={false}
             />
           ))}
         </div>
@@ -122,10 +117,9 @@ export function Pricing() {
 
 // Identical to CreditsBadge — kept co-located so Pricing is self-contained
 // if you ever want to diverge plans between the two surfaces.
-function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
-  const discount = billingCycle === "annually" ? ANNUAL_DISCOUNT : 0;
+function buildPlans(currency: CurrencyData) {
   const fmt = (usd: number) =>
-    formatPrice(usd * (1 - discount), currency.currency, currency.rate);
+    formatPrice(usd, currency.currency, currency.rate);
 
   return [
     {
@@ -175,8 +169,8 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
       description:
         "Built for advanced creators shipping products, designs, and AI workflows.",
       credits: {
-        amount: "5,000 monthly",
-        equivalence: "=5,000 AI actions",
+        amount: "2,500 monthly",
+        equivalence: "=2,500 AI actions",
       },
       features: [
         "Access to premium reasoning models",
@@ -193,12 +187,12 @@ function buildPlans(currency: CurrencyData, billingCycle: BillingCycle) {
     {
       name: "Ultra",
       popular: false,
-      price: fmt(79),
+      price: fmt(65),
       description:
         "High-compute plan for heavy AI usage and large creative pipelines.",
       credits: {
-        amount: "20,000 monthly",
-        equivalence: "=12,000 AI actions",
+        amount: "5,000 monthly",
+        equivalence: "=5,000 AI actions",
       },
       features: [
         "Everything in Pro",

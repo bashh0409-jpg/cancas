@@ -25,8 +25,8 @@ export async function grantPlanCredits(
   idempotencyKey: string,
   scope: string,
 ): Promise<void> {
-  const cycleMultiplier = billingCycle === "annual" ? 12 : 1;
-  const creditsToGrant = getPlanDetails(plan).monthlyCredits * cycleMultiplier;
+  void billingCycle;
+  const creditsToGrant = getPlanDetails(plan).monthlyCredits;
 
   if (creditsToGrant <= 0) {
     return;

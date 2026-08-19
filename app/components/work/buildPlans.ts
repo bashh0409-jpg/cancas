@@ -26,14 +26,14 @@ export function buildPlans(currencyData: CurrencyData): PricingPlan[] {
     {
       name: "Pro",
       description: "For advanced creators and teams",
-      monthlyCredits: 5000,
+      monthlyCredits: 2500,
       price: convertPrice(25),
       highlighted: true,
     },
     {
       name: "Ultra",
       description: "Maximum power and scale",
-      monthlyCredits: 20000,
+      monthlyCredits: 5000,
       price: convertPrice(50),
     },
   ];

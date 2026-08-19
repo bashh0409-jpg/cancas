@@ -249,8 +249,8 @@ export function getPlanDetails(plan: SubscriptionPlan): {
       monthlyCredits: 1000,
       displayName: "Starter Plan",
     },
-    pro: { name: "Pro", monthlyCredits: 5000, displayName: "Pro Plan" },
-    ultra: { name: "Ultra", monthlyCredits: 20000, displayName: "Ultra Plan" },
+    pro: { name: "Pro", monthlyCredits: 2500, displayName: "Pro Plan" },
+    ultra: { name: "Ultra", monthlyCredits: 5000, displayName: "Ultra Plan" },
   };
 
   return plans[plan];
