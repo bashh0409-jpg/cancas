@@ -3,19 +3,16 @@ import Link from "next/link";
 
 export default function BillingCancel() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white font-mono text-black flex items-center justify-center p-4">
       <div className="text-center max-w-md">
-        <div className="flex justify-center mb-6">
-          <XCircle className="w-16 h-16 text-yellow-500" />
-        </div>
-
-        <h1 className="text-3xl font-bold mb-2">Payment Canceled</h1>
-
-        <p className="text-gray-400 mb-8">
-          Your payment was not completed. Your account remains on the free plan.
+        <h1 className="text-xl uppercase tracking-tight mono mb-2">
+          Subscription cancelled!
+        </h1>
+        <p className="mt-2 font-mono font-mono tracking-tight uppercase text-black/60">
+          oops, Your payment was not completed. Your account remains on the free
+          plan.
         </p>
-
-        <div className="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
+        <div className="bg-gray-800 hidden rounded-lg p-4 mb-8 border border-gray-700">
           <p className="text-sm text-gray-400 mb-3">{`What's next?`}</p>
           <ul className="text-left space-y-2 text-sm">
             <li className="flex items-center gap-2">
@@ -33,26 +30,26 @@ export default function BillingCancel() {
           </ul>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex gap-2 items-center justify-center mt-5">
           <Link
             href="/billing/checkout"
-            className="block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
+            className="flex items-center cursor-pointer w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full  transition-colors"
           >
             Try Again
           </Link>
 
           <Link
             href="/work"
-            className="block w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
+            className="flex items-center cursor-pointer w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full  transition-colors"
           >
-            Go to Dashboard
+            Dashboard
           </Link>
 
           <a
-            href="mailto:support@example.com"
-            className="block w-full px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg font-semibold transition-colors text-gray-300"
+            href="mailto:support@swipes.site"
+            className="flex items-center cursor-pointer w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full  transition-colors"
           >
-            Contact Support
+            Support
           </a>
         </div>
       </div>
