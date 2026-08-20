@@ -19,6 +19,7 @@ import {
   type UserCreditsUpdatedDetail,
 } from "@/lib/credits/events";
 import TaskView from "@/app/components/TaskView";
+import type { SubscriptionPlan } from "@/lib/subscriptions/repository";
 
 type ImageSyncStats = {
   synced: number;
@@ -37,6 +38,7 @@ type CanvasPageClientProps = {
   lastName: string;
   credits: number;
   countryCode?: string;
+  plan: SubscriptionPlan;
   signOutAction: (formData: FormData) => Promise<void>;
 };
 
@@ -49,6 +51,7 @@ export default function CanvasPageClient({
   userId,
   credits,
   countryCode,
+  plan,
 }: CanvasPageClientProps) {
   const [canvasTitle, setCanvasTitle] = useState(canvasName);
   const [currentCredits, setCurrentCredits] = useState(credits);
@@ -145,6 +148,7 @@ export default function CanvasPageClient({
       <div className="absolute hidden right-4 top-4 z-50 flex items-center">
         <CreditsBadge
           credits={currentCredits}
+          plan={plan}
           countryCode={countryCode}
           className=" rounded border-white/10 bg-black/75 px-1  shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl hover:bg-black/90"
         />

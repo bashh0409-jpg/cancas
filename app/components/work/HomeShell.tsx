@@ -756,6 +756,7 @@ export function HomeShell({
             lastName={lastName}
             canvases={canvases}
             credits={credits}
+            plan={plan}
             countryCode={countryCode}
             projectsError={projectsError}
             errorMessage={errorMessage}
@@ -897,6 +898,7 @@ function FilesPage({
   lastName,
   canvases,
   credits,
+  plan,
   countryCode,
   projectsError,
   errorMessage,
@@ -908,6 +910,7 @@ function FilesPage({
   lastName: string;
   canvases: CanvasListItem[];
   credits: number;
+  plan: SubscriptionPlan;
   countryCode?: string;
   projectsError: string | null;
   errorMessage: string | undefined;
@@ -940,7 +943,11 @@ function FilesPage({
               {errorMessage}
             </div>
           )}
-          <CreditsBadge credits={credits} countryCode={countryCode} />
+          <CreditsBadge
+            credits={credits}
+            plan={plan}
+            countryCode={countryCode}
+          />
         </div>
       </div>
       <div className="">

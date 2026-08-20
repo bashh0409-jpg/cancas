@@ -1,5 +1,6 @@
 import { getUserCanvas, getUserCanvases } from "@/lib/canvas/repository";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
+import { getUserSubscription } from "@/lib/subscriptions/repository";
 import { EMPTY_CANVAS_CONTENT, parseCanvasContent } from "@/types/canvas";
 import { notFound, redirect } from "next/navigation";
 import CanvasPageClient from "./CanvasPageClient";
@@ -44,6 +45,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     "User";
   const countryCode =
     (user.user_metadata?.country as string | undefined) ?? "ZA";
+  const subscription = await getUserSubscription(supabase, user.id);
 
   return (
     <CanvasPageClient
@@ -58,6 +60,7 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
       signOutAction={signOut}
       userId={user.id}
       countryCode={countryCode}
+      plan={subscription?.plan ?? "free"}
     />
   );
 }

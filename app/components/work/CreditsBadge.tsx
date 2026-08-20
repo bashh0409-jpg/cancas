@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, CheckIcon, ArrowRightIcon, WalletCards } from "lucide-react";
+import { X, CheckIcon, ArrowRightIcon } from "lucide-react";
 import { PlanCard } from "./PlanCard";
 import { TrustedBy } from "./TrustedBy";
 import { formatCredits } from "@/lib/credits/format";
+import type { SubscriptionPlan } from "@/lib/subscriptions/repository";
 
 type CurrencyData = {
   currency: string;
@@ -13,12 +14,14 @@ type CurrencyData = {
 
 type CreditsBadgeProps = {
   credits: number;
+  plan?: SubscriptionPlan;
   className?: string;
   countryCode?: string;
 };
 
 export function CreditsBadge({
   credits,
+  plan = "free",
   className,
   countryCode,
 }: CreditsBadgeProps) {
@@ -99,7 +102,7 @@ export function CreditsBadge({
     }
   }
 
-  const plans = buildPlans(currencyData, initiateCheckout);
+  const plans = buildPlans(currencyData, initiateCheckout, plan);
 
   return (
     <>
@@ -130,7 +133,7 @@ export function CreditsBadge({
           </button>
 
           <div className="grid place-items-center h-full px-4 overflow-y-auto">
-            <div className="flex flex-col items-center mt-30 mb-10 text-center">
+            <div className="flex flex-col items-center mt-20  text-center">
               <h1 className="text-2xl tracking-tight uppercase mono text-white">
                 Choose the plan that&apos;s right for you
               </h1>
@@ -156,7 +159,7 @@ export function CreditsBadge({
               ))}
             </div>
 
-            <div className="bg-white/10 max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
+            <div className="bg-white/10 hidden max-w-7xl w-full text-white/80 text-sm mt-10 px-30 py-10 rounded-md flex items-center justify-between gap-8">
               <div className="flex flex-col gap-2 shrink-0">
                 <p className="text-white mono uppercase text-xl tracking-tight">
                   Need more than Ultra?
@@ -178,7 +181,7 @@ export function CreditsBadge({
 
               <div className="w-px self-stretch bg-white/10 shrink-0" />
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex  flex-col gap-1.5">
                 <p className="text-white/40 mono text-[11px] uppercase mb-1">
                   Enterprise includes everything in Ultra, plus
                 </p>
@@ -205,7 +208,7 @@ export function CreditsBadge({
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto tracking-tight mt-20 mb-40 text-white/80 text-center px-4">
+            <div className="max-w-7xl hidden mx-auto tracking-tight mt-20 mb-40 text-white/80 text-center px-4">
               <p className="font-mono text-sm uppercase">
                 Brands I&apos;d love to work with in the future:
               </p>
@@ -224,6 +227,7 @@ export function CreditsBadge({
 function buildPlans(
   currency: CurrencyData,
   initiateCheckout: (planId: string) => Promise<void>,
+  currentPlan: SubscriptionPlan,
 ) {
   const fmt = (usd: number) =>
     formatPrice(usd, currency.currency, currency.rate);
@@ -246,7 +250,7 @@ function buildPlans(
         "Limited workflow history",
         "Community asset browsing",
       ],
-      isCurrent: true,
+      isCurrent: currentPlan === "free",
     },
     {
       name: "Starter",
@@ -266,7 +270,7 @@ function buildPlans(
         "Priority generation speeds",
         "Import assets from shared workspaces",
       ],
-      isCurrent: false,
+      isCurrent: currentPlan === "starter",
       onSelect: () => initiateCheckout("starter"),
     },
     {
@@ -288,7 +292,7 @@ function buildPlans(
         "Shared asset libraries",
         "Early access AI features",
       ],
-      isCurrent: false,
+      isCurrent: currentPlan === "pro",
       onSelect: () => initiateCheckout("pro"),
     },
     {
@@ -310,7 +314,7 @@ function buildPlans(
         "Premium support",
         "Future collaboration features",
       ],
-      isCurrent: false,
+      isCurrent: currentPlan === "ultra",
       onSelect: () => initiateCheckout("ultra"),
     },
   ];

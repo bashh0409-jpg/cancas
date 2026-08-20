@@ -53,13 +53,14 @@ export async function GET(req: NextRequest) {
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
+      include_granted_scopes: true,
       prompt: "consent",
       state: statePayload,
       scope: [
         "openid",
         "email",
         "profile",
-        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive.readonly",
       ],
     });
 
