@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import {
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { formatCredits } from "@/lib/credits/format";
 import type { UserSubscription } from "@/lib/subscriptions/repository";
 
@@ -15,6 +11,7 @@ interface BillingDashboardProps {
 }
 
 export function BillingDashboard({ userId }: BillingDashboardProps) {
+  const router = useRouter();
   const [subscription, setSubscription] = useState<UserSubscription | null>(
     null,
   );
@@ -117,12 +114,21 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
 
   return (
     <div className="space-y-6 mono">
-      <a
-        href="/work"
-        className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+      <button
+        type="button"
+        onClick={() => {
+          if (window.history.length > 1) {
+            router.back();
+          } else {
+            router.push("/work");
+          }
+        }}
+        aria-label="Back to work"
+        title="Back to work"
+        className="w-fit absolute top-2 left-2 p-2 lime flex cursor-pointer items-center justify-center rounded text-black uppercase tracking-tight text-xs"
       >
-        <X className="w-4 h-4" />
-      </a>
+        <ArrowLeft className="w-4 h-4" />
+      </button>
       {/* Actions */}
       <div className="flex gap-2">
         <a
@@ -186,7 +192,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
               Credits
             </div>
             <div className="tracking-tight text-sm flex  items-center grotesk">
-              <CredIcon  />
+              <CredIcon />
               {typeof credits === "number" ? formatCredits(credits) : "—"}
             </div>
           </div>
