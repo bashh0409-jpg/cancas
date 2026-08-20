@@ -43,18 +43,12 @@ const NoticeBar = ({ notice, onDismiss }: NoticeBarProps) => {
       <span>
         {notice.message}
         {notice.link && (
-          <a
-            href={notice.link.href}
-            className="ml-1 cursor-pointer underline"
-          >
+          <a href={notice.link.href} className="ml-1 cursor-pointer underline">
             {notice.link.text}
           </a>
         )}
       </span>
-      <button
-        onClick={() => onDismiss(notice.id)}
-        className="cursor-pointer"
-      >
+      <button onClick={() => onDismiss(notice.id)} className="cursor-pointer">
         <X className="w-6 h-6 stroke-[1.5]" />
       </button>
     </div>
@@ -62,9 +56,8 @@ const NoticeBar = ({ notice, onDismiss }: NoticeBarProps) => {
 };
 
 const Notice = () => {
-  const [visibleNotices, setVisibleNotices] = React.useState<NoticeConfig[]>(
-    activeNotices,
-  );
+  const [visibleNotices, setVisibleNotices] =
+    React.useState<NoticeConfig[]>(activeNotices);
 
   React.useEffect(() => {
     const dismissed = getDismissed();
@@ -81,11 +74,7 @@ const Notice = () => {
   return (
     <div>
       {visibleNotices.map((notice) => (
-        <NoticeBar
-          key={notice.id}
-          notice={notice}
-          onDismiss={handleDismiss}
-        />
+        <NoticeBar key={notice.id} notice={notice} onDismiss={handleDismiss} />
       ))}
     </div>
   );

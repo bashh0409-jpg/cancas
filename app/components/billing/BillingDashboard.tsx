@@ -6,8 +6,6 @@ import {
   AlertCircle,
   CheckCircle,
   X,
-  WalletCards,
-  Icon,
 } from "lucide-react";
 import { formatCredits } from "@/lib/credits/format";
 import type { UserSubscription } from "@/lib/subscriptions/repository";

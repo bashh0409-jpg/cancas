@@ -3,9 +3,9 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { User} from "lucide-react";
-import { siDiscord, siInstagram, siYoutube } from "simple-icons";
+import { siDiscord, siYoutube } from "simple-icons";
 import { AccountCard } from "../work/HomeShell";
-import Notice from "./Notice";
+//import Notice from "./Notice";
 import {
   type SubscriptionPlan,
   getPlanDetails,
@@ -123,23 +123,6 @@ const MobileNotifier: React.FC<Props> = ({
           For now you can...
         </span>
         <a
-          href="https://www.instagram.com/reflowfyi?igsh=MXRlamY1MHE1ZmxmNA%3D%3D&utm_source=qr"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Visit Instagram"
-          className="lime h-8 hidden cursor-pointer w-full max-w-[80vw] text-black text-xs px-3 mono uppercase tracking-tight items-center flex rounded flex items-center gap-2"
-        >
-          <svg
-            role="img"
-            viewBox="0 0 24 24"
-            className="w-4 h-4 fill-current"
-            strokeWidth={0.4}
-          >
-            <path d={siInstagram.path} />
-          </svg>
-          Visit our instagram page
-        </a>{" "}
-        <a
           href="https://youtube.com/@reflowfyi?si=QCnvJcY09fYOThJi"
           target="_blank"
           rel="noopener noreferrer"
@@ -174,9 +157,9 @@ const MobileNotifier: React.FC<Props> = ({
           Join our Discord community
         </a>{" "}
       </div>
-      <div className="w-full absolute bottom-0 left-0">
+      { /* <div className="w-full absolute bottom-0 left-0">
         <Notice />
-      </div>
+      </div> */ }
     </div>
   );
 };
