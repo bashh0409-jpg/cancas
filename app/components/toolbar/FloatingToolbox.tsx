@@ -32,6 +32,7 @@ import {
   type VoiceNoteRecordedDetail,
 } from "@/lib/canvas/voiceNotes";
 import { SiGoogledrive, SiDropbox } from "@icons-pack/react-simple-icons";
+import Image from "next/image";
 import { AssetLibrary } from "@/app/components/canvas/AssetLibrary";
 import type { LibraryAsset } from "@/lib/canvas/assetLibrary";
 
@@ -765,11 +766,18 @@ export function FloatingToolbox() {
                               {item.fileType === "image" ? (
                                 <>
                                   {item.thumbnailUrl ? (
-                                    <img
+                                    <Image
                                       src={item.thumbnailUrl}
                                       alt={item.name}
-                                      className="h-full w-full object-cover"
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 640px) 50vw, 160px"
                                       loading="lazy"
+                                      onError={(e) => {
+                                        // Fallback to icon if image fails to load
+                                        const img = e.target as HTMLImageElement;
+                                        img.style.display = "none";
+                                      }}
                                     />
                                   ) : (
                                     <div className="flex h-full w-full items-center justify-center">
