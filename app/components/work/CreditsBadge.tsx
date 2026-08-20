@@ -17,7 +17,11 @@ type CreditsBadgeProps = {
   countryCode?: string;
 };
 
-export function CreditsBadge({ credits, className, countryCode }: CreditsBadgeProps) {
+export function CreditsBadge({
+  credits,
+  className,
+  countryCode,
+}: CreditsBadgeProps) {
   const [open, setOpen] = useState(false);
   const [currencyData, setCurrencyData] = useState<CurrencyData>({
     currency: "USD",

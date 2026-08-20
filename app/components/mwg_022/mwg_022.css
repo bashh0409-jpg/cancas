@@ -1,0 +1,47 @@
+/* ===== MWG_022 — Typography Word Reveal ===== */
+
+/* Word wrapper - each word is contained in an overflow-hidden span */
+.typography-section .typo-word {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  margin: -0.14em 0;
+}
+
+/* The inner span that animates (slides up/down) */
+.typography-section .typo-word span {
+  display: block;
+  padding: 0.14em 0;
+}
+
+/* Initial state: hide second and third paragraphs */
+.typography-section .typography-paragraph {
+  position: relative;
+  line-height: 0.9;
+}
+
+.typography-section .typography-paragraph:nth-child(2) .typo-word span,
+.typography-section .typography-paragraph:nth-child(3) .typo-word span {
+  transform: translateY(100%);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .typography-section .top {
+    padding: 30px 15px !important;
+  }
+
+  .typography-section .top p {
+    font-size: 27px !important;
+  }
+
+  .typography-section .paragraphs {
+    flex-direction: column !important;
+    row-gap: 30px !important;
+    padding: 30px 15px !important;
+  }
+
+  .typography-section .typography-paragraph {
+    font-size: 26px !important;
+  }
+}

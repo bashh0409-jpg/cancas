@@ -42,7 +42,8 @@ export default async function CanvasPage({ params }: CanvasPageProps) {
     (user.user_metadata?.full_name as string | undefined)?.split(" ")?.[0] ??
     user.email?.split("@")[0] ??
     "User";
-  const countryCode = (user.user_metadata?.country as string | undefined) ?? "ZA";
+  const countryCode =
+    (user.user_metadata?.country as string | undefined) ?? "ZA";
 
   return (
     <CanvasPageClient

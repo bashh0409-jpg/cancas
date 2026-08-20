@@ -157,8 +157,8 @@ export default function ReflowIntro() {
       ref={sectionRef}
       className="relative flex h-screen w-full items-center justify-center p-3 sm:p-4"
     >
-      <div className="flex w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 py-3 text-center sm:gap-8 sm:px-6 sm:py-4 md:gap-12 md:p-4">
-        <p className="font-mono hidden text-xs uppercase sm:text-sm">
+      <div className="flex w-full max-w-3xl flex-col items-center justify-center gap-2 px-4 py-3 text-center sm:gap-8 sm:px-6 sm:py-4 md:gap-12 md:p-4">
+        <p className="font-mono  text-xs uppercase sm:text-sm">
           What it&apos;s all about?
         </p>
 
