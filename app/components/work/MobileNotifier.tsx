@@ -56,6 +56,8 @@ const MobileNotifier: React.FC<Props> = ({
             alt="Logo"
             width={64}
             loading="eager"
+            priority
+            
             height={34}
             className="object-contain shrink-0"
           />

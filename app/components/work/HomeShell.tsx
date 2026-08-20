@@ -173,6 +173,7 @@ export function AccountCard({
                 height={96}
                 src={photoUrl}
                 alt={firstName}
+                priority
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
               />
@@ -570,6 +571,7 @@ export function HomeShell({
                 alt="Logo"
                 loading="eager"
                 width={84}
+                priority
                 height={24}
                 className="object-contain cursor-pointer rounded shrink-0"
               />{" "}
@@ -602,6 +604,7 @@ export function HomeShell({
                     width={32}
                     loading="eager"
                     height={32}
+                    priority
                     className="h-full w-full object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -1257,6 +1260,7 @@ function AccountInfoTab({
                 height={96}
                 src={photoUrl}
                 loading="eager"
+                priority
                 alt={displayName}
                 className="h-full cursor-pointer w-full object-cover"
                 referrerPolicy="no-referrer"
@@ -1906,6 +1910,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                           alt={file.title}
                           fill
                           loading="eager"
+                          priority
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover group-hover:opacity-75  transition-opacity"
                         />

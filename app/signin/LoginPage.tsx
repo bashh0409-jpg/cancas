@@ -114,6 +114,7 @@ export default function Page() {
             width={64}
             loading="eager"
             height={64}
+            priority
             className="object-contain shrink-0"
           />
           <span className="mono text-white/60 hidden  tracking-tight text-xs ml-1">

@@ -8,13 +8,11 @@ import {
   X,
   Eye,
   EyeOff,
-  Edit2,
   Trash2,
   Maximize2,
   Grid2x2,
   ZoomIn,
   ZoomOut,
-  Cable,
   MouseRight,
   Loader2,
   ImageIcon,
@@ -23,14 +21,11 @@ import {
   FileText,
   FolderOpen,
   Minus,
-  Ellipsis,
   SquareActivity,
   Workflow,
-  ChevronsUpIcon,
   ChevronRight,
   CirclePower,
   HardDrive,
-  ArrowRightLeft,
 } from "lucide-react";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
