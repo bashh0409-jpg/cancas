@@ -32,6 +32,7 @@ function extractSubscriptionId(data: Record<string, unknown>): string | undefine
 
   return (
     extractValue(data.subscription_id) ??
+    extractValue(data.id) ??
     (subscription && typeof subscription === "object"
       ? extractValue((subscription as Record<string, unknown>).id)
       : undefined)
@@ -88,6 +89,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true, duplicate: true, eventId });
     }
 
+    if (!eventType?.startsWith("subscription.")) {
+      console.info("Polar webhook acknowledged", { eventId, type: eventType });
+      return NextResponse.json({ received: true, eventId });
+    }
+
     const userId = extractUserId({ ...payload, ...data } as Record<string, unknown>);
 
     if (userId) {
@@ -128,7 +134,9 @@ export async function POST(req: Request) {
         },
       });
 
-      const isSubscriptionEvent = eventType?.startsWith("subscription.") ?? false;
+      const shouldGrantCredits =
+        eventType === "subscription.active" ||
+        eventType === "subscription.updated";
       const periodStart = extractValue(
         data.current_period_start ??
           data.period_start ??
@@ -137,15 +145,15 @@ export async function POST(req: Request) {
             : undefined),
       );
 
-      if (status === "active" && plan && isSubscriptionEvent) {
+      if (status === "active" && plan && subscriptionId && shouldGrantCredits) {
         await grantPlanCredits(
           supabase,
           userId,
           plan.toLowerCase() as "starter" | "pro" | "ultra",
           (billingCycle?.toLowerCase() as "monthly" | "annual") ?? "monthly",
-          subscriptionId && periodStart
+          periodStart
             ? `${subscriptionId}:${periodStart}`
-            : subscriptionId ?? eventId,
+            : subscriptionId,
           "polar.checkout.credit",
         );
       }

@@ -63,11 +63,13 @@ const NoticeBar = ({ notice, onDismiss }: NoticeBarProps) => {
 
 const Notice = () => {
   const [visibleNotices, setVisibleNotices] = React.useState<NoticeConfig[]>(
-    () => {
-      const dismissed = getDismissed();
-      return activeNotices.filter((n) => !dismissed.includes(n.id));
-    }
+    activeNotices,
   );
+
+  React.useEffect(() => {
+    const dismissed = getDismissed();
+    setVisibleNotices(activeNotices.filter((n) => !dismissed.includes(n.id)));
+  }, []);
 
   const handleDismiss = (id: string) => {
     dismiss(id);

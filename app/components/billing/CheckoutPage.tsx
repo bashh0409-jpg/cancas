@@ -165,7 +165,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
   return (
     <div className="min-h-screen bg-black text-white scrollbar-hidden overflow-x-hidden">
       <a
-        href="/manage"
+        href="/billing/manage"
         className="w-fit absolute top-2 left-2 p-2 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
         aria-label="Go back"
       >
@@ -182,7 +182,7 @@ export function CheckoutPage({ userCountry }: CheckoutPageProps) {
           </p>
 
           {loadingCurrency && (
-            <p className="text-white/40 grotesk text-xs mt-3">
+            <p className="text-white/40 font-mono uppercase text-xs mt-3">
               Detecting your currency…
             </p>
           )}

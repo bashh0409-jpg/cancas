@@ -7,6 +7,7 @@ import {
   CheckCircle,
   X,
   WalletCards,
+  Icon,
 } from "lucide-react";
 import { formatCredits } from "@/lib/credits/format";
 import type { UserSubscription } from "@/lib/subscriptions/repository";
@@ -142,15 +143,15 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
       </div>
 
       {/* Current Plan */}
-      <div className="bg-white/10 p-6 rounded">
+      <div className="bg-white/10 uppercase p-6 rounded">
         <h3 className="text-sm uppercase tracking-tight mb-4">Current Plan</h3>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid uppercase md:grid-cols-2 gap-6">
           <div>
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
               Plan
             </div>
-            <div className="text-md tracking-tight  capitalize">
+            <div className="text-md uppercase tracking-tight  capitalize">
               {subscription.plan}
             </div>
           </div>
@@ -159,7 +160,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
               Provider
             </div>
-            <div className="text-md tracking-tight  capitalize">
+            <div className="text-md uppercase tracking-tight  capitalize">
               {subscription.provider}
             </div>
           </div>
@@ -169,7 +170,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
               Status
             </div>
             <div
-              className={`tracking-tight capitalize ${statusColors[subscription.status] || ""}`}
+              className={`tracking-tight uppercase capitalize ${statusColors[subscription.status] || ""}`}
             >
               {subscription.status}
             </div>
@@ -179,15 +180,15 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
               Billing Cycle
             </div>
-            <div className="capitalize">{subscription.billing_cycle}</div>
+            <div className="uppercase">{subscription.billing_cycle}</div>
           </div>
 
           <div>
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
               Credits
             </div>
-            <div className="tracking-tight flex gap-1 items-center grotesk">
-              <WalletCards className="w-4 h-4" />{" "}
+            <div className="tracking-tight text-sm flex  items-center grotesk">
+              <CredIcon  />
               {typeof credits === "number" ? formatCredits(credits) : "—"}
             </div>
           </div>
@@ -263,5 +264,21 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function CredIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M12 3.75V20.25" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 7.5L19.5 16.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M4.5 16.5L19.5 7.5" stroke="currentColor" strokeWidth="2" />
+    </svg>
   );
 }
