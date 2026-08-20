@@ -2,14 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { gsap } from "gsap";
-import { siDiscord, siInstagram, siYoutube } from "simple-icons";
+import { siDiscord, siYoutube } from "simple-icons";
 import {
   AudioLines,
   ClockFading,
   Download,
   Fullscreen,
   Globe,
-  LogOut,
   Clapperboard,
   Plus,
   Settings,

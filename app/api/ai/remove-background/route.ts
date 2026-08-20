@@ -5,13 +5,14 @@ import {
   addUserCredits,
   getUserCredits,
 } from "@/lib/credits/repository";
+import { OPERATION_COSTS } from "@/lib/credits/pricing";
 import {
   IdempotencyKeyError,
   requireIdempotencyKey,
   userScopedIdempotencyKey,
 } from "@/lib/idempotency";
 
-const REMOVE_BG_CREDIT_COST = 4;
+const REMOVE_BG_CREDIT_COST = OPERATION_COSTS.REMOVE_BACKGROUND;
 
 const REMOVE_BG_TIMEOUT_MS = 30_000;
 

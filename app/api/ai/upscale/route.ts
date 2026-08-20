@@ -5,6 +5,7 @@ import {
   addUserCredits,
   getUserCredits,
 } from "@/lib/credits/repository";
+import { OPERATION_COSTS } from "@/lib/credits/pricing";
 import {
   IdempotencyKeyError,
   requireIdempotencyKey,
@@ -13,7 +14,7 @@ import {
 
 export const maxDuration = 180;
 
-const UPSCALE_CREDIT_COST = 10;
+const UPSCALE_CREDIT_COST = OPERATION_COSTS.UPSCALE;
 
 const TOPAZ_SUBMIT_TIMEOUT_MS = 60_000;
 const TOPAZ_POLL_INTERVAL_MS = 3_000;

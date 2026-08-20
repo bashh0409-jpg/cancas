@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { PLAN_DETAILS } from "@/lib/credits/pricing";
+
 export type SubscriptionPlan = "free" | "starter" | "pro" | "ultra";
 export type SubscriptionProvider = "local" | "payfast" | "stripe" | "polar" | "2checkout";
 export type SubscriptionStatus =
@@ -242,18 +244,7 @@ export function getPlanDetails(plan: SubscriptionPlan): {
   monthlyCredits: number;
   displayName: string;
 } {
-  const plans = {
-    free: { name: "Free", monthlyCredits: 100, displayName: "Free Plan" },
-    starter: {
-      name: "Starter",
-      monthlyCredits: 1000,
-      displayName: "Starter Plan",
-    },
-    pro: { name: "Pro", monthlyCredits: 2500, displayName: "Pro Plan" },
-    ultra: { name: "Ultra", monthlyCredits: 5000, displayName: "Ultra Plan" },
-  };
-
-  return plans[plan];
+  return PLAN_DETAILS[plan];
 }
 
 /**
