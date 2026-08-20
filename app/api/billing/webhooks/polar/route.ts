@@ -27,6 +27,17 @@ function extractUserId(payload: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+function extractSubscriptionId(data: Record<string, unknown>): string | undefined {
+  const subscription = data.subscription;
+
+  return (
+    extractValue(data.subscription_id) ??
+    (subscription && typeof subscription === "object"
+      ? extractValue((subscription as Record<string, unknown>).id)
+      : undefined)
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
@@ -89,7 +100,7 @@ export async function POST(req: Request) {
 
       const customer = data.customer as Record<string, unknown> | undefined;
       const metadata = (data.metadata as Record<string, unknown> | undefined) ?? {};
-      const subscriptionId = extractValue(data.subscription_id ?? data.id);
+      const subscriptionId = extractSubscriptionId(data);
       const providerCustomerId = extractValue(
         (data.customer_id as string | undefined) ?? customer?.id,
       );
@@ -117,13 +128,24 @@ export async function POST(req: Request) {
         },
       });
 
-      if (status === "active" && plan) {
+      const isSubscriptionEvent = eventType?.startsWith("subscription.") ?? false;
+      const periodStart = extractValue(
+        data.current_period_start ??
+          data.period_start ??
+          (data.current_period && typeof data.current_period === "object"
+            ? (data.current_period as Record<string, unknown>).start
+            : undefined),
+      );
+
+      if (status === "active" && plan && isSubscriptionEvent) {
         await grantPlanCredits(
           supabase,
           userId,
           plan.toLowerCase() as "starter" | "pro" | "ultra",
           (billingCycle?.toLowerCase() as "monthly" | "annual") ?? "monthly",
-          subscriptionId ?? eventId,
+          subscriptionId && periodStart
+            ? `${subscriptionId}:${periodStart}`
+            : subscriptionId ?? eventId,
           "polar.checkout.credit",
         );
       }
