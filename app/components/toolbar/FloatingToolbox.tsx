@@ -775,7 +775,8 @@ export function FloatingToolbox() {
                                       loading="lazy"
                                       onError={(e) => {
                                         // Fallback to icon if image fails to load
-                                        const img = e.target as HTMLImageElement;
+                                        const img =
+                                          e.target as HTMLImageElement;
                                         img.style.display = "none";
                                       }}
                                     />
