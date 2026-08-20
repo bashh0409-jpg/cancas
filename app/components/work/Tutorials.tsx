@@ -135,7 +135,10 @@ export default function Tutorials() {
                 <Image
                   src={video.thumbnail}
                   alt={video.title}
+                  
+                  loading="eager"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 200px"
                   priority={false}
                   className="object-cover transition-transform duration-300"
                 />

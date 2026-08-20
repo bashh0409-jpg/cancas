@@ -55,6 +55,7 @@ const MobileNotifier: React.FC<Props> = ({
             src="/images/Reflow.svg"
             alt="Logo"
             width={64}
+            loading="eager"
             height={34}
             className="object-contain shrink-0"
           />
@@ -73,6 +74,7 @@ const MobileNotifier: React.FC<Props> = ({
                   src={photoUrl}
                   width={20}
                   height={20}
+                  loading="eager"
                   alt={firstName}
                   className="h-full w-full object-cover"
                   referrerPolicy="no-referrer"
@@ -157,9 +159,9 @@ const MobileNotifier: React.FC<Props> = ({
           Join our Discord community
         </a>{" "}
       </div>
-      { /* <div className="w-full absolute bottom-0 left-0">
+      {/* <div className="w-full absolute bottom-0 left-0">
         <Notice />
-      </div> */ }
+      </div> */}
     </div>
   );
 };

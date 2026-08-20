@@ -1976,6 +1976,7 @@ export const Sidebar = ({
             <Image
               src="/images/Re.svg"
               alt="Reflow"
+              loading="eager"
               width={24}
               height={24}
               className="object-contain"

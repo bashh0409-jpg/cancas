@@ -112,6 +112,7 @@ export default function Page() {
             src="/images/Reflow.svg"
             alt="Logo"
             width={64}
+            loading="eager"
             height={64}
             className="object-contain shrink-0"
           />
@@ -269,6 +270,7 @@ export default function Page() {
           src={loginImage}
           alt="Login background"
           fill
+          loading="eager"
           priority
           fetchPriority="high"
           sizes="50vw"

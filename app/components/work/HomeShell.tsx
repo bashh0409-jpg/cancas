@@ -122,17 +122,21 @@ export function AccountCard({
   useEffect(() => {
     if (!cardRef.current) return;
 
-    gsap.fromTo(
-      cardRef.current,
-      { opacity: 0, y: -6, scale: 0.97 },
-      {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.18,
-        ease: "power2.out",
-      },
-    );
+    try {
+      gsap.fromTo(
+        cardRef.current,
+        { opacity: 0, y: -6, scale: 0.97 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.18,
+          ease: "power2.out",
+        },
+      );
+    } catch (error) {
+      console.error("GSAP animation error:", error);
+    }
   }, []);
 
   // Close on outside click
@@ -165,6 +169,7 @@ export function AccountCard({
             {photoUrl ? (
               <Image
                 width={96}
+                loading="eager"
                 height={96}
                 src={photoUrl}
                 alt={firstName}
@@ -483,27 +488,33 @@ export function HomeShell({
     const createBtn = createBtnRef.current;
     const targets = [...labels, ...(createBtn ? [createBtn] : [])];
 
-    if (collapsed) {
-      gsap.to(targets, {
-        opacity: 0,
-        x: -6,
-        duration: 0.15,
-        ease: "power2.in",
-        stagger: 0.02,
-      });
-    } else {
-      gsap.fromTo(
-        targets,
-        { opacity: 0, x: -6 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.2,
-          ease: "power2.out",
-          stagger: 0.03,
-          delay: 0.1,
-        },
-      );
+    if (targets.length === 0) return;
+
+    try {
+      if (collapsed) {
+        gsap.to(targets, {
+          opacity: 0,
+          x: -6,
+          duration: 0.15,
+          ease: "power2.in",
+          stagger: 0.02,
+        });
+      } else {
+        gsap.fromTo(
+          targets,
+          { opacity: 0, x: -6 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.2,
+            ease: "power2.out",
+            stagger: 0.03,
+            delay: 0.1,
+          },
+        );
+      }
+    } catch (error) {
+      console.error("GSAP animation error:", error);
     }
   }, [collapsed]);
 
@@ -557,6 +568,7 @@ export function HomeShell({
                 onClick={() => setAccountOpen((o) => !o)}
                 src="/images/Reflow.svg"
                 alt="Logo"
+                loading="eager"
                 width={84}
                 height={24}
                 className="object-contain cursor-pointer rounded shrink-0"
@@ -588,6 +600,7 @@ export function HomeShell({
                     src={photoUrl}
                     alt={firstName}
                     width={32}
+                    loading="eager"
                     height={32}
                     className="h-full w-full object-cover"
                     referrerPolicy="no-referrer"
@@ -1168,21 +1181,31 @@ function AccountInfoTab({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
-    gsap.to(containerRef.current, {
-      scale: 1.12,
-      rotate: 6,
-      duration: 0.5,
-      ease: "elastic.out(1, 0.5)",
-    });
+    if (!containerRef.current) return;
+    try {
+      gsap.to(containerRef.current, {
+        scale: 1.12,
+        rotate: 6,
+        duration: 0.5,
+        ease: "elastic.out(1, 0.5)",
+      });
+    } catch (error) {
+      console.error("GSAP animation error:", error);
+    }
   };
 
   const handleMouseLeave = () => {
-    gsap.to(containerRef.current, {
-      scale: 1,
-      rotate: 0,
-      duration: 0.5,
-      ease: "elastic.out(1, 0.5)",
-    });
+    if (!containerRef.current) return;
+    try {
+      gsap.to(containerRef.current, {
+        scale: 1,
+        rotate: 0,
+        duration: 0.5,
+        ease: "elastic.out(1, 0.5)",
+      });
+    } catch (error) {
+      console.error("GSAP animation error:", error);
+    }
   };
 
   const initialName = profile?.nickname?.trim() || fullName;
@@ -1233,6 +1256,7 @@ function AccountInfoTab({
                 width={96}
                 height={96}
                 src={photoUrl}
+                loading="eager"
                 alt={displayName}
                 className="h-full cursor-pointer w-full object-cover"
                 referrerPolicy="no-referrer"
@@ -1881,6 +1905,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
                           src={file.thumbnail}
                           alt={file.title}
                           fill
+                          loading="eager"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover group-hover:opacity-75  transition-opacity"
                         />
@@ -1980,6 +2005,7 @@ function LibraryPage({ canvases }: { canvases: CanvasListItem[] }) {
               src={previewImage.src}
               alt={previewImage.title}
               width={800}
+              loading="eager"
               height={600}
               className="w-full h-auto"
               priority

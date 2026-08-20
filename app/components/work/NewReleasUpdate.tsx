@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MuxPlayer from "@mux/mux-player-react";
 import type { MuxCSSProperties } from "@mux/mux-player-react";
 
@@ -15,22 +15,25 @@ const getStorageKey = (userId: string) =>
   `new-release-update:${UPDATE_VERSION}:${userId}`;
 
 const NewReleaseUpdate = ({ userId }: Props) => {
-  const [open, setOpen] = useState(() => {
-    if (!userId || typeof window === "undefined") return false;
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (!userId) return;
     const key = getStorageKey(userId);
-    return localStorage.getItem(key) !== "true";
-  });
+    setOpen(localStorage.getItem(key) !== "true");
+    setMounted(true);
+  }, [userId]);
 
   const close = () => {
-    if (userId && typeof window !== "undefined") {
+    if (userId) {
       const key = getStorageKey(userId);
       localStorage.setItem(key, "true");
     }
     setOpen(false);
   };
 
-  if (!open) return null;
+  if (!mounted || !open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">

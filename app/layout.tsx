@@ -48,8 +48,6 @@ const rinter = localFont({
   preload: false,
 });
 
-
-
 const layGrotesk = localFont({
   src: [
     {
@@ -67,7 +65,6 @@ const layGrotesk = localFont({
   preload: false,
 });
 
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://swipes.site"),
 
@@ -78,6 +75,9 @@ export const metadata: Metadata = {
 
   description:
     "Reflow is an AI-powered creative canvas for turning ideas into images, videos, and visual concepts.",
+  other: {
+    "data-scroll-behavior": "smooth",
+  },
 
   alternates: {
     canonical: "/",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React, { useLayoutEffect, useRef, useState} from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { ArrowUpRight, Equal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
@@ -61,49 +61,56 @@ const Navbar = () => {
     const overlay = overlayRef.current;
     if (!overlay) return;
 
-    if (open) {
-      gsap.set(overlay, {
-        pointerEvents: "auto",
-      });
+    try {
+      if (open) {
+        gsap.set(overlay, {
+          pointerEvents: "auto",
+        });
 
-      gsap.fromTo(
-        overlay,
-        {
+        gsap.fromTo(
+          overlay,
+          {
+            clipPath: "inset(0 0 100% 0)",
+          },
+          {
+            clipPath: "inset(0 0 0% 0)",
+            duration: 0.9,
+            ease: "power4.inOut",
+          },
+        );
+
+        const links = linksRef.current.filter(Boolean);
+        if (links.length > 0) {
+          gsap.fromTo(
+            links,
+            {
+              y: 40,
+              opacity: 0,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              stagger: 0.08,
+              delay: 0.25,
+              duration: 0.7,
+              ease: "power3.out",
+            },
+          );
+        }
+      } else {
+        gsap.to(overlay, {
           clipPath: "inset(0 0 100% 0)",
-        },
-        {
-          clipPath: "inset(0 0 0% 0)",
-          duration: 0.9,
-          ease: "power4.inOut",
-        },
-      );
-
-      gsap.fromTo(
-        linksRef.current,
-        {
-          y: 40,
-          opacity: 0,
-        },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.08,
-          delay: 0.25,
           duration: 0.7,
-          ease: "power3.out",
-        },
-      );
-    } else {
-      gsap.to(overlay, {
-        clipPath: "inset(0 0 100% 0)",
-        duration: 0.7,
-        ease: "power4.inOut",
-        onComplete: () => {
-          gsap.set(overlay, {
-            pointerEvents: "none",
-          });
-        },
-      });
+          ease: "power4.inOut",
+          onComplete: () => {
+            gsap.set(overlay, {
+              pointerEvents: "none",
+            });
+          },
+        });
+      }
+    } catch (error) {
+      console.error("GSAP animation error:", error);
     }
   }, [open]);
 

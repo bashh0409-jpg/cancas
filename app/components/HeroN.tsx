@@ -125,6 +125,7 @@ export default function Hero() {
               src={image.src}
               alt=""
               width={800}
+              loading="eager"
               height={800}
               priority={index < 4}
               className="block h-auto w-full object-cover"
