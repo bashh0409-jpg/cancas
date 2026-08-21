@@ -1,5 +1,11 @@
 /* ===== MWG_022 — Typography Word Reveal ===== */
 
+.typography-section {
+  background: transparent;
+}
+
+/* ---------- Desktop / large screens (>= 769px) ---------- */
+
 /* Word wrapper - each word is contained in an overflow-hidden span */
 .typography-section .typo-word {
   position: relative;
@@ -14,34 +20,144 @@
   padding: 0.14em 0;
 }
 
-/* Initial state: hide second and third paragraphs */
 .typography-section .typography-paragraph {
   position: relative;
   line-height: 0.9;
 }
 
+/* Initial state: hide second and third paragraphs until GSAP reveals them.
+   Only meaningful once .typo-word spans exist, which only happens on
+   desktop (the JS gates word-splitting to >= 769px via matchMedia). */
 .typography-section .typography-paragraph:nth-child(2) .typo-word span,
 .typography-section .typography-paragraph:nth-child(3) .typo-word span {
   transform: translateY(100%);
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .typography-section .top {
-    padding: 30px 15px !important;
-  }
+.typography-section .top p {
+  font-size: clamp(1.75rem, 4vw, 3.25rem) !important;
+}
 
-  .typography-section .top p {
-    font-size: 27px !important;
-  }
+.typography-section .typography-paragraph {
+  font-size: clamp(1.35rem, 2.3vw, 2.25rem) !important;
+}
 
+.typography-section .paragraphs {
+  column-gap: 2.5vw;
+}
+
+/* Mobile paragraph block is desktop-hidden by default */
+.typography-section .mobile-paragraph {
+  display: none;
+}
+
+/* Box row: desktop version is the GSAP-driven, scroll-pinned track */
+.typography-section .typography-boxes-row {
+  width: 100%;
+  overflow: hidden;
+  margin-top: -6rem;
+  padding: 1rem 0;
+}
+
+.typography-section .typography-boxes-track {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  width: max-content;
+  padding: 0 1rem;
+}
+
+.typography-section .typography-box {
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  background: #000;
+  border: 1px solid rgb(73, 73, 73);
+  height: 12rem;
+  flex-shrink: 0;
+}
+
+/* Tablet tightening */
+@media (max-width: 1024px) {
   .typography-section .paragraphs {
-    flex-direction: column !important;
-    row-gap: 30px !important;
-    padding: 30px 15px !important;
+    column-gap: 1.5rem !important;
+    padding: 2rem !important;
   }
 
-  .typography-section .typography-paragraph {
-    font-size: 26px !important;
+  .typography-section .typography-boxes-row {
+    margin-top: -4rem;
+  }
+}
+
+/* ---------- Mobile / small screens (< 769px) ---------- */
+/* Mobile layout: the paragraph block stays static while the box row is
+   pinned and scrubbed through the final card. */
+@media (max-width: 768px) {
+  .typography-section .typography-pin-height {
+    height: 300vh !important;
+  }
+
+  .typography-section .typography-container {
+    height: 80svh !important;
+    min-height: 0 !important;
+    max-height: 80svh !important;
+    padding-top: 100px;
+    padding-bottom: 32px;
+   
+  }
+
+  /* Hide the desktop title bar and animated paragraphs entirely */
+  .typography-section .top,
+  .typography-section .paragraphs {
+    display: none !important;
+  }
+
+  /* Static mobile paragraph block */
+  .typography-section .mobile-paragraph {
+    display: block;
+    padding: 0 20px;
+    margin-bottom: 40px;
+  }
+
+  .typography-section .mobile-paragraph p {
+    font-size: clamp(1.5rem, 6.8vw, 2rem);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.06em;
+    margin: 0 0 24px 0;
+  }
+
+  .typography-section .mobile-paragraph p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* The track is moved by ScrollTrigger while the section is pinned. */
+  .typography-section .typography-boxes-row {
+    margin-top: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .typography-section .typography-boxes-track {
+    gap: 8px;
+    padding: 0 20px;
+    will-change: transform;
+  }
+
+  .typography-section .typography-box {
+    height: 240px;
+   
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 420px) {
+  .typography-section .mobile-paragraph {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .typography-section .typography-boxes-track {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
