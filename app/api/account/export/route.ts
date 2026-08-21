@@ -159,7 +159,7 @@ function decodeDataUrl(value: unknown) {
     return null;
   }
 
-  const match = value.match(/^data:[^;]+;base64,(.+)$/s);
+  const match = value.match(/^data:[^;]+;base64,([\s\S]+)$/);
   if (!match) return null;
 
   try {
