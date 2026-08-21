@@ -764,7 +764,7 @@ export function HomeShell({
       </aside>
 
       {/* ── App Main content ────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-8 flex flex-col gap-4">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 flex flex-col gap-4">
         {activePage === "files" && (
           <FilesPage
             firstName={firstName}
@@ -969,10 +969,10 @@ function FilesPage({
       <div className="">
         <Tutorials />
       </div>
-      <div className="mt-8 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-2">
+      <div className="mt-4 flex sticky flex-wrap items-center justify-between gap-2 border-b pb-2">
         <h2 className="mono text-sm tracking-tight text-white">My Files</h2>
         <div className="flex items-center gap-2">
-          <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-xs border border-white/20  text-white">
+          <div className=" w-full gap-2 px-1 flex bg-white/20 items-center rounded-full border border-white/20  text-white">
             <Search className="w-5 h-5" strokeWidth={1.5} />{" "}
             <input
               type="text"
