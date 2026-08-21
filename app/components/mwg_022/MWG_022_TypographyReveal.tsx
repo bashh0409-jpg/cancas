@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
 import "./mwg_022.css";
 
+// Register GSAP plugins
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -14,14 +15,12 @@ export interface MWG_022_Paragraph {
 }
 
 export interface MWG_022_TypographyRevealProps {
-  /** Title text displayed in the header bar (desktop only) */
+  /** Title text displayed in the header bar */
   title?: string;
   /** Exclamation/logo character in the top-right */
   logoChar?: string;
-  /** Array of paragraph objects that animate through on large screens */
+  /** Array of paragraph objects to animate through */
   paragraphs?: MWG_022_Paragraph[];
-  /** Short paragraph(s) shown as static text on small screens */
-  mobileParagraphs?: string[];
   /** Background color class (tailwind or custom) */
   bgClass?: string;
   /** Text color */
@@ -30,9 +29,9 @@ export interface MWG_022_TypographyRevealProps {
   accentColor?: string;
   /** Border color for the divider */
   borderColor?: string;
-  /** Snap points for scroll positions (0 to 1), desktop only */
+  /** Snap points for scroll positions (0 to 1) */
   snapPoints?: number[];
-  /** Height of the pin container in vh units, desktop only */
+  /** Height of the pin container in vh units */
   pinHeight?: number;
 }
 
@@ -40,151 +39,82 @@ export function MWG_022_TypographyReveal({
   title = "What Reflow does best",
   paragraphs = [
     {
-      text: "One canvas for your ideas, files, images, and conversations. Everything stays connected as your thinking evolves.",
+      text: "Reflow brings your ideas, notes, files, images, and conversations into one visual workspace. Instead of switching between multiple apps, you can organize everything in a single canvas that evolves as your thinking does.",
     },
     {
-      text: "AI helps you explore ideas, create content, summarize information, and connect concepts without breaking your flow.",
+      text: "Powered by AI, Reflow helps you explore ideas faster by generating content, summarizing information, creating visuals, and connecting related concepts. It's designed to reduce friction so you can spend more time creating and less time managing tools.",
     },
     {
-      text: "Research, plan, design, and create in one flexible workspace where human creativity and AI work together.",
+      text: "Whether you're planning a project, conducting research, designing a product, or brainstorming your next big idea, Reflow gives you a flexible workspace where documents, media, and AI work together seamlessly in real time.",
     },
-  ],
-  mobileParagraphs = [
-    "One canvas for your ideas, files, images, and conversations. Everything stays connected as your thinking evolves.",
-    "AI helps you explore, create, and connect ideas across one flexible workspace, without ever breaking your flow.",
   ],
   bgClass = "",
   textColor = "#F1F1F1",
+  accentColor = "var(--color-brand-600, #6366f1)",
+  borderColor = "rgb(73, 73, 73)",
   snapPoints = [0, 0.35, 1],
   pinHeight = 500,
 }: MWG_022_TypographyRevealProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const horizontalTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
     const container = containerRef.current;
-    const horizontalTrack = horizontalTrackRef.current;
+    if (!section || !container) return;
 
-    if (!section || !container || !horizontalTrack) return;
+    const ctx = gsap.context(() => {
+      const pinHeightEl = section.querySelector(".typography-pin-height");
+      const paragraphsEls = section.querySelectorAll(".typography-paragraph");
 
-    const mm = gsap.matchMedia();
-
-    mm.add("(max-width: 768px)", () => {
-      const ctx = gsap.context(() => {
-        const pinHeightEl = section.querySelector(".typography-pin-height");
-        if (!pinHeightEl) return;
-
-        const horizontalDistance = Math.max(
-          0,
-          horizontalTrack.scrollWidth - window.innerWidth,
-        );
-
-        gsap.set(horizontalTrack, { x: 0 });
-
-        gsap.to(horizontalTrack, {
-          x: -horizontalDistance,
-          ease: "none",
-          scrollTrigger: {
-            trigger: pinHeightEl,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: true,
-          },
-        });
-
-        ScrollTrigger.create({
-          trigger: pinHeightEl,
-          start: "top top",
-          end: "bottom bottom",
-          pin: container,
-          pinSpacing: false,
-          anticipatePin: 1,
-        });
-
-        ScrollTrigger.refresh();
-      }, section);
-
-      return () => ctx.revert();
-    });
-
-    mm.add("(min-width: 769px)", () => {
-      const ctx = gsap.context(() => {
-        const pinHeightEl = section.querySelector(".typography-pin-height");
-        const paragraphsEls = section.querySelectorAll<HTMLElement>(
-          ".typography-paragraph",
-        );
-
-        if (!pinHeightEl || !paragraphsEls.length) return;
-
-        // Prevent duplicate word wrappers on re-run.
-        paragraphsEls.forEach((paragraph) => {
-          if (paragraph.querySelector(".typo-word")) return;
-
-          const text = paragraph.textContent || "";
-
+      // Wrap words in spans
+      paragraphsEls.forEach((paragraph) => {
+        const text = paragraph.textContent || "";
+        if (text.trim()) {
           paragraph.innerHTML = text
             .split(" ")
             .map(
               (word) => `<span class="typo-word"><span>${word}</span></span>`,
             )
             .join(" ");
-        });
+        }
+      });
 
-        const horizontalDistance = Math.max(
-          0,
-          horizontalTrack.scrollWidth - window.innerWidth,
-        );
+      // Pin the container with snap points
+      ScrollTrigger.create({
+        trigger: pinHeightEl,
+        start: "top top",
+        end: "bottom bottom",
+        pin: container,
+        snap: {
+          snapTo: snapPoints,
+          duration: { min: 0.2, max: 0.5 },
+          delay: 0.1,
+          ease: "power1.inOut",
+        },
+      });
 
-        gsap.to(horizontalTrack, {
-          x: -horizontalDistance,
-          ease: "none",
-          scrollTrigger: {
-            trigger: pinHeightEl,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 1,
-          },
-        });
-
-        ScrollTrigger.create({
+      // Create timeline for word animations
+      const tl = gsap.timeline({
+        scrollTrigger: {
           trigger: pinHeightEl,
           start: "top top",
-          end: "bottom bottom",
-          pin: container,
-          pinSpacing: false,
-          snap: {
-            snapTo: snapPoints,
-            duration: { min: 0.2, max: 0.5 },
-            delay: 0.1,
-            ease: "power1.inOut",
-          },
-        });
+          end: "80% bottom",
+          scrub: true,
+        },
+      });
 
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: pinHeightEl,
-            start: "top top",
-            end: "80% bottom",
-            scrub: true,
-          },
-        });
-
-        paragraphsEls.forEach((paragraph, index) => {
-          const nextParagraph = paragraphsEls[index + 1];
-
-          if (!nextParagraph) return;
-
+      // Animate paragraph transitions
+      paragraphsEls.forEach((paragraph, index) => {
+        if (paragraphsEls[index + 1]) {
           tl.to(paragraph.querySelectorAll(".typo-word span"), {
             y: "100%",
             duration: 1,
             stagger: 0.2,
             ease: "power4.in",
           });
-
           tl.to(
-            nextParagraph.querySelectorAll(".typo-word span"),
+            paragraphsEls[index + 1].querySelectorAll(".typo-word span"),
             {
               y: "0%",
               duration: 1,
@@ -194,33 +124,22 @@ export function MWG_022_TypographyReveal({
             },
             "<",
           );
-        });
+        }
+      });
+    }, section);
 
-        ScrollTrigger.refresh();
-      }, section);
-
-      return () => ctx.revert();
-    });
-
-    return () => mm.revert();
+    return () => ctx.revert();
   }, [paragraphs, snapPoints]);
 
   return (
     <section
       ref={sectionRef}
       className={`typography-section ${bgClass}`}
-      style={{
-        position: "relative",
-        width: "100%",
-        overflow: "hidden",
-      }}
+      style={{ position: "relative", width: "100%", overflow: "hidden" }}
     >
       <div
         className="typography-pin-height"
-        style={{
-          height: `${pinHeight}vh`,
-          width: "100%",
-        }}
+        style={{ height: `${pinHeight}vh`, width: "100%" }}
       >
         <div
           ref={containerRef}
@@ -228,14 +147,13 @@ export function MWG_022_TypographyReveal({
           style={{
             height: "100vh",
             position: "sticky",
-            top: 30,
+            top: 0,
             width: "100%",
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden",
           }}
         >
-          {/* Header bar — desktop only */}
+          {/* Header bar */}
           <div
             className="top"
             style={{
@@ -246,11 +164,10 @@ export function MWG_022_TypographyReveal({
               width: "100%",
             }}
           >
-            <p
-              className="hidden"
+            <p className="hidden"
               style={{
                 fontSize: "4vw",
-                lineHeight: 1,
+                lineHeight: 1.0,
                 letterSpacing: "-0.05em",
                 fontWeight: 500,
                 color: textColor,
@@ -262,7 +179,7 @@ export function MWG_022_TypographyReveal({
             </p>
           </div>
 
-          {/* Animated paragraphs — desktop only */}
+          {/* Paragraphs */}
           <div
             className="paragraphs"
             style={{
@@ -273,9 +190,9 @@ export function MWG_022_TypographyReveal({
               flex: 1,
             }}
           >
-            {paragraphs.map((paragraph, index) => (
+            {paragraphs.map((p, i) => (
               <p
-                key={index}
+                key={i}
                 className="typography-paragraph"
                 style={{
                   flex: 1,
@@ -286,36 +203,11 @@ export function MWG_022_TypographyReveal({
                   color: textColor,
                   margin: 0,
                   position: "relative",
-                  overflow: "hidden",
                 }}
               >
-                {paragraph.text}
+                {p.text}
               </p>
             ))}
-          </div>
-
-          {/* Static short paragraph(s) — mobile only */}
-          <div className="mobile-paragraph" style={{ color: textColor }}>
-            {mobileParagraphs.map((text, index) => (
-              <p key={index}>{text}</p>
-            ))}
-          </div>
-
-          {/* Horizontally scrolling row */}
-          <div className="typography-boxes-row" style={{ flexShrink: 0 }}>
-            <div
-              ref={horizontalTrackRef}
-              className="typography-boxes-track"
-              style={{ willChange: "transform" }}
-            >
-              <div className="typography-box" />
-              <div className="typography-box" />
-              <div className="typography-box" />
-              <div className="typography-box" />
-              <div className="typography-box" />
-              <div className="typography-box" />
-              <div className="typography-box" />
-            </div>
           </div>
         </div>
       </div>
