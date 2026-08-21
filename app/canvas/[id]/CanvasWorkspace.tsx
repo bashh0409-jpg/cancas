@@ -128,6 +128,13 @@ import {
 import { UnsplashSearchModal } from "@/app/components/canvas/UnsplashSearchModal";
 import { showToast } from "@/app/components/work/Toast";
 import { dispatchUserCreditsUpdated } from "@/lib/credits/events";
+import {
+  createCanvasHistoryState,
+  recordCanvasHistory,
+  redoCanvasHistory,
+  undoCanvasHistory,
+  type CanvasHistoryState,
+} from "@/lib/canvas/canvasHistory";
 
 export default function CanvasWorkspace({
   canvasId,
@@ -179,6 +186,15 @@ export default function CanvasWorkspace({
   >(() => {});
   const imageDeleteUndoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
   const imageDeleteRedoStackRef = useRef<ImageDeleteUndoEntry[]>([]);
+  const canvasHistoryRef = useRef<CanvasHistoryState>(
+    createCanvasHistoryState(),
+  );
+  const isApplyingHistoryRef = useRef(false);
+  const gestureBeforeRef = useRef<CanvasContent | null>(null);
+  const gestureChangedRef = useRef(false);
+  const recordCanvasChangeRef = useRef<
+    (before: CanvasContent, after: CanvasContent) => void
+  >(() => {});
   const selectedImageIdsRef = useRef<string[]>([]);
   const supabaseClientRef = useRef(createClient());
   const [viewport, setViewport] = useState<Viewport>(initialContent.viewport);
@@ -542,6 +558,8 @@ export default function CanvasWorkspace({
   }, [canvasLayers, updateLayers]);
 
   useEffect(() => {
+    canvasHistoryRef.current = createCanvasHistoryState();
+    isApplyingHistoryRef.current = false;
     const localDraft = readLocalCanvasDraft(canvasId, serverUpdatedAt);
 
     if (localDraft?.content) {
@@ -768,6 +786,13 @@ export default function CanvasWorkspace({
         return;
       }
 
+      const before = buildCanvasContentRef.current();
+      const after = structuredClone(before);
+      after.imageNodes = after.imageNodes.filter(
+        (node) => !removedIds.has(node.id),
+      );
+      recordCanvasChangeRef.current(before, after);
+
       flushImageDeleteRedoStack();
 
       const pendingByNodeId: ImageDeleteUndoEntry["pendingByNodeId"] = {};
@@ -810,51 +835,6 @@ export default function CanvasWorkspace({
       flushImageDeleteRedoStack,
     ],
   );
-
-  const undoImageDelete = useCallback(() => {
-    const entry = imageDeleteUndoStackRef.current.pop();
-
-    if (!entry) {
-      return;
-    }
-
-    imageDeleteRedoStackRef.current.push(entry);
-
-    for (const [nodeId, pending] of Object.entries(entry.pendingByNodeId)) {
-      pendingUploadFilesRef.current.set(nodeId, pending);
-      pendingUploadIdsRef.current.add(nodeId);
-    }
-
-    setImageNodes((current) => {
-      const existingIds = new Set(current.map((node) => node.id));
-      const restored = entry.nodes.filter((node) => !existingIds.has(node.id));
-
-      return [...current, ...restored].sort((a, b) => a.zIndex - b.zIndex);
-    });
-    setSelectedImageIds(entry.selectedIds);
-    saveDelayMsRef.current = 0;
-  }, []);
-
-  const redoImageDelete = useCallback(() => {
-    const entry = imageDeleteRedoStackRef.current.pop();
-
-    if (!entry) {
-      return;
-    }
-
-    imageDeleteUndoStackRef.current.push(entry);
-
-    while (imageDeleteUndoStackRef.current.length > IMAGE_DELETE_UNDO_LIMIT) {
-      const flushed = imageDeleteUndoStackRef.current.shift();
-
-      if (flushed) {
-        commitImageDeleteEntry(flushed);
-      }
-    }
-
-    applyImageDeleteEntryToCanvas(entry);
-    saveDelayMsRef.current = 0;
-  }, [applyImageDeleteEntryToCanvas, commitImageDeleteEntry]);
 
   useEffect(() => {
     selectedImageIdsRef.current = selectedImageIds;
@@ -1709,6 +1689,114 @@ export default function CanvasWorkspace({
   const buildCanvasContentRef = useRef(buildCanvasContent);
   buildCanvasContentRef.current = buildCanvasContent;
 
+  const applyCanvasContent = useCallback((content: CanvasContent) => {
+    isApplyingHistoryRef.current = true;
+
+    setViewport(content.viewport);
+    setImageNodes(content.imageNodes);
+    setWebNodes(content.webNodes);
+    setVoiceNodes(content.voiceNodes);
+    setTextNodes(content.textNodes);
+    setAiChatNodes(content.aiChatNodes);
+    setTranscriptionNodes(content.transcriptionNodes);
+    setShowGrid(content.showGrid);
+    setBackgroundColor(content.backgroundColor);
+    setGridColor(content.gridColor);
+    setGridSize(content.gridSize);
+    setGridLineType(content.gridLineType);
+
+    viewportRef.current = content.viewport;
+    imageNodesRef.current = content.imageNodes;
+    webNodesRef.current = content.webNodes;
+    voiceNodesRef.current = content.voiceNodes;
+    textNodesRef.current = content.textNodes;
+    aiChatNodesRef.current = content.aiChatNodes;
+    transcriptionNodesRef.current = content.transcriptionNodes;
+
+    const imageIds = new Set(content.imageNodes.map((node) => node.id));
+    for (const nodeId of pendingUploadFilesRef.current.keys()) {
+      if (!imageIds.has(nodeId)) {
+        pendingUploadFilesRef.current.delete(nodeId);
+        pendingUploadIdsRef.current.delete(nodeId);
+      }
+    }
+
+    for (const entry of imageDeleteUndoStackRef.current) {
+      for (const [nodeId, pending] of Object.entries(entry.pendingByNodeId)) {
+        if (imageIds.has(nodeId)) {
+          pendingUploadFilesRef.current.set(nodeId, pending);
+          pendingUploadIdsRef.current.add(nodeId);
+        }
+      }
+    }
+
+    queueMicrotask(() => {
+      isApplyingHistoryRef.current = false;
+    });
+  }, []);
+
+  const recordCanvasChange = useCallback(
+    (before: CanvasContent, after: CanvasContent) => {
+      if (isApplyingHistoryRef.current || isApplyingRemoteUpdateRef.current) {
+        return;
+      }
+
+      canvasHistoryRef.current = recordCanvasHistory(
+        canvasHistoryRef.current,
+        before,
+        after,
+      );
+    },
+    [],
+  );
+  recordCanvasChangeRef.current = recordCanvasChange;
+
+  const undoCanvas = useCallback(() => {
+    const result = undoCanvasHistory(canvasHistoryRef.current);
+    canvasHistoryRef.current = result.state;
+
+    if (result.content) {
+      applyCanvasContent(result.content);
+      saveDelayMsRef.current = 0;
+      return true;
+    }
+
+    return false;
+  }, [applyCanvasContent]);
+
+  const redoCanvas = useCallback(() => {
+    const result = redoCanvasHistory(canvasHistoryRef.current);
+    canvasHistoryRef.current = result.state;
+
+    if (result.content) {
+      applyCanvasContent(result.content);
+      saveDelayMsRef.current = 0;
+      return true;
+    }
+
+    return false;
+  }, [applyCanvasContent]);
+
+  const beginCanvasGesture = useCallback(() => {
+    gestureBeforeRef.current = buildCanvasContentRef.current();
+    gestureChangedRef.current = false;
+  }, []);
+
+  const markCanvasGestureChanged = useCallback(() => {
+    gestureChangedRef.current = true;
+  }, []);
+
+  const finishCanvasGesture = useCallback(() => {
+    const before = gestureBeforeRef.current;
+
+    if (before && gestureChangedRef.current) {
+      recordCanvasChange(before, buildCanvasContentRef.current());
+    }
+
+    gestureBeforeRef.current = null;
+    gestureChangedRef.current = false;
+  }, [recordCanvasChange]);
+
   const serverUpdatedAtRef = useRef(serverUpdatedAt);
   serverUpdatedAtRef.current = serverUpdatedAt;
   lastServerUpdatedAtRef.current = serverUpdatedAt;
@@ -1962,14 +2050,17 @@ export default function CanvasWorkspace({
       if (primaryModifier && isUndoKey && !event.shiftKey) {
         event.preventDefault();
         event.stopPropagation();
-        undoImageDelete();
+        undoCanvas();
         return;
       }
 
-      if (primaryModifier && isUndoKey && event.shiftKey) {
+      const isRedoKey =
+        event.code === "KeyY" || event.key === "y" || event.key === "Y";
+
+      if (primaryModifier && ((isUndoKey && event.shiftKey) || isRedoKey)) {
         event.preventDefault();
         event.stopPropagation();
-        redoImageDelete();
+        redoCanvas();
         return;
       }
 
@@ -1994,6 +2085,12 @@ export default function CanvasWorkspace({
 
           if (transcriptionNode) {
             event.preventDefault();
+            const before = buildCanvasContentRef.current();
+            const after = structuredClone(before);
+            after.transcriptionNodes = after.transcriptionNodes.filter(
+              (node) => node.id !== hoveredTranscriptionNodeId,
+            );
+            recordCanvasChange(before, after);
             setTranscriptionNodes((current) =>
               current.filter((node) => node.id !== hoveredTranscriptionNodeId),
             );
@@ -2016,6 +2113,12 @@ export default function CanvasWorkspace({
           );
           if (webNode) {
             event.preventDefault();
+            const before = buildCanvasContentRef.current();
+            const after = structuredClone(before);
+            after.webNodes = after.webNodes.filter(
+              (node) => node.id !== activeWebNodeId,
+            );
+            recordCanvasChange(before, after);
             setWebNodes((current) =>
               current.filter((n) => n.id !== activeWebNodeId),
             );
@@ -2054,6 +2157,12 @@ export default function CanvasWorkspace({
 
           if (selectedTextNode) {
             event.preventDefault();
+            const before = buildCanvasContentRef.current();
+            const after = structuredClone(before);
+            after.textNodes = after.textNodes.filter(
+              (node) => node.id !== selectedTextNodeId,
+            );
+            recordCanvasChange(before, after);
             setTextNodes((current) =>
               current.filter((node) => node.id !== selectedTextNodeId),
             );
@@ -2070,6 +2179,12 @@ export default function CanvasWorkspace({
 
             if (selectedAiChatNode) {
               event.preventDefault();
+              const before = buildCanvasContentRef.current();
+              const after = structuredClone(before);
+              after.aiChatNodes = after.aiChatNodes.filter(
+                (node) => node.id !== selectedTextNodeId,
+              );
+              recordCanvasChange(before, after);
               setAiChatNodes((current) =>
                 current.filter((node) => node.id !== selectedTextNodeId),
               );
@@ -2109,6 +2224,7 @@ export default function CanvasWorkspace({
         );
 
         if (selectedNodes.length > 0) {
+          const before = buildCanvasContentRef.current();
           const duplicatedNodes = selectedNodes.map((node) => ({
             ...node,
             id: crypto.randomUUID(),
@@ -2118,6 +2234,12 @@ export default function CanvasWorkspace({
             },
             zIndex: Math.max(...imageNodesRef.current.map((n) => n.zIndex)) + 1,
           }));
+          const after = structuredClone(before);
+          after.imageNodes = [
+            ...after.imageNodes,
+            ...duplicatedNodes.map(serializeImageNodeForSave),
+          ];
+          recordCanvasChange(before, after);
 
           setImageNodes((current) => [...current, ...duplicatedNodes]);
           setSelectedImageIds(duplicatedNodes.map((node) => node.id));
@@ -2133,11 +2255,12 @@ export default function CanvasWorkspace({
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
     };
   }, [
-    redoImageDelete,
+    recordCanvasChange,
+    redoCanvas,
     removeImageNodes,
     selectedImageIdSet,
     selectedTextNodeId,
-    undoImageDelete,
+    undoCanvas,
     setImageNodes,
     activeWebNodeId,
     hoveredTranscriptionNodeId,
@@ -2610,101 +2733,166 @@ export default function CanvasWorkspace({
     [focusCanvasBounds],
   );
 
-  const toggleCanvasLayerVisibility = useCallback((id: string) => {
-    setImageNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
-      ),
-    );
-    setWebNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
-      ),
-    );
-    setVoiceNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
-      ),
-    );
-    setTextNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
-      ),
-    );
-    setAiChatNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
-      ),
-    );
-    setSelectedImageIds((current) => current.filter((nodeId) => nodeId !== id));
-    setSelectedTextNodeId((current) => (current === id ? null : current));
-    setActiveWebNodeId((current) => (current === id ? null : current));
-    saveDelayMsRef.current = 0;
-  }, []);
+  const toggleCanvasLayerVisibility = useCallback(
+    (id: string) => {
+      const before = buildCanvasContentRef.current();
+      const after = structuredClone(before);
+      const collections = [
+        after.imageNodes,
+        after.webNodes,
+        after.voiceNodes,
+        after.textNodes,
+        after.aiChatNodes,
+        after.transcriptionNodes,
+      ];
 
-  const toggleCanvasLayerLocked = useCallback((id: string) => {
-    setImageNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
-      ),
-    );
-    setWebNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
-      ),
-    );
-    setVoiceNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
-      ),
-    );
-    setTextNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
-      ),
-    );
-    setAiChatNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
-      ),
-    );
-    saveDelayMsRef.current = 0;
-  }, []);
+      for (const nodes of collections) {
+        const node = nodes.find((entry) => entry.id === id);
+        if (node) {
+          node.visible = !(node.visible ?? true);
+        }
+      }
 
-  const renameCanvasLayer = useCallback((id: string, name: string) => {
-    const nextName = name.trim();
+      recordCanvasChange(before, after);
+      setImageNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+        ),
+      );
+      setWebNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+        ),
+      );
+      setVoiceNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+        ),
+      );
+      setTextNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+        ),
+      );
+      setAiChatNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, visible: !(node.visible ?? true) } : node,
+        ),
+      );
+      setSelectedImageIds((current) =>
+        current.filter((nodeId) => nodeId !== id),
+      );
+      setSelectedTextNodeId((current) => (current === id ? null : current));
+      setActiveWebNodeId((current) => (current === id ? null : current));
+      saveDelayMsRef.current = 0;
+    },
+    [recordCanvasChange],
+  );
 
-    if (!nextName) {
-      return;
-    }
+  const toggleCanvasLayerLocked = useCallback(
+    (id: string) => {
+      const before = buildCanvasContentRef.current();
+      const after = structuredClone(before);
+      const collections = [
+        after.imageNodes,
+        after.webNodes,
+        after.voiceNodes,
+        after.textNodes,
+        after.aiChatNodes,
+        after.transcriptionNodes,
+      ];
 
-    setImageNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, fileName: nextName } : node,
-      ),
-    );
-    setWebNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, title: nextName } : node,
-      ),
-    );
-    setVoiceNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, title: nextName } : node,
-      ),
-    );
-    setTextNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, text: nextName } : node,
-      ),
-    );
-    setAiChatNodes((current) =>
-      current.map((node) =>
-        node.id === id ? { ...node, title: nextName } : node,
-      ),
-    );
-    saveDelayMsRef.current = 0;
-  }, []);
+      for (const nodes of collections) {
+        const node = nodes.find((entry) => entry.id === id);
+        if (node) {
+          node.locked = !(node.locked ?? false);
+        }
+      }
+
+      recordCanvasChange(before, after);
+      setImageNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+        ),
+      );
+      setWebNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+        ),
+      );
+      setVoiceNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+        ),
+      );
+      setTextNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+        ),
+      );
+      setAiChatNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, locked: !(node.locked ?? false) } : node,
+        ),
+      );
+      saveDelayMsRef.current = 0;
+    },
+    [recordCanvasChange],
+  );
+
+  const renameCanvasLayer = useCallback(
+    (id: string, name: string) => {
+      const nextName = name.trim();
+
+      if (!nextName) {
+        return;
+      }
+
+      const before = buildCanvasContentRef.current();
+      const after = structuredClone(before);
+      const imageNode = after.imageNodes.find((node) => node.id === id);
+      const webNode = after.webNodes.find((node) => node.id === id);
+      const voiceNode = after.voiceNodes.find((node) => node.id === id);
+      const textNode = after.textNodes.find((node) => node.id === id);
+      const aiChatNode = after.aiChatNodes.find((node) => node.id === id);
+
+      if (imageNode) imageNode.fileName = nextName;
+      if (webNode) webNode.title = nextName;
+      if (voiceNode) voiceNode.title = nextName;
+      if (textNode) textNode.text = nextName;
+      if (aiChatNode) aiChatNode.name = nextName;
+
+      recordCanvasChange(before, after);
+
+      setImageNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, fileName: nextName } : node,
+        ),
+      );
+      setWebNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, title: nextName } : node,
+        ),
+      );
+      setVoiceNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, title: nextName } : node,
+        ),
+      );
+      setTextNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, text: nextName } : node,
+        ),
+      );
+      setAiChatNodes((current) =>
+        current.map((node) =>
+          node.id === id ? { ...node, name: nextName } : node,
+        ),
+      );
+      saveDelayMsRef.current = 0;
+    },
+    [recordCanvasChange],
+  );
 
   const deleteCanvasLayer = useCallback(
     (id: string) => {
@@ -3285,7 +3473,7 @@ export default function CanvasWorkspace({
   }
 
   function handleCanvasPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget || event.button !== 0) {
+    if (event.button !== 0) {
       return;
     }
 
@@ -3368,6 +3556,7 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     textDragRef.current = {
@@ -3426,9 +3615,11 @@ export default function CanvasWorkspace({
     setTextNodes(updatePosition);
     setAiChatNodes(updatePosition);
     setTranscriptionNodes(updatePosition);
+    markCanvasGestureChanged();
   }
 
   function handleTextPointerUp(event: ReactPointerEvent<HTMLElement>) {
+    finishCanvasGesture();
     textDragRef.current = null;
     setDraggingTextNodeId(null);
 
@@ -3448,12 +3639,15 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     const additive = event.shiftKey || event.metaKey || event.ctrlKey;
     const isSelected = selectedImageIdSet.has(node.id);
     let idsToDrag: string[];
 
     if (additive && isSelected) {
+      gestureBeforeRef.current = null;
+      gestureChangedRef.current = false;
       setSelectedImageIds((current) => current.filter((id) => id !== node.id));
       return;
     }
@@ -3464,10 +3658,9 @@ export default function CanvasWorkspace({
     } else if (!isSelected) {
       idsToDrag = [node.id];
       setSelectedImageIds(idsToDrag);
-    } else if (selectedImageIds.length > 1) {
-      idsToDrag = selectedImageIds;
     } else {
       idsToDrag = [node.id];
+      setSelectedImageIds(idsToDrag);
     }
 
     setSelectedTextNodeId(null);
@@ -3552,6 +3745,7 @@ export default function CanvasWorkspace({
     const resizeState = imageResizeRef.current;
 
     if (resizeState) {
+      markCanvasGestureChanged();
       const point = screenToCanvas({ x: event.clientX, y: event.clientY });
       const bounds = getResizedNodeBounds(resizeState, point);
 
@@ -3569,6 +3763,8 @@ export default function CanvasWorkspace({
     if (!dragState) {
       return;
     }
+
+    markCanvasGestureChanged();
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     const anchorStart = dragState.startPositions[dragState.anchorId];
@@ -3610,6 +3806,7 @@ export default function CanvasWorkspace({
   }
 
   function handleImagePointerUp(event: ReactPointerEvent<HTMLElement>) {
+    finishCanvasGesture();
     imageDragRef.current = null;
     imageResizeRef.current = null;
     setDraggingImageNodeId(null);
@@ -3631,6 +3828,7 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     webDragRef.current = {
@@ -3665,6 +3863,7 @@ export default function CanvasWorkspace({
     const resizeState = webResizeRef.current;
 
     if (resizeState) {
+      markCanvasGestureChanged();
       const point = screenToCanvas({ x: event.clientX, y: event.clientY });
       const bounds = getResizedNodeBounds(resizeState, point);
 
@@ -3693,6 +3892,7 @@ export default function CanvasWorkspace({
 
     if (moveDistance > 4) {
       dragState.hasMoved = true;
+      markCanvasGestureChanged();
     }
 
     setWebNodes((current) =>
@@ -3713,6 +3913,12 @@ export default function CanvasWorkspace({
   function handleWebPointerUp(event: ReactPointerEvent<HTMLElement>) {
     const didDrag = webDragRef.current?.hasMoved ?? false;
     const didResize = webResizeRef.current !== null;
+    if (didDrag || didResize) {
+      finishCanvasGesture();
+    } else {
+      gestureBeforeRef.current = null;
+      gestureChangedRef.current = false;
+    }
     webDragRef.current = null;
     webResizeRef.current = null;
     setDraggingWebNodeId(null);
@@ -3737,6 +3943,7 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     imageDragRef.current = null;
     imageResizeRef.current = {
@@ -3774,6 +3981,7 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     webDragRef.current = null;
     webResizeRef.current = {
@@ -3822,6 +4030,7 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    beginCanvasGesture();
 
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
     voiceDragRef.current = {
@@ -3858,6 +4067,8 @@ export default function CanvasWorkspace({
       return;
     }
 
+    markCanvasGestureChanged();
+
     const point = screenToCanvas({ x: event.clientX, y: event.clientY });
 
     setVoiceNodes((current) =>
@@ -3876,6 +4087,7 @@ export default function CanvasWorkspace({
   }
 
   function handleVoicePointerUp(event: ReactPointerEvent<HTMLElement>) {
+    finishCanvasGesture();
     voiceDragRef.current = null;
     setDraggingVoiceNodeId(null);
 
@@ -4760,6 +4972,7 @@ export default function CanvasWorkspace({
                 event.preventDefault();
                 event.stopPropagation();
                 event.currentTarget.setPointerCapture(event.pointerId);
+                beginCanvasGesture();
                 const point = screenToCanvas({
                   x: event.clientX,
                   y: event.clientY,
@@ -4852,6 +5065,7 @@ export default function CanvasWorkspace({
                   event.preventDefault();
                   event.stopPropagation();
                   event.currentTarget.setPointerCapture(event.pointerId);
+                  beginCanvasGesture();
                   const point = screenToCanvas({
                     x: event.clientX,
                     y: event.clientY,

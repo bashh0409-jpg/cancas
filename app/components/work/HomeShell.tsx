@@ -222,7 +222,7 @@ export function AccountCard({
           onClick={() => router.push("/billing/manage")}
           className="mt-1 w-fit px-2 rounded-full uppercase font-mono py-1 lime cursor-pointer text-xs text-black transition"
         >
-          <span className="mono">Upgrade</span>
+          <span className="mono">Manage</span>
         </button>
       </div>
       {/* Credits row */}
@@ -787,6 +787,7 @@ export function HomeShell({
           <SettingsPage
             profile={profile}
             photoUrl={photoUrl}
+            plan={plan}
             deleteAccountAction={deleteAccountAction}
             signOut={signOut}
             userSettings={userSettings}
@@ -1056,6 +1057,7 @@ function RecentlyDeletedPage() {
 function SettingsPage({
   profile,
   photoUrl,
+  plan,
   deleteAccountAction,
   signOut,
   userSettings,
@@ -1069,6 +1071,7 @@ function SettingsPage({
     nickname?: string | null;
   };
   photoUrl?: string;
+  plan: SubscriptionPlan;
   deleteAccountAction: (verificationCode: string) => Promise<void>;
   signOut: () => Promise<void>;
   userSettings: UserSettings;
@@ -1151,6 +1154,8 @@ function SettingsPage({
 
           {activeTab === "settings" && (
             <WorkspaceSettingsTab
+              username={safeProfile.nickname?.trim() || safeProfile.firstName}
+              plan={plan}
               deleteAccountAction={deleteAccountAction}
               signOut={signOut}
               userSettings={userSettings}
@@ -1366,17 +1371,22 @@ function AccountInfoTab({
 }
 
 function WorkspaceSettingsTab({
+  username,
+  plan,
   deleteAccountAction,
   signOut,
   userSettings,
   updateSettingsAction,
 }: {
+  username: string;
+  plan: SubscriptionPlan;
   deleteAccountAction: (verificationCode: string) => Promise<void>;
   signOut: () => Promise<void>;
   userSettings: UserSettings;
   updateSettingsAction: (formData: FormData) => Promise<void>;
 }) {
   const router = useRouter();
+  const planDetails = getPlanDetails(plan);
   const [openDelete, setOpenDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -1386,21 +1396,27 @@ function WorkspaceSettingsTab({
   const [canvasActivity, setCanvasActivity] = useState(
     userSettings.canvas_activity ?? true,
   );
-  const [saved, setSaved] = useState(false);
   const [saving, startTransition] = useTransition();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
-  async function handleSaveSettings() {
-    setSaved(false);
+  function handleSettingToggle(setting: "product_updates" | "canvas_activity") {
+    const nextProductUpdates =
+      setting === "product_updates" ? !productUpdates : productUpdates;
+    const nextCanvasActivity =
+      setting === "canvas_activity" ? !canvasActivity : canvasActivity;
+
+    if (setting === "product_updates") {
+      setProductUpdates(nextProductUpdates);
+    } else {
+      setCanvasActivity(nextCanvasActivity);
+    }
 
     const formData = new FormData();
-    formData.append("product_updates", String(productUpdates));
-    formData.append("canvas_activity", String(canvasActivity));
+    formData.append("product_updates", String(nextProductUpdates));
+    formData.append("canvas_activity", String(nextCanvasActivity));
 
-    startTransition(async () => {
-      await updateSettingsAction(formData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    });
+    startTransition(() => updateSettingsAction(formData));
   }
 
   async function handleDeleteAccount(verificationCode: string) {
@@ -1423,6 +1439,36 @@ function WorkspaceSettingsTab({
     }
   }
 
+  async function handleExport() {
+    try {
+      setIsExporting(true);
+      setExportError(null);
+      const response = await fetch("/api/account/export");
+      if (!response.ok) throw new Error("Failed to export account data");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const safeUsername =
+        username
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "user";
+      link.download = `reflow-${safeUsername}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(
+        error instanceof Error
+          ? error.message
+          : "Failed to export account data",
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <>
       <div className="flex max-w-xl flex-col gap-8">
@@ -1440,18 +1486,18 @@ function WorkspaceSettingsTab({
         {/* plan */}
         <div className="flex flex-col gap-4">
           <span className="text-xs text-white tracking-tight uppercase mono">
-            Plan
+            current Plan
           </span>
 
           <div className="flex flex-col gap-4 rounded bg-white/10 p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-sm  mono tracking-tight font-medium text-white">
-                  Free
+                <span className="text-sm uppercase  mono tracking-tight font-medium text-white">
+                  {planDetails.name} Plan
                 </span>
 
                 <span className="text-xs mono tracking-tight text-white/40">
-                  Limited canvas creation · 100 credits / month
+                  {planDetails.monthlyCredits.toLocaleString()} credits / month
                 </span>
               </div>
 
@@ -1459,14 +1505,14 @@ function WorkspaceSettingsTab({
                 onClick={() => router.push("/billing/manage")}
                 className="h-8 mono cursor-pointer uppercase rounded bg-white px-3 text-xs font-medium text-black transition hover:bg-white/90"
               >
-                Upgrade
+                {plan === "free" ? "Upgrade" : "Manage plan"}
               </button>
             </div>
           </div>
         </div>
 
         {/* notifications */}
-        <div className="flex flex-col gap-4">
+        <div className="flex  flex-col gap-4">
           <span className="text-xs   uppercase mono tracking-tight text-white">
             Notifications
           </span>
@@ -1476,34 +1522,53 @@ function WorkspaceSettingsTab({
               label="Product updates"
               description="New features and announcements"
               checked={productUpdates}
-              onChange={() => setProductUpdates((current) => !current)}
+              onChange={() => handleSettingToggle("product_updates")}
             />
-
-            <div className="h-px bg-white/5" />
-
+            <span className="w-full h-px bg-white/4"></span>
             <Toggle
               label="Canvas activity"
               description="Comments and edits on your canvases"
               checked={canvasActivity}
-              onChange={() => setCanvasActivity((current) => !current)}
+              onChange={() => handleSettingToggle("canvas_activity")}
             />
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handleSaveSettings}
-                disabled={saving}
-                className="flex h-8 min-w-[70px] cursor-pointer  font-medium cursor-pointer items-center justify-center self-end rounded bg-white px-3 text-xs  mono uppercase text-black transition hover:bg-white/90 disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : saved ? (
-                  "Saved"
-                ) : (
-                  "update"
-                )}
-              </button>
-            </div>
           </div>
+        </div>
+
+        {/* account data */}
+        <div className="flex flex-col gap-4">
+          <span className="text-xs uppercase mono tracking-tight text-white">
+            Your data
+          </span>
+
+          <div className="flex items-center justify-between rounded bg-white/10 p-4">
+            <div className="flex flex-col">
+              <span className="text-sm mono tracking-tight text-white">
+                Download account data
+              </span>
+
+              <span className="text-xs mono tracking-tight text-white/40">
+                Export your canvases and account information as a ZIP file.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleExport()}
+              disabled={isExporting}
+              className="flex h-8 shrink-0 cursor-pointer items-center justify-center gap-2 rounded bg-white px-3 text-xs mono uppercase font-medium text-black transition hover:bg-white/90 disabled:cursor-wait disabled:opacity-50"
+            >
+              {isExporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              {isExporting ? "Preparing" : "Download"}
+            </button>
+          </div>
+
+          {exportError && (
+            <p className="text-xs mono text-rose-400">{exportError}</p>
+          )}
         </div>
 
         {/* danger zone */}

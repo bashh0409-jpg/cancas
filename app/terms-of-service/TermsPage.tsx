@@ -137,6 +137,9 @@ export default function TermsPage() {
         <img
           src="/images/Re.svg"
           alt=""
+          loading="eager"
+          width={24}
+          height={24}
           className="h-6 text-black mix-blend-difference w-6"
         />{" "}
       </header>

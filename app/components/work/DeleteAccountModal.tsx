@@ -142,24 +142,22 @@ export function DeleteAccountModal({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded border border-white/10 bg-[#1A1D21] p-5">
+      <div className="w-full max-w-md rounded border border-black/10 bg-white p-5">
         {step === "confirm" ? (
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className="text-white text-sm font-medium">Delete Account</h2>
-              <p className="text-white/60 text-xs mono mt-1">
-                This action cannot be undone. All your data will be permanently
-                deleted.
-              </p>
+              <h2 className="text-black uppercase text-sm font-medium">
+                Delete Account
+              </h2>
+              
             </div>
 
             <div className="rounded bg-rose-500/10 border border-rose-500/30 p-3">
-              <p className="text-rose-200 text-xs mono">
-                ⚠️ Deleting your account will permanently remove all your data, including canvases, credits, and profile information. This action cannot be undone.
-              </p>
-              <p className="text-rose-200 mt-2 text-xs mono">
-                Make sure you have saved any important files or data before
-                proceeding.
+              <p className="text-rose-500 up text-xs mono">
+                This action cannot be undone. All your data will be permanently
+                deleted.. Deleting your account will permanently remove all your
+                data, make sure you have saved any important files or data
+                before proceeding.
               </p>
             </div>
 
@@ -173,7 +171,7 @@ export function DeleteAccountModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="h-9 rounded cursor-pointer bg-white/10 px-3 text-xs text-white hover:bg-white/15 transition"
+                className=" p-2 rounded-full cursor-pointer bg-black/20 px-3 text-xs text-black transition"
               >
                 Cancel
               </button>
@@ -182,7 +180,7 @@ export function DeleteAccountModal({
                 type="button"
                 onClick={handleSendCode}
                 disabled={loading}
-                className="h-9 rounded cursor-pointer bg-rose-500 px-3 text-xs font-medium text-white transition disabled:opacity-40 flex items-center gap-1.5"
+                className=" p-2 rounded-full cursor-pointer bg-rose-500 px-3 text-xs font-medium text-white transition disabled:opacity-40 flex items-center gap-1.5"
               >
                 {loading ? (
                   <>
@@ -249,7 +247,7 @@ export function DeleteAccountModal({
                   resetCode();
                   setError(null);
                 }}
-                className="h-9 rounded cursor-pointer bg-white/10 px-3 text-xs text-white hover:bg-white/15 transition"
+                className="p-2 rounded cursor-pointer bg-white/10 px-3 text-xs text-white hover:bg-white/15 transition"
               >
                 Back
               </button>

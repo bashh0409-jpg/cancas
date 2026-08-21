@@ -34,8 +34,9 @@ const shortcutGroups = [
       { keys: "Backspace / Delete", label: "Remove selected node" },
       { keys: "Cmd/Ctrl + D", label: "Duplicate selected" },
       { keys: "Cmd/Ctrl + A", label: "Select all" },
-      { keys: "Cmd/Ctrl + Z", label: "Undo delete" },
-      { keys: "Cmd/Ctrl + Shift + Z", label: "Redo delete" },
+      { keys: "Cmd/Ctrl + Z", label: "Undo" },
+      { keys: "Cmd/Ctrl + Shift + Z", label: "Redo" },
+      { keys: "Cmd/Ctrl + Y", label: "Redo" },
     ],
   },
   {

@@ -184,7 +184,7 @@ export function CanvasImageNode({
       ) : null}
       {isSelected && onTransform ? (
         <div
-          className="absolute  -bottom-11 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-lg border border-white/10 bg-[#212126] px-1 py-1 shadow-xl backdrop-blur"
+          className="absolute  -bottom-11 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-white/10 bg-[#212126] px-0.5 py-0.5 shadow-xl backdrop-blur"
           onPointerDown={(event) => {
             event.stopPropagation();
             event.preventDefault();
@@ -197,7 +197,7 @@ export function CanvasImageNode({
             aria-label="Flip horizontal"
             aria-pressed={flipH}
             className={[
-              "flex h-7 w-7 items-center justify-center rounded transition",
+              "flex h-7 w-7 items-center justify-center rounded-full transition",
               flipH
                 ? "bg-[#f8ff9a] text-black"
                 : "text-white hover:bg-white/10 hover:text-white",
@@ -215,7 +215,7 @@ export function CanvasImageNode({
             aria-label="Flip vertical"
             aria-pressed={flipV}
             className={[
-              "flex h-7 w-7 items-center justify-center rounded transition",
+              "flex h-7 w-7 items-center justify-center rounded-full transition",
               flipV
                 ? "bg-[#f8ff9a] text-black"
                 : "text-white hover:bg-white/10 hover:text-white",
@@ -231,7 +231,7 @@ export function CanvasImageNode({
           </button>
           <button
             aria-label="Rotate 90°"
-            className="flex h-7 w-7 items-center justify-center rounded text-white transition hover:bg-white/10 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/10 hover:text-white"
             type="button"
             onClick={(event) => {
               event.stopPropagation();

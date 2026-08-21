@@ -130,30 +130,15 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
         <ArrowLeft className="w-4 h-4" />
       </button>
       {/* Actions */}
-      <div className="flex gap-2">
-        <a
-          href="/billing/checkout"
-          className="w-fit p-2 px-4 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
-        >
-          Change Plan
-        </a>
-
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-fit p-2 px-4 lime cursor-pointer flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
-        >
-          Cancel Subscription
-        </button>
-      </div>
-
+      <h3 className="text-sm uppercase tracking-tight hidden mb-4">
+        Current Plan
+      </h3>
       {/* Current Plan */}
       <div className="bg-white/10 uppercase p-6 rounded">
-        <h3 className="text-sm uppercase tracking-tight mb-4">Current Plan</h3>
-
         <div className="grid uppercase md:grid-cols-2 gap-6">
           <div>
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
-              Plan
+              current Plan
             </div>
             <div className="text-md uppercase tracking-tight  capitalize">
               {subscription.plan}
@@ -197,8 +182,22 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
             </div>
           </div>
         </div>
-      </div>
+      </div>{" "}
+      <div className="flex gap-2">
+        <a
+          href="/billing/checkout"
+          className="w-fit p-2 px-4 lime flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+        >
+          Change Plan
+        </a>
 
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="w-fit p-2 px-4 lime cursor-pointer flex items-center justify-center rounded text-black uppercase tracking-tight text-xs"
+        >
+          Cancel
+        </button>
+      </div>
       {/* Period Information */}
       {currentPeriodEnd && (
         <div
@@ -230,7 +229,6 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
           </div>
         </div>
       )}
-
       {/* Cancel Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black flex items-center justify-center p-4 z-50">

@@ -1447,11 +1447,11 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
           <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
         </button>
       </div>
-
-      <div className="space-y-5">
+      <p className="tracking-tighter uppercas mt-10 text-xs font-mono text-white">Canvas node settings will be here</p>
+      <div className="space-y-5 hidden">
         {/* ── TTS Provider ── */}
         <div className="space-y-2">
-          <label className="text-white/50 mono text-xs uppercase tracking-tight">
+          <label className="text-white/50 mb-1 mono text-xs uppercase tracking-tight">
             Text-to-speech Provider
           </label>
           <select
@@ -1720,7 +1720,7 @@ const HelpPanel = ({ onClose }: { onClose: () => void }) => (
             <span className="text-white/70">Cmd/Ctrl + A</span> — Select all
           </p>
           <p>
-            <span className="text-white/70">Cmd/Ctrl + Z</span> — Undo delete
+            <span className="text-white/70">Cmd/Ctrl + Z</span> — Undo
           </p>
           <p>
             <span className="text-white/70">Esc</span> — Deselect / close panels
@@ -1760,6 +1760,7 @@ const ExportSection = ({
       isActive={activePanel === "help"}
       onClick={() => onPanelChange(activePanel === "help" ? null : "help")}
     />
+    
     <IconButton
       icon={Settings}
       tooltip="Settings"
