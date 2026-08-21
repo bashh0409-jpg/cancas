@@ -228,7 +228,7 @@ export function MWG_022_TypographyReveal({
           style={{
             height: "100vh",
             position: "sticky",
-            top: 0,
+            top: 30,
             width: "100%",
             display: "flex",
             flexDirection: "column",
