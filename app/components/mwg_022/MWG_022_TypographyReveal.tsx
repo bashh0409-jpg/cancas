@@ -5,7 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
 import "./mwg_022.css";
 
-// Register GSAP plugins
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -57,35 +56,62 @@ export function MWG_022_TypographyReveal({
 }: MWG_022_TypographyRevealProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const horizontalTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
     const container = containerRef.current;
-    if (!section || !container) return;
+    const horizontalTrack = horizontalTrackRef.current;
+
+    if (!section || !container || !horizontalTrack) return;
 
     const ctx = gsap.context(() => {
       const pinHeightEl = section.querySelector(".typography-pin-height");
-      const paragraphsEls = section.querySelectorAll(".typography-paragraph");
+      const paragraphsEls = section.querySelectorAll<HTMLElement>(
+        ".typography-paragraph",
+      );
 
-      // Wrap words in spans
+      if (!pinHeightEl || !paragraphsEls.length) return;
+
+      // Prevent React re-renders from duplicating the word wrappers.
       paragraphsEls.forEach((paragraph) => {
+        if (paragraph.querySelector(".typo-word")) return;
+
         const text = paragraph.textContent || "";
-        if (text.trim()) {
-          paragraph.innerHTML = text
-            .split(" ")
-            .map(
-              (word) => `<span class="typo-word"><span>${word}</span></span>`,
-            )
-            .join(" ");
-        }
+
+        paragraph.innerHTML = text
+          .split(" ")
+          .map((word) => `<span class="typo-word"><span>${word}</span></span>`)
+          .join(" ");
       });
 
-      // Pin the container with snap points
+      const horizontalDistance = Math.max(
+        0,
+        horizontalTrack.scrollWidth - window.innerWidth,
+      );
+
+      /*
+       * The vertical section becomes the timeline for the horizontal row,
+       * so normal vertical scrolling controls the horizontal movement.
+       */
+      gsap.to(horizontalTrack, {
+        x: -horizontalDistance,
+        ease: "none",
+        scrollTrigger: {
+          trigger: pinHeightEl,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+        },
+      });
+
+      // Pin the main content while the user moves through the section.
       ScrollTrigger.create({
         trigger: pinHeightEl,
         start: "top top",
         end: "bottom bottom",
         pin: container,
+        pinSpacing: false,
         snap: {
           snapTo: snapPoints,
           duration: { min: 0.2, max: 0.5 },
@@ -94,7 +120,7 @@ export function MWG_022_TypographyReveal({
         },
       });
 
-      // Create timeline for word animations
+      // Typography reveal timeline.
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: pinHeightEl,
@@ -104,28 +130,32 @@ export function MWG_022_TypographyReveal({
         },
       });
 
-      // Animate paragraph transitions
       paragraphsEls.forEach((paragraph, index) => {
-        if (paragraphsEls[index + 1]) {
-          tl.to(paragraph.querySelectorAll(".typo-word span"), {
-            y: "100%",
+        const nextParagraph = paragraphsEls[index + 1];
+
+        if (!nextParagraph) return;
+
+        tl.to(paragraph.querySelectorAll(".typo-word span"), {
+          y: "100%",
+          duration: 1,
+          stagger: 0.2,
+          ease: "power4.in",
+        });
+
+        tl.to(
+          nextParagraph.querySelectorAll(".typo-word span"),
+          {
+            y: "0%",
             duration: 1,
+            delay: 1,
             stagger: 0.2,
-            ease: "power4.in",
-          });
-          tl.to(
-            paragraphsEls[index + 1].querySelectorAll(".typo-word span"),
-            {
-              y: "0%",
-              duration: 1,
-              delay: 1,
-              stagger: 0.2,
-              ease: "power4.out",
-            },
-            "<",
-          );
-        }
+            ease: "power4.out",
+          },
+          "<",
+        );
       });
+
+      ScrollTrigger.refresh();
     }, section);
 
     return () => ctx.revert();
@@ -135,11 +165,18 @@ export function MWG_022_TypographyReveal({
     <section
       ref={sectionRef}
       className={`typography-section ${bgClass}`}
-      style={{ position: "relative", width: "100%", overflow: "hidden" }}
+      style={{
+        position: "relative",
+        width: "100%",
+        overflow: "hidden",
+      }}
     >
       <div
         className="typography-pin-height"
-        style={{ height: `${pinHeight}vh`, width: "100%" }}
+        style={{
+          height: `${pinHeight}vh`,
+          width: "100%",
+        }}
       >
         <div
           ref={containerRef}
@@ -151,6 +188,7 @@ export function MWG_022_TypographyReveal({
             width: "100%",
             display: "flex",
             flexDirection: "column",
+            overflow: "hidden",
           }}
         >
           {/* Header bar */}
@@ -164,10 +202,11 @@ export function MWG_022_TypographyReveal({
               width: "100%",
             }}
           >
-            <p className="hidden"
+            <p
+              className="hidden"
               style={{
                 fontSize: "4vw",
-                lineHeight: 1.0,
+                lineHeight: 1,
                 letterSpacing: "-0.05em",
                 fontWeight: 500,
                 color: textColor,
@@ -190,9 +229,9 @@ export function MWG_022_TypographyReveal({
               flex: 1,
             }}
           >
-            {paragraphs.map((p, i) => (
+            {paragraphs.map((paragraph, index) => (
               <p
-                key={i}
+                key={index}
                 className="typography-paragraph"
                 style={{
                   flex: 1,
@@ -203,11 +242,38 @@ export function MWG_022_TypographyReveal({
                   color: textColor,
                   margin: 0,
                   position: "relative",
+                  overflow: "hidden",
                 }}
               >
-                {p.text}
+                {paragraph.text}
               </p>
             ))}
+          </div>
+
+          {/* Horizontally scrolling row */}
+          <div
+            className="w-full -z-900 -mt-40 overflow-hidden py-4 sm:h-20 md:h-50"
+            style={{
+              flexShrink: 0,
+            }}
+          >
+            <div
+              ref={horizontalTrackRef}
+              className="flex items-center gap-1 h-full w-max"
+              style={{
+                paddingLeft: "1rem",
+                paddingRight: "1rem",
+                willChange: "transform",
+              }}
+            >
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+              <div className="aspect-video rounded bg-black h-full" />
+            </div>
           </div>
         </div>
       </div>
