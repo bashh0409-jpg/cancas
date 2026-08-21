@@ -217,13 +217,14 @@ export default function HomeClient({ user }: HomeClientProps) {
 
         {/* Dark grid */}
         <div
-          className="relative h-screen bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
+          className="relative flex justify-center h-fit bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
           style={{
             backgroundImage:
               "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
           }}
         >
-          <Hero />
+         <Hero user={user}/>
+        
         </div>
         {/* White grid */}
         <div
@@ -263,16 +264,15 @@ export default function HomeClient({ user }: HomeClientProps) {
         >
           {/*  <TextScalingAnimation /> */}
           <div className="-z-100">
-
-          
-          {/* Section 2: Typography Word Reveal */}
-          <MWG_022_TypographyReveal
-            title="What Reflow does best"
-            textColor="#000"
-            borderColor="rgb(73, 73, 73)"
-            pinHeight={600}
-          />
-        </div></div>
+            {/* Section 2: Typography Word Reveal */}
+            <MWG_022_TypographyReveal
+              title="What Reflow does best"
+              textColor="#000"
+              borderColor="rgb(73, 73, 73)"
+              pinHeight={600}
+            />
+          </div>
+        </div>
         {/* Dark grid */}
         <div
           className="relative h- justify-center flex items-center bg-repeat-x bg-[length:32px_100%] sm:bg-[length:40px_100%] lg:bg-[length:30px_100%] xl:bg-[length:25px_100%]"
