@@ -19,10 +19,7 @@ const IMAGES = [
     src: "/images/img2.jpeg",
     className: "left-[27%] top-[6%] w-[22%] sm:w-[15%] md:w-[13%]",
   },
-  {
-    src: "/images/img3.jpeg",
-    className: "left-[19%] top-[27%] w-[17%] sm:w-[12%] md:w-[10%]",
-  },
+  
   {
     src: "/images/img4.jpeg",
     className: "right-[25%] top-[10%] w-[16%] sm:w-[11%] md:w-[9%]",
@@ -143,7 +140,7 @@ export default function Hero({ user }: HomeClientProps) {
 
         tl.to(
           text,
-          { yPercent: -40, opacity: 0, ease: "none", duration: 1 },
+          { yPercent: -40, opacity: 1, ease: "none", duration: 1 },
           0,
         );
 
@@ -248,7 +245,7 @@ export default function Hero({ user }: HomeClientProps) {
             onMouseEnter={() => handleEnter(index)}
             onMouseMove={(event) => handleMove(event, index)}
             onMouseLeave={() => handleLeave(index)}
-            className={`absolute cursor-pointer overflow-hidden ${image.className}`}
+            className={`absolute mix-blend-difference cursor-pointer overflow-hidden ${image.className}`}
             style={{
               zIndex: 1,
               willChange: "transform",
@@ -270,10 +267,10 @@ export default function Hero({ user }: HomeClientProps) {
       {/* Content */}
       <div
         ref={textRef}
-        className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4 text-center font-mono uppercase leading-tight text-white"
+        className="absolute inset-0 z-20 mix-blend-difference flex flex-col items-center justify-center px-4 text-center font-mono uppercase leading-tight text-white"
       >
-        <h1 className="max-w-xl text-6xl capitalize tracking-tighter">
-          Video editing, reinvented
+        <h1 className="max-w-xl mix-blend-difference text-6xl sm:text-7xl uppercase capitalize tracking-tighter">
+          Your creativity, powered by AI
         </h1>
         <div className="mt-6 flex items-center justify-center gap-2">
           <a
