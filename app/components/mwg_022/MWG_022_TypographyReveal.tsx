@@ -145,7 +145,7 @@ export function MWG_022_TypographyReveal({
           ref={containerRef}
           className="border-none typography-container"
           style={{
-            height: "100vh",
+            height: "10vh",
             position: "sticky",
             top: 0,
             width: "100%",
@@ -153,35 +153,10 @@ export function MWG_022_TypographyReveal({
             flexDirection: "column",
           }}
         >
-          {/* Header bar */}
-          <div
-            className="top"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "2.5vw",
-              width: "100%",
-            }}
-          >
-            <p className="hidden"
-              style={{
-                fontSize: "4vw",
-                lineHeight: 1.0,
-                letterSpacing: "-0.05em",
-                fontWeight: 500,
-                color: textColor,
-                whiteSpace: "pre-line",
-                margin: 0,
-              }}
-            >
-              {title}
-            </p>
-          </div>
 
           {/* Paragraphs */}
           <div
-            className="paragraphs"
+            className="paragraphs h-fit"
             style={{
               display: "flex",
               alignItems: "flex-start",
