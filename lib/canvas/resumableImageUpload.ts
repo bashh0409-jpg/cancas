@@ -127,16 +127,23 @@ export async function uploadCanvasImageResumable({
       return { storagePath: ticket.storagePath, url: ticket.url };
     }
 
+    if (!ticket.token || !ticket.endpoint) {
+      throw new Error("Invalid image upload ticket");
+    }
+
+    const tusToken = ticket.token;
+    const tusEndpoint = ticket.endpoint;
+
     const tus = await import("tus-js-client");
     await new Promise<void>((resolve, reject) => {
       const upload = new tus.Upload(file, {
-        endpoint: ticket.endpoint,
+        endpoint: tusEndpoint,
         chunkSize: 6 * 1024 * 1024,
         retryDelays: [0, 3_000, 5_000, 10_000, 20_000],
         removeFingerprintOnSuccess: true,
         uploadDataDuringCreation: true,
         headers: {
-          "x-signature": ticket.token,
+          "x-signature": tusToken,
           "x-upsert": "true",
         },
         metadata: {
