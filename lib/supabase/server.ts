@@ -65,6 +65,20 @@ export async function createClient() {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const AUTH_REQUEST_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(
+        () => reject(new Error("Supabase auth request timed out")),
+        timeoutMs,
+      );
+    }),
+  ]);
+}
+
 /**
  * Decode a JWT payload (base64url) without signature verification.
  * Only used to check the `exp` claim — we never trust unverified tokens for auth.
@@ -211,16 +225,33 @@ export async function getAuthenticatedUser(
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
   const accessToken = parseAccessTokenFromCookies(allCookies);
+  const hasAuthCookie = allCookies.some((cookie) =>
+    isSupabaseAuthCookie(cookie.name),
+  );
+
+  if (!hasAuthCookie) {
+    return null;
+  }
 
   if (accessToken && !isTokenExpired(accessToken)) {
     // Token hasn't expired — getUser() won't trigger a refresh
     try {
-      const { data, error } = await supabase.auth.getUser();
+      const { data, error } = await withTimeout(
+        supabase.auth.getUser(),
+        AUTH_REQUEST_TIMEOUT_MS,
+      );
       if (!error && data.user) return data.user;
 
       // If getUser() fails despite a valid-looking token (e.g. revoked),
       // fall through to the full retry logic below.
-    } catch {
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "Supabase auth request timed out"
+      ) {
+        return null;
+      }
+
       // Fall through
     }
   }
@@ -230,7 +261,10 @@ export async function getAuthenticatedUser(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const { data, error } = await supabase.auth.getUser();
+      const { data, error } = await withTimeout(
+        supabase.auth.getUser(),
+        AUTH_REQUEST_TIMEOUT_MS,
+      );
       if (error) throw error;
       if (data.user) return data.user;
       // No error but no user either — session may be missing entirely
