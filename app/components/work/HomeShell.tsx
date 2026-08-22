@@ -39,7 +39,6 @@ import { FolderIcon } from "@/public/icons/custom/FolderIcon";
 import { TrashIcon } from "@/public/icons/custom/TrashIcon";
 import { TutorialIcon } from "@/public/icons/custom/TutorialIcon";
 import { LibraryIcon } from "@/public/icons/custom/LibraryIcon";
-import { DeleteAccountModal } from "@/app/components/work/DeleteAccountModal";
 import { useRouter } from "next/navigation";
 import CanvasPlaceholderIcon from "../CanvasPlaceholderIcon";
 import {
@@ -67,7 +66,6 @@ interface HomeShellProps {
 
   createCanvasAction: (idempotencyKey: string) => Promise<CreateCanvasResult>;
   signOut: () => Promise<void>;
-  deleteAccountAction: (verificationCode: string) => Promise<void>;
   profile: {
     firstName: string;
     lastName: string;
@@ -389,7 +387,6 @@ export function HomeShell({
   errorMessage,
   createCanvasAction,
   signOut,
-  deleteAccountAction,
   profile,
   updateNicknameAction,
   updateSettingsAction,
@@ -788,7 +785,6 @@ export function HomeShell({
             profile={profile}
             photoUrl={photoUrl}
             plan={plan}
-            deleteAccountAction={deleteAccountAction}
             signOut={signOut}
             userSettings={userSettings}
             updateSettingsAction={updateSettingsAction}
@@ -1058,7 +1054,6 @@ function SettingsPage({
   profile,
   photoUrl,
   plan,
-  deleteAccountAction,
   signOut,
   userSettings,
   updateSettingsAction,
@@ -1072,7 +1067,6 @@ function SettingsPage({
   };
   photoUrl?: string;
   plan: SubscriptionPlan;
-  deleteAccountAction: (verificationCode: string) => Promise<void>;
   signOut: () => Promise<void>;
   userSettings: UserSettings;
   updateSettingsAction: (formData: FormData) => Promise<void>;
@@ -1156,8 +1150,6 @@ function SettingsPage({
             <WorkspaceSettingsTab
               username={safeProfile.nickname?.trim() || safeProfile.firstName}
               plan={plan}
-              deleteAccountAction={deleteAccountAction}
-              signOut={signOut}
               userSettings={userSettings}
               updateSettingsAction={updateSettingsAction}
             />
@@ -1373,23 +1365,16 @@ function AccountInfoTab({
 function WorkspaceSettingsTab({
   username,
   plan,
-  deleteAccountAction,
-  signOut,
   userSettings,
   updateSettingsAction,
 }: {
   username: string;
   plan: SubscriptionPlan;
-  deleteAccountAction: (verificationCode: string) => Promise<void>;
-  signOut: () => Promise<void>;
   userSettings: UserSettings;
   updateSettingsAction: (formData: FormData) => Promise<void>;
 }) {
   const router = useRouter();
   const planDetails = getPlanDetails(plan);
-  const [openDelete, setOpenDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [productUpdates, setProductUpdates] = useState(
     userSettings.product_updates ?? true,
   );
@@ -1397,8 +1382,6 @@ function WorkspaceSettingsTab({
     userSettings.canvas_activity ?? true,
   );
   const [saving, startTransition] = useTransition();
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
 
   function handleSettingToggle(setting: "product_updates" | "canvas_activity") {
     const nextProductUpdates =
@@ -1417,56 +1400,6 @@ function WorkspaceSettingsTab({
     formData.append("canvas_activity", String(nextCanvasActivity));
 
     startTransition(() => updateSettingsAction(formData));
-  }
-
-  async function handleDeleteAccount(verificationCode: string) {
-    setDeleting(true);
-    setDeleteError(null);
-    setOpenDelete(false);
-
-    try {
-      await deleteAccountAction(verificationCode);
-      await signOut();
-      router.push("/signin");
-    } catch (error) {
-      setDeleting(false);
-      setDeleteError(
-        error instanceof Error
-          ? error.message
-          : String(error) || "Unable to delete account.",
-      );
-      setOpenDelete(true);
-    }
-  }
-
-  async function handleExport() {
-    try {
-      setIsExporting(true);
-      setExportError(null);
-      const response = await fetch("/api/account/export");
-      if (!response.ok) throw new Error("Failed to export account data");
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const safeUsername =
-        username
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "") || "user";
-      link.download = `reflow-${safeUsername}.zip`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      setExportError(
-        error instanceof Error
-          ? error.message
-          : "Failed to export account data",
-      );
-    } finally {
-      setIsExporting(false);
-    }
   }
 
   return (
@@ -1532,43 +1465,6 @@ function WorkspaceSettingsTab({
               onChange={() => handleSettingToggle("canvas_activity")}
             />
           </div>
-        </div>
-
-        {/* account data */}
-        <div className="flex flex-col gap-4">
-          <span className="text-xs uppercase mono tracking-tight text-white">
-            Your data
-          </span>
-
-          <div className="flex items-center justify-between rounded bg-white/10 p-4">
-            <div className="flex flex-col">
-              <span className="text-sm mono tracking-tight text-white">
-                Download account data
-              </span>
-
-              <span className="text-xs mono tracking-tight text-white/40">
-                Export your canvases and account information as a ZIP file.
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => void handleExport()}
-              disabled={isExporting}
-              className="flex h-8 shrink-0 cursor-pointer items-center justify-center gap-2 rounded bg-white px-3 text-xs mono uppercase font-medium text-black transition hover:bg-white/90 disabled:cursor-wait disabled:opacity-50"
-            >
-              {isExporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              {isExporting ? "Preparing" : "Download"}
-            </button>
-          </div>
-
-          {exportError && (
-            <p className="text-xs mono text-rose-400">{exportError}</p>
-          )}
         </div>
 
         {/* danger zone */}

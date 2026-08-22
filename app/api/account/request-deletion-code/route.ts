@@ -19,9 +19,11 @@ class EmailDeliveryError extends Error {
 async function sendDeletionCodeEmail({
   to,
   code,
+  name,
 }: {
   to: string;
   code: string;
+  name: string;
 }) {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
@@ -65,39 +67,43 @@ async function sendDeletionCodeEmail({
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
   </head>
-  <body style="margin:0;padding:0;background:#ffffff;font-family:'Geist Mono','Courier New',Courier,monospace;color:#000000;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;padding:48px 0;">
+  <body style="margin:0;padding:0;background:#ffffff;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;padding:32px 0 48px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:420px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;">
             <tr>
-              <td align="center" style="padding:0 24px;">
-                <p style="margin:0 0 8px;font-size:20px;font-weight:600;letter-spacing:-0.02em;text-transform:uppercase;color:#000000;">
-                  Verification Code
-                </p>
-
-                <p style="margin:0 0 24px;font-size:14px;line-height:22px;letter-spacing:-0.01em;text-transform:uppercase;color:rgba(0,0,0,0.6);">
-                  Use this code to confirm your account request. It expires in
-                  <span style="color:#000000;">15 minutes</span>.
-                </p>
-
-                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 24px;">
+              <td style="padding:0 32px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 78px;">
                   <tr>
-                    <td style="background:rgba(0,0,0,0.06);border-radius:9999px;font-family:Arial, Helvetica, sans-serif;padding:12px 32px;font-size:28px;font-weight:700;letter-spacing:6px;color:#000000;">
+                    <td>
+                      <img src="https://www.swipes.site/images/Reb.svg" width="43" height="28" alt="Reflow" style="display:block;border:0;outline:none;text-decoration:none;filter:brightness(0);" />
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 32px;font-size:26px;line-height:34px;letter-spacing:-0.7px;">
+                  Hello, <strong>${name}.</strong>
+                </p>
+
+                <p style="margin:0 0 32px;font-size:18px;line-height:28px;letter-spacing:-0.25px;">
+                  Use the verification code below to confirm your account deletion request. It expires in 15 minutes.
+                </p>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 72px;">
+                  <tr>
+                    <td style="border-radius:1200px;padding:10px 15px;font-size:22px;line-height:28px;font-weight:700;letter-spacing:5px;color:#000000;">
                       ${code}
                     </td>
                   </tr>
                 </table>
 
-                <p style="margin:0;font-size:12px;line-height:20px;letter-spacing:-0.01em;text-transform:uppercase;color:rgba(0,0,0,0.4);">
+                <p style="margin:0 0 12px;padding-top:24px;border-top:1px solid #eaeaea;font-size:14px;line-height:22px;color:#737373;">
                   If you did not request this code, you can safely ignore this email.
+                </p>
+                <p style="margin:0;font-size:14px;line-height:22px;color:#737373;">
+                  Reflow account security
                 </p>
               </td>
             </tr>
@@ -184,7 +190,14 @@ export async function POST() {
     }
 
     try {
-      await sendDeletionCodeEmail({ to: user.email, code });
+      const displayName =
+        (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
+        user.email.split("@")[0];
+      await sendDeletionCodeEmail({
+        to: user.email,
+        code,
+        name: displayName,
+      });
     } catch (emailError) {
       console.error("Failed to send email:", emailError);
       const message =
