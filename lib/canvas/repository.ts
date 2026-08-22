@@ -494,13 +494,17 @@ export async function listUserTrashedCanvases(
   try {
     const { data, error } = await supabase
       .from("canvases")
-      .select("id,slug,name,created_at,updated_at,deleted_at")
+      .select("id,slug,name,content,created_at,updated_at,deleted_at")
       .eq("user_id", userId)
       .not("deleted_at", "is", null)
       .order("deleted_at", { ascending: false });
 
     if (error) throw error;
-    return data ?? [];
+
+    return (data ?? []).map(({ content, ...canvas }) => ({
+      ...canvas,
+      size_bytes: new TextEncoder().encode(JSON.stringify(content ?? {})).length,
+    }));
   } catch (err: unknown) {
     // If deleted_at doesn't exist yet, return empty
     if (isMissingDeletedAtColumn(err)) {
