@@ -1,5 +1,5 @@
 import { getUserCanvas } from "@/lib/canvas/repository";
-import { createR2UploadUrl, isR2Configured } from "@/lib/r2";
+import { createR2UploadUrl, deleteFromR2, isR2Configured } from "@/lib/r2";
 import { buildCanvasImageStoragePath } from "@/lib/canvas/storageKey";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -126,6 +126,63 @@ export async function POST(request: NextRequest, context: RouteContext) {
   } catch {
     return NextResponse.json(
       { error: "Unable to authorize image upload" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const { id: canvasId } = await context.params;
+    const supabase = await createClient();
+    const user = await getAuthenticatedUser(supabase);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const canvas = await getUserCanvas(supabase, user.id, canvasId);
+
+    if (!canvas) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const storagePath = new URL(request.url).searchParams.get("storagePath");
+    const expectedPrefix = `${user.id}/${canvas.id}/`;
+
+    if (!storagePath?.startsWith(expectedPrefix)) {
+      return NextResponse.json({ error: "Invalid storage path" }, { status: 400 });
+    }
+
+    const deletionErrors: unknown[] = [];
+
+    if (isR2Configured()) {
+      try {
+        await deleteFromR2(storagePath);
+      } catch (error) {
+        deletionErrors.push(error);
+      }
+    }
+
+    const { error } = await supabase.storage
+      .from("canvas-files")
+      .remove([storagePath]);
+
+    if (error) {
+      deletionErrors.push(error);
+    }
+
+    if (deletionErrors.length > 0) {
+      return NextResponse.json(
+        { error: "Unable to delete canvas image" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to delete canvas image" },
       { status: 500 },
     );
   }

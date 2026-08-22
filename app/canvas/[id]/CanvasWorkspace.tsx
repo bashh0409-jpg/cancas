@@ -788,7 +788,7 @@ export default function CanvasWorkspace({
         pendingUploadIdsRef.current.delete(node.id);
 
         if (node.storagePath) {
-          void deleteCanvasImage(supabase, node.storagePath).catch(() => {
+          void deleteCanvasImage(supabase, canvasId, node.storagePath).catch(() => {
             // Best-effort storage cleanup.
           });
         }

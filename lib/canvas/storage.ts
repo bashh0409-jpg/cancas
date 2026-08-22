@@ -130,13 +130,15 @@ export async function uploadVoiceNote(
 
 export async function deleteCanvasImage(
   supabase: SupabaseClient,
-  storagePath: string
+  canvasId: string,
+  storagePath: string,
 ) {
-  const { error } = await supabase.storage
-    .from("canvas-files")
-    .remove([storagePath]);
+  const response = await fetch(
+    `/api/canvases/${canvasId}/upload-url?storagePath=${encodeURIComponent(storagePath)}`,
+    { method: "DELETE" },
+  );
 
-  if (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error("Unable to delete canvas image");
   }
 }
