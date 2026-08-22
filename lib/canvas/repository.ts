@@ -5,6 +5,7 @@ import type {
 } from "@/types/canvas";
 import { parseCanvasContent } from "@/types/canvas";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { deleteR2Prefix, isR2Configured } from "@/lib/r2";
 import { isUuid, slugifyCanvasName } from "./slug";
 
 async function createUniqueCanvasSlug(
@@ -373,6 +374,11 @@ export async function deleteUserCanvas(
 
   if (pathsToRemove.length > 0) {
     await removeWithRetry(pathsToRemove);
+  }
+
+  if (isR2Configured()) {
+    await deleteR2Prefix(rootPath);
+    await deleteR2Prefix(`r2/${rootPath}`);
   }
 
   const { error } = await supabase

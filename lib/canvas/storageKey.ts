@@ -38,6 +38,15 @@ export function buildVoiceNoteStoragePath(
   return `${userId}/${canvasId}/${nodeId}/voice${extension}`;
 }
 
+export function buildR2VoiceNoteStoragePath(
+  userId: string,
+  canvasId: string,
+  nodeId: string,
+  mimeType: string,
+) {
+  return `r2/${buildVoiceNoteStoragePath(userId, canvasId, nodeId, mimeType)}`;
+}
+
 /** Supabase object keys must not contain spaces or most punctuation in path segments. */
 export function buildCanvasImageStoragePath(
   userId: string,

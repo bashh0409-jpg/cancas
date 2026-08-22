@@ -95,7 +95,11 @@ import {
   getPendingUploadFile,
   savePendingUploadFile,
 } from "@/lib/canvas/pendingUploads";
-import { deleteCanvasImage } from "@/lib/canvas/storage";
+import {
+  deleteCanvasImage,
+  deleteVoiceNote,
+  getVoiceNoteUrl,
+} from "@/lib/canvas/storage";
 import { uploadCanvasImageResumable } from "@/lib/canvas/resumableImageUpload";
 import { uploadVoiceNote } from "@/lib/canvas/storage";
 import { canvasImageUploadPool } from "@/lib/canvas/uploadPool";
@@ -682,11 +686,13 @@ export default function CanvasWorkspace({
 
         if (storagePath && !(node.audioDataUrl ?? "")) {
           try {
-            const { data } = await supabase.storage
-              .from("voice-notes")
-              .createSignedUrl(storagePath, 60 * 60);
-
-            const signedUrl = data?.signedUrl;
+            const signedUrl = storagePath.startsWith("r2/")
+              ? await getVoiceNoteUrl(canvasId, storagePath)
+              : (
+                  await supabase.storage
+                    .from("voice-notes")
+                    .createSignedUrl(storagePath, 60 * 60)
+                ).data?.signedUrl;
 
             if (typeof signedUrl === "string") {
               const blobResponse = await fetch(signedUrl);
@@ -1534,7 +1540,8 @@ export default function CanvasWorkspace({
           pendingVoiceRecording.blob,
         );
 
-        audioDataUrl = URL.createObjectURL(pendingVoiceRecording.blob);
+        audioDataUrl =
+          result.url ?? URL.createObjectURL(pendingVoiceRecording.blob);
         storagePath = result.storagePath;
       } catch (err) {
         // If upload fails, fallback to data URL so user can still play back
@@ -4568,12 +4575,19 @@ export default function CanvasWorkspace({
   function handleDeleteVoiceNode(nodeId: string) {
     const node = voiceNodesRef.current.find((entry) => entry.id === nodeId);
 
-    if (node?.locked) {
+    if (!node || node.locked) {
       return;
     }
 
     removeNodePlayback(nodeId);
     setVoiceNodes((current) => current.filter((node) => node.id !== nodeId));
+    if (node.storagePath) {
+      void deleteVoiceNote(
+        supabaseClientRef.current,
+        canvasId,
+        node.storagePath,
+      ).catch(() => {});
+    }
     saveDelayMsRef.current = 0;
   }
 
@@ -4707,11 +4721,13 @@ export default function CanvasWorkspace({
 
           if (voiceNode.storagePath) {
             // Create a signed URL and fetch the blob for transcription
-            const { data } = await supabase.storage
-              .from("voice-notes")
-              .createSignedUrl(voiceNode.storagePath, 60 * 60);
-
-            const signedUrl = data?.signedUrl;
+            const signedUrl = voiceNode.storagePath.startsWith("r2/")
+              ? await getVoiceNoteUrl(canvasId, voiceNode.storagePath)
+              : (
+                  await supabase.storage
+                    .from("voice-notes")
+                    .createSignedUrl(voiceNode.storagePath, 60 * 60)
+                ).data?.signedUrl;
 
             if (!signedUrl) throw new Error("Failed to get signed URL");
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { deflateRawSync } from "node:zlib";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { downloadFromR2, isR2Configured } from "@/lib/r2";
 
 type ExportFile = {
   name: string;
@@ -128,11 +129,30 @@ async function downloadMedia(
   userId: string,
   canvasId: string,
 ) {
-  if (
-    typeof storagePath !== "string" ||
-    !storagePath.startsWith(`${userId}/${canvasId}/`)
-  ) {
+  if (typeof storagePath !== "string") {
     return null;
+  }
+
+  const isOwnedPath =
+    storagePath.startsWith(`${userId}/${canvasId}/`) ||
+    storagePath.startsWith(`r2/${userId}/${canvasId}/`);
+  if (!isOwnedPath) {
+    return null;
+  }
+
+  if (storagePath.startsWith("r2/") && isR2Configured()) {
+    try {
+      return {
+        bytes: await downloadFromR2(storagePath),
+        extension: storagePath.match(/\.[a-z0-9]{1,8}$/i)?.[0] ?? ".bin",
+      };
+    } catch (error) {
+      console.warn("[Account Export] Unable to download R2 media", {
+        storagePath,
+        error: error instanceof Error ? error.message : error,
+      });
+      return null;
+    }
   }
 
   const { data, error } = await supabase.storage
