@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-polly": "^3.1072.0",
+    "@aws-sdk/client-s3": "^3.1116.0",
     "@aws-sdk/credential-providers": "^3.1072.0",
+    "@aws-sdk/s3-request-presigner": "^3.1116.0",
     "@gsap/react": "^2.1.2",
     "@icons-pack/react-simple-icons": "^13.13.0",
     "@mozilla/readability": "^0.6.0",

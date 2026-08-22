@@ -68,6 +68,10 @@ const nextConfig: NextConfig = {
     },
     {
       protocol: "https",
+      hostname: "images.swipes.site",
+    },
+    {
+      protocol: "https",
       hostname: "image.mux.com",
     },
     {

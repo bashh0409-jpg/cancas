@@ -1,4 +1,5 @@
 import { getUserCanvas } from "@/lib/canvas/repository";
+import { createR2UploadUrl, isR2Configured } from "@/lib/r2";
 import { buildCanvasImageStoragePath } from "@/lib/canvas/storageKey";
 import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -87,6 +88,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       nodeId,
       file,
     );
+
+    if (isR2Configured()) {
+      const { uploadUrl, publicUrl } = await createR2UploadUrl(
+        storagePath,
+        mimeType,
+      );
+
+      return NextResponse.json({
+        uploadUrl,
+        storagePath,
+        url: publicUrl,
+      });
+    }
+
     const { data, error } = await supabase.storage
       .from("canvas-files")
       .createSignedUploadUrl(storagePath, { upsert: true });

@@ -1,4 +1,3 @@
-import * as tus from "tus-js-client";
 import {
   getPendingUploadTicket,
   savePendingUploadTicket,
@@ -11,6 +10,14 @@ type ResumableImageUploadOptions = {
   nodeId: string;
   file: File;
   onProgress: (percent: number) => void;
+};
+
+type UploadTicket = {
+  uploadUrl?: string;
+  token?: string;
+  storagePath: string;
+  url: string;
+  endpoint?: string;
 };
 
 export function makeUploadFingerprint(
@@ -44,10 +51,10 @@ async function createUploadTicket(
   if (
     !response.ok ||
     !body ||
-    typeof body.token !== "string" ||
     typeof body.storagePath !== "string" ||
     typeof body.url !== "string" ||
-    typeof body.endpoint !== "string"
+    (typeof body.uploadUrl !== "string" &&
+      (typeof body.token !== "string" || typeof body.endpoint !== "string"))
   ) {
     const message =
       body && typeof body.error === "string"
@@ -57,6 +64,7 @@ async function createUploadTicket(
   }
 
   return {
+    uploadUrl: body.uploadUrl,
     token: body.token,
     storagePath: body.storagePath,
     url: body.url,
@@ -121,6 +129,13 @@ export async function uploadCanvasImageResumable({
   );
 
   try {
+    if (ticket.uploadUrl) {
+      await uploadWithProgress(ticket.uploadUrl, file, onProgress);
+      await deletePendingUploadTicket(fingerprint).catch(() => {});
+      return { storagePath: ticket.storagePath, url: ticket.url };
+    }
+
+    const tus = await import("tus-js-client");
     await new Promise<void>((resolve, reject) => {
       const upload = new tus.Upload(file, {
         endpoint: ticket.endpoint,
@@ -180,4 +195,32 @@ export async function uploadCanvasImageResumable({
   });
 
   return { storagePath: ticket.storagePath, url: ticket.url };
+}
+
+function uploadWithProgress(
+  uploadUrl: string,
+  file: File,
+  onProgress: (percent: number) => void,
+) {
+  return new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", uploadUrl);
+    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    request.setRequestHeader("Cache-Control", "public, max-age=86400");
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(Math.min(99, Math.floor((event.loaded / event.total) * 100)));
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress(100);
+        resolve();
+      } else {
+        reject(new Error(`R2 upload failed with status ${request.status}`));
+      }
+    };
+    request.onerror = () => reject(new Error("R2 upload failed"));
+    request.onabort = () => reject(new DOMException("Upload aborted", "AbortError"));
+    request.send(file);
+  });
 }
