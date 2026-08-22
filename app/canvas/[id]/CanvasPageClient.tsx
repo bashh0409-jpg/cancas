@@ -31,7 +31,7 @@ type CanvasPageClientProps = {
   canvasId: string;
   canvasName: string;
   initialContent: CanvasContent;
-  canvases: { id: string; name: string; slug: string }[];
+  canvases: { id: string; name: string; slug: string; size_bytes: number }[];
   serverUpdatedAt: string;
   userId: string;
   firstName: string;

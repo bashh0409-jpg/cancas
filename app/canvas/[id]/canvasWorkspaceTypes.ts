@@ -44,7 +44,7 @@ export type CanvasWorkspaceProps = {
   canvasId: string;
   userId: string;
   canvasName: string;
-  canvases: { id: string; name: string; slug: string }[];
+  canvases: { id: string; name: string; slug: string; size_bytes: number }[];
   initialContent: CanvasContent;
   serverUpdatedAt: string;
   onImageSyncStatsChange?: (stats: ImageSyncStats) => void;
