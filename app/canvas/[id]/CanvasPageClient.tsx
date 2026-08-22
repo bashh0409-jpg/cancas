@@ -57,6 +57,9 @@ export default function CanvasPageClient({
   const [currentCredits, setCurrentCredits] = useState(credits);
   const [taskLabels, setTaskLabels] = useState<string[]>(["No task running"]);
   const [userCanvases, setUserCanvases] = useState(canvases);
+  const [storageSizeBytes, setStorageSizeBytes] = useState<number>(
+    () => new TextEncoder().encode(JSON.stringify(initialContent ?? {})).length,
+  );
 
   const [syncStats, setSyncStats] = useState<ImageSyncStats>(() => ({
     synced: initialContent.imageNodes.filter((n) => Boolean(n.storagePath))
@@ -139,6 +142,7 @@ export default function CanvasPageClient({
           setUploadDebugEntries((c) => [entry, ...c].slice(0, 6))
         }
         onRemoteNameChange={setCanvasTitle}
+        onStorageSizeChange={setStorageSizeBytes}
       />
 
       <div className="absolute bottom-0 right-0 z-50 flex w-fit items-center p-4">
@@ -154,7 +158,11 @@ export default function CanvasPageClient({
         />
       </div>
       <div className="absolute right-4 top-4 z-50 flex items-center">
-        <TaskView credits={currentCredits} taskLabels={taskLabels} />
+        <TaskView
+          credits={currentCredits}
+          taskLabels={taskLabels}
+          storageSizeBytes={storageSizeBytes}
+        />
       </div>
       <FloatingToolbar />
     </main>

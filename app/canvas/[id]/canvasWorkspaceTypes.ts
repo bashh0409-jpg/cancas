@@ -18,6 +18,7 @@ export type ImageCanvasNode = {
   fileName: string;
   url: string;
   storagePath?: string;
+  fileSizeBytes?: number;
   position: Point;
   size: {
     width: number;
@@ -49,6 +50,7 @@ export type CanvasWorkspaceProps = {
   onImageSyncStatsChange?: (stats: ImageSyncStats) => void;
   onUploadDebugEntry?: (entry: import("@/lib/canvas/uploadDebug").UploadDebugEntry) => void;
   onRemoteNameChange?: (name: string) => void;
+  onStorageSizeChange?: (sizeBytes: number) => void;
 };
 
 export type LocalCanvasDraft = {

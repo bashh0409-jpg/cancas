@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader, SquareActivity, SquareUserRound } from "lucide-react";
+import { SquareActivity, SquareUserRound } from "lucide-react";
 import { useCanvasPreferencesStore } from "@/lib/canvas/canvasPreferencesStore";
 import { formatCredits } from "@/lib/credits/format";
 
@@ -9,12 +9,14 @@ type TaskProps = {
   credits: number;
   taskLabels?: string[];
   className?: string;
+  storageSizeBytes?: number;
 };
 
 const TaskView = ({
   credits,
   taskLabels = ["No task running"],
   className,
+  storageSizeBytes,
 }: TaskProps) => {
   const showActivityMonitor = useCanvasPreferencesStore(
     (state) => state.showActivityMonitor,
@@ -24,6 +26,7 @@ const TaskView = ({
   );
   const syncToServer = useCanvasPreferencesStore((state) => state.syncToServer);
   const hasTasks = taskLabels.length > 0 && taskLabels[0] !== "No task running";
+  const storageSize = formatStorageSize(storageSizeBytes);
   const [uploadingFiles, setUploadingFiles] = useState<
     { nodeId: string; fileName: string; fileSize: number; percent: number }[]
   >([]);
@@ -166,7 +169,13 @@ const TaskView = ({
             <Icon />
             <span className="grotesk mr-1">{formatCredits(credits)}</span>
           </span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center rounded text-[10px] text-white gap-1">
+              <span className="grotesk">{storageSize.value}</span>
+              <span className="font-mono uppercase text-white/80">
+                {storageSize.unit}
+              </span>
+            </div>
             <button
               type="button"
               onClick={(event) => {
@@ -184,7 +193,7 @@ const TaskView = ({
               type="button"
               aria-label="Share canvas"
               title="Share"
-              className="flex h-full cursor-not-allowed items-center rounded-full text-xs font-mono uppercase text-black"
+              className="flex h-full hidden cursor-not-allowed items-center rounded-full text-xs font-mono uppercase text-black"
             >
               <SquareUserRound className="h-4 w-4 text-white/50 stroke-[2]" />
             </button>
@@ -205,8 +214,6 @@ const TaskView = ({
                       key={label}
                       className="text-[10px] justify-between w-full uppercase flex gap-1 items-center tracking-tight font-mono text-black"
                     >
-                      
-                     
                       {label} <TaskIndicator />
                     </span>
                   ))}
@@ -314,26 +321,32 @@ const TaskView = ({
   );
 };
 
-function CountingDots({ intervalMs = 400 }: { intervalMs?: number }) {
-  const [count, setCount] = useState(1);
+function formatStorageSize(sizeBytes?: number) {
+  if (
+    !Number.isFinite(sizeBytes) ||
+    sizeBytes === undefined ||
+    sizeBytes <= 0
+  ) {
+    return { value: "0", unit: "B" };
+  }
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCount((current) => (current % 3) + 1);
-    }, intervalMs);
+  if (sizeBytes < 1024) {
+    return { value: `${Math.round(sizeBytes)}`, unit: "B" };
+  }
 
-    return () => clearInterval(timer);
-  }, [intervalMs]);
+  const units = ["KB", "MB", "GB"];
+  let size = sizeBytes;
+  let unitIndex = -1;
 
-  return (
-    <span className="inline-flex" aria-hidden>
-      {[1, 2, 3].map((dot) => (
-        <span key={dot} className={dot <= count ? "opacity-100" : "opacity-0"}>
-          .
-        </span>
-      ))}
-    </span>
-  );
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  return {
+    value: size.toFixed(size < 10 ? 1 : 0),
+    unit: units[unitIndex] ?? "GB",
+  };
 }
 
 function Icon() {
@@ -385,11 +398,3 @@ function TaskIndicator() {
 }
 
 export default TaskView;
-
-function formatPercent(p: unknown) {
-  const n = Number(p);
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(100, Math.max(0, Math.round(n)));
-}
-
-// formatBytes removed — kept earlier but unused; restore if needed.

@@ -79,7 +79,7 @@ export async function listUserCanvases(
   try {
     const { data, error } = await supabase
       .from("canvases")
-      .select("id, slug, name, created_at, updated_at, deleted_at")
+      .select("id, slug, name, content, created_at, updated_at, deleted_at")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false });
@@ -88,18 +88,24 @@ export async function listUserCanvases(
       throw error;
     }
 
-    return data ?? [];
+    return (data ?? []).map(({ content, ...canvas }) => ({
+      ...canvas,
+      size_bytes: new TextEncoder().encode(JSON.stringify(content ?? {})).length,
+    }));
   } catch (err: unknown) {
     // If the deleted_at column doesn't exist, fall back to querying without it.
     if (isMissingDeletedAtColumn(err)) {
       const { data, error } = await supabase
         .from("canvases")
-        .select("id, slug, name, created_at, updated_at")
+        .select("id, slug, name, content, created_at, updated_at")
         .eq("user_id", userId)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(({ content, ...canvas }) => ({
+        ...canvas,
+        size_bytes: new TextEncoder().encode(JSON.stringify(content ?? {})).length,
+      }));
     }
 
     throw err;

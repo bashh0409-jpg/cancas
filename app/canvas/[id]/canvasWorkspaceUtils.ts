@@ -150,6 +150,7 @@ export function serializeImageNodeForSave(node: ImageCanvasNode) {
     fileName: node.fileName,
     url: pending && node.url.startsWith("blob:") ? "" : node.url,
     storagePath: node.storagePath,
+    fileSizeBytes: node.fileSizeBytes,
     position: node.position,
     size: node.size,
     zIndex: node.zIndex,

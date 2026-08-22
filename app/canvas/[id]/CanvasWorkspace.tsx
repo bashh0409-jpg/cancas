@@ -150,6 +150,7 @@ export default function CanvasWorkspace({
   onImageSyncStatsChange,
   onUploadDebugEntry,
   onRemoteNameChange,
+  onStorageSizeChange,
 }: CanvasWorkspaceProps) {
   const initialImageIdsRef = useRef(
     new Set(initialContent.imageNodes.map((node) => node.id)),
@@ -438,6 +439,52 @@ export default function CanvasWorkspace({
     viewport.zoom >= 0.01
       ? `${Math.round(viewport.zoom * 100)}%`
       : `${(viewport.zoom * 100).toFixed(1)}%`;
+  const currentCanvasContent = useMemo<CanvasContent>(
+    () => ({
+      version: 1,
+      viewport,
+      imageNodes,
+      webNodes,
+      voiceNodes,
+      textNodes,
+      aiChatNodes,
+      transcriptionNodes,
+      showGrid,
+      backgroundColor,
+      gridColor,
+      gridSize,
+      gridLineType,
+    }),
+    [
+      viewport,
+      imageNodes,
+      webNodes,
+      voiceNodes,
+      textNodes,
+      aiChatNodes,
+      transcriptionNodes,
+      showGrid,
+      backgroundColor,
+      gridColor,
+      gridSize,
+      gridLineType,
+    ],
+  );
+
+  useEffect(() => {
+    const serializedCanvasBytes = new TextEncoder().encode(
+      JSON.stringify(currentCanvasContent),
+    ).length;
+    const imageBytes = imageNodes.reduce((sum, node) => {
+      if (!Number.isFinite(node.fileSizeBytes) || node.fileSizeBytes == null) {
+        return sum;
+      }
+      return sum + Math.max(0, node.fileSizeBytes);
+    }, 0);
+
+    onStorageSizeChange?.(serializedCanvasBytes + imageBytes);
+  }, [currentCanvasContent, imageNodes, onStorageSizeChange]);
+
   const canvasContentsItems = useMemo<CanvasContentsItem[]>(
     () =>
       [
@@ -3346,6 +3393,7 @@ export default function CanvasWorkspace({
         id: nodeId,
         fileName: file.name,
         url: blobUrl,
+        fileSizeBytes: file.size,
         position: snapCanvasPoint({
           x: dropPosition.x + index * getNodeStagger(),
           y: dropPosition.y + index * getNodeStagger(),

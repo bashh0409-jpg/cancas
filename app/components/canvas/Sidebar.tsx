@@ -74,7 +74,7 @@ type SidebarProps = {
   onClosePanel?: () => void;
   canvasName?: string;
   activeCanvasId?: string;
-  canvases?: { id: string; name: string; slug: string }[];
+  canvases?: { id: string; name: string; slug: string; size_bytes: number }[];
   onRename?: (name: string) => void | Promise<void>;
   onSwitchCanvas?: (slug: string) => void;
 };
@@ -85,7 +85,7 @@ const CanvasSwitcherFlyout = ({
   activeCanvasId,
   onSwitchCanvas,
 }: {
-  canvases?: { id: string; name: string; slug: string }[];
+  canvases?: { id: string; name: string; slug: string; size_bytes: number }[];
   activeCanvasId?: string;
   onSwitchCanvas?: (slug: string) => void;
 }) => {
@@ -106,6 +106,29 @@ const CanvasSwitcherFlyout = ({
   const [disconnectHovered, setDisconnectHovered] = useState<string | null>(
     null,
   );
+
+  const formatCanvasSize = (sizeBytes?: number) => {
+    if (
+      !Number.isFinite(sizeBytes) ||
+      sizeBytes === undefined ||
+      sizeBytes <= 0
+    ) {
+      return "0 B";
+    }
+
+    if (sizeBytes < 1024) return `${Math.round(sizeBytes)} B`;
+
+    const units = ["KB", "MB", "GB"];
+    let size = sizeBytes;
+    let unitIndex = -1;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+
+    return `${size.toFixed(size < 10 ? 1 : 0)} ${units[unitIndex] ?? "GB"}`;
+  };
 
   return (
     <div
@@ -156,8 +179,10 @@ const CanvasSwitcherFlyout = ({
                   >
                     <span className="min-w-0 flex-1 truncate pr-5 uppercase">
                       {canvas.name}
-                    </span>
-
+                    </span>{" "}
+                    <div className="shrink-0 hidden mr-10 text-white/40">
+                      {formatCanvasSize(canvas.size_bytes)}
+                    </div>
                     {isActive && (
                       <div className="pointer-events-none absolute inset-y-0 right-2 flex w-10 items-center justify-end bg-gradient-to-r from-transparent to-[#212126]">
                         <FolderOpen className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" />
@@ -198,7 +223,7 @@ const CanvasSwitcherOverlay = ({
 }: {
   canvasName?: string;
   activeCanvasId?: string;
-  canvases?: { id: string; name: string; slug: string }[];
+  canvases?: { id: string; name: string; slug: string; size_bytes: number }[];
   onRename?: (name: string) => void | Promise<void>;
   onSwitchCanvas?: (slug: string) => void;
   onClose?: () => void;
@@ -970,42 +995,42 @@ export const ConnectPanel = ({
             );
           }
 
-         return (
-           <div key={provider.id}>
-             {categoryLabel && (
-               <p className="mb-2 mono uppercase tracking-tight text-white text-xs pb-1">
-                 {categoryLabel}
-               </p>
-             )}
-             <div
-               onClick={() => setBrowsingProvider(provider.id)}
-               className="group cursor-pointer border px-1 border-white/20 rounded w-full hover:border-white/20 transition"
-             >
-               <div className="flex items-center gap-1 -ml-1">
-                 {/* Icon */}
-                 <div className="flex items-center justify-center w-8 h-7 rounded border-white/10 shrink-0">
-                   <Icon className="w-4 h-4 text-white/80" />
-                 </div>
+          return (
+            <div key={provider.id}>
+              {categoryLabel && (
+                <p className="mb-2 mono uppercase tracking-tight text-white text-xs pb-1">
+                  {categoryLabel}
+                </p>
+              )}
+              <div
+                onClick={() => setBrowsingProvider(provider.id)}
+                className="group cursor-pointer border px-1 border-white/20 rounded w-full hover:border-white/20 transition"
+              >
+                <div className="flex items-center gap-1 -ml-1">
+                  {/* Icon */}
+                  <div className="flex items-center justify-center w-8 h-7 rounded border-white/10 shrink-0">
+                    <Icon className="w-4 h-4 text-white/80" />
+                  </div>
 
-                 {/* Content */}
-                 <div className="flex w-full min-w-0 flex-col">
-                   {/* Header */}
-                   <div className="flex min-w-0 w-full items-start justify-between">
-                     <div className="flex w-full justify-between min-w-0">
-                       <p className="truncate mono text-xs uppercase tracking-tight text-white">
-                         {provider.name}
-                       </p>{" "}
-                       <div className="flex font-mono text-xs">
-                         {provider.connected && !provider.expired ? (
-                           <div className="group/actions flex items-center">
-                             {/* Browse collapses only when Disconnect is hovered */}
-                             <button
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 setBrowsingProvider(provider.id);
-                               }}
-                               aria-label="Browse files"
-                               className="
+                  {/* Content */}
+                  <div className="flex w-full min-w-0 flex-col">
+                    {/* Header */}
+                    <div className="flex min-w-0 w-full items-start justify-between">
+                      <div className="flex w-full justify-between min-w-0">
+                        <p className="truncate mono text-xs uppercase tracking-tight text-white">
+                          {provider.name}
+                        </p>{" "}
+                        <div className="flex font-mono text-xs">
+                          {provider.connected && !provider.expired ? (
+                            <div className="group/actions flex items-center">
+                              {/* Browse collapses only when Disconnect is hovered */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setBrowsingProvider(provider.id);
+                                }}
+                                aria-label="Browse files"
+                                className="
         lime relative cursor-pointer hidden flex overflow-hidden rounded-full p-0.5
         tracking-tight uppercase
         transition-[width,padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
@@ -1013,19 +1038,19 @@ export const ConnectPanel = ({
         group-has-[.disconnect-btn:hover]/actions:w-6
         group-has-[.disconnect-btn:hover]/actions:px-1
       "
-                             >
-                               <span
-                                 className="
+                              >
+                                <span
+                                  className="
           block transition-all duration-200 ease-out
           group-has-[.disconnect-btn:hover]/actions:opacity-0
           group-has-[.disconnect-btn:hover]/actions:-translate-y-1
           group-has-[.disconnect-btn:hover]/actions:scale-90
         "
-                               >
-                                 Browse
-                               </span>
-                               <span
-                                 className="
+                                >
+                                  Browse
+                                </span>
+                                <span
+                                  className="
           pointer-events-none absolute inset-0 flex items-center justify-center
           opacity-0 translate-y-1 scale-90
           transition-all duration-200 delay-0 ease-out
@@ -1033,20 +1058,20 @@ export const ConnectPanel = ({
           group-has-[.disconnect-btn:hover]/actions:translate-y-0
           group-has-[.disconnect-btn:hover]/actions:scale-100
         "
-                               >
-                                 <FolderOpen className="h-4 w-4" />
-                               </span>
-                             </button>
+                                >
+                                  <FolderOpen className="h-4 w-4" />
+                                </span>
+                              </button>
 
-                             {/* Disconnect expands from icon to text */}
-                             <button
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 void handleDisconnect(provider.id);
-                               }}
-                               disabled={disconnecting === provider.id}
-                               aria-label="Disconnect"
-                               className="
+                              {/* Disconnect expands from icon to text */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleDisconnect(provider.id);
+                                }}
+                                disabled={disconnecting === provider.id}
+                                aria-label="Disconnect"
+                                className="
         disconnect-btn group/disconnect
         lime relative ml-0.5 cursor-pointer overflow-hidden rounded-full
         p-0.5 tracking-tight uppercase
@@ -1054,66 +1079,66 @@ export const ConnectPanel = ({
         w-6 px-1
         hover:w-[78px] hover:px-2
       "
-                             >
-                               {disconnecting === provider.id ? (
-                                 <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                               ) : (
-                                 <>
-                                   {/* Icon shown by default, hidden while hovering */}
-                                   <span
-                                     className="
+                              >
+                                {disconnecting === provider.id ? (
+                                  <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    {/* Icon shown by default, hidden while hovering */}
+                                    <span
+                                      className="
               flex items-center justify-center
               transition-all duration-200 ease-out
               group-hover/disconnect:opacity-0
               group-hover/disconnect:scale-90
               group-hover/disconnect:rotate-45
             "
-                                   >
-                                     <CirclePower className="h-4 w-4" />
-                                   </span>
+                                    >
+                                      <CirclePower className="h-4 w-4" />
+                                    </span>
 
-                                   {/* Text replaces the icon on hover */}
-                                   <span
-                                     className="
+                                    {/* Text replaces the icon on hover */}
+                                    <span
+                                      className="
               pointer-events-none absolute inset-0 flex items-center justify-center
               whitespace-nowrap opacity-0 scale-95
               transition-all duration-200 delay-75 ease-out
               group-hover/disconnect:opacity-100
               group-hover/disconnect:scale-100
             "
-                                   >
-                                     Disconnect
-                                   </span>
-                                 </>
-                               )}
-                             </button>
-                           </div>
-                         ) : (
-                           <button
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               void handleConnect(provider.id);
-                             }}
-                             disabled={provider.loading}
-                             className="lime cursor-pointer rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
-                           >
-                             {provider.loading ? (
-                               <Loader2 className="h-3 w-3 animate-spin" />
-                             ) : provider.connected && provider.expired ? (
-                               "Reconnect"
-                             ) : (
-                               "Connect"
-                             )}
-                           </button>
-                         )}
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         );
+                                    >
+                                      Disconnect
+                                    </span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleConnect(provider.id);
+                              }}
+                              disabled={provider.loading}
+                              className="lime cursor-pointer rounded-full p-0.5 px-2 tracking-tight uppercase transition-transform duration-150 ease-out active:scale-95"
+                            >
+                              {provider.loading ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : provider.connected && provider.expired ? (
+                                "Reconnect"
+                              ) : (
+                                "Connect"
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
         })}
       </div>
 
@@ -1447,7 +1472,9 @@ const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
           <X className="w-4 cursor-pointer h-4" strokeWidth={1.25} />
         </button>
       </div>
-      <p className="tracking-tighter uppercas mt-10 text-xs font-mono text-white">Canvas node settings will be here</p>
+      <p className="tracking-tighter uppercas mt-10 text-xs font-mono text-white">
+        Canvas node settings will be here
+      </p>
       <div className="space-y-5 hidden">
         {/* ── TTS Provider ── */}
         <div className="space-y-2">
@@ -1760,7 +1787,7 @@ const ExportSection = ({
       isActive={activePanel === "help"}
       onClick={() => onPanelChange(activePanel === "help" ? null : "help")}
     />
-    
+
     <IconButton
       icon={Settings}
       tooltip="Settings"
@@ -1769,6 +1796,7 @@ const ExportSection = ({
         onPanelChange(activePanel === "settings" ? null : "settings")
       }
     />
+
   </div>
 );
 

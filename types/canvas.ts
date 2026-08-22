@@ -134,6 +134,7 @@ export type CanvasListItem = {
   id: string;
   slug: string;
   name: string;
+  size_bytes: number;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
