@@ -69,57 +69,53 @@ export default async function HomePage({
   const countryCode =
     (user.user_metadata?.country as string | undefined) ?? "ZA";
 
-  let canvases: CanvasListItem[] = [];
   let projectsError: string | null = null;
-
   let credits = 0;
   let plan: SubscriptionPlan = "free";
-
-  if (user) {
-    credits = await getUserCredits(supabase, user.id);
-
-    const subscription = await getUserSubscription(supabase, user.id);
-    if (
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing")
-    ) {
-      plan = subscription.plan;
-    }
-  }
 
   const setActivePage = async (page: string) => {
     "use server";
     void page;
   };
 
-  try {
-    canvases = await listUserCanvases(supabase, user.id);
-  } catch {
-    projectsError = "Something went wrong. Please refresh to try again.";
-  }
-
-  try {
-    credits = await getUserCredits(supabase, user.id);
-  } catch {
-    // Silently fail
-  }
-
   let settings: UserSettings = {
     product_updates: true,
     canvas_activity: true,
   };
+  let canvases: CanvasListItem[] = [];
+  let profile: { nickname: string | null } | null = null;
 
-  try {
-    settings = await getUserSettings(supabase, user.id);
-  } catch {
-    // Silently fail and fall back to defaults.
+  const [creditsResult, subscriptionResult, canvasesResult, settingsResult, profileResult] =
+    await Promise.all([
+      getUserCredits(supabase, user.id).catch(() => 0),
+      getUserSubscription(supabase, user.id).catch(() => null),
+      listUserCanvases(supabase, user.id)
+        .then((items) => ({ items, error: null }))
+        .catch(() => ({
+          items: [] as CanvasListItem[],
+          error: "Something went wrong. Please refresh to try again.",
+        })),
+      getUserSettings(supabase, user.id).catch(() => null),
+      supabase
+        .from("profiles")
+        .select("nickname")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => data),
+    ]);
+
+  credits = creditsResult;
+  canvases = canvasesResult.items;
+  projectsError = canvasesResult.error;
+  if (settingsResult) settings = settingsResult;
+  profile = profileResult;
+  if (
+    subscriptionResult &&
+    (subscriptionResult.status === "active" ||
+      subscriptionResult.status === "trialing")
+  ) {
+    plan = subscriptionResult.plan;
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nickname")
-    .eq("id", user.id)
-    .single();
 
   return (
     <div className="min-h-screen bg-black/70">

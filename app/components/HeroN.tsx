@@ -256,8 +256,8 @@ export default function Hero({ user }: HomeClientProps) {
               alt=""
               width={800}
               height={800}
-              loading="eager"
-              priority={index < 4}
+              loading={index < 2 ? "eager" : "lazy"}
+              priority={index === 0}
               className="block h-auto w-full object-cover"
             />
           </div>

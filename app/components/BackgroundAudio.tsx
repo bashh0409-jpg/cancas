@@ -112,6 +112,10 @@ export default function BackgroundAudio() {
 
   // Beat detection — track bass energy spikes and trigger ping per beat
   useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
     let raf = 0;
     const history: number[] = [];
     const data = new Uint8Array(128);
@@ -142,7 +146,7 @@ export default function BackgroundAudio() {
 
     raf = requestAnimationFrame(detectBeat);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [isPlaying]);
 
   // When a track ends, switch to the other one
   const handleTrackEnd = () => {
@@ -165,7 +169,7 @@ export default function BackgroundAudio() {
       <audio
         ref={audioRef}
         src={TRACKS[trackIndex]}
-        preload="auto"
+        preload="metadata"
         onCanPlay={() => {
           // Nothing needed here — play effect handles it
         }}
