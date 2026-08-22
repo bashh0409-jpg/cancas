@@ -3,10 +3,11 @@ const STORE_NAME = "pending-uploads";
 const DB_VERSION = 1;
 
 export type UploadTicket = {
-  token: string;
+  uploadUrl?: string;
+  token?: string;
   storagePath: string;
   url: string;
-  endpoint: string;
+  endpoint?: string;
 };
 
 type PendingUploadRecord = {

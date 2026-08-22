@@ -12,14 +12,6 @@ type ResumableImageUploadOptions = {
   onProgress: (percent: number) => void;
 };
 
-type UploadTicket = {
-  uploadUrl?: string;
-  token?: string;
-  storagePath: string;
-  url: string;
-  endpoint?: string;
-};
-
 export function makeUploadFingerprint(
   canvasId: string,
   nodeId: string,
