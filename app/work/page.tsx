@@ -21,7 +21,6 @@ import MobileNotifier from "@/app/components/work/MobileNotifier";
 import { HomeShell } from "@/app/components/work/HomeShell";
 import { updateNicknameAction } from "@/app/actions/updateNicknameAction";
 import { updateSettingsAction } from "@/app/actions/updateSettingsAction";
-import { deleteAccountAction } from "@/app/actions/account/deleteAccountAction";
 import NewReleaseUpdate from "@/app/components/work/NewReleasUpdate";
 import Notice from "../components/work/Notice";
 
@@ -85,24 +84,29 @@ export default async function HomePage({
   let canvases: CanvasListItem[] = [];
   let profile: { nickname: string | null } | null = null;
 
-  const [creditsResult, subscriptionResult, canvasesResult, settingsResult, profileResult] =
-    await Promise.all([
-      getUserCredits(supabase, user.id).catch(() => 0),
-      getUserSubscription(supabase, user.id).catch(() => null),
-      listUserCanvases(supabase, user.id)
-        .then((items) => ({ items, error: null }))
-        .catch(() => ({
-          items: [] as CanvasListItem[],
-          error: "Something went wrong. Please refresh to try again.",
-        })),
-      getUserSettings(supabase, user.id).catch(() => null),
-      supabase
-        .from("profiles")
-        .select("nickname")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => data),
-    ]);
+  const [
+    creditsResult,
+    subscriptionResult,
+    canvasesResult,
+    settingsResult,
+    profileResult,
+  ] = await Promise.all([
+    getUserCredits(supabase, user.id).catch(() => 0),
+    getUserSubscription(supabase, user.id).catch(() => null),
+    listUserCanvases(supabase, user.id)
+      .then((items) => ({ items, error: null }))
+      .catch(() => ({
+        items: [] as CanvasListItem[],
+        error: "Something went wrong. Please refresh to try again.",
+      })),
+    getUserSettings(supabase, user.id).catch(() => null),
+    supabase
+      .from("profiles")
+      .select("nickname")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => data),
+  ]);
 
   credits = creditsResult;
   canvases = canvasesResult.items;
@@ -149,7 +153,6 @@ export default async function HomePage({
           errorMessage={errorMessage}
           createCanvasAction={createCanvasAction}
           signOut={signOut}
-          deleteAccountAction={deleteAccountAction}
           profile={{
             firstName,
             lastName,

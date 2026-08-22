@@ -1,5 +1,31 @@
 # Production Domain Configuration
 
+## Better Stack status page
+
+In Better Stack, switch to the **Uptime** product, open **Status pages**, then
+choose **Create status page**. The **Create app** screen belongs to a different
+Better Stack product. Add monitors for the services below, then set
+`NEXT_PUBLIC_STATUS_PAGE_URL` to the public status-page URL:
+
+```env
+NEXT_PUBLIC_STATUS_PAGE_URL=https://status.yourdomain.com
+```
+
+Recommended Better Stack monitors:
+
+- Website: `https://www.swipes.site/`
+- API: a representative public API endpoint
+- Authentication and database: an HTTP monitor or scheduled synthetic check
+  that exercises the Supabase flow
+- Storage: a safe upload or asset URL check
+- Billing: a non-mutating billing configuration or webhook health check
+- AI: a low-cost, non-mutating provider health check
+
+Configure Better Stack incident rules to update the affected component, notify
+the support channel, and resolve the incident automatically when the monitor
+recovers. When the variable is configured, Reflow adds a `STATUS` link to the
+public navigation and `/status` redirects users to the Better Stack page.
+
 The canonical production origin is `https://www.swipes.site`. Do not use
 `app.swipes.site`; the application redirects it to the canonical host.
 

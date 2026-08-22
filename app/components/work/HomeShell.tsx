@@ -1588,43 +1588,15 @@ function WorkspaceSettingsTab({
               </span>
             </div>
 
-            <button
-              onClick={() => setOpenDelete(true)}
-              className="h-8 mono cursor-pointer uppercase cursor-pointer rounded border border-rose-500/30 px-3 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
+            <a
+              href="/account/delete"
+              className="h-8 mono flex items-center cursor-pointer uppercase cursor-pointer rounded border border-rose-500/30 px-3 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
             >
               Delete
-            </button>
+            </a>
           </div>
         </div>
       </div>
-
-      <DeleteAccountModal
-        open={openDelete}
-        onClose={() => {
-          if (!deleting) {
-            setOpenDelete(false);
-            setDeleteError(null);
-          }
-        }}
-        onConfirm={handleDeleteAccount}
-      />
-
-      {deleteError ? (
-        <div className="mt-4 rounded border border-rose-500/50 bg-rose-500/10 p-3 text-xs text-rose-200">
-          {deleteError}
-        </div>
-      ) : null}
-
-      {deleting ? (
-        <div
-          aria-label="Deleting account"
-          aria-live="polite"
-          className="fixed inset-0 z-[1000] grid place-items-center bg-black"
-          role="status"
-        >
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
-        </div>
-      ) : null}
     </>
   );
 }

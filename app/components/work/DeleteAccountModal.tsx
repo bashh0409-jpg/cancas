@@ -1,9 +1,16 @@
 "use client";
 
-import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type KeyboardEvent,
+} from "react";
 import { Loader2 } from "lucide-react";
 
 const VERIFICATION_CODE_LENGTH = 6;
+const AUTO_SUBMIT_DELAY_MS = 3000;
 
 export function DeleteAccountModal({
   open,
@@ -21,10 +28,36 @@ export function DeleteAccountModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const codeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
-
-  if (!open) return null;
+  const autoSubmitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const verificationCode = codeDigits.join("");
+  const isCodeComplete = verificationCode.length === VERIFICATION_CODE_LENGTH;
+
+  useEffect(() => {
+    if (step !== "verify" || !isCodeComplete || loading) return;
+
+    autoSubmitTimeoutRef.current = setTimeout(() => {
+      void handleVerify();
+    }, AUTO_SUBMIT_DELAY_MS);
+
+    return () => {
+      if (autoSubmitTimeoutRef.current) {
+        clearTimeout(autoSubmitTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCodeComplete, step]);
+
+  function cancelAutoSubmit() {
+    if (autoSubmitTimeoutRef.current) {
+      clearTimeout(autoSubmitTimeoutRef.current);
+      autoSubmitTimeoutRef.current = null;
+    }
+  }
+
+  if (!open) return null;
 
   function focusCodeInput(index: number) {
     codeInputRefs.current[index]?.focus();
@@ -37,6 +70,7 @@ export function DeleteAccountModal({
     nextDigits[index] = digit;
     setCodeDigits(nextDigits);
     setError(null);
+    cancelAutoSubmit();
 
     if (digit && index < VERIFICATION_CODE_LENGTH - 1) {
       focusCodeInput(index + 1);
@@ -52,6 +86,7 @@ export function DeleteAccountModal({
       const nextDigits = [...codeDigits];
       nextDigits[index - 1] = "";
       setCodeDigits(nextDigits);
+      cancelAutoSubmit();
       focusCodeInput(index - 1);
     }
 
@@ -117,11 +152,6 @@ export function DeleteAccountModal({
   }
 
   async function handleVerify() {
-    if (!verificationCode.trim()) {
-      setError("Please enter the verification code");
-      return;
-    }
-
     if (verificationCode.length < VERIFICATION_CODE_LENGTH) {
       setError("Please enter the full verification code");
       return;
@@ -141,136 +171,115 @@ export function DeleteAccountModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded border border-black/10 bg-white p-5">
+    <div className="flex w-full justify-center px-0">
+      <div className="w-full  bg-white p-6 text-center text-black">
         {step === "confirm" ? (
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-black uppercase text-sm font-medium">
-                Delete Account
-              </h2>
-              
-            </div>
+          <>
+            <h2 className="text-xl uppercase tracking-tight mono mb-2">
+              Delete Account
+            </h2>
 
-            <div className="rounded bg-rose-500/10 border border-rose-500/30 p-3">
-              <p className="text-rose-500 up text-xs mono">
-                This action cannot be undone. All your data will be permanently
-                deleted.. Deleting your account will permanently remove all your
-                data, make sure you have saved any important files or data
-                before proceeding.
-              </p>
-            </div>
+            <p className="mt-2 font-mono text-sm tracking-tight uppercase text-black/60">
+              This permanently deletes your account and{" "}
+              <span className="text-black">all associated data</span>. Save
+              anything important before continuing — this can&apos;t be undone.
+            </p>
 
             {error && (
-              <div className="rounded bg-rose-500/10 border border-rose-500/30 p-2.5">
-                <p className="text-rose-200 text-xs">{error}</p>
-              </div>
+              <p className="mt-3 font-mono text-xs uppercase tracking-tight text-rose-600">
+                {error}
+              </p>
             )}
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-center items-center mt-4 text-sm mono gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className=" p-2 rounded-full cursor-pointer bg-black/20 px-3 text-xs text-black transition"
+                className="flex items-center cursor-pointer w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full transition-colors"
               >
                 Cancel
               </button>
-
               <button
                 type="button"
                 onClick={handleSendCode}
                 disabled={loading}
-                className=" p-2 rounded-full cursor-pointer bg-rose-500 px-3 text-xs font-medium text-white transition disabled:opacity-40 flex items-center gap-1.5"
+                className="flex items-center cursor-pointer gap-1.5 w-fit p-1.5 text-sm px-3 hover:bg-rose-700 uppercase text-white bg-rose-600 rounded-full transition-colors disabled:opacity-40"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Sending...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Sending
                   </>
                 ) : (
                   "Continue"
                 )}
               </button>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-white text-sm font-medium">
-                Verify Your Identity
-              </h2>
-              <p className="text-white/60 text-xs mono mt-1">
-                We&apos;ve sent a verification code to your email. Enter it
-                below to confirm account deletion.
-              </p>
-            </div>
+          <>
+            <h2 className="text-xl uppercase tracking-tight mono mb-2">
+              Verify It&apos;s You
+            </h2>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-xs mono tracking-tight text-white">
-                Verification Code
-              </label>
-              <div className="grid grid-cols-6 gap-2">
-                {codeDigits.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(node) => {
-                      codeInputRefs.current[index] = node;
-                    }}
-                    value={digit}
-                    onChange={(event) =>
-                      updateCodeDigit(index, event.currentTarget.value)
-                    }
-                    onKeyDown={(event) => handleCodeKeyDown(index, event)}
-                    onPaste={(event) => handleCodePaste(index, event)}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete={index === 0 ? "one-time-code" : "off"}
-                    aria-label={`Verification code digit ${index + 1}`}
-                    className="aspect-square w-full rounded bg-[#212529] text-center text-base font-semibold text-white outline-none border border-white/10 focus:border-rose-400 focus:bg-[#252a30] font-mono transition"
-                    maxLength={1}
-                  />
-                ))}
-              </div>
+            <p className="mt-2 font-mono tracking-tight uppercase text-black/60">
+              Enter the code sent to your email. Deletion starts automatically
+              once it&apos;s complete.
+            </p>
+
+            {/* fixed grid keeps 6 inputs aligned regardless of container width */}
+            <div className="grid grid-cols-6 gap-2 mt-4">
+              {codeDigits.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(node) => {
+                    codeInputRefs.current[index] = node;
+                  }}
+                  value={digit}
+                  onChange={(event) =>
+                    updateCodeDigit(index, event.currentTarget.value)
+                  }
+                  onKeyDown={(event) => handleCodeKeyDown(index, event)}
+                  onPaste={(event) => handleCodePaste(index, event)}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete={index === 0 ? "one-time-code" : "off"}
+                  aria-label={`Verification code digit ${index + 1}`}
+                  maxLength={1}
+                  disabled={loading}
+                  className="aspect-square w-full grotesk mono text-center text-3xl font-medium text-black bg-black/6 outline-none rounded-lg focus:bg-black/10 transition-colors disabled:opacity-50"
+                />
+              ))}
             </div>
 
             {error && (
-              <div className="rounded bg-rose-500/10 border border-rose-500/30 p-2.5">
-                <p className="text-rose-200 text-xs">{error}</p>
-              </div>
+              <p className="mt-3 font-mono text-xs uppercase tracking-tight text-rose-600">
+                {error}
+              </p>
+            )}
+            {loading && (
+              <span className="flex justify-center mt-4 items-center gap-1.5 text-sm mono uppercase text-rose-600">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                
+              </span>
             )}
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-center items-center mt-4 text-sm mono gap-2">
               <button
                 type="button"
                 onClick={() => {
+                  cancelAutoSubmit();
                   setStep("confirm");
                   resetCode();
                   setError(null);
                 }}
-                className="p-2 rounded cursor-pointer bg-white/10 px-3 text-xs text-white hover:bg-white/15 transition"
+                disabled={loading}
+                className="flex items-center cursor-pointer w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full transition-colors disabled:opacity-40"
               >
                 Back
               </button>
-
-              <button
-                type="button"
-                onClick={handleVerify}
-                disabled={
-                  verificationCode.length < VERIFICATION_CODE_LENGTH || loading
-                }
-                className="h-9 rounded cursor-pointer bg-rose-500 px-3 text-xs font-medium text-white transition disabled:opacity-40 flex items-center gap-1.5"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete Account"
-                )}
-              </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

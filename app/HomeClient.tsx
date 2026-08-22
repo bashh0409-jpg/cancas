@@ -9,8 +9,6 @@ import type { User } from "@supabase/supabase-js";
 import MouseImageTrail from "./components/MouseImageTrail";
 import ReflowDemoModal from "./components/ReflowDemoModal";
 
-
-
 export const metadata: Metadata = {
   title: "Reflow",
   description:
@@ -43,12 +41,13 @@ import ReflowIntro from "./components/ReflowIntro";
 import { TrustedBy } from "./components/work/TrustedBy";
 import { MWG_022_TypographyReveal } from "./components/mwg_022/MWG_022_TypographyReveal";
 
+const STATUS_PAGE_URL = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
+
 interface HomeClientProps {
   user: User | null;
 }
 
 export default function HomeClient({ user }: HomeClientProps) {
-
   <script
     type="application/ld+json"
     dangerouslySetInnerHTML={{
@@ -68,6 +67,7 @@ export default function HomeClient({ user }: HomeClientProps) {
     { label: "Pricing", href: "/pricing" },
     { label: "Legal", href: "/legal" },
     { label: "Support", href: "/support" },
+    ...(STATUS_PAGE_URL ? [{ label: "Status", href: "/status" }] : []),
     { label: accountLabel, href: accountHref },
   ];
 
@@ -224,8 +224,7 @@ export default function HomeClient({ user }: HomeClientProps) {
               "linear-gradient(to right, rgba(160,160,160,0.1) 0px, rgba(160,160,160,0.1) 1px, transparent 1px, transparent 100%)",
           }}
         >
-         <Hero user={user} />
-        
+          <Hero user={user} />
         </div>
         {/* White grid */}
         <div
@@ -264,7 +263,7 @@ export default function HomeClient({ user }: HomeClientProps) {
           }}
         >
           {/*  <TextScalingAnimation /> */}
-        {/*   <div className="-z-100">
+          {/*   <div className="-z-100">
             Section 2: Typography Word Reveal 
             <MWG_022_TypographyReveal
               title="What Reflow does best"

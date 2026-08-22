@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import gsap from "gsap";
 import { getAppUrl } from "@/lib/appUrl";
 
+const STATUS_PAGE_URL = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
+
 const NAV_LINKS = [
   {
     label: "ENTERPRISE",
@@ -29,6 +31,7 @@ const NAV_LINKS = [
     label: "FAQs",
     href: "faq",
   },
+  ...(STATUS_PAGE_URL ? [{ label: "STATUS", href: "/status" }] : []),
 ];
 
 const Navbar = () => {
