@@ -135,7 +135,7 @@ export function BillingDashboard({ userId }: BillingDashboardProps) {
       </h3>
       {/* Current Plan */}
       <div className="bg-white/10 uppercase p-6 rounded">
-        <div className="grid uppercase md:grid-cols-2 gap-6">
+        <div className="grid uppercase grid-cols-2 gap-6">
           <div>
             <div className="text-xs text-white/60  uppercase tracking-tight mb-1">
               current Plan

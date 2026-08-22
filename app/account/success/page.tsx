@@ -17,7 +17,7 @@ export default async function BillingSuccess() {
 
         <div className=" flex justify-center items-center mt-4 text-sm mono gap-2 items-center ">
           <Link
-            href="/work"
+            href="/signin"
             className="flex items-center  w-fit p-1.5 text-sm px-3 hover:bg-black/10 uppercase text-black bg-black/6 rounded-full  transition-colors"
           >
             Start Over
