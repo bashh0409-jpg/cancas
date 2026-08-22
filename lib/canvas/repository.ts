@@ -401,27 +401,43 @@ export async function deleteUserCanvas(
 export async function getUserCanvases(
   supabase: SupabaseClient,
   userId: string,
-) {
+): Promise<Array<{ id: string; name: string; slug: string; size_bytes: number }>> {
   try {
     const { data, error } = await supabase
       .from("canvases")
-      .select("id,name,slug,deleted_at")
+      .select("id,name,slug,content,deleted_at")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
-    return data ?? [];
+
+    return (data ?? []).map((canvas) => ({
+      id: canvas.id,
+      name: canvas.name,
+      slug: canvas.slug,
+      size_bytes: new TextEncoder().encode(
+        JSON.stringify(canvas.content ?? {}),
+      ).length,
+    }));
   } catch (err: unknown) {
     if (isMissingDeletedAtColumn(err)) {
       const { data, error } = await supabase
         .from("canvases")
-        .select("id,name,slug")
+        .select("id,name,slug,content")
         .eq("user_id", userId)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      return data ?? [];
+
+      return (data ?? []).map((canvas) => ({
+        id: canvas.id,
+        name: canvas.name,
+        slug: canvas.slug,
+        size_bytes: new TextEncoder().encode(
+          JSON.stringify(canvas.content ?? {}),
+        ).length,
+      }));
     }
 
     throw err;
